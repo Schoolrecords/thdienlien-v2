@@ -3,16 +3,20 @@
    Tông chủ đạo: XANH NAVY DỊU (giảm tông cho nhẹ mắt) + nhũ vàng
    ============================================================ */
 :root {
-  --dam: #1f3d5f;          /* navy dịu — nền hero, header, thẻ đậm */
-  --dam-2: #2c5484;        /* navy sáng hơn — gradient */
-  --chinh: #2e6da8;        /* màu nhấn liên kết, nút */
-  --vang: #f0b429;         /* nhũ vàng — điểm nhấn */
-  --kem: #f6f7fa;          /* nền trang */
+  /* Bảng màu lấy ĐÚNG theo app THCS Bạch Liêu */
+  --dam: #14306b;          /* navy — nền hero, header, thẻ đậm */
+  --dam-2: #1e4593;        /* navy sáng hơn — gradient */
+  --chinh: #2a5cb8;        /* màu nhấn liên kết, nút */
+  --vang: #e5b13a;         /* nhũ vàng trên nền tối */
+  --vang-sam: #c8901c;     /* vàng sậm cho chữ trên nền sáng */
+  --kem: #f4f7fc;          /* nền trang */
   --the: #ffffff;
-  --chu: #24313d;
-  --chu-mo: #64748b;
-  --vien: #e5e7ee;
+  --chu: #16202f;
+  --chu-mo: #5d6b81;
+  --vien: #e4e9f2;
   --bo-goc: 16px;
+  /* Hoa văn chấm mờ trên các mảng navy (đặc trưng Bạch Liêu) */
+  --cham-navy: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -26,7 +30,7 @@ img { max-width: 100%; }
 /* ═══ Thanh đầu trang ═══ */
 header.dau-trang {
   background: var(--dam); color: #fff; position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 2px 12px rgba(15, 30, 50, .28);
+  box-shadow: 0 2px 12px rgba(16, 32, 64, .28);
 }
 .dau-trang .khung {
   max-width: 1180px; margin: 0 auto; padding: 10px 16px;
@@ -61,7 +65,7 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
 .hero .anh { position: absolute; inset: 0; background: url('img/truong.jpg') right center / cover no-repeat; }
 .hero .phu {
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, var(--dam) 0%, var(--dam) 34%, rgba(31, 61, 95, .88) 48%, rgba(31, 61, 95, .42) 68%, rgba(31, 61, 95, .12) 100%);
+  background: linear-gradient(100deg, var(--dam) 0%, var(--dam) 34%, rgba(20, 48, 107, .88) 48%, rgba(20, 48, 107, .42) 68%, rgba(20, 48, 107, .12) 100%);
 }
 .hero .khung { position: relative; max-width: 1180px; margin: 0 auto; padding: 40px 16px 28px; }
 .hieu-bai {
@@ -89,7 +93,7 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
   margin-top: 26px; backdrop-filter: blur(3px);
 }
 @media (min-width: 760px) { .dai-so-lieu { grid-template-columns: repeat(4, 1fr); } }
-.dai-so-lieu .o { background: rgba(31, 61, 95, .78); padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
+.dai-so-lieu .o { background: rgba(20, 48, 107, .78); padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
 .dai-so-lieu .bi { font-size: 22px; }
 .dai-so-lieu .so { font-size: 26px; font-weight: 800; color: var(--vang); line-height: 1.1; }
 .dai-so-lieu .nhan { font-size: 12.5px; color: #cbdcee; }
@@ -101,7 +105,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
 @keyframes hien-ra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .dau-muc { text-align: center; margin: 8px 0 22px; }
-.dau-muc .nhan-nho { color: #b78a1e; font-weight: 800; font-size: 12.5px; letter-spacing: .22em; text-transform: uppercase; }
+.dau-muc .nhan-nho { color: var(--vang-sam); font-weight: 800; font-size: 12.5px; letter-spacing: .22em; text-transform: uppercase; }
 .dau-muc h2 { font-size: clamp(26px, 4.5vw, 38px); font-weight: 800; color: var(--dam); margin: 4px 0 8px; }
 .dau-muc p { color: var(--chu-mo); max-width: 640px; margin: 0 auto; font-size: 15px; }
 
@@ -112,11 +116,11 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
 .the-module {
   position: relative; overflow: hidden; border-radius: 18px; padding: 24px;
   border: 1px solid rgba(120, 130, 160, .16); cursor: pointer;
-  box-shadow: 0 3px 14px rgba(31, 61, 95, .07);
+  box-shadow: 0 3px 14px rgba(20, 48, 107, .07);
   transition: transform .15s, box-shadow .15s;
   display: flex; flex-direction: column;
 }
-.the-module:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(31, 61, 95, .15); }
+.the-module:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(20, 48, 107, .15); }
 .the-module .bi {
   width: 58px; height: 58px; border-radius: 15px; font-size: 26px;
   display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
@@ -188,7 +192,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
   background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc);
   overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .15s; display: flex; flex-direction: column;
 }
-.the-hop:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(31, 61, 95, .14); }
+.the-hop:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(20, 48, 107, .14); }
 .the-hop .dau {
   background: linear-gradient(135deg, var(--dam), var(--dam-2)); color: #fff;
   padding: 16px 18px; display: flex; align-items: center; gap: 13px;
@@ -258,3 +262,13 @@ footer {
   font-size: 13px; padding: 26px 16px; margin-top: 34px;
 }
 footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
+
+/* ═══ Hoa văn chấm mờ trên mọi mảng navy (đặc trưng Bạch Liêu) ═══ */
+.o-so,
+.the-hop .dau,
+.nhom-tc > .dau-nhom,
+.dai-so-lieu .o {
+  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-size: 14px 14px, auto;
+}
+.dai-so-lieu .o { background-image: var(--cham-navy), linear-gradient(135deg, rgba(20, 48, 107, .82), rgba(30, 69, 147, .78)); }
