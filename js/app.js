@@ -59,6 +59,10 @@
     $('#chip-ho-so').textContent = (window.BO_PHAN || []).length + ' bộ phận · ' + d.tong + ' danh mục';
     $('#chip-so-lop').textContent = window.CAU_HINH.SO_LOP + ' lớp';
     $('#tk-lop').textContent = window.CAU_HINH.SO_LOP;
+    // Vẽ lại hai dòng chữ này sau khi nạp cấu hình từ CSDL — chúng được đặt
+    // lần đầu lúc DOMContentLoaded, tức là TRƯỚC khi đọc bảng cau_hinh.
+    $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
+    $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
     $('#tk-hoc-sinh').textContent = Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN');
     $('#hs-tong').textContent = d.tong;
     $('#hs-co').textContent = d.co;

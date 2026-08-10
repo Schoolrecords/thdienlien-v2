@@ -22,7 +22,8 @@ window.CAU_HINH = {
   SLOGAN: 'Vững bước tương lai – Tự tin hội nhập',
 
   // --- Mục tiêu chất lượng ---
-  MUC_TIEU_CHUAN_QG: 'Giữ vững chuẩn quốc gia Mức độ 1 — phấn đấu Mức độ 2',
+  // Trường đã đạt chuẩn quốc gia MỨC ĐỘ 2 từ năm 2022 (thầy Chung xác nhận 11/8/2026)
+  MUC_TIEU_CHUAN_QG: 'Giữ vững và phát triển chuẩn quốc gia Mức độ 2',
 
   // --- Số dự phòng cho bản in khi chưa đếm được từ CSDL (máy đếm được thì
   //     luôn ưu tiên số đếm thật) ---

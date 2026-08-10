@@ -63,6 +63,7 @@
       }
       if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
       if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
+      if (ch.muc_tieu_chuan_qg) window.CAU_HINH.MUC_TIEU_CHUAN_QG = ch.muc_tieu_chuan_qg;
       // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
       // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
       // sửa mã — tránh mỗi nơi một con số.
