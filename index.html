@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hồ sơ số — Trường Tiểu học Diễn Liên</title>
+  <meta name="description" content="Hệ thống Hồ sơ số Trường Tiểu học Diễn Liên — Quản lý Hồ sơ · Trường chuẩn Quốc gia (TT57/2026) · Đảm bảo Chất lượng">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=202608101">
+</head>
+<body>
+
+<header class="dau-trang">
+  <div class="ten-truong dien-ten-truong">Trường Tiểu học Diễn Liên</div>
+  <div class="phu-de"><span id="dien-slogan"></span> · Năm học <span id="dien-nam-hoc"></span></div>
+</header>
+<div class="bang-xem-thu" id="bang-xem-thu">👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu — chưa nối cơ sở dữ liệu</div>
+
+<nav class="thanh-dieu-huong">
+  <button data-di="home" class="dang-chon">🏠 Trang chủ</button>
+  <button data-di="hoso">📁 Quản lý Hồ sơ</button>
+  <button data-di="chuanqg">🏅 Trường chuẩn QG</button>
+  <button data-di="dbcl">📊 Đảm bảo chất lượng</button>
+</nav>
+
+<main>
+  <!-- ═══ TRANG CHỦ ═══ -->
+  <section class="man-hinh hien" id="mh-home">
+    <div class="luoi-thong-ke">
+      <div class="the o-so"><div class="so" id="tk-tong">–</div><div class="nhan">Tổng hồ sơ</div></div>
+      <div class="the o-so"><div class="so" id="tk-co">–</div><div class="nhan">Đã có</div></div>
+      <div class="the o-so"><div class="so" id="tk-dang">–</div><div class="nhan">Đang cập nhật</div></div>
+      <div class="the o-so"><div class="so" id="tk-chua">–</div><div class="nhan">Chưa có</div></div>
+    </div>
+
+    <div class="the the-module" onclick="chuyenManHinh('hoso')">
+      <h3>📁 Quản lý Hồ sơ</h3>
+      <p>Kho minh chứng điện tử: 5 bộ phận · 14 hộp · mã MC theo Phụ lục IV Thông tư 57/2026. Quét Google Drive tự động cập nhật trạng thái.</p>
+    </div>
+    <div class="the the-module" onclick="chuyenManHinh('chuanqg')">
+      <h3>🏅 Trường chuẩn Quốc gia</h3>
+      <p>Tự đánh giá theo Thông tư 57/2026/TT-BGDĐT: 4 tiêu chuẩn · 15 tiêu chí · 2 mức. Mục tiêu: <span id="dien-muc-tieu"></span>.</p>
+    </div>
+    <div class="the the-module" onclick="chuyenManHinh('dbcl')">
+      <h3>📊 Đảm bảo Chất lượng</h3>
+      <p>Dữ liệu vận hành thường xuyên theo khung Nghệ An: chu trình PDCA, 3 mốc 30/9 · 30/01 · 30/7, cam kết chuẩn đầu ra.</p>
+    </div>
+
+    <div class="chu-thich-phap-ly">
+      <b>Căn cứ triển khai:</b> Thông tư 57/2026/TT-BGDĐT (bảo đảm chất lượng &amp; công nhận chuẩn quốc gia) ·
+      Thông tư 15/2026/TT-BGDĐT (Điều lệ — khoản 4 Điều 21: hồ sơ điện tử có giá trị pháp lý tương đương hồ sơ giấy) ·
+      Thông tư 27/2020/TT-BGDĐT (đánh giá học sinh tiểu học) · Nghị định 13/2023/NĐ-CP (bảo vệ dữ liệu cá nhân).
+    </div>
+  </section>
+
+  <!-- ═══ MODULE 1: QUẢN LÝ HỒ SƠ ═══ -->
+  <section class="man-hinh" id="mh-hoso">
+    <input type="search" id="o-tim-ho-so" class="o-tim-kiem"
+           placeholder="🔍 Tìm hồ sơ (tên, mã mới, mã cũ, người phụ trách — gõ không dấu cũng được)">
+    <div class="bo-loc" id="loc-trang-thai">
+      <button data-tt="tatca" class="dang-chon">Tất cả</button>
+      <button data-tt="co">🟢 Đã có</button>
+      <button data-tt="dang">🟡 Đang cập nhật</button>
+      <button data-tt="chua">⚪ Chưa có</button>
+    </div>
+    <div id="danh-muc-ho-so"></div>
+    <div class="chu-thich-phap-ly">
+      Mã <b>MC.x.y.zz</b> đặt theo Phụ lục IV TT57 (tiêu chuẩn · tiêu chí · số thứ tự) — đang là mã <b>gợi ý</b>
+      sinh tự động từ danh mục cũ, Ban giám hiệu duyệt lại khi nối cơ sở dữ liệu. Một minh chứng dùng cho nhiều
+      tiêu chí thì dùng lại đúng một mã, không cấp mã mới.
+    </div>
+  </section>
+
+  <!-- ═══ MODULE 2: TRƯỜNG CHUẨN QUỐC GIA ═══ -->
+  <section class="man-hinh" id="mh-chuanqg">
+    <div class="the" style="margin-bottom:14px">
+      <h3 style="margin-bottom:6px">🏅 Tự đánh giá theo Thông tư 57/2026/TT-BGDĐT</h3>
+      <p style="font-size:14px;color:var(--chu-mo)">
+        4 tiêu chuẩn · 15 tiêu chí (8 tiêu chí bắt buộc) · đánh giá tuần tự Mức 1 → Mức 2.
+        Nguyên văn từng mức và 71 nội hàm sẽ nạp từ cơ sở dữ liệu khi nối Supabase;
+        báo cáo tự đánh giá cập nhật hằng năm <b>trước ngày 15/6</b>.
+      </p>
+    </div>
+    <div id="danh-sach-tieu-chi"></div>
+    <div class="chu-thich-phap-ly">
+      ⚖️ Khoản 4 Điều 27 TT57: đến hết <b>31/12/2028</b>, dữ liệu định lượng được dùng để theo dõi, phân tích,
+      cảnh báo và hỗ trợ cải tiến — <b>không</b> được dùng làm căn cứ duy nhất hoặc ngưỡng loại trừ để kết luận
+      không đạt. Ứng dụng chỉ gợi ý; kết luận thuộc về Hội đồng tự đánh giá.
+    </div>
+  </section>
+
+  <!-- ═══ MODULE 3: ĐẢM BẢO CHẤT LƯỢNG ═══ -->
+  <section class="man-hinh" id="mh-dbcl">
+    <div class="the">
+      <h3 style="margin-bottom:6px">📊 Đảm bảo Chất lượng (khung Nghệ An)</h3>
+      <p style="font-size:14px;color:var(--chu-mo);margin-bottom:10px">
+        Module này mở ở <b>đợt 2</b>: chu trình PDCA với 3 mốc <b>30/9 · 30/01 · 30/7</b>, Tổ ĐBCL,
+        bộ chỉ tiêu tiểu học theo Thông tư 27/2020 (mức T/H/C các môn học; năng lực - phẩm chất T/Đ/C),
+        cam kết chuẩn đầu ra và trang công bố cho phụ huynh.
+      </p>
+      <p style="font-size:13px;color:var(--chu-mo)">
+        ⏳ Đang chờ văn bản của Sở GD&amp;ĐT Nghệ An thay thế Kế hoạch 683 (giai đoạn 2022-2025) và
+        Công văn 2180 theo mô hình chính quyền 2 cấp — khung chỉ tiêu sẽ chốt theo văn bản mới.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="dien-ten-truong"></span> — Xã Quảng Châu, Tỉnh Nghệ An<br>
+  Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
+</footer>
+
+<script src="js/cauhinh.js?v=202608101"></script>
+<script src="js/du-lieu-demo.js?v=202608101"></script>
+<script src="js/app.js?v=202608101"></script>
+</body>
+</html>
