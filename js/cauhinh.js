@@ -16,7 +16,9 @@ window.CAU_HINH = {
   CO_QUAN_QUAN_LY: 'SỞ GIÁO DỤC VÀ ĐÀO TẠO NGHỆ AN',
   HIEU_TRUONG: 'Nguyễn Thị Hòa',
   PHO_HIEU_TRUONG: 'Trần Thanh Chung',
-  NAM_HOC: '2026-2027',
+  // Năm học KHÔNG ghi cứng — tính theo ngày ở cuối tệp này.
+  // Giá trị đặt sẵn đây chỉ là chỗ giữ chỗ, sẽ bị ghi đè ngay bên dưới.
+  NAM_HOC: '',
   SLOGAN: 'Vững bước tương lai – Tự tin hội nhập',
 
   // --- Mục tiêu chất lượng ---
@@ -29,5 +31,29 @@ window.CAU_HINH = {
   SO_HOC_SINH: 863,
   SO_CBGV: 37,
 };
+// ============================================================
+// NĂM HỌC HIỆN HÀNH — TỰ TÍNH THEO NGÀY, KHÔNG GHI CỨNG
+// Mốc mặc định 30/08: từ ngày này trở đi là năm học mới.
+//   · 11/8/2026  → 2025-2026   (chưa qua mốc)
+//   · 30/8/2026  → 2026-2027   (đúng ngày mốc là đổi)
+//   · 20/5/2027  → 2026-2027
+// Ghi cứng năm học là cái bẫy: đến hè năm sau không ai nhớ vào sửa, cả hệ
+// thống ghi dữ liệu sai năm mà không ai biết.
+// Mốc lấy từ bảng cau_hinh (khoá 'moc_doi_nam_hoc') khi đã đăng nhập —
+// Sở đổi lịch năm học thì sửa cấu hình, không phải sửa mã.
+// ============================================================
+window.tinhNamHoc = function (moc, ngay) {
+  var d = ngay || new Date();
+  var m = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(String(moc || '30/08'));
+  var ngayMoc = m ? +m[1] : 30;
+  var thangMoc = m ? +m[2] : 8;
+  var thang = d.getMonth() + 1;
+  var quaMoc = thang > thangMoc || (thang === thangMoc && d.getDate() >= ngayMoc);
+  var dau = quaMoc ? d.getFullYear() : d.getFullYear() - 1;
+  return dau + '-' + (dau + 1);
+};
+window.CAU_HINH.MOC_DOI_NAM_HOC = '30/08';
+window.CAU_HINH.NAM_HOC = window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
+
 // Cờ suy ra, các file khác đọc cờ này — không tự kiểm tra chuỗi rỗng
 window.DA_NOI = !!(window.CAU_HINH.DIA_CHI && window.CAU_HINH.KHOA_CONG_KHAI);

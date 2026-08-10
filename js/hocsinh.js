@@ -134,6 +134,15 @@
 
   function veThanh() {
     var t = tongKet();
+    // Đang xem năm KHÁC năm học hiện hành thì phải nói rõ, kẻo thầy cô tưởng
+    // số liệu này là của năm nay.
+    var hienHanh = window.CAU_HINH.NAM_HOC;
+    if (NAM && hienHanh && NAM !== hienHanh) {
+      canhBao('📅 Đang xem năm học <b>' + thoat(NAM) + '</b>. Năm học hiện hành của hệ thống là <b>' +
+        thoat(hienHanh) + '</b>' + (CAC_NAM.indexOf(hienHanh) < 0 ? ' — năm đó chưa có dữ liệu học sinh.' : '.'));
+    } else {
+      canhBao('');
+    }
     var pill = $('#hs-pill');
     if (pill) {
       pill.innerHTML = 'Năm học <b>' + thoat(NAM) + '</b> · <b>' + t.soLop + '</b> lớp · <b>' +

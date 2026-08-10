@@ -52,7 +52,15 @@
       cauHinh.forEach(function (d) { ch[d.khoa] = d.gia_tri; });
       if (ch.ten_truong) window.CAU_HINH.TEN_TRUONG = ch.ten_truong;
       if (ch.slogan) window.CAU_HINH.SLOGAN = ch.slogan;
-      if (ch.nam_hoc) window.CAU_HINH.NAM_HOC = ch.nam_hoc;
+      // Năm học: mặc định TỰ TÍNH theo mốc trong CSDL (30/08).
+      // Chỉ khi quản trị đặt nam_hoc_tu_dong = 'khong' thì mới lấy giá trị
+      // ghi cứng ở cột nam_hoc — để phòng trường hợp Sở lùi/đẩy năm học.
+      if (ch.moc_doi_nam_hoc) window.CAU_HINH.MOC_DOI_NAM_HOC = ch.moc_doi_nam_hoc;
+      if (ch.nam_hoc_tu_dong === 'khong' && ch.nam_hoc) {
+        window.CAU_HINH.NAM_HOC = ch.nam_hoc;
+      } else {
+        window.CAU_HINH.NAM_HOC = window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
+      }
       if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
       if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
       // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
