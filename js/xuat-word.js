@@ -91,6 +91,12 @@
 
   var TEN_TT = { co: 'Đã có', dang: 'Đang cập nhật', chua: 'Chưa có' };
 
+  // Tiện ích dùng chung cho các file xuất Word khác (tcqg-word.js…)
+  window.WORD_TIEN_ICH = {
+    chan: chan, cauHinh: cauHinh, ngayVN: ngayVN, diaDanh: diaDanh,
+    khungWord: khungWord, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
+  };
+
   // Phiếu giao việc của một hộp — nhận mã hộp 'H01'…'H14'
   window.xuatHopWord = function (maHop) {
     var hop = window.HOP[maHop];

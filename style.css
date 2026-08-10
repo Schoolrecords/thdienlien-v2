@@ -811,3 +811,40 @@ td.tdst { white-space: nowrap; text-align: right; }
 .ct-kl-muc.m2 { background: var(--ok-nen); color: var(--ok); }
 .ct-kl-muc.m1 { background: var(--canh-nen); color: var(--canh); }
 .ct-kl-muc.no { background: var(--thieu-nen); color: var(--thieu); }
+
+/* Quan tri dang the (tab) + hoi dong + dieu kien CQG */
+.qt-tab { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 2px solid var(--vien); padding-bottom: 0; }
+.qt-tab button {
+  font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; color: var(--chu-mo);
+  background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 13px; margin-bottom: -2px;
+}
+.qt-tab button.on { color: var(--dam); border-bottom-color: var(--vang-sam); }
+.hd-kiem { border-radius: 11px; padding: 11px 14px; font-size: 13.2px; margin: 8px 0 12px; line-height: 1.6; }
+.hd-kiem.xanh { background: var(--ok-nen); color: var(--ok); border: 1px solid #bfe6cf; }
+.hd-kiem.vang { background: var(--canh-nen); color: var(--canh); border: 1px solid #f1e2b5; }
+.hd-kiem.do { background: var(--thieu-nen); color: var(--thieu); border: 1px solid #f2cccc; }
+.hd-toi {
+  background: #eef4ff; border: 1px solid #cfe0ff; border-radius: 10px;
+  padding: 9px 13px; font-size: 13px; margin-bottom: 10px;
+}
+.hd-form {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+}
+.hd-form .hs-o { margin-bottom: 0; flex: 1 1 180px; }
+.hd-form select, .hd-form > input {
+  font: inherit; font-size: 13.5px; padding: 9px 10px; border: 1.5px solid var(--vien); border-radius: 10px; background: #fff;
+}
+.hd-th { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--chu-mo); }
+.tt-dk {
+  background: var(--the); border: 1px solid var(--vien); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.tt-dk-dau { font-size: 13.8px; line-height: 1.55; }
+.tt-dk small { display: block; color: var(--chu-mo); font-size: 12.3px; margin-top: 4px; line-height: 1.55; }
+.tt-dk select, .tt-dk input {
+  font: inherit; font-size: 13px; padding: 8px 10px; border: 1.5px solid var(--vien); border-radius: 9px; background: #fff;
+}
+.bang-quan-tri input { font: inherit; font-size: 12.8px; padding: 6px 8px; border: 1px solid var(--vien); border-radius: 7px; width: 100%; min-width: 90px; background: #fff; }
+.bang-quan-tri input[type="checkbox"] { width: auto; min-width: 0; }
+.bang-quan-tri input[type="date"] { min-width: 128px; }
