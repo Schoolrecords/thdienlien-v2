@@ -148,12 +148,19 @@
       pill.innerHTML = 'Năm học <b>' + thoat(NAM) + '</b> · <b>' + t.soLop + '</b> lớp · <b>' +
         t.soHS + '</b> học sinh';
     }
+    // Ô chọn năm LUÔN hiện (như Bạch Liêu). Danh sách gồm các năm CÓ dữ liệu
+    // cộng thêm năm học hiện hành — để đến 30/8 nhảy sang 2026-2027 thì năm đó
+    // đã có sẵn trong ô chọn, thầy cô nhìn thấy ngay là chưa nạp dữ liệu.
     var boc = $('#hs-nam-boc');
     if (!boc) return;
-    if (CAC_NAM.length < 2) { boc.innerHTML = ''; return; }
+    var ds = CAC_NAM.slice();
+    if (hienHanh && ds.indexOf(hienHanh) < 0) ds.push(hienHanh);
+    if (NAM && ds.indexOf(NAM) < 0) ds.push(NAM);
+    ds.sort().reverse();
     boc.innerHTML = '<label for="hs-nam">Xem năm học</label>' +
-      '<select id="hs-nam">' + CAC_NAM.map(function (n) {
-        return '<option value="' + thoat(n) + '"' + (n === NAM ? ' selected' : '') + '>' + thoat(n) + '</option>';
+      '<select id="hs-nam">' + ds.map(function (n) {
+        return '<option value="' + thoat(n) + '"' + (n === NAM ? ' selected' : '') + '>' +
+          thoat(n) + '</option>';
       }).join('') + '</select>';
     $('#hs-nam').addEventListener('change', doiNam);
   }
@@ -198,11 +205,15 @@
     o.innerHTML = '<div class="luoi-khoi">' + [1, 2, 3, 4, 5].map(function (k) {
       var d = dem[k] || { lop: 0, hs: 0 };
       return '<button class="the-khoi' + (KHOI_MO === k ? ' on' : '') + '" data-khoi="' + k + '"' +
-        (d.lop ? '' : ' disabled style="opacity:.5;cursor:default"') + '>' +
-        '<div class="so-khoi">' + k + '</div>' +
+        (d.lop ? '' : ' disabled') + '>' +
+        '<div class="huy">' + k + '</div>' +
         '<div class="ten-khoi">Khối ' + k + '</div>' +
-        '<div class="dem-khoi">' + d.lop + ' lớp · ' + d.hs + ' học sinh</div>' +
-        (d.lop ? '<div class="mo-khoi">Xem các lớp →</div>' : '<div class="dem-khoi">chưa có dữ liệu</div>') +
+        '<hr class="ngan">' +
+        '<div class="hai-cot">' +
+        '<div><div class="so">' + d.lop + '</div><div class="nhan">Lớp</div></div>' +
+        '<div><div class="so">' + d.hs + '</div><div class="nhan">Học sinh</div></div>' +
+        '</div>' +
+        (d.lop ? '<div class="mo-khoi">Xem các lớp →</div>' : '') +
         '</button>';
     }).join('') + '</div>';
 
@@ -229,8 +240,9 @@
         return '<button class="the-lop" data-lop="' + thoat(l) + '">' +
           '<div class="ten-lop">' + thoat(l) + '</div>' +
           '<div class="si-so">' + d.em.length + ' học sinh</div>' +
-          '<div class="gvcn' + (CN[l] ? '' : ' trong') + '">' +
-          (CN[l] ? '👩‍🏫 ' + thoat(CN[l]) : '— chưa phân công chủ nhiệm —') + '</div>' +
+          // Chưa phân công thì KHÔNG ghi gì cả. In "chưa phân công chủ nhiệm"
+          // lên cả 25 thẻ chỉ làm rối mắt, mà phân công xong lại phải xoá đi.
+          (CN[l] ? '<div class="gvcn">👩‍🏫 ' + thoat(CN[l]) + '</div>' : '') +
           (d.coSo ? '<span class="co-so-nho">' + thoat(d.coSo) + '</span>' : '') +
           '</button>';
       }).join('') + '</div>';
@@ -245,8 +257,8 @@
     var d = LOP[lop];
     if (!d) return;
     $('#hsp-tieu-de').textContent = 'Lớp ' + lop;
-    $('#hsp-phu').textContent = 'Giáo viên chủ nhiệm: ' + (CN[lop] || 'chưa phân công') +
-      ' · Năm học ' + NAM;
+    $('#hsp-phu').textContent = (CN[lop] ? 'Giáo viên chủ nhiệm: ' + CN[lop] + ' · ' : '') +
+      'Năm học ' + NAM;
 
     var nam = 0, nu = 0, chua = 0, hoaNhap = 0;
     d.em.forEach(function (h) {

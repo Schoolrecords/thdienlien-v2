@@ -521,35 +521,60 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 .prog { height: 8px; background: #e8edf5; border-radius: 999px; overflow: hidden; margin-top: 9px; }
 .prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--ok), #31a97b); border-radius: 999px; transition: width .6s; }
 
-/* ═══ Module Quản lý học sinh ═══ */
-.hs-thanh {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 4px 0 18px;
+/* ═══ Module Quản lý học sinh (bố cục theo bản THCS Bạch Liêu) ═══ */
+.hs-hero {
+  background: linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-size: 22px 22px, auto;
+  border-radius: var(--bo-goc); color: #fff; text-align: center;
+  padding: 30px 20px 26px; margin-bottom: 22px;
 }
+.hs-hero h2 { font-size: clamp(22px, 3.4vw, 30px); font-weight: 800; }
+.hs-hero > p { font-size: 14.5px; color: #cbdcee; margin-top: 8px; }
 .hs-pill {
-  background: var(--dam); color: #fff; border-radius: 999px; padding: 8px 18px;
-  font-size: 13.5px; font-weight: 700;
+  display: inline-block; margin-top: 18px;
+  background: rgba(255, 255, 255, .08); border: 1.5px solid var(--vang);
+  color: #fff; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 700;
 }
 .hs-pill b { color: var(--vang); }
-.hs-nam-boc { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
-.hs-nam-boc select {
-  font: inherit; font-size: 13.5px; font-weight: 700; padding: 8px 12px;
-  border: 1px solid var(--vien); border-radius: 10px; background: #fff; color: var(--dam);
+.hs-nam-boc {
+  margin-top: 16px; display: flex; align-items: center; justify-content: center;
+  gap: 10px; font-size: 13.5px; color: #cbdcee;
 }
-.luoi-khoi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.hs-nam-boc select {
+  font: inherit; font-size: 14px; font-weight: 700; padding: 9px 14px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .4); border-radius: 10px;
+  background: #fff; color: var(--dam);
+}
+
+.luoi-khoi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 @media (min-width: 720px) { .luoi-khoi { grid-template-columns: repeat(5, 1fr); } }
 .the-khoi {
-  font: inherit; text-align: left; cursor: pointer; background: var(--the);
-  border: 1px solid var(--vien); border-radius: var(--bo-goc); padding: 16px 16px 14px;
-  transition: transform .15s, box-shadow .15s, border-color .15s;
+  font: inherit; text-align: center; cursor: pointer; background: var(--the);
+  border: 1px solid var(--vien); border-left: 4px solid var(--dam);
+  border-radius: 14px; padding: 20px 14px 16px;
+  transition: transform .15s, box-shadow .15s;
 }
-.the-khoi:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(20, 48, 107, .13); border-color: var(--dam); }
-.the-khoi.on { border-color: var(--dam); box-shadow: 0 0 0 2px rgba(20, 48, 107, .12); }
-.the-khoi .so-khoi {
-  font-size: 30px; font-weight: 800; color: var(--dam); line-height: 1;
+.the-khoi:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20, 48, 107, .15); }
+.the-khoi.on { box-shadow: 0 0 0 2px var(--dam), 0 12px 28px rgba(20, 48, 107, .15); }
+.the-khoi .huy {
+  width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 13px;
+  background: linear-gradient(135deg, var(--dam), var(--dam-2)); color: #fff;
+  display: grid; place-items: center; font-size: 21px; font-weight: 800;
 }
-.the-khoi .ten-khoi { font-size: 14px; font-weight: 800; color: var(--chu); margin-top: 4px; }
-.the-khoi .dem-khoi { font-size: 12.4px; color: var(--chu-mo); margin-top: 6px; }
-.the-khoi .mo-khoi { font-size: 12.6px; font-weight: 700; color: var(--chinh); margin-top: 9px; }
+.the-khoi .ten-khoi { font-size: 17px; font-weight: 800; color: var(--chu); }
+.the-khoi .ngan {
+  border: 0; border-top: 1px solid var(--vien); margin: 13px 0 12px;
+}
+.the-khoi .hai-cot { display: flex; justify-content: center; gap: 26px; }
+.the-khoi .hai-cot .so { font-size: 21px; font-weight: 800; color: var(--dam); line-height: 1.1; }
+.the-khoi .hai-cot .nhan {
+  font-size: 10.5px; font-weight: 700; color: var(--chu-mo);
+  letter-spacing: .1em; text-transform: uppercase; margin-top: 2px;
+}
+.the-khoi .mo-khoi { font-size: 13px; font-weight: 700; color: var(--chinh); margin-top: 14px; }
+.the-khoi[disabled] { cursor: default; opacity: .55; border-left-color: var(--vien); }
+.the-khoi[disabled]:hover { transform: none; box-shadow: none; }
 
 .bang-khoi {
   display: flex; align-items: center; gap: 13px; margin: 22px 0 12px;
