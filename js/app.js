@@ -54,6 +54,12 @@
   function veThongKe() {
     var d = demTrangThai(window.HO_SO);
     $('#tk-tong').textContent = d.tong;
+    // Đếm thật từ dữ liệu, KHÔNG viết số cứng vào HTML — thêm/bớt một đầu hồ sơ
+    // là chữ trên trang chủ tự đúng theo.
+    $('#chip-ho-so').textContent = (window.BO_PHAN || []).length + ' bộ phận · ' + d.tong + ' danh mục';
+    $('#chip-so-lop').textContent = window.CAU_HINH.SO_LOP + ' lớp';
+    $('#tk-lop').textContent = window.CAU_HINH.SO_LOP;
+    $('#tk-hoc-sinh').textContent = Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN');
     $('#hs-tong').textContent = d.tong;
     $('#hs-co').textContent = d.co;
     $('#hs-co-nhan').textContent = 'Đã có — ' + Math.round(d.co * 100 / d.tong) + '%';

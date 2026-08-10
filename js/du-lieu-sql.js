@@ -53,6 +53,11 @@
       if (ch.nam_hoc) window.CAU_HINH.NAM_HOC = ch.nam_hoc;
       if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
       if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
+      // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
+      // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
+      // sửa mã — tránh mỗi nơi một con số.
+      if (ch.so_lop) window.CAU_HINH.SO_LOP = parseInt(ch.so_lop, 10);
+      if (ch.so_hoc_sinh) window.CAU_HINH.SO_HOC_SINH = parseInt(ch.so_hoc_sinh, 10);
       document.querySelectorAll('.dien-ten-truong').forEach(function (e) { e.textContent = window.CAU_HINH.TEN_TRUONG; });
       var oSlogan = document.getElementById('dien-slogan');
       if (oSlogan) oSlogan.textContent = window.CAU_HINH.SLOGAN;

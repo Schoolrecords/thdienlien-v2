@@ -25,8 +25,8 @@ window.CAU_HINH = {
   // --- Số dự phòng cho bản in khi chưa đếm được từ CSDL (máy đếm được thì
   //     luôn ưu tiên số đếm thật) ---
   DIA_DANH: 'Quảng Châu',
-  SO_LOP: 15,
-  SO_HOC_SINH: 450,
+  SO_LOP: 25,
+  SO_HOC_SINH: 863,
   SO_CBGV: 37,
 };
 // Cờ suy ra, các file khác đọc cờ này — không tự kiểm tra chuỗi rỗng

@@ -15,6 +15,11 @@
   --chu-mo: #5d6b81;
   --vien: #e4e9f2;
   --bo-goc: 16px;
+  /* Bề ngang khung chung cho ĐẦU TRANG · HERO · THÂN TRANG.
+     Ba khối phải cùng một con số thì logo mới thẳng cột với tên trường ở
+     hero và với nội dung bên dưới — đây là chỗ bản cũ lệch (đầu trang 1460,
+     hero 1180 → logo thò ra ngoài 140px). */
+  --rong-khung: 1320px;
   /* Hoa văn chấm mờ trên các mảng navy (đặc trưng Bạch Liêu) */
   --cham-navy: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1px);
 }
@@ -33,13 +38,18 @@ header.dau-trang {
   box-shadow: 0 2px 12px rgba(16, 32, 64, .28);
 }
 .dau-trang .khung {
-  max-width: 1180px; margin: 0 auto; padding: 10px 16px;
+  max-width: var(--rong-khung); margin: 0 auto; padding: 10px 16px;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
-/* Màn hình rộng: menu nằm CÙNG HÀNG với tên trường (như Bạch Liêu) */
-@media (min-width: 1240px) {
-  .dau-trang .khung { max-width: 1460px; flex-wrap: nowrap; }
-  .ten-khu { flex: 0 0 auto; }
+/* Màn hình rộng: menu nằm CÙNG HÀNG với tên trường (như Bạch Liêu).
+   Mốc 1360px chứ không phải 1240px: dưới mức đó 5 nút menu không đủ chỗ,
+   ép cùng hàng thì menu phải cuộn ngang — thà cho xuống dòng còn hơn.
+   Khoảng trống đẩy về TRƯỚC khu tài khoản (margin-left:auto), KHÔNG đẩy ở
+   sau tên trường — nhờ vậy menu bám sát tên trường đúng kiểu Bạch Liêu. */
+@media (min-width: 1360px) {
+  .dau-trang .khung { flex-wrap: nowrap; }
+  .ten-khu { flex: 0 0 auto; margin-right: 0; }
+  .khu-tai-khoan { margin-left: auto; }
 }
 .logo-truong {
   width: 46px; height: 46px; border-radius: 50%; background: #fff;
@@ -72,7 +82,7 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
   position: absolute; inset: 0;
   background: linear-gradient(100deg, var(--dam) 0%, var(--dam) 34%, rgba(20, 48, 107, .88) 48%, rgba(20, 48, 107, .42) 68%, rgba(20, 48, 107, .12) 100%);
 }
-.hero .khung { position: relative; max-width: 1180px; margin: 0 auto; padding: 40px 16px 28px; }
+.hero .khung { position: relative; max-width: var(--rong-khung); margin: 0 auto; padding: 40px 16px 28px; }
 .hieu-bai {
   display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase; color: #d5e6f7;
@@ -97,14 +107,28 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
   background: rgba(255, 255, 255, .14); border-radius: var(--bo-goc); overflow: hidden;
   margin-top: 26px; backdrop-filter: blur(3px);
 }
-@media (min-width: 760px) { .dai-so-lieu { grid-template-columns: repeat(4, 1fr); } }
+/* Dải có 5 ô — số lẻ nên với 2 hoặc 3 cột bao giờ cũng thừa một ô trống ở
+   hàng cuối. Cho ô cuối chiếm 2 cột là lấp kín, không còn mảng trống lệch.
+   2 cột (điện thoại): 2+2+1(rộng) · 3 cột (máy tính bảng): 3+2(ô cuối rộng)
+   5 cột (màn rộng): mỗi ô một cột, trả ô cuối về bình thường. */
+.dai-so-lieu .o:last-child { grid-column: span 2; }
+@media (min-width: 700px)  { .dai-so-lieu { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) {
+  .dai-so-lieu { grid-template-columns: repeat(5, 1fr); }
+  .dai-so-lieu .o { padding: 16px 14px; }
+  .dai-so-lieu .o:last-child { grid-column: auto; }
+}
 .dai-so-lieu .o { background: rgba(20, 48, 107, .78); padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
-.dai-so-lieu .bi { font-size: 22px; }
+.dai-so-lieu .bi {
+  flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%; font-size: 21px;
+  background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .3);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+}
 .dai-so-lieu .so { font-size: 26px; font-weight: 800; color: var(--vang); line-height: 1.1; }
 .dai-so-lieu .nhan { font-size: 12.5px; color: #cbdcee; }
 
 /* ═══ Khung nội dung ═══ */
-main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
+main { max-width: var(--rong-khung); margin: 0 auto; padding: 26px 16px 10px; }
 .man-hinh { display: none; }
 .man-hinh.hien { display: block; animation: hien-ra .25s ease; }
 @keyframes hien-ra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -126,8 +150,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
   display: flex; flex-direction: column;
 }
 .the-module:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(20, 48, 107, .15); }
+/* Biểu tượng NÉT (SVG) thay cho emoji — emoji mỗi máy vẽ một kiểu, in ra mờ
+   và không đổi được màu theo phối màu thẻ. Đây là cách Bạch Liêu làm. */
+.ic {
+  width: 1em; height: 1em; display: block; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
 .the-module .bi {
-  width: 58px; height: 58px; border-radius: 15px; font-size: 26px;
+  width: 58px; height: 58px; border-radius: 15px; font-size: 27px;
   display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
 }
 .the-module h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
@@ -145,23 +175,34 @@ main { max-width: 1180px; margin: 0 auto; padding: 26px 16px 10px; }
   width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid currentColor;
   display: inline-flex; align-items: center; justify-content: center; font-size: 15px;
 }
+/* Hình chìm góc dưới phải: bản vẽ NÉT to, mờ, mang màu của thẻ */
 .the-module .hinh-chim {
-  position: absolute; right: 6px; bottom: -6px; font-size: 96px; line-height: 1;
-  filter: grayscale(1); opacity: .10; pointer-events: none; user-select: none;
+  position: absolute; right: -16px; bottom: -20px; width: 156px; height: 156px;
+  opacity: .12; pointer-events: none; user-select: none;
 }
-/* 6 phối màu */
+.the-module .hinh-chim .ic { width: 100%; height: 100%; stroke-width: 1; }
+
+/* 6 phối màu — .bi và .hinh-chim mang cùng màu chữ để nét SVG ăn theo thẻ */
 .v-lam   { background: linear-gradient(150deg, #ffffff 12%, #e2e6f8 100%); }
-.v-lam .bi { background: #d4daf4; } .v-lam h3, .v-lam .chan-the { color: #33418f; } .v-lam .chip { color: #33418f; }
+.v-lam .bi { background: #d4daf4; }
+.v-lam h3, .v-lam .chan-the, .v-lam .chip, .v-lam .bi, .v-lam .hinh-chim { color: #33418f; }
 .v-luc   { background: linear-gradient(150deg, #ffffff 12%, #ddefe6 100%); }
-.v-luc .bi { background: #cde7da; } .v-luc h3, .v-luc .chan-the { color: #1e7a55; } .v-luc .chip { color: #1e7a55; }
+.v-luc .bi { background: #cde7da; }
+.v-luc h3, .v-luc .chan-the, .v-luc .chip, .v-luc .bi, .v-luc .hinh-chim { color: #1e7a55; }
 .v-cam   { background: linear-gradient(150deg, #ffffff 12%, #f9ecd8 100%); }
-.v-cam .bi { background: #f3ddbe; } .v-cam h3, .v-cam .chan-the { color: #c26a1f; } .v-cam .chip { color: #a85c1a; }
+.v-cam .bi { background: #f3ddbe; }
+.v-cam h3, .v-cam .chan-the, .v-cam .bi, .v-cam .hinh-chim { color: #c26a1f; }
+.v-cam .chip { color: #a85c1a; }
 .v-xanh-la { background: linear-gradient(150deg, #ffffff 12%, #e2f1df 100%); }
-.v-xanh-la .bi { background: #d1e8cd; } .v-xanh-la h3, .v-xanh-la .chan-the { color: #2e7d32; } .v-xanh-la .chip { color: #2e7d32; }
+.v-xanh-la .bi { background: #d1e8cd; }
+.v-xanh-la h3, .v-xanh-la .chan-the, .v-xanh-la .chip, .v-xanh-la .bi, .v-xanh-la .hinh-chim { color: #2e7d32; }
 .v-tim   { background: linear-gradient(150deg, #ffffff 12%, #ebe2f9 100%); }
-.v-tim .bi { background: #e0d2f5; } .v-tim h3, .v-tim .chan-the { color: #7c3aed; } .v-tim .chip { color: #6d31d4; }
+.v-tim .bi { background: #e0d2f5; }
+.v-tim h3, .v-tim .chan-the, .v-tim .bi, .v-tim .hinh-chim { color: #7c3aed; }
+.v-tim .chip { color: #6d31d4; }
 .v-xam   { background: linear-gradient(150deg, #ffffff 12%, #e8eaef 100%); }
-.v-xam .bi { background: #dcdfe6; } .v-xam h3, .v-xam .chan-the { color: #3f4756; } .v-xam .chip { color: #3f4756; }
+.v-xam .bi { background: #dcdfe6; }
+.v-xam h3, .v-xam .chan-the, .v-xam .chip, .v-xam .bi, .v-xam .hinh-chim { color: #3f4756; }
 
 /* ═══ Thẻ thống kê (màn Hồ sơ) ═══ */
 .luoi-thong-ke { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
