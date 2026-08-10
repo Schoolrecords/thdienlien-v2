@@ -5,9 +5,9 @@
 // (dữ liệu mẫu trong js/du-lieu-demo.js, không cần đăng nhập).
 // ============================================================
 window.CAU_HINH = {
-  // --- Supabase (điền theo HUONG-DAN-TRIEN-KHAI.md, Bước 6) ---
-  DIA_CHI: '',        // ví dụ: 'https://abcdefgh.supabase.co'
-  KHOA_CONG_KHAI: '', // anon key — lộ ra ngoài cũng vô hại, mọi hàng rào nằm ở RLS
+  // --- Supabase (dự án th-dien-lien, dựng 10/8/2026) ---
+  DIA_CHI: 'https://qbfyolhehltfrefudexz.supabase.co',
+  KHOA_CONG_KHAI: 'sb_publishable_VLVtHQ2iHbbodarb0N0QAQ_kohJ0-_7', // khóa công khai — hàng rào nằm ở RLS
 
   // --- Thông tin trường (bản hiển thị; bản chính thức nằm ở bảng cau_hinh trên CSDL) ---
   TEN_TRUONG: 'Trường Tiểu học Diễn Liên',

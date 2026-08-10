@@ -60,6 +60,7 @@
       '<div class="ten">' + thoatHTML(h.ten) +
       '<small>Mã cũ: ' + thoatHTML(h.maCu) + ' · Tiêu chí TT57: ' + h.tc.join(', ') +
       (hienHop ? ' · ' + thoatHTML(hop.ten) : '') + '</small></div>' +
+      (h.link ? '<a class="nut-drive" target="_blank" rel="noopener" href="' + thoatHTML(h.link) + '" title="Mở thư mục hồ sơ trên Drive">📁</a>' : '') +
       '<span class="ma">' + thoatHTML(h.ma) + '</span></div>';
   }
 

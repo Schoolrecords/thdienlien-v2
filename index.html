@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=202608106">
+  <link rel="stylesheet" href="style.css?v=202608108">
 </head>
 <body>
 
@@ -27,9 +27,11 @@
       <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
       <button data-di="dbcl">Đảm bảo chất lượng</button>
     </nav>
+    <div class="khu-tai-khoan" id="khu-tai-khoan"></div>
   </div>
 </header>
 <div class="bang-xem-thu" id="bang-xem-thu">👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu — chưa nối cơ sở dữ liệu</div>
+<div class="bang-trang-thai" id="bang-trang-thai" style="display:none"></div>
 
 <!-- ═══ HERO (chỉ hiện ở Trang chủ) ═══ -->
 <section class="hero" id="hero">
@@ -213,7 +215,8 @@
       <p>Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên: thông tin cơ bản,
       trình độ đào tạo và đường dẫn tới thư mục hồ sơ trên Drive.</p>
     </div>
-    <div class="the-thong-bao">
+    <div id="vung-cbgv"></div>
+    <div class="the-thong-bao" id="cbgv-thong-bao">
       <p style="font-size:14.5px"><b>Danh sách đội ngũ nạp từ cơ sở dữ liệu khi nối Supabase.</b></p>
       <p style="font-size:14px;color:var(--chu-mo);margin-top:6px">
         Ở chế độ xem thử, màn hình này chưa hiển thị dữ liệu để bảo vệ thông tin cá nhân
@@ -248,7 +251,8 @@
       <h2>Quản trị hệ thống</h2>
       <p>Duyệt tài khoản, phân quyền 5 mức, danh sách mời và sổ nhật ký thao tác.</p>
     </div>
-    <div class="the-thong-bao">
+    <div id="vung-quantri"></div>
+    <div class="the-thong-bao" id="quantri-thong-bao">
       <p style="font-size:14.5px"><b>Khu vực này mở khi nối Supabase và đăng nhập bằng tài khoản quản trị.</b></p>
       <p style="font-size:14px;color:var(--chu-mo);margin-top:6px">
         Phân quyền 5 mức: Quản trị · Ban giám hiệu · Tổ trưởng · Giáo viên · Nhân viên.
@@ -265,8 +269,12 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608106"></script>
-<script src="js/du-lieu-demo.js?v=202608106"></script>
-<script src="js/app.js?v=202608106"></script>
+<script src="js/cauhinh.js?v=202608108"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/du-lieu-demo.js?v=202608108"></script>
+<script src="js/du-lieu-sql.js?v=202608108"></script>
+<script src="js/quan-tri.js?v=202608108"></script>
+<script src="js/supabase-ket-noi.js?v=202608108"></script>
+<script src="js/app.js?v=202608108"></script>
 </body>
 </html>

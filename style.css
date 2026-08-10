@@ -277,3 +277,75 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   background-size: 14px 14px, auto;
 }
 .dai-so-lieu .o { background-image: var(--cham-navy), linear-gradient(135deg, rgba(20, 48, 107, .82), rgba(30, 69, 147, .78)); }
+
+/* ═══ Khu tài khoản + đăng nhập (thêm 10/8/2026) ═══ */
+.khu-tai-khoan { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.nut-dang-nhap {
+  font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  color: var(--dam); background: var(--vang);
+  border: none; border-radius: 999px; padding: 9px 16px; min-height: 42px;
+  white-space: nowrap; transition: filter .15s;
+}
+.nut-dang-nhap:hover { filter: brightness(1.08); }
+.chip-nguoi {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 999px; padding: 4px 12px 4px 4px; font-size: 13px; color: #fff;
+}
+.chip-nguoi img { width: 30px; height: 30px; border-radius: 50%; display: block; }
+.nut-thoat {
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  color: #e4ecf5; background: transparent;
+  border: 1px solid rgba(255, 255, 255, .3); border-radius: 999px; padding: 6px 12px;
+}
+.nut-thoat:hover { background: rgba(255, 255, 255, .12); }
+
+/* Băng trạng thái đăng nhập */
+.bang-trang-thai { text-align: center; font-size: 13.5px; padding: 9px 16px; }
+.bang-trang-thai.moi  { background: #eaf1fb; color: #1e4593; border-bottom: 1px solid #d4e2f5; }
+.bang-trang-thai.cho  { background: #fdf4dc; color: #8a6414; border-bottom: 1px solid #f1e2b5; }
+.bang-trang-thai.khoa,
+.bang-trang-thai.loi  { background: #fdeaea; color: #a33; border-bottom: 1px solid #f2cccc; }
+
+/* Thẻ danh bạ CBGV-NV */
+.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.the-cbgv {
+  display: flex; align-items: center; gap: 11px;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 14px; padding: 12px 14px;
+}
+.the-cbgv .anh { width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto; object-fit: cover; }
+.the-cbgv .anh.chu {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--kem); font-size: 21px;
+}
+.the-cbgv .phan-chu { min-width: 0; }
+.the-cbgv b { font-size: 14.5px; display: block; }
+.the-cbgv small { display: block; font-size: 12px; color: var(--chu-mo); }
+.the-cbgv .da-vao { color: #2d8a6e; }
+.the-cbgv .chua-vao { color: #98a4b5; }
+.nut-drive { margin-left: auto; text-decoration: none; font-size: 18px; flex: 0 0 auto; }
+.dong-ho-so .nut-drive { margin-left: 0; }
+
+/* Bảng quản trị + sổ nhật ký */
+.cuon-ngang { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bang-quan-tri {
+  width: 100%; border-collapse: collapse; background: var(--the);
+  border: 1px solid var(--vien); border-radius: var(--bo-goc); overflow: hidden;
+  font-size: 13.5px; min-width: 640px;
+}
+.bang-quan-tri th {
+  text-align: left; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--chu-mo); background: var(--kem); padding: 10px 12px;
+}
+.bang-quan-tri td { padding: 10px 12px; border-top: 1px solid var(--vien); vertical-align: middle; }
+.bang-quan-tri select {
+  font: inherit; font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--vien); border-radius: 8px; background: #fff; max-width: 150px;
+}
+.bang-quan-tri .dong-cho td { background: #fdf7e3; }
+.bang-quan-tri.nho { min-width: 560px; font-size: 12.5px; }
+.nut-luu-nd {
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  color: #fff; background: var(--chinh); border: none; border-radius: 8px; padding: 7px 13px;
+}
+.nut-luu-nd:hover { filter: brightness(1.1); }
