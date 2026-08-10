@@ -36,6 +36,11 @@ header.dau-trang {
   max-width: 1180px; margin: 0 auto; padding: 10px 16px;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
+/* Màn hình rộng: menu nằm CÙNG HÀNG với tên trường (như Bạch Liêu) */
+@media (min-width: 1240px) {
+  .dau-trang .khung { max-width: 1460px; flex-wrap: nowrap; }
+  .ten-khu { flex: 0 0 auto; }
+}
 .logo-truong {
   width: 46px; height: 46px; border-radius: 50%; background: #fff;
   object-fit: contain; padding: 2px; flex: 0 0 auto;
