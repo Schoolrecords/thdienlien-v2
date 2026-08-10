@@ -32,6 +32,60 @@ body {
 a { color: var(--chinh); }
 img { max-width: 100%; }
 
+/* ═══ CỔNG VÀO — khóa toàn trang cho tới khi đăng nhập ═══
+   Khóa bằng CSS ngay từ HTML (body class="dang-khoa"), JS chỉ MỞ khóa.
+   Làm ngược lại (JS khóa) thì lỡ JS lỗi hay bị chặn là trang mở toang —
+   nguyên tắc: hỏng thì phải hỏng theo hướng ĐÓNG, không hướng mở. */
+body.dang-khoa > header.dau-trang,
+body.dang-khoa > .bang-xem-thu,
+body.dang-khoa > .bang-trang-thai,
+body.dang-khoa > .hero,
+body.dang-khoa > main,
+body.dang-khoa > footer { display: none !important; }
+
+.cong-vao {
+  position: fixed; inset: 0; z-index: 9999; padding: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--kem);
+  background-image: var(--cham-navy);
+  background-size: 22px 22px;
+}
+.cong-vao.an { display: none; }
+.cong-hop {
+  background: #fff; border: 1px solid var(--vien); border-radius: 20px;
+  padding: 34px 30px 26px; width: 100%; max-width: 430px; text-align: center;
+  box-shadow: 0 18px 50px rgba(20, 48, 107, .14);
+}
+.cong-hop .logo {
+  width: 64px; height: 64px; border-radius: 16px; object-fit: contain;
+  background: var(--dam); padding: 8px; margin: 0 auto 16px; display: block;
+}
+.cong-hop h1 { font-size: 19px; font-weight: 800; color: var(--dam); line-height: 1.35; }
+.cong-hop .loi-moi { font-size: 14px; color: var(--chu-mo); margin: 10px 0 22px; }
+.cong-hop .nut-google {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 11px;
+  font: inherit; font-size: 15px; font-weight: 700; color: var(--chu); cursor: pointer;
+  background: #fff; border: 1.5px solid var(--vien); border-radius: 12px; padding: 13px 16px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.cong-hop .nut-google:hover { border-color: var(--chinh); box-shadow: 0 4px 14px rgba(42, 92, 184, .14); }
+.cong-hop .nut-google svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.cong-hop .nut-phu {
+  margin-top: 10px; width: 100%; font: inherit; font-size: 14px; font-weight: 700;
+  background: #eef1f6; color: var(--chu); border: 0; border-radius: 12px; padding: 11px; cursor: pointer;
+}
+.cong-hop .chan {
+  margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--vien);
+  font-size: 12px; color: var(--chu-mo); line-height: 1.65;
+}
+.cong-hop .hop-loi {
+  margin-top: 14px; border-radius: 11px; padding: 11px 13px; font-size: 13.2px;
+  line-height: 1.6; text-align: left;
+}
+.cong-hop .hop-loi.cho  { background: var(--canh-nen); color: var(--canh); border: 1px solid #f1e2b5; }
+.cong-hop .hop-loi.khoa { background: var(--thieu-nen); color: var(--thieu); border: 1px solid #f2cccc; }
+.cong-hop .dang-cho { font-size: 14px; color: var(--chu-mo); }
+
 /* ═══ Thanh đầu trang ═══ */
 header.dau-trang {
   background: var(--dam); color: #fff; position: sticky; top: 0; z-index: 100;

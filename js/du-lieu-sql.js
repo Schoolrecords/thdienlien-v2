@@ -24,7 +24,9 @@
     daNap = true;
     var may = window.MAY_CHU;
 
-    Promise.all([
+    // TRẢ VỀ promise: cổng vào chờ nạp xong mới mở khóa trang, nhờ vậy thầy cô
+    // không thấy số liệu mẫu loé lên rồi mới nhảy sang số thật.
+    return Promise.all([
       may.from('cau_hinh').select('khoa,gia_tri'),
       may.from('nhom_ho_so').select('id,so_tt,ten,mo_ta,bieu_tuong').order('so_tt'),
       may.from('nhom_con').select('id,ma,ten,so_tt,nhom_id').order('so_tt'),

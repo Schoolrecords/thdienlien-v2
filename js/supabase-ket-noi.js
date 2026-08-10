@@ -6,14 +6,97 @@
 // ============================================================
 (function () {
   'use strict';
-  if (!window.DA_NOI) return;
 
   function thoat(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // Chưa cấu hình CSDL → chạy chế độ xem thử, phải MỞ khóa vì trang khóa sẵn
+  // từ HTML. Không có dòng này thì bản demo sẽ trắng màn.
+  if (!window.DA_NOI) {
+    document.body.classList.remove('dang-khoa');
+    var congDemo = document.getElementById('cong-vao');
+    if (congDemo) congDemo.classList.add('an');
+    return;
+  }
+
   var may = null;
   window.NGUOI_DUNG = null;
+
+  // ══════════ CỔNG VÀO ══════════
+  var LOGO_GOOGLE =
+    '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+    '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+    '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+    '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+    '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+    '</svg>';
+
+  function hopCong() { return document.getElementById('cong-hop'); }
+
+  function dauCong() {
+    return '<img class="logo" src="img/logo.png" alt="">' +
+      '<h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">' +
+      thoat(window.CAU_HINH.TEN_TRUONG) + '</span></h1>';
+  }
+
+  function chanCong() {
+    return '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
+      'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
+      'Nghị định 13/2023/NĐ-CP.</div>';
+  }
+
+  // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
+  function moKhoa() {
+    document.body.classList.remove('dang-khoa');
+    var cong = document.getElementById('cong-vao');
+    if (cong) cong.classList.add('an');
+  }
+
+  function veCongDangNhap(loi) {
+    var h = hopCong(); if (!h) return;
+    h.innerHTML = dauCong() +
+      '<div class="loi-moi">Đăng nhập bằng địa chỉ Gmail của thầy cô để vào hệ thống.</div>' +
+      '<button class="nut-google" id="nut-google">' + LOGO_GOOGLE + ' Đăng nhập bằng Google</button>' +
+      (loi ? '<div class="hop-loi khoa">' + thoat(loi) + '</div>' : '') +
+      chanCong();
+    document.getElementById('nut-google').addEventListener('click', function () {
+      this.disabled = true;
+      this.innerHTML = 'Đang chuyển sang Google…';
+      dangNhap();
+    });
+  }
+
+  function veCongChoDuyet(email, laKhoa) {
+    var h = hopCong(); if (!h) return;
+    h.innerHTML = dauCong() +
+      '<div class="loi-moi">' + (laKhoa ? '🔒 Tài khoản đã bị khóa' : '🕐 Tài khoản đang chờ duyệt') + '</div>' +
+      '<div class="hop-loi ' + (laKhoa ? 'khoa' : 'cho') + '">' +
+      '<b>' + thoat(email) + '</b><br>' +
+      (laKhoa
+        ? 'Tài khoản này đã bị khóa. Thầy cô liên hệ Ban giám hiệu để được mở lại.'
+        : 'Thầy cô đã đăng nhập thành công, nhưng địa chỉ Gmail này chưa có trong ' +
+          'danh sách của nhà trường nên cần Ban giám hiệu duyệt. Nếu thầy cô dùng ' +
+          'Gmail khác với địa chỉ đã đăng ký, hãy đăng xuất rồi đăng nhập lại đúng địa chỉ đó.') +
+      '</div>' +
+      '<button class="nut-phu" id="nut-thoat-cong">↩ Đăng xuất</button>' +
+      chanCong();
+    document.getElementById('nut-thoat-cong').addEventListener('click', dangXuat);
+  }
+
+  function veCongDangTai() {
+    var h = hopCong(); if (!h) return;
+    h.innerHTML = dauCong() + '<div class="dang-cho">Đang tải dữ liệu nhà trường…</div>';
+  }
+
+  function veCongLoi(chu) {
+    var h = hopCong(); if (!h) return;
+    h.innerHTML = dauCong() +
+      '<div class="hop-loi khoa">' + thoat(chu) + '</div>' +
+      '<button class="nut-phu" id="nut-tai-lai">↻ Tải lại trang</button>' +
+      chanCong();
+    document.getElementById('nut-tai-lai').addEventListener('click', function () { location.reload(); });
+  }
 
   // ── Băng thông báo trạng thái dưới đầu trang ──
   window.baoTrangThai = function (loai, chu) {
@@ -85,36 +168,46 @@
     if (!phien) {
       window.NGUOI_DUNG = null;
       idPhienDaXuLy = null;
-      veKhuTaiKhoan();
-      window.baoTrangThai('moi',
-        '👁 Đang xem <b>dữ liệu mẫu</b>. Thầy cô bấm <b>🔑 Đăng nhập</b> (góc phải trên) bằng Gmail đã đăng ký với nhà trường để làm việc với dữ liệu thật.');
+      veCongDangNhap();
       return;
     }
     if (idPhienDaXuLy === phien.user.id) return; // tránh xử lý lặp khi đổi tab
     idPhienDaXuLy = phien.user.id;
 
     may.from('nguoi_dung').select('*').eq('id', phien.user.id).maybeSingle().then(function (r) {
-      if (r.error || !r.data) {
-        window.baoTrangThai('khoa', '⚠️ Không đọc được hồ sơ tài khoản. Anh/chị thử tải lại trang; nếu vẫn lỗi, báo quản trị viên.');
+      if (r.error) {
+        idPhienDaXuLy = null;
+        veCongLoi('Không đọc được hồ sơ tài khoản: ' + (r.error.message || '') +
+          '. Thầy cô thử tải lại trang; nếu vẫn lỗi thì báo quản trị viên.');
+        return;
+      }
+      // Đăng nhập Google được nhưng CHƯA có dòng trong nguoi_dung: trigger tạo
+      // hồ sơ chạy ngay sau khi Google trả về, đôi khi chậm hơn lần đọc này.
+      // Coi như chờ duyệt và cho đăng xuất — KHÔNG mở khóa trang.
+      if (!r.data) {
+        veCongChoDuyet(phien.user.email || '', false);
         return;
       }
       window.NGUOI_DUNG = r.data;
       veKhuTaiKhoan();
 
       if (r.data.trang_thai === 'hoat_dong') {
+        veCongDangTai();
         window.baoTrangThai(null);
         may.from('nguoi_dung').update({ lan_vao_cuoi: new Date().toISOString() }).eq('id', r.data.id).then(function () {});
-        window.napDuLieuThat && window.napDuLieuThat();
+        // Chờ dữ liệu thật nạp xong mới mở khóa. Nạp lỗi cũng mở — thà vào được
+        // trang và thấy báo lỗi còn hơn kẹt mãi ở cổng.
+        var dangNap = window.napDuLieuThat && window.napDuLieuThat();
+        if (dangNap && dangNap.then) dangNap.then(moKhoa, moKhoa);
+        else moKhoa();
         // Cho các file bê nguyên từ Bạch Liêu sang (bach-lieu-shim.js)
         document.dispatchEvent(new Event('dangnhap-xong'));
         if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
           window.veQuanTri && window.veQuanTri();
         }
-      } else if (r.data.trang_thai === 'cho_duyet') {
-        window.baoTrangThai('cho',
-          '🕐 Tài khoản <b>' + thoat(r.data.email) + '</b> đang <b>chờ Ban giám hiệu duyệt</b>. Trong lúc chờ, trang hiển thị dữ liệu mẫu.');
       } else {
-        window.baoTrangThai('khoa', '🔒 Tài khoản này đã bị khóa. Anh/chị liên hệ Ban giám hiệu để được mở lại.');
+        // cho_duyet hoặc khoa → giữ nguyên cổng, KHÔNG mở khóa trang
+        veCongChoDuyet(r.data.email, r.data.trang_thai === 'khoa');
       }
     });
   }
@@ -122,7 +215,8 @@
   // ── Khởi động ──
   document.addEventListener('DOMContentLoaded', function () {
     if (!window.supabase || !window.supabase.createClient) {
-      window.baoTrangThai('khoa', '⚠️ Không tải được thư viện kết nối. Kiểm tra đường mạng rồi tải lại trang.');
+      veCongLoi('Không tải được thư viện kết nối tới máy chủ. Thầy cô kiểm tra ' +
+        'đường mạng rồi tải lại trang.');
       return;
     }
     may = window.supabase.createClient(window.CAU_HINH.DIA_CHI, window.CAU_HINH.KHOA_CONG_KHAI);

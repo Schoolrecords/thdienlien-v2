@@ -9,9 +9,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=202608121">
+  <link rel="stylesheet" href="style.css?v=202608122">
 </head>
-<body>
+<body class="dang-khoa">
+
+<!-- Cổng vào: khóa sẵn từ HTML, js/supabase-ket-noi.js mở khóa sau khi xác thực -->
+<div class="cong-vao" id="cong-vao">
+  <div class="cong-hop" id="cong-hop">
+    <img class="logo" src="img/logo.png" alt="">
+    <h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">Trường Tiểu học Diễn Liên</span></h1>
+    <div class="dang-cho">Đang kiểm tra phiên đăng nhập…</div>
+  </div>
+</div>
 
 <header class="dau-trang">
   <div class="khung">
@@ -96,7 +105,7 @@
         <h3>Quản lý học sinh</h3>
         <div class="chip-hang"><span class="chip">5 khối</span><span class="chip" id="chip-so-lop">25 lớp</span></div>
         <p>Danh sách học sinh theo khối và lớp, đọc thẳng từ cơ sở dữ liệu nhà trường.
-        Chưa đăng nhập thì chỉ thấy bản xem thử bố cục.</p>
+        Giáo viên chỉ xem được học sinh lớp mình phụ trách.</p>
         <div class="chan-the">Xem các khối <span class="mui-ten">→</span></div>
         <span class="hinh-chim"><svg class="ic" viewBox="0 0 24 24"><path d="M21.4 10.9a1 1 0 0 0 0-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></span>
       </div>
@@ -312,22 +321,22 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608121"></script>
+<script src="js/cauhinh.js?v=202608122"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608121"></script>
-<script src="js/du-lieu-sql.js?v=202608121"></script>
-<script src="js/quan-tri.js?v=202608121"></script>
-<script src="js/supabase-ket-noi.js?v=202608121"></script>
-<script src="js/app.js?v=202608121"></script>
-<script src="js/hoso-sua.js?v=202608121"></script>
-<script src="js/xuat-word.js?v=202608121"></script>
-<script src="js/tcqg.js?v=202608121"></script>
-<script src="js/tcqg-hoidong.js?v=202608121"></script>
-<script src="js/tcqg-word.js?v=202608121"></script>
-<script src="js/bach-lieu-shim.js?v=202608121"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608121"></script>
-<script src="js/co-so.js?v=202608121"></script>
-<script src="js/dbcl.js?v=202608121"></script>
-<script src="js/link-cbgv.js?v=202608121"></script>
+<script src="js/du-lieu-demo.js?v=202608122"></script>
+<script src="js/du-lieu-sql.js?v=202608122"></script>
+<script src="js/quan-tri.js?v=202608122"></script>
+<script src="js/supabase-ket-noi.js?v=202608122"></script>
+<script src="js/app.js?v=202608122"></script>
+<script src="js/hoso-sua.js?v=202608122"></script>
+<script src="js/xuat-word.js?v=202608122"></script>
+<script src="js/tcqg.js?v=202608122"></script>
+<script src="js/tcqg-hoidong.js?v=202608122"></script>
+<script src="js/tcqg-word.js?v=202608122"></script>
+<script src="js/bach-lieu-shim.js?v=202608122"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608122"></script>
+<script src="js/co-so.js?v=202608122"></script>
+<script src="js/dbcl.js?v=202608122"></script>
+<script src="js/link-cbgv.js?v=202608122"></script>
 </body>
 </html>
