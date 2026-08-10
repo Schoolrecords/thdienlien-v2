@@ -18,20 +18,20 @@ window.BO_PHAN = [
 ];
 
 window.HOP = {
-  H01: { ten: 'Hộp 01 · Hiệu trưởng', phuTrach: 'Hiệu trưởng' },
-  H02: { ten: 'Hộp 02 · Phó Hiệu trưởng', phuTrach: 'Phó Hiệu trưởng' },
-  H03: { ten: 'Hộp 03 · Hội đồng trường & các hội đồng', phuTrach: 'Chủ tịch Hội đồng trường' },
-  H04: { ten: 'Hộp 04 · Chi bộ', phuTrach: 'Bí thư Chi bộ' },
-  H05: { ten: 'Hộp 05 · Đội TNTP & Sao Nhi đồng', phuTrach: 'Tổng phụ trách Đội' },
-  H06: { ten: 'Hộp 06 · Tổ chuyên môn khối 1-2-3', phuTrach: 'Tổ trưởng Tổ 1-2-3' },
-  H07: { ten: 'Hộp 07 · Tổ chuyên môn khối 4-5', phuTrach: 'Tổ trưởng Tổ 4-5' },
-  H08: { ten: 'Hộp 08 · Giáo viên & GVCN', phuTrach: 'Cá nhân CB-GV-NV' },
-  H09: { ten: 'Hộp 09 · Văn thư', phuTrach: 'Văn thư' },
-  H10: { ten: 'Hộp 10 · Kế toán', phuTrach: 'Kế toán' },
-  H11: { ten: 'Hộp 11 · Y tế học đường', phuTrach: 'Y tế học đường' },
-  H12: { ten: 'Hộp 12 · Thư viện - Thiết bị', phuTrach: 'Thủ thư / CB Thiết bị' },
-  H13: { ten: 'Hộp 13 · Ban đại diện CMHS', phuTrach: 'Trưởng Ban ĐDCMHS' },
-  H14: { ten: 'Hộp 14 · Ban an ninh - truyền thông', phuTrach: 'Ban an ninh' },
+  H01: { ten: 'Hiệu trưởng', phuTrach: 'Hiệu trưởng', moTa: 'Hồ sơ chỉ đạo, điều hành và quản lý chung của người đứng đầu nhà trường.' },
+  H02: { ten: 'Phó Hiệu trưởng', phuTrach: 'Phó Hiệu trưởng', moTa: 'Hồ sơ quản lý chuyên môn, hoạt động dạy học, phổ cập GDTH và chất lượng giáo dục.' },
+  H03: { ten: 'Hội đồng trường & các hội đồng', phuTrach: 'Chủ tịch Hội đồng trường', moTa: 'Nghị quyết Hội đồng trường và hồ sơ các hội đồng theo Điều lệ.' },
+  H04: { ten: 'Chi bộ', phuTrach: 'Bí thư Chi bộ', moTa: 'Hồ sơ hoạt động của Chi bộ Đảng trong nhà trường.' },
+  H05: { ten: 'Đội TNTP & Sao Nhi đồng', phuTrach: 'Tổng phụ trách Đội', moTa: 'Kế hoạch, biên bản và tư liệu hoạt động Đội, Sao Nhi đồng.' },
+  H06: { ten: 'Tổ chuyên môn khối 1-2-3', phuTrach: 'Tổ trưởng Tổ 1-2-3', moTa: 'Kế hoạch môn học lớp 1-3, sinh hoạt chuyên môn và tài nguyên dùng chung.' },
+  H07: { ten: 'Tổ chuyên môn khối 4-5', phuTrach: 'Tổ trưởng Tổ 4-5', moTa: 'Kế hoạch môn học lớp 4-5 và sinh hoạt chuyên môn của tổ.' },
+  H08: { ten: 'Giáo viên & GVCN', phuTrach: 'Cá nhân CB-GV-NV', moTa: 'Hồ sơ năng lực, bồi dưỡng, kế hoạch bài dạy và sổ chủ nhiệm.' },
+  H09: { ten: 'Văn thư', phuTrach: 'Văn thư', moTa: 'Văn bản đi - đến, quản lý văn bản điện tử và lưu trữ.' },
+  H10: { ten: 'Kế toán', phuTrach: 'Kế toán', moTa: 'Hồ sơ tài chính, lương, hợp đồng và báo cáo kế toán.' },
+  H11: { ten: 'Y tế học đường', phuTrach: 'Y tế học đường', moTa: 'Theo dõi sức khỏe học sinh, BHYT và truyền thông phòng dịch.' },
+  H12: { ten: 'Thư viện - Thiết bị', phuTrach: 'Thủ thư / CB Thiết bị', moTa: 'Hồ sơ thư viện, văn hóa đọc, kho thiết bị dạy học.' },
+  H13: { ten: 'Ban đại diện CMHS', phuTrach: 'Trưởng Ban ĐDCMHS', moTa: 'Quy chế, kế hoạch và biên bản hoạt động Ban đại diện cha mẹ học sinh.' },
+  H14: { ten: 'Ban an ninh - truyền thông', phuTrach: 'Ban an ninh', moTa: 'An ninh trật tự, an toàn trường học và truyền thông.' },
 };
 
 // 94 hồ sơ nghiệp vụ (15 hồ sơ KĐCL/ĐBCL cũ do app tự sinh — không nằm trong kho)
