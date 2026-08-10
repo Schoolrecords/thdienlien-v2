@@ -25,7 +25,12 @@
     bang.style.display = '';
   };
 
-  // ── Khu tài khoản góc phải đầu trang ──
+  // ── Khu tài khoản góc phải đầu trang (chip + hộp xổ xuống kiểu Bạch Liêu) ──
+  var TEN_VAI_TRO = {
+    admin: 'Quản trị hệ thống', ban_giam_hieu: 'Ban giám hiệu', to_truong: 'Tổ trưởng chuyên môn',
+    giao_vien: 'Giáo viên', nhan_vien: 'Nhân viên'
+  };
+
   function veKhuTaiKhoan() {
     var khu = document.getElementById('khu-tai-khoan');
     if (!khu) return;
@@ -33,14 +38,33 @@
     if (!nd) {
       khu.innerHTML = '<button class="nut-dang-nhap" id="nut-dang-nhap">🔑 Đăng nhập</button>';
       document.getElementById('nut-dang-nhap').addEventListener('click', dangNhap);
-    } else {
-      khu.innerHTML =
-        '<span class="chip-nguoi">' +
-        (nd.anh_dai_dien ? '<img src="' + thoat(nd.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">' : '👤') +
-        '<b>' + thoat(nd.ho_ten.split(' ').slice(-2).join(' ')) + '</b></span>' +
-        '<button class="nut-thoat" id="nut-thoat" title="Đăng xuất">Thoát</button>';
-      document.getElementById('nut-thoat').addEventListener('click', dangXuat);
+      return;
     }
+    var laQT = (nd.vai_tro === 'admin' || nd.vai_tro === 'ban_giam_hieu');
+    khu.innerHTML =
+      '<button class="chip-nguoi" id="chip-nguoi">' +
+      (nd.anh_dai_dien ? '<img src="' + thoat(nd.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">' : '<span class="anh-chu">👤</span>') +
+      '<span class="chip-chu"><b>' + thoat(nd.ho_ten) + '</b>' +
+      '<small>' + (TEN_VAI_TRO[nd.vai_tro] || '') + '</small></span></button>' +
+      '<div class="hop-tai-khoan" id="hop-tai-khoan">' +
+      '<div class="phan-ten"><b>' + thoat(nd.ho_ten) + '</b>' +
+      '<div class="email">' + thoat(nd.email) + '</div>' +
+      '<span class="the-vai-tro">' + (TEN_VAI_TRO[nd.vai_tro] || '') + '</span></div>' +
+      (laQT ? '<button class="muc-menu" id="muc-quan-tri">⚙️ Quản trị hệ thống</button>' : '') +
+      '<button class="muc-menu thoat" id="muc-dang-xuat">↩ Đăng xuất</button></div>';
+
+    var hop = document.getElementById('hop-tai-khoan');
+    document.getElementById('chip-nguoi').addEventListener('click', function (e) {
+      e.stopPropagation();
+      hop.classList.toggle('hien');
+    });
+    document.addEventListener('click', function () { hop.classList.remove('hien'); });
+    var nutQT = document.getElementById('muc-quan-tri');
+    if (nutQT) nutQT.addEventListener('click', function () {
+      hop.classList.remove('hien');
+      window.chuyenManHinh('quantri');
+    });
+    document.getElementById('muc-dang-xuat').addEventListener('click', dangXuat);
   }
 
   function dangNhap() {
@@ -83,15 +107,6 @@
         window.napDuLieuThat && window.napDuLieuThat();
         if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
           window.veQuanTri && window.veQuanTri();
-          // Nút menu Quản trị — chỉ hiện với admin/BGH
-          var menu = document.querySelector('nav.menu');
-          if (menu && !menu.querySelector('[data-di="quantri"]')) {
-            var nut = document.createElement('button');
-            nut.setAttribute('data-di', 'quantri');
-            nut.textContent = '⚙️ Quản trị';
-            nut.addEventListener('click', function () { window.chuyenManHinh('quantri'); });
-            menu.appendChild(nut);
-          }
         }
       } else if (r.data.trang_thai === 'cho_duyet') {
         window.baoTrangThai('cho',
