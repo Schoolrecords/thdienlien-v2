@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=202608108">
+  <link rel="stylesheet" href="style.css?v=202608109">
 </head>
 <body>
 
@@ -153,8 +153,11 @@
     </div>
 
     <div class="hang-tim">
-      <input type="search" id="o-tim-ho-so" class="o-tim-kiem"
-             placeholder="🔍 Gõ vài chữ đầu của tên hồ sơ, mã mới, mã cũ… (không dấu cũng được)">
+      <div class="o-tim-boc">
+        <input type="search" id="o-tim-ho-so" class="o-tim-kiem" autocomplete="off"
+               placeholder="🔍 Gõ vài chữ đầu của tên hồ sơ, mã mới, mã cũ… (không dấu cũng được)">
+        <div class="tim-xo" id="hs-goi-y"></div>
+      </div>
       <select id="chon-trang-thai" class="chon-loc">
         <option value="tatca">Tất cả trạng thái</option>
         <option value="co">🟢 Đã có</option>
@@ -263,18 +266,34 @@
   </section>
 </main>
 
+<!-- ═══ LỚP PHỦ CHI TIẾT (bộ phận hồ sơ / nguyên văn tiêu chí) ═══ -->
+<div class="overlay" id="lop-phu" onclick="if(event.target===this)dongLopPhu()">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="ic num" id="lp-ic">📁</div>
+      <div class="tt"><h3 id="lp-tieu-de">Bộ phận</h3><p id="lp-phu"></p></div>
+      <button class="sheet-x" onclick="dongLopPhu()" title="Đóng">✕</button>
+    </div>
+    <div class="sheet-body" id="lp-than"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <footer>
   <div class="ten dien-ten-truong">Trường Tiểu học Diễn Liên</div>
   Xã Quảng Châu, Tỉnh Nghệ An · Năm học <span id="dien-nam-hoc"></span><br>
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608108"></script>
+<script src="js/cauhinh.js?v=202608109"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608108"></script>
-<script src="js/du-lieu-sql.js?v=202608108"></script>
-<script src="js/quan-tri.js?v=202608108"></script>
-<script src="js/supabase-ket-noi.js?v=202608108"></script>
-<script src="js/app.js?v=202608108"></script>
+<script src="js/du-lieu-demo.js?v=202608109"></script>
+<script src="js/du-lieu-sql.js?v=202608109"></script>
+<script src="js/quan-tri.js?v=202608109"></script>
+<script src="js/supabase-ket-noi.js?v=202608109"></script>
+<script src="js/app.js?v=202608109"></script>
+<script src="js/hoso-sua.js?v=202608109"></script>
+<script src="js/xuat-word.js?v=202608109"></script>
 </body>
 </html>

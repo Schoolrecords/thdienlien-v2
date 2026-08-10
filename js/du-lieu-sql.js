@@ -28,8 +28,9 @@
       may.from('cau_hinh').select('khoa,gia_tri'),
       may.from('nhom_ho_so').select('id,so_tt,ten,mo_ta,bieu_tuong').order('so_tt'),
       may.from('nhom_con').select('id,ma,ten,so_tt,nhom_id').order('so_tt'),
-      may.from('ho_so').select('ma,ten,trang_thai,tieu_chi,ma_cu,so_tt,link_drive,nguoi_phu_trach,nhom_con_id').order('so_tt'),
-      may.from('tieu_chi').select('ma,ten,bat_buoc').order('ma')
+      may.from('ho_so').select('*').order('so_tt'),
+      may.from('tieu_chi').select('ma,ten,bat_buoc,muc_1,muc_2').order('ma'),
+      may.from('nguoi_dung').select('id,ho_ten,email,chuc_vu,vai_tro').eq('trang_thai', 'hoat_dong').order('ho_ten')
     ]).then(function (kq) {
       var loi = kq.filter(function (r) { return r.error; });
       if (loi.length) {
@@ -39,7 +40,10 @@
         return;
       }
       var cauHinh = kq[0].data, boPhan = kq[1].data, nhomCon = kq[2].data,
-          hoSo = kq[3].data, tieuChi = kq[4].data;
+          hoSo = kq[3].data, tieuChi = kq[4].data, taiKhoan = kq[5].data;
+
+      // Danh sách tài khoản hoạt động — cho ô "giao quyền sửa" trong hoso-sua.js
+      window.DS_TAI_KHOAN = taiKhoan || [];
 
       // 1. Cấu hình trường
       var ch = {};
@@ -47,6 +51,8 @@
       if (ch.ten_truong) window.CAU_HINH.TEN_TRUONG = ch.ten_truong;
       if (ch.slogan) window.CAU_HINH.SLOGAN = ch.slogan;
       if (ch.nam_hoc) window.CAU_HINH.NAM_HOC = ch.nam_hoc;
+      if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
+      if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
       document.querySelectorAll('.dien-ten-truong').forEach(function (e) { e.textContent = window.CAU_HINH.TEN_TRUONG; });
       var oSlogan = document.getElementById('dien-slogan');
       if (oSlogan) oSlogan.textContent = window.CAU_HINH.SLOGAN;
@@ -72,7 +78,9 @@
         };
       });
       window.HOP = HOP;
+      window.HS_BAN_GHI = {}; // ma -> bản ghi đầy đủ trong CSDL (cho ô sửa)
       window.HO_SO = hoSo.map(function (h) {
+        window.HS_BAN_GHI[h.ma] = h;
         return {
           hop: maHop[h.nhom_con_id], ma: h.ma, maCu: h.ma_cu || '', ten: h.ten,
           tc: h.tieu_chi || [], tt: h.trang_thai, link: h.link_drive || '',
@@ -80,10 +88,10 @@
         };
       });
 
-      // 3. Tiêu chí TT57 (tên + bắt buộc từ CSDL)
+      // 3. Tiêu chí TT57 (tên + bắt buộc + nguyên văn 2 mức từ CSDL)
       if (tieuChi.length) {
         window.TIEU_CHI = tieuChi.map(function (t) {
-          return { ma: t.ma, ten: t.ten, batBuoc: !!t.bat_buoc };
+          return { ma: t.ma, ten: t.ten, batBuoc: !!t.bat_buoc, m1: t.muc_1 || '', m2: t.muc_2 || '' };
         });
       }
 

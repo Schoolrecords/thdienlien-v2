@@ -83,6 +83,15 @@
         window.napDuLieuThat && window.napDuLieuThat();
         if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
           window.veQuanTri && window.veQuanTri();
+          // Nút menu Quản trị — chỉ hiện với admin/BGH
+          var menu = document.querySelector('nav.menu');
+          if (menu && !menu.querySelector('[data-di="quantri"]')) {
+            var nut = document.createElement('button');
+            nut.setAttribute('data-di', 'quantri');
+            nut.textContent = '⚙️ Quản trị';
+            nut.addEventListener('click', function () { window.chuyenManHinh('quantri'); });
+            menu.appendChild(nut);
+          }
         }
       } else if (r.data.trang_thai === 'cho_duyet') {
         window.baoTrangThai('cho',
