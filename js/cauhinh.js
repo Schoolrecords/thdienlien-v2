@@ -21,6 +21,13 @@ window.CAU_HINH = {
 
   // --- Mục tiêu chất lượng ---
   MUC_TIEU_CHUAN_QG: 'Giữ vững chuẩn quốc gia Mức độ 1 — phấn đấu Mức độ 2',
+
+  // --- Số dự phòng cho bản in khi chưa đếm được từ CSDL (máy đếm được thì
+  //     luôn ưu tiên số đếm thật) ---
+  DIA_DANH: 'Quảng Châu',
+  SO_LOP: 15,
+  SO_HOC_SINH: 450,
+  SO_CBGV: 37,
 };
 // Cờ suy ra, các file khác đọc cờ này — không tự kiểm tra chuỗi rỗng
 window.DA_NOI = !!(window.CAU_HINH.DIA_CHI && window.CAU_HINH.KHOA_CONG_KHAI);

@@ -105,6 +105,8 @@
         window.baoTrangThai(null);
         may.from('nguoi_dung').update({ lan_vao_cuoi: new Date().toISOString() }).eq('id', r.data.id).then(function () {});
         window.napDuLieuThat && window.napDuLieuThat();
+        // Cho các file bê nguyên từ Bạch Liêu sang (bach-lieu-shim.js)
+        document.dispatchEvent(new Event('dangnhap-xong'));
         if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
           window.veQuanTri && window.veQuanTri();
         }

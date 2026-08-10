@@ -134,10 +134,36 @@
     });
   }
 
-  // Cầu dữ liệu cho file xuất Word
+  // Cầu dữ liệu cho file xuất Word — ĐÚNG HỢP ĐỒNG của xuat-bao-cao-tdg.js
+  // Bạch Liêu (chạy nguyên văn qua bach-lieu-shim.js)
   window.duLieuTuDanhGia = function () {
-    return { namHoc: NAM, tc: TC, noiHam: NOI_HAM, htNh: HT_NH, dgtc: DGTC, bc: BC };
+    var mcTheoTC = {};
+    window.HO_SO.forEach(function (h) {
+      var banGhi = (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) || {};
+      (h.tc || []).forEach(function (ma) {
+        (mcTheoTC[ma] = mcTheoTC[ma] || []).push({
+          ma: h.ma, ten: h.ten, trang_thai: h.tt, link_drive: h.link || null,
+          ghi_chu: banGhi.ghi_chu || null, nguoi_phu_trach: h.phuTrach || null,
+          dinh_dang: banGhi.dinh_dang || null
+        });
+      });
+    });
+    Object.keys(mcTheoTC).forEach(function (k) {
+      mcTheoTC[k].sort(function (a, b) { return a.ma.localeCompare(b.ma, 'vi'); });
+    });
+    return {
+      namHoc: NAM,
+      tieuChi: TC.map(function (t) {
+        return { code: t.ma, std: t.tieuChuan, bb: t.batBuoc, name: t.ten,
+                 m1: t.m1, m2: t.m2, self: t.self, htM1: t.htM1, htM2: t.htM2 };
+      }),
+      noiHam: NOI_HAM, htNh: HT_NH, dgtc: DGTC, bc: BC, mcTheoTC: mcTheoTC,
+      thieuNoiHam: !Object.keys(NOI_HAM).length
+    };
   };
+
+  // Bản toàn cục cho file Bạch Liêu (phanIII Biểu 1 gọi thẳng tên này)
+  window.xepMucNhaTruong = function () { return xepMuc(); };
 
   // ══════════════════ XẾP MỨC TOÀN TRƯỜNG (khoản 3 Điều 5) ══════════════════
   function xepMuc() {
