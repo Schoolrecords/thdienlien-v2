@@ -18,8 +18,10 @@
   // ── Điều hướng: hero chỉ hiện ở Trang chủ ──
   function chuyenManHinh(ma) {
     $$('.man-hinh').forEach(function (m) { m.classList.toggle('hien', m.id === 'mh-' + ma); });
+    // Màn CBGV-NV thuộc nút "Quản trị Hồ sơ"; màn Quản trị chưa có nút riêng
+    var nutSang = (ma === 'cbgv') ? 'hoso' : ma;
     $$('nav.menu button').forEach(function (b) {
-      b.classList.toggle('dang-chon', b.getAttribute('data-di') === ma);
+      b.classList.toggle('dang-chon', b.getAttribute('data-di') === nutSang);
     });
     $('#hero').style.display = (ma === 'home') ? '' : 'none';
     window.scrollTo(0, 0);
