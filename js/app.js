@@ -285,24 +285,58 @@
   }
 
   // ── Module 2: Trường chuẩn Quốc gia ──
+  // Bản DEMO/chưa đăng nhập; tcqg.js ghi đè window.veManTCQG khi có dữ liệu thật.
   function veTieuChi() {
-    var goc = $('#danh-sach-tieu-chi');
-    var html = '';
-    window.TIEU_CHUAN.forEach(function (tc) {
-      var dong = window.TIEU_CHI.filter(function (t) { return t.ma.charAt(0) === String(tc.so); })
-        .map(function (t) {
-          var soMC = window.HO_SO.filter(function (h) { return h.tc.indexOf(t.ma) >= 0; }).length;
-          return '<div class="dong-tc" style="cursor:pointer" onclick="xemTieuChi(\'' + t.ma + '\')"><span class="ma-tc">' + t.ma + '</span>' +
-            '<span class="ten-tc">' + thoatHTML(t.ten) +
-            '<span class="nhan-mc">' + soMC + ' minh chứng trong kho hồ sơ · bấm xem nguyên văn</span></span>' +
-            (t.batBuoc ? '<span class="nhan-bb">BẮT BUỘC</span>' : '') + '</div>';
-        }).join('');
-      html += '<div class="nhom-tc"><div class="dau-nhom"><span class="so-tc">' + tc.so + '</span>' +
-        'Tiêu chuẩn ' + tc.so + '. ' + thoatHTML(tc.ten) + '</div>' +
-        '<div class="than-nhom">' + dong + '</div></div>';
-    });
-    goc.innerHTML = html;
+    if (window.TCQG_SAN_SANG && window.veManTCQG) { window.veManTCQG(); return; }
+    var stats = $('#kd-stats');
+    if (!stats) return;
+    stats.innerHTML =
+      '<div class="the-kd navy"><b>—</b><span>Mức hiện tại · đăng nhập để tự đánh giá</span></div>' +
+      '<div class="the-kd xanh"><b>15</b><span>tiêu chí · 4 tiêu chuẩn</span></div>' +
+      '<div class="the-kd vang"><b>8</b><span>tiêu chí bắt buộc (Điều 5)</span></div>' +
+      '<div class="the-kd la"><b>71</b><span>nội hàm cần mô tả hiện trạng</span></div>';
+    $('#kd-giai-thich').innerHTML = '';
+    $('#kd-thanh').innerHTML = '';
+    $('#kd-so-tc').textContent = '(4 tiêu chuẩn)';
+    $('#kd-loc').innerHTML = '';
+    $('#kd-list').innerHTML = window.TIEU_CHI.map(function (t) {
+      var soMC = window.HO_SO.filter(function (h) { return h.tc.indexOf(t.ma) >= 0; }).length;
+      return '<div class="tc-hang" onclick="xemTieuChi(\'' + t.ma + '\')">' +
+        '<span class="tc-ma">' + t.ma + '</span>' +
+        '<span class="tc-ten">' + thoatHTML(t.ten) +
+        (t.batBuoc ? ' <span class="tc-bb">BẮT BUỘC</span>' : '') +
+        '<small>' + soMC + ' minh chứng trong kho · bấm xem nguyên văn</small></span></div>';
+    }).join('');
+    $('#kd-chi-tiet').innerHTML =
+      '<div class="the-thong-bao"><p style="font-size:14.5px"><b>Đăng nhập để tự đánh giá.</b></p>' +
+      '<p style="font-size:13.5px;color:var(--chu-mo);margin-top:6px">Sau khi đăng nhập, thầy cô trong Hội đồng ' +
+      'tự đánh giá sẽ chấm Đạt/Không đạt từng mức, mô tả hiện trạng theo 71 nội hàm và gắn mã minh chứng ' +
+      'từ kho hồ sơ. Ở chế độ xem thử, bấm một tiêu chí để đọc nguyên văn.</p></div>';
+    $('#kd-danh-gia-chung').innerHTML = '';
+    $('#kd-bao-cao').innerHTML = '';
   }
+
+  // Cửa sổ "Căn cứ & hướng dẫn" — dùng lại lớp phủ chung
+  window.moCanCu = function () {
+    $('#lp-ic').textContent = '📘';
+    $('#lp-ic').className = 'ic';
+    $('#lp-tieu-de').textContent = 'Căn cứ & hướng dẫn';
+    $('#lp-phu').textContent = 'Thông tư 57/2026/TT-BGDĐT — hiệu lực từ 07/7/2026';
+    $('#lp-than').innerHTML =
+      '<div class="lv"><span class="lv-tag">CĂN CỨ PHÁP LÝ</span><p>Thông tư 57/2026/TT-BGDĐT quy định về bảo đảm chất lượng ' +
+      'và công nhận trường đạt chuẩn quốc gia đối với cơ sở giáo dục phổ thông, thay thế các Thông tư 17, 18, 19/2018 và 22/2024. ' +
+      'Nội dung Mức 1 / Mức 2 hiển thị trong hệ thống là nguyên văn Phụ lục II.</p></div>' +
+      '<div class="lv"><span class="lv-tag">CÁCH XẾP MỨC (khoản 3 Điều 5)</span><p>Trường đạt Mức 1 khi 8 tiêu chí bắt buộc ' +
+      '(1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2) đều đạt Mức 1 và ít nhất 5/7 tiêu chí còn lại đạt Mức 1. ' +
+      'Đạt Mức 2 khi 8 tiêu chí bắt buộc đều đạt Mức 2, ít nhất 5/7 tiêu chí còn lại đạt Mức 2 và không tiêu chí nào dưới Mức 1.</p></div>' +
+      '<div class="lv"><span class="lv-tag m2">Ý NGHĨA HAI MỨC</span><p>Mức 1: nhà trường đáp ứng yêu cầu tổ chức thực hiện. ' +
+      'Mức 2: có minh chứng về việc rà soát, điều chỉnh, cải tiến dựa trên dữ liệu — tự đánh giá tuần tự Mức 1 rồi mới xét Mức 2.</p></div>' +
+      '<div class="lv" style="border-left:4px solid var(--canh)"><span class="lv-tag" style="background:var(--canh)">⚠ CHUYỂN TIẾP (khoản 4 Điều 27)</span>' +
+      '<p>Từ 07/7/2026 đến hết 31/12/2028, dữ liệu định lượng được dùng để theo dõi, phân tích, cảnh báo và hỗ trợ cải tiến — ' +
+      'không được dùng làm căn cứ duy nhất hoặc ngưỡng loại trừ để kết luận không đạt. Kết luận thuộc về Hội đồng tự đánh giá.</p></div>';
+    $('#lop-phu').classList.add('on');
+    document.body.style.overflow = 'hidden';
+  };
 
   // ── Khởi động ──
   document.addEventListener('DOMContentLoaded', function () {

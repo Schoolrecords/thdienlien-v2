@@ -96,6 +96,7 @@
       }
 
       window.veTatCa && window.veTatCa();
+      window.khoiDongTCQG && window.khoiDongTCQG();
       napCBGV(may);
     });
   };

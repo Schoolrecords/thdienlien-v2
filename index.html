@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=202608110">
+  <link rel="stylesheet" href="style.css?v=202608111">
 </head>
 <body>
 
@@ -175,20 +175,50 @@
     </div>
   </section>
 
-  <!-- ═══ MODULE 2: TRƯỜNG CHUẨN QUỐC GIA ═══ -->
+  <!-- ═══ MODULE 2: TRƯỜNG CHUẨN QUỐC GIA (kế thừa Bạch Liêu) ═══ -->
   <section class="man-hinh" id="mh-chuanqg">
-    <div class="dau-muc">
-      <div class="nhan-nho">Thông tư 57/2026/TT-BGDĐT</div>
-      <h2>Trường chuẩn Quốc gia</h2>
-      <p>4 tiêu chuẩn · 15 tiêu chí (8 bắt buộc) · đánh giá tuần tự Mức 1 → Mức 2.
-      Nguyên văn từng mức và 71 nội hàm nạp từ cơ sở dữ liệu khi nối Supabase;
-      báo cáo tự đánh giá cập nhật hằng năm trước ngày 15/6.</p>
+    <div class="kd-dau">
+      <div class="dau-muc" style="margin-bottom:0">
+        <div class="nhan-nho">Tự đánh giá và cải tiến chất lượng</div>
+        <h2>Trường chuẩn Quốc gia</h2>
+        <p>Theo Thông tư 57/2026/TT-BGDĐT — 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức 1 và Mức 2.</p>
+      </div>
+      <div class="kd-dau-phai">
+        <span class="kd-muctieu">🎖 Mục tiêu: giữ vững Mức 1 — phấn đấu Mức 2</span>
+        <button class="nut-vien" onclick="moCanCu()">📘 Căn cứ &amp; hướng dẫn</button>
+      </div>
     </div>
-    <div id="danh-sach-tieu-chi"></div>
+
+    <div class="kd-tong">
+      <div id="kd-stats" class="kd-stats"></div>
+      <div class="kd-nut">
+        <button id="kd-nut-hd" style="display:none" onclick="chuyenManHinh('quantri');window.moQuanTri&&moQuanTri('hd')">✏ Sửa hội đồng</button>
+        <button id="kd-nut-kh" style="display:none" onclick="chuyenManHinh('quantri');window.moQuanTri&&moQuanTri('kh')">📈 Kế hoạch cải tiến</button>
+      </div>
+    </div>
+
+    <div id="kd-giai-thich" class="kd-vi"></div>
+    <div id="kd-hoi-dong"></div>
+
+    <div class="kd-thanh" id="kd-thanh"></div>
+
+    <div class="kd-lam" id="kd-lam">
+      <div class="kd-trai">
+        <div class="kd-trai-dau">Danh sách tiêu chí <span id="kd-so-tc"></span></div>
+        <div id="kd-loc" class="kd-loc"></div>
+        <div id="kd-list"></div>
+      </div>
+      <div id="kd-chi-tiet" class="kd-phai"></div>
+    </div>
+
+    <div id="kd-danh-gia-chung"></div>
+    <div id="kd-bao-cao"></div>
+
     <div class="chu-thich-phap-ly">
       ⚖️ Khoản 4 Điều 27 TT57: đến hết <b>31/12/2028</b>, dữ liệu định lượng được dùng để theo dõi, phân tích,
       cảnh báo và hỗ trợ cải tiến — <b>không</b> được dùng làm căn cứ duy nhất hoặc ngưỡng loại trừ để kết luận
-      không đạt. Ứng dụng chỉ gợi ý; kết luận thuộc về Hội đồng tự đánh giá.
+      không đạt. Máy chỉ tính hộ; quyền kết luận thuộc về Hội đồng tự đánh giá.
+      <a href="javascript:moCanCu()">Xem nguyên văn</a>
     </div>
   </section>
 
@@ -286,14 +316,15 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608110"></script>
+<script src="js/cauhinh.js?v=202608111"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608110"></script>
-<script src="js/du-lieu-sql.js?v=202608110"></script>
-<script src="js/quan-tri.js?v=202608110"></script>
-<script src="js/supabase-ket-noi.js?v=202608110"></script>
-<script src="js/app.js?v=202608110"></script>
-<script src="js/hoso-sua.js?v=202608110"></script>
-<script src="js/xuat-word.js?v=202608110"></script>
+<script src="js/du-lieu-demo.js?v=202608111"></script>
+<script src="js/du-lieu-sql.js?v=202608111"></script>
+<script src="js/quan-tri.js?v=202608111"></script>
+<script src="js/supabase-ket-noi.js?v=202608111"></script>
+<script src="js/app.js?v=202608111"></script>
+<script src="js/hoso-sua.js?v=202608111"></script>
+<script src="js/xuat-word.js?v=202608111"></script>
+<script src="js/tcqg.js?v=202608111"></script>
 </body>
 </html>
