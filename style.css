@@ -26,7 +26,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
-  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  font-family: 'UTM Avo', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
   background: var(--kem); color: var(--chu); font-size: 16px; line-height: 1.6;
 }
 a { color: var(--chinh); }
@@ -156,58 +156,42 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
 }
 .su-menh h4 { color: var(--vang); letter-spacing: .12em; font-size: 13.5px; margin-bottom: 4px; }
 .su-menh p { font-size: 15px; color: #ecf3fa; }
-/* MỘT dải liền, màu MỜ DẦN từ trái sang phải để lộ ảnh sân trường bên phải —
-   đúng cách Bạch Liêu làm. Trước đây em cho mỗi ô một nền đặc riêng + khe hở
-   1px, thành ra 5 cái hộp đều tăm tắp che kín ảnh, nhìn nặng và phẳng. */
+/* Dải số liệu — LẤY ĐÚNG THÔNG SỐ CỦA BẠCH LIÊU (.hero-stats trong index.html
+   của repo thcsbachlieu). Một tấm nền duy nhất, gradient tắt dần đến TRONG SUỐT
+   HOÀN TOÀN ở mép phải; các ô KHÔNG có nền riêng, KHÔNG đường ngăn — cái tôi
+   tưởng là đường kẻ thật ra chỉ là khe hở 10px cho lộ ảnh nền. */
 .dai-so-lieu {
-  position: relative; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0;
-  border-radius: var(--bo-goc); overflow: hidden; margin-top: 26px;
-  background-image: var(--cham-navy),
-    linear-gradient(90deg,
-      rgba(13, 32, 74, .95) 0%,
-      rgba(15, 36, 84, .88) 38%,
-      rgba(17, 40, 92, .58) 70%,
-      rgba(20, 48, 107, .16) 100%);
-  background-size: 22px 22px, auto;
-  backdrop-filter: blur(2px);
+  position: relative; display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px; margin-top: 24px; border: 0; border-radius: 16px; padding: 14px 19px;
+  background: linear-gradient(90deg,
+    rgba(10, 26, 60, .97) 0%,
+    rgba(19, 45, 99, .9) 45%,
+    rgba(38, 74, 145, .78) 75%,
+    rgba(44, 84, 160, .6) 88%,
+    rgba(50, 92, 170, 0) 100%);
 }
-/* Dải có 5 ô — số lẻ nên với 2 hoặc 3 cột bao giờ cũng thừa một ô trống ở
-   hàng cuối. Cho ô cuối chiếm 2 cột là lấp kín, không còn mảng trống lệch.
-   2 cột (điện thoại): 2+2+1(rộng) · 3 cột (máy tính bảng): 3+2(ô cuối rộng)
-   5 cột (màn rộng): mỗi ô một cột, trả ô cuối về bình thường. */
+/* Dải có 5 ô — số lẻ nên ở 2 hoặc 3 cột sẽ thừa chỗ hàng cuối; cho ô cuối chiếm
+   2 cột cho cân. Từ 1100px xếp đủ 5 cột, trả ô cuối về bình thường. */
 .dai-so-lieu .o:last-child { grid-column: span 2; }
-/* Ngăn cách bằng ĐƯỜNG MẢNH bên trong, không phải khe hở — nhờ vậy dải vẫn
-   liền mạch và vệt mờ dần chạy suốt từ đầu đến cuối. Ô đầu mỗi hàng bỏ đường. */
-.dai-so-lieu .o { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .15); }
-.dai-so-lieu .o:nth-child(2n+1) { box-shadow: none; }
-@media (min-width: 700px) {
-  .dai-so-lieu { grid-template-columns: repeat(3, 1fr); }
-  .dai-so-lieu .o:nth-child(2n+1) { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .15); }
-  .dai-so-lieu .o:nth-child(3n+1) { box-shadow: none; }
-}
+@media (min-width: 700px)  { .dai-so-lieu { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1100px) {
   .dai-so-lieu { grid-template-columns: repeat(5, 1fr); }
-  .dai-so-lieu .o { padding: 16px 14px; }
   .dai-so-lieu .o:last-child { grid-column: auto; }
-  .dai-so-lieu .o:nth-child(3n+1) { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .15); }
-  .dai-so-lieu .o:nth-child(5n+1) { box-shadow: none; }
 }
-/* Một tấm nền liền, các ô chỉ ngăn nhau bằng đường mảnh (gap 1px lộ nền tấm) —
-   KHÔNG hoa văn chấm trên từng ô, vì chấm làm mỗi ô trông như một hộp rời. */
+/* Ô KHÔNG có nền riêng — nền thuộc về cả dải, nhờ vậy vệt mờ chạy liền mạch */
 .dai-so-lieu .o {
-  background: rgba(16, 38, 88, .62); padding: 17px 18px;
-  display: flex; gap: 13px; align-items: center;
+  background: none; padding: 6px 4px 6px 18px;
+  display: flex; gap: 12px; align-items: center;
 }
-/* Huy hiệu TRÒN ĐẶC màu xanh nhấn, biểu tượng trắng — đúng kiểu Bạch Liêu.
-   Vòng tròn viền mờ nhìn nhạt, chìm hẳn vào ảnh nền. */
+/* Huy hiệu tròn, nền chuyển sắc xanh sáng — đúng thông số Bạch Liêu */
 .dai-so-lieu .bi {
-  flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; font-size: 22px;
-  background: var(--chinh); border: 0; color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, .22);
+  flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%; font-size: 20px;
+  background: linear-gradient(150deg, #3b82f6, #1d4ed8); border: 0; color: #fff;
+  display: grid; place-items: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
 }
-.dai-so-lieu .so { font-size: 26px; font-weight: 800; color: var(--vang); line-height: 1.1; }
-.dai-so-lieu .nhan { font-size: 12.5px; color: #cbdcee; }
+.dai-so-lieu .so { font-size: 26px; font-weight: 700; color: var(--vang); line-height: 1.05; }
+.dai-so-lieu .nhan { font-size: 12.3px; color: #fff; opacity: .85; display: block; }
 
 /* ═══ Khung nội dung ═══ */
 main { max-width: var(--rong-khung); margin: 0 auto; padding: 26px 16px 10px; }
