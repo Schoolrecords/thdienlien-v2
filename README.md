@@ -1,5 +1,7 @@
 # Hồ sơ số v2 — Trường Tiểu học Diễn Liên
 
+🔗 **https://tieuhocdienlien.com**
+
 Hệ thống Hồ sơ số theo **Thông tư 57/2026/TT-BGDĐT**, gồm 3 module:
 
 1. **📁 Quản lý Hồ sơ** — kho minh chứng điện tử: 5 bộ phận / 14 hộp, mã `MC.x.y.zz` theo Phụ lục IV
