@@ -218,17 +218,18 @@
     var nams = [];
     for (var i = 1; i >= -3; i--) nams.push((namNay + i) + '-' + (namNay + i + 1));
     thanh.innerHTML =
+      '<span class="nhan-nam">Năm học:</span>' +
       '<select id="kd-nam-hoc">' + nams.map(function (n) {
-        return '<option value="' + n + '"' + (n === NAM ? ' selected' : '') + '>Năm học ' + n + '</option>';
+        return '<option value="' + n + '"' + (n === NAM ? ' selected' : '') + '>' + n + '</option>';
       }).join('') + '</select>' +
       '<select id="kd-std">' +
       '<option value="0">Tất cả 4 tiêu chuẩn</option>' +
       window.TIEU_CHUAN.map(function (t) {
-        return '<option value="' + t.so + '"' + (STD === t.so ? ' selected' : '') + '>Tiêu chuẩn ' + t.so + '. ' + thoat(t.ten) + '</option>';
+        return '<option value="' + t.so + '"' + (STD === t.so ? ' selected' : '') + '>Tiêu chuẩn ' + t.so + ' — ' + thoat(t.ten) + '</option>';
       }).join('') + '</select>' +
       '<span class="sp"></span>' +
       '<button class="nut-vien" onclick="window.xuatMinhChungTheoTieuChuan?xuatMinhChungTheoTieuChuan():notify(\'Bản xuất danh mục minh chứng sẽ có ở bước sau.\')">📋 Danh mục minh chứng</button>' +
-      '<button class="sub-word" style="font-size:13px" onclick="window.xuatBaoCaoTuDanhGia?xuatBaoCaoTuDanhGia():notify(\'Bản xuất báo cáo sẽ có ở bước sau.\')">📄 Xuất báo cáo tự đánh giá</button>';
+      '<button class="nut-xuat-bc" onclick="window.xuatBaoCaoTuDanhGia?xuatBaoCaoTuDanhGia():notify(\'Bản xuất báo cáo sẽ có ở bước sau.\')">📄 Xuất báo cáo tự đánh giá</button>';
     $('#kd-nam-hoc').addEventListener('change', function () { NAM = this.value; taiTCQG(); });
     $('#kd-std').addEventListener('change', function () { STD = +this.value; veList(); veDanhGiaChung(); });
   }
@@ -252,26 +253,32 @@
     var nh = demNoiHamTat();
     var pt = nh.tong ? Math.round(nh.viet * 100 / nh.tong) : 0;
     $('#kd-stats').innerHTML =
-      '<div class="the-kd navy"><b>' + kq.ketLuan + '</b><span>Mức hiện tại · ' +
-      (chuaM1 ? chuaM1 + ' tiêu chí chưa đạt Mức 1' : 'không tiêu chí nào dưới Mức 1') + '</span></div>' +
-      '<div class="the-kd xanh"><b>' + TC.length + '</b><span>tiêu chí · ' + daM2 + ' đã đạt Mức 2</span></div>' +
-      '<div class="the-kd vang"><b>' + kq.bbM2 + '/' + kq.bbTong + '</b><span>tiêu chí bắt buộc đạt Mức 2</span></div>' +
-      '<div class="the-kd la" id="kd-the-tien-do">' +
-      (nh.tong
-        ? '<span class="vong" style="background:conic-gradient(#0f7b52 ' + (pt * 3.6) + 'deg,#d7ebe0 0)"><i>' + pt + '%</i></span>' +
-          '<span>nội hàm đã mô tả<br><b style="font-size:14px">' + nh.viet + '/' + nh.tong + '</b></span>'
-        : '<b>—</b><span>chưa đếm được nội hàm</span>') + '</div>';
-    $('#kd-giai-thich').innerHTML = '💡 <b>Vì sao xếp mức này:</b> ' + thoat(kq.vi);
+      '<div class="the navy"><span class="ic">🏠</span><span class="noi">' +
+      '<span class="so">' + kq.ketLuan + '</span><span class="nhan">Mức hiện tại</span>' +
+      '<span class="them">' + (chuaM1 ? chuaM1 + ' tiêu chí chưa đạt Mức 1' : 'Không tiêu chí nào chưa đạt Mức 1') + '</span></span></div>' +
+      '<div class="the xanh"><span class="ic">📌</span><span class="noi">' +
+      '<span class="so">' + TC.length + '</span><span class="nhan">Tiêu chí</span>' +
+      '<span class="them">' + daM2 + ' tiêu chí đã đạt Mức 2</span></span></div>' +
+      '<div class="the vang"><span class="ic">⭐</span><span class="noi">' +
+      '<span class="so">' + kq.bbTong + '</span><span class="nhan">Tiêu chí bắt buộc</span>' +
+      '<span class="them">' + kq.bbM2 + '/' + kq.bbTong + ' đạt Mức 2</span></span></div>' +
+      '<div class="the la" id="kd-the-tien-do">' + theTienDoHTML(nh, pt) + '</div>';
+    $('#kd-giai-thich').innerHTML = '<b>Vì sao xếp mức này:</b> ' + thoat(kq.vi);
+  }
+
+  function theTienDoHTML(nh, pt) {
+    if (!nh.tong) return '<span class="ic">⏱</span><span class="noi"><span class="so">—</span><span class="nhan">chưa đếm được nội hàm</span></span>';
+    return '<span class="vong" style="background:conic-gradient(#0f7b52 ' + (pt * 3.6) + 'deg,#d7ebe0 0)"><i>' + pt + '%</i></span>' +
+      '<span class="noi"><span class="so" style="font-size:15px">Tiến độ</span>' +
+      '<span class="nhan">đã viết ' + nh.viet + '/' + nh.tong + ' nội hàm</span>' +
+      '<span class="them">còn ' + (nh.tong - nh.viet) + ' ý chưa viết</span></span>';
   }
 
   function veTienDoNoiHam() {
     var nh = demNoiHamTat();
     var pt = nh.tong ? Math.round(nh.viet * 100 / nh.tong) : 0;
     var o = $('#kd-the-tien-do');
-    if (o && nh.tong) {
-      o.innerHTML = '<span class="vong" style="background:conic-gradient(#0f7b52 ' + (pt * 3.6) + 'deg,#d7ebe0 0)"><i>' + pt + '%</i></span>' +
-        '<span>nội hàm đã mô tả<br><b style="font-size:14px">' + nh.viet + '/' + nh.tong + '</b></span>';
-    }
+    if (o && nh.tong) o.innerHTML = theTienDoHTML(nh, pt);
   }
 
   // ══════════════════ CỘT TRÁI: DANH SÁCH TIÊU CHÍ ══════════════════
@@ -362,16 +369,15 @@
       }).join('') + '<span class="sp"></span>' + huyHieu(c.self) + '</div>' +
       '<div class="ct-than">' + than + '</div>' +
       '<div class="ct-day">' +
-      '<button class="nut-vien" data-tab-di="kl">📝 Ghi chú</button>' +
+      '<button class="ct-nut" data-tab-di="kl">📝 Ghi chú</button>' +
       (nh.tong
         ? (nh.viet >= nh.tong
-          ? '<span class="st st-co">✓ Đã viết đủ nội dung</span>'
-          : '<span class="st st-dang">Còn ' + (nh.tong - nh.viet) + ' ý chưa viết</span>')
-        : '<span class="st st-chua">Chưa có danh mục nội hàm</span>') +
-      '<span class="sp"></span>' +
+          ? '<span class="ct-nut xong">✓ Đã viết đủ nội dung</span>'
+          : '<span class="ct-nut cho">Còn ' + (nh.tong - nh.viet) + ' ý chưa viết</span>')
+        : '<span class="ct-nut cho">Chưa có danh mục nội hàm</span>') +
       (keTiep
-        ? '<button class="nut-kiem-tra" data-di-tc="' + keTiep + '">Tiếp theo: ' + keTiep + ' →</button>'
-        : '<button class="nut-kiem-tra" disabled>Đã là tiêu chí cuối</button>') +
+        ? '<button class="ct-nut chinh" data-di-tc="' + keTiep + '">Tiếp theo: ' + keTiep + ' →</button>'
+        : '<button class="ct-nut" disabled>Đã là tiêu chí cuối</button>') +
       '</div>';
 
     Array.prototype.slice.call($('#kd-chi-tiet').querySelectorAll('[data-tab]')).forEach(function (b) {
@@ -397,7 +403,7 @@
     var dat = muc === 1 ? c.datM1 : c.datM2;
     var daCham = muc === 1 ? (c.self >= 1 || c.datM1 === false && c.capNhatLuc) : null;
     var khoa = muc === 2 && !c.datM1;
-    var html = '<div class="yc"><div class="yc-nhan">🔖 Yêu cầu tiêu chí (Thông tư 57) — Mức ' + muc + '</div>' +
+    var html = '<div class="yc"><div class="yc-nhan">📌 Yêu cầu tiêu chí (Thông tư 57) — Mức ' + muc + '</div>' +
       '<p>' + thoat(muc === 1 ? c.m1 : c.m2) + '</p>';
     if (khoa) {
       html += '<div class="lv-pick khoa">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</div></div>';
@@ -418,8 +424,7 @@
     var viet = dsNH.filter(function (n) { var h = HT_NH[n.id]; return h && h.hien_trang && h.hien_trang.trim(); }).length;
     html += '<div class="tt-box"><div class="tt-dau"><b>Thực trạng &amp; kết quả thực hiện — Mức ' + muc + '</b>' +
       (dsNH.length ? '<span class="dem-nh" data-dem="' + c.ma + '|' + muc + '">đã viết ' + viet + '/' + dsNH.length + ' nội hàm</span>' : '') +
-      '<span class="sp"></span>' +
-      (coQuyenCham() && !DANG_SUA ? '<button class="nut-vien nho" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
+      (coQuyenCham() && !DANG_SUA ? '<button class="ct-quaylai" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
       '</div>';
     if (DANG_SUA && coQuyenCham()) {
       html += dsNH.length ? oHienTrang(c, muc, dsNH) : oHienTrangVanXuoi(c, muc);
