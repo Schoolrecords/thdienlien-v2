@@ -172,11 +172,19 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
   .dai-so-lieu .o { padding: 16px 14px; }
   .dai-so-lieu .o:last-child { grid-column: auto; }
 }
-.dai-so-lieu .o { background: rgba(20, 48, 107, .78); padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
+/* Một tấm nền liền, các ô chỉ ngăn nhau bằng đường mảnh (gap 1px lộ nền tấm) —
+   KHÔNG hoa văn chấm trên từng ô, vì chấm làm mỗi ô trông như một hộp rời. */
+.dai-so-lieu .o {
+  background: rgba(16, 38, 88, .62); padding: 17px 18px;
+  display: flex; gap: 13px; align-items: center;
+}
+/* Huy hiệu TRÒN ĐẶC màu xanh nhấn, biểu tượng trắng — đúng kiểu Bạch Liêu.
+   Vòng tròn viền mờ nhìn nhạt, chìm hẳn vào ảnh nền. */
 .dai-so-lieu .bi {
-  flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%; font-size: 21px;
-  background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .3);
-  display: flex; align-items: center; justify-content: center; color: #fff;
+  flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; font-size: 22px;
+  background: var(--chinh); border: 0; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .22);
 }
 .dai-so-lieu .so { font-size: 26px; font-weight: 800; color: var(--vang); line-height: 1.1; }
 .dai-so-lieu .nhan { font-size: 12.5px; color: #cbdcee; }
@@ -366,8 +374,7 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 /* ═══ Hoa văn chấm mờ trên mọi mảng navy (đặc trưng Bạch Liêu) ═══ */
 .o-so,
 .the-hop .dau,
-.nhom-tc > .dau-nhom,
-.dai-so-lieu .o {
+.nhom-tc > .dau-nhom {
   background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
   background-size: 14px 14px, auto;
 }
