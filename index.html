@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=202608102">
+  <link rel="stylesheet" href="style.css?v=202608103">
 </head>
 <body>
 
@@ -22,7 +22,9 @@
     </div>
     <nav class="menu">
       <button data-di="home" class="dang-chon">Trang chủ</button>
-      <button data-di="hoso">Quản lý Hồ sơ</button>
+      <button data-di="hoso">Hồ sơ số</button>
+      <button data-di="cbgv">Hồ sơ CBGV–NV</button>
+      <button data-di="hocsinh">Quản lý học sinh</button>
       <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
       <button data-di="dbcl">Đảm bảo chất lượng</button>
     </nav>
@@ -69,26 +71,59 @@
   <!-- ═══ TRANG CHỦ ═══ -->
   <section class="man-hinh hien" id="mh-home">
     <div class="luoi-module">
-      <div class="the-module" onclick="chuyenManHinh('hoso')">
-        <div class="bi bi-xanh">🗂</div>
-        <h3 class="mau-xanh">Quản lý Hồ sơ</h3>
+      <div class="the-module v-lam" onclick="chuyenManHinh('hoso')">
+        <div class="bi">🗂</div>
+        <h3>Hồ sơ số</h3>
         <div class="chip-hang"><span class="chip">5 bộ phận · 14 hộp</span><span class="chip">Điều 21 TT 15/2026</span></div>
-        <p>Kho minh chứng điện tử toàn trường, mã hóa đến từng đầu mục theo Phụ lục IV
-        Thông tư 57/2026. Quét Google Drive tự động cập nhật trạng thái.</p>
+        <p>Danh mục hồ sơ toàn trường có mã hóa đến từng đầu mục. Mỗi hồ sơ biết rõ ai phụ trách,
+        đã có hay chưa, lưu ở thư mục nào và phục vụ tiêu chí nào.</p>
+        <div class="chan-the">Mở danh mục <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">🗂</span>
       </div>
-      <div class="the-module" onclick="chuyenManHinh('chuanqg')">
-        <div class="bi bi-vang">🏅</div>
-        <h3 class="mau-navy">Trường chuẩn Quốc gia</h3>
-        <div class="chip-hang"><span class="chip">4 tiêu chuẩn</span><span class="chip">15 tiêu chí</span><span class="chip">2 mức</span></div>
-        <p>Tự đánh giá theo Thông tư 57/2026/TT-BGDĐT, hội đồng tự đánh giá, báo cáo Biểu 1,
-        kế hoạch cải tiến chất lượng Biểu 2.</p>
+      <div class="the-module v-luc" onclick="chuyenManHinh('cbgv')">
+        <div class="bi">👥</div>
+        <h3>Hồ sơ CBGV – NV</h3>
+        <div class="chip-hang"><span class="chip">Ban giám hiệu</span><span class="chip">Giáo viên</span><span class="chip">Nhân viên</span></div>
+        <p>Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên: thông tin cơ bản, trình độ đào tạo
+        và đường dẫn tới hồ sơ trên Drive.</p>
+        <div class="chan-the">Xem đội ngũ <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">👥</span>
       </div>
-      <div class="the-module" onclick="chuyenManHinh('dbcl')">
-        <div class="bi bi-cam">📊</div>
-        <h3 class="mau-cam">Đảm bảo Chất lượng</h3>
-        <div class="chip-hang"><span class="chip">PDCA</span><span class="chip">30/9 · 30/01 · 30/7</span></div>
-        <p>Dữ liệu vận hành thường xuyên theo khung Nghệ An: chu trình cải tiến liên tục,
-        cam kết chuẩn đầu ra, công bố tới phụ huynh.</p>
+      <div class="the-module v-cam" onclick="chuyenManHinh('hocsinh')">
+        <div class="bi">🎓</div>
+        <h3>Quản lý học sinh</h3>
+        <div class="chip-hang"><span class="chip">5 khối</span><span class="chip">15 lớp</span></div>
+        <p>Danh sách học sinh theo khối và lớp, đọc thẳng từ cơ sở dữ liệu nhà trường.
+        Chưa đăng nhập thì chỉ thấy bản xem thử bố cục.</p>
+        <div class="chan-the">Xem các khối <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">🎓</span>
+      </div>
+      <div class="the-module v-xanh-la" onclick="chuyenManHinh('chuanqg')">
+        <div class="bi">📋</div>
+        <h3>Trường chuẩn Quốc gia</h3>
+        <div class="chip-hang"><span class="chip">4 tiêu chuẩn</span><span class="chip">15 tiêu chí</span></div>
+        <p>Tự đánh giá hằng năm theo bộ tiêu chuẩn mới của Thông tư 57/2026. Chọn mức đạt,
+        gắn minh chứng sẵn có từ kho hồ sơ số, hệ thống tổng hợp và kết xuất báo cáo.</p>
+        <div class="chan-the">Vào tự đánh giá <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">📋</span>
+      </div>
+      <div class="the-module v-tim" onclick="chuyenManHinh('dbcl')">
+        <div class="bi">📈</div>
+        <h3>Đảm bảo chất lượng</h3>
+        <div class="chip-hang"><span class="chip">Chuẩn đầu ra</span><span class="chip">Cam kết chất lượng</span><span class="chip">Kế hoạch cải tiến</span></div>
+        <p>Nhập một bộ chỉ tiêu theo Thông tư 27/2020, hệ thống tự sinh các phụ lục và tự đối chiếu
+        kết quả với chuẩn đầu ra đã cam kết. Kèm kế hoạch cải tiến và bộ chỉ số nhiều năm.</p>
+        <div class="chan-the">Xem theo dõi <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">📈</span>
+      </div>
+      <div class="the-module v-xam" onclick="chuyenManHinh('quantri')">
+        <div class="bi">⚙️</div>
+        <h3>Quản trị hệ thống</h3>
+        <div class="chip-hang"><span class="chip">Duyệt tài khoản</span><span class="chip">Phân quyền</span><span class="chip">Sổ nhật ký</span></div>
+        <p>Duyệt tài khoản mới đăng nhập, đặt vai trò cho từng người, quản lý danh sách mời
+        và tra sổ nhật ký mọi thao tác trên hệ thống.</p>
+        <div class="chan-the">Mở quản trị <span class="mui-ten">→</span></div>
+        <span class="hinh-chim">⚙️</span>
       </div>
     </div>
 
@@ -169,6 +204,59 @@
       </p>
     </div>
   </section>
+
+  <!-- ═══ HỒ SƠ CBGV-NV ═══ -->
+  <section class="man-hinh" id="mh-cbgv">
+    <div class="dau-muc">
+      <div class="nhan-nho">Đội ngũ nhà trường</div>
+      <h2>Hồ sơ CBGV – NV</h2>
+      <p>Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên: thông tin cơ bản,
+      trình độ đào tạo và đường dẫn tới thư mục hồ sơ trên Drive.</p>
+    </div>
+    <div class="the-thong-bao">
+      <p style="font-size:14.5px"><b>Danh sách đội ngũ nạp từ cơ sở dữ liệu khi nối Supabase.</b></p>
+      <p style="font-size:14px;color:var(--chu-mo);margin-top:6px">
+        Ở chế độ xem thử, màn hình này chưa hiển thị dữ liệu để bảo vệ thông tin cá nhân
+        (SĐT, email của thầy cô không đưa lên bản công khai). Sau khi đăng nhập bằng Gmail,
+        mỗi thầy cô thấy hồ sơ của mình; Ban giám hiệu thấy toàn trường.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ QUẢN LÝ HỌC SINH ═══ -->
+  <section class="man-hinh" id="mh-hocsinh">
+    <div class="dau-muc">
+      <div class="nhan-nho">5 khối · 15 lớp</div>
+      <h2>Quản lý học sinh</h2>
+      <p>Danh sách học sinh theo khối và lớp, kết quả đánh giá theo Thông tư 27/2020
+      (mức T/H/C các môn học; năng lực - phẩm chất T/Đ/C).</p>
+    </div>
+    <div class="the-thong-bao">
+      <p style="font-size:14.5px"><b>Dữ liệu học sinh chỉ hiện sau khi đăng nhập.</b></p>
+      <p style="font-size:14px;color:var(--chu-mo);margin-top:6px">
+        Theo Nghị định 13/2023/NĐ-CP, danh sách học sinh không đưa lên bản xem thử công khai.
+        Giáo viên đăng nhập chỉ thấy lớp mình dạy; số định danh cá nhân được cất trong bảng riêng
+        chỉ quản trị đọc được.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ QUẢN TRỊ HỆ THỐNG ═══ -->
+  <section class="man-hinh" id="mh-quantri">
+    <div class="dau-muc">
+      <div class="nhan-nho">Dành cho Ban giám hiệu</div>
+      <h2>Quản trị hệ thống</h2>
+      <p>Duyệt tài khoản, phân quyền 5 mức, danh sách mời và sổ nhật ký thao tác.</p>
+    </div>
+    <div class="the-thong-bao">
+      <p style="font-size:14.5px"><b>Khu vực này mở khi nối Supabase và đăng nhập bằng tài khoản quản trị.</b></p>
+      <p style="font-size:14px;color:var(--chu-mo);margin-top:6px">
+        Phân quyền 5 mức: Quản trị · Ban giám hiệu · Tổ trưởng · Giáo viên · Nhân viên.
+        Mọi thao tác sửa/xóa đều tự ghi vào sổ nhật ký, không ai xóa được kể cả quản trị
+        (Nghị định 13/2023/NĐ-CP).
+      </p>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -177,8 +265,8 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608102"></script>
-<script src="js/du-lieu-demo.js?v=202608102"></script>
-<script src="js/app.js?v=202608102"></script>
+<script src="js/cauhinh.js?v=202608103"></script>
+<script src="js/du-lieu-demo.js?v=202608103"></script>
+<script src="js/app.js?v=202608103"></script>
 </body>
 </html>
