@@ -14,10 +14,13 @@
   }
   function cauHinh(khoa, mac) { return (window.CAU_HINH && window.CAU_HINH[khoa]) || mac || ''; }
 
+  // NĐ 30: ngày nhỏ hơn 10 thì thêm số 0, nhưng THÁNG chỉ thêm số 0 khi là
+  // tháng 1 hoặc tháng 2. Ghi "tháng 08" là sai thể thức.
   function ngayVN() {
     var t = new Date();
+    var thang = t.getMonth() + 1;
     return 'ngày ' + String(t.getDate()).padStart(2, '0') +
-      ' tháng ' + String(t.getMonth() + 1).padStart(2, '0') + ' năm ' + t.getFullYear();
+      ' tháng ' + (thang < 3 ? '0' + thang : thang) + ' năm ' + t.getFullYear();
   }
   // Địa danh = tên xã, không kèm chữ "Xã", không kèm tỉnh
   function diaDanh() {
@@ -26,14 +29,13 @@
     return m ? m[1].trim() : (dc.split(',')[0] || '').trim();
   }
 
-  // Ô tên cơ quan chỉ rộng 38% trang, Word tự ngắt thì rớt một chữ lẻ xuống
-  // dòng cuối ("TRƯỜNG TIỂU HỌC DIỄN / LIÊN"). Ngắt sẵn ngay sau cấp học —
-  // đúng cách các trường vẫn in tiêu đề văn bản.
-  function ngatTenTruong(ten) {
-    var m = ten.match(/^(.*?(?:MẦM NON|MẪU GIÁO|TIỂU HỌC|TRUNG HỌC CƠ SỞ|TRUNG HỌC PHỔ THÔNG|THCS|THPT))\s+(.+)$/);
-    if (m) return chan(m[1]) + '<br>' + chan(m[2]);
-    return chan(ten);
-  }
+  // Chiều rộng hai ô đầu trang, tính trên bề ngang chữ 16,5cm và trừ 0,38cm
+  // lề trong ô của Word. Cả hai dòng dài nhất phải nằm gọn MỘT DÒNG:
+  //   ô trái  43% = 7,10cm → dùng được 6,72cm · "TRƯỜNG TIỂU HỌC DIỄN LIÊN" 6,41cm
+  //   ô phải  57% = 9,41cm → dùng được 9,03cm · Quốc hiệu (12pt đậm) 8,83cm
+  // Để 38% như bản trước là Word ngắt dòng, rớt chữ cuối xuống dòng riêng.
+  // Trường nào tên dài hơn thì nới ô trái, đừng để Word tự ngắt.
+  var O_TRAI = 43, O_PHAI = 57;
 
   // So khớp chức vụ không phân biệt hoa/thường và dấu
   function boDau(s) {
@@ -59,32 +61,44 @@
       '</style></head><body>' + than + '</body></html>';
   }
 
-  // Đường kẻ ngang dưới tên cơ quan / tiêu ngữ / trích yếu.
-  // NĐ 30: dài bằng 1/3 đến 1/2 ĐỘ DÀI DÒNG CHỮ và đặt cân đối so với dòng
-  // chữ — không phải kéo hết chiều ngang ô. Tham số là % của ô chứa nó.
-  function gach(rong, tren, duoi) {
-    return '<div style="width:' + rong + '%;margin:' + (tren || 3) + 'pt auto ' +
-      (duoi || 0) + 'pt;border-bottom:1px solid #000;font-size:1pt;line-height:1pt">&nbsp;</div>';
+  // Đường kẻ ngang dưới tên cơ quan / tiêu ngữ — dựng bằng DÃY DẤU CÁCH CỨNG
+  // ĐƯỢC GẠCH CHÂN. Hai cách hiển nhiên hơn đều hỏng khi mở bằng Word:
+  //  · <div style="width:…"> → Word đổi thành ĐOẠN VĂN, mà đoạn văn không có
+  //    chiều rộng nên kẻ hết chiều ngang ô
+  //  · bảng lồng có width → bị luật table{width:100%} của khung kéo giãn hết ô
+  // Gạch chân dấu cách thì Word giữ đúng chiều dài. Trong Times New Roman, dấu
+  // cách rộng 0,25em → cỡ 12pt là 0,106cm mỗi dấu.
+  function gach(rongCm, cot) {
+    var co = cot || 12;
+    var n = Math.max(4, Math.round(rongCm / (0.0088 * co)));
+    return '<p class="giua" style="margin:1pt 0 0;font-size:' + co + 'pt;line-height:1"><u>' +
+      new Array(n + 1).join('&nbsp;') + '</u></p>';
   }
 
-  // Thể thức NĐ 30 (Phụ lục I):
-  //  · ô 38%: chủ quản in hoa KHÔNG đậm · tên trường in hoa VÀ đậm
-  //  · ô 62%: Quốc hiệu in hoa đậm 12pt · tiêu ngữ đậm 13pt
-  //  · địa danh + ngày tháng in nghiêng, canh giữa NGAY DƯỚI ô Quốc hiệu —
-  //    nên đặt trong chính ô đó, không căn lề phải cả trang như trước
+  // Kẻ dưới tên cơ quan ban hành: NĐ 30 quy định dài bằng 1/3 đến 1/2 dòng
+  // chữ. Tên trường mỗi trường một khác nên tính theo số ký tự (~0,24cm mỗi
+  // ký tự in hoa cỡ 12pt) rồi lấy 40% — đúng tỉ lệ đo được trên bản mẫu chuẩn.
+  function gachTenTruong(ten) {
+    return gach(Math.max(2.2, Math.min(4, ten.length * 0.24 * 0.4)));
+  }
+
+  // Thể thức NĐ 30 (Phụ lục I) — thông số đo trên bản mẫu chuẩn của trường:
+  //  · ô trái 44%: chủ quản in hoa KHÔNG đậm · tên trường in hoa VÀ đậm, MỘT DÒNG
+  //  · ô phải 56%: Quốc hiệu in hoa đậm 12pt · tiêu ngữ đậm 13pt, kẻ dưới 4,4cm
+  //  · địa danh + ngày tháng in nghiêng, canh giữa NGAY DƯỚI ô Quốc hiệu
   function theThuc() {
     return '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
-      '<td style="border:none;padding:0;width:38%;text-align:center;vertical-align:top;font-size:12pt">' +
+      '<td style="border:none;padding:0;width:' + O_TRAI + '%;text-align:center;vertical-align:top;font-size:12pt">' +
       chan(cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br>' +
-      '<b>' + ngatTenTruong(cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
-      gach(32) + '</td>' +
-      '<td style="border:none;padding:0;width:62%;text-align:center;vertical-align:top;font-size:12pt">' +
+      '<b>' + chan(cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
+      gachTenTruong(cauHinh('TEN_TRUONG')) + '</td>' +
+      '<td style="border:none;padding:0;width:' + O_PHAI + '%;text-align:center;vertical-align:top;font-size:12pt">' +
       '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b><br>' +
       '<b style="font-size:13pt">Độc lập - Tự do - Hạnh phúc</b>' +
-      gach(30) +
-      '<p class="nghieng" style="margin:12pt 0 0;font-size:13pt">' +
+      gach(4.4, 13) +
+      '<p class="nghieng" style="margin:10pt 0 0;font-size:13pt">' +
       chan(diaDanh()) + ', ' + ngayVN() + '</p></td>' +
-      '</tr></table><div style="height:12pt"></div>';
+      '</tr></table>';
   }
 
   // Khối ký. Gọi khoiKy(null) khi phiếu do CHÍNH hiệu trưởng nhận việc —
@@ -143,7 +157,7 @@
   // Tiện ích dùng chung cho các file xuất Word khác (tcqg-word.js…)
   window.WORD_TIEN_ICH = {
     chan: chan, cauHinh: cauHinh, ngayVN: ngayVN, diaDanh: diaDanh,
-    ngatTenTruong: ngatTenTruong, gach: gach,
+    gach: gach, gachTenTruong: gachTenTruong, O_TRAI: O_TRAI, O_PHAI: O_PHAI,
     khungWord: khungWord, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
   };
 
@@ -179,12 +193,11 @@
     var laHieuTruong = !!tenPT && tenPT === cauHinh('HIEU_TRUONG');
 
     var than = theThuc() +
-      // Tên loại (in hoa, đậm, 14pt) → trích yếu (chữ thường, đậm) → đường kẻ
-      // ngang ngắn bên dưới trích yếu, đúng Mẫu 1.2 NĐ 30.
-      '<p class="giua" style="font-size:14pt;font-weight:bold;margin:0">PHIẾU GIAO VIỆC</p>' +
-      '<p class="giua" style="font-size:13pt;font-weight:bold;margin:4pt 0 0">' +
+      // Tên loại (in hoa, đậm, 14pt) rồi trích yếu (chữ thường, đậm). KHÔNG kẻ
+      // ngang dưới trích yếu — bản mẫu chuẩn của trường không có đường kẻ đó.
+      '<p class="giua" style="font-size:14pt;font-weight:bold;margin:14pt 0 0">PHIẾU GIAO VIỆC</p>' +
+      '<p class="giua" style="font-size:13pt;font-weight:bold;margin:4pt 0 16pt">' +
       'Hoàn thiện hồ sơ minh chứng - Hộp ' + chan(maHop) + '. ' + chan(hop.ten) + '</p>' +
-      gach(20, 5, 14) +
       '<p style="margin:0 0 4pt"><b>Năm học:</b> ' + chan(cauHinh('NAM_HOC')) + '</p>' +
       '<p style="margin:0 0 4pt"><b>Người phụ trách:</b> ' +
       (tenPT ? chan(tenPT) + ' - ' + chan(phuTrach)
