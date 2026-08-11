@@ -146,21 +146,48 @@
         { ten: '📚 Giáo viên', loc: ['to_truong', 'giao_vien'] },
         { ten: '🗄 Nhân viên', loc: ['nhan_vien'] }
       ];
-      var daVe = {}; // 1 người 2 email (thầy Chung) chỉ vẽ 1 thẻ
+      // Một người có thể có HAI email trong danh sách mời (thầy Chung: gmail và
+      // nghean.edu.vn). Trước đây chỗ này giữ dòng gặp trước rồi BỎ dòng sau —
+      // mà link Drive lại chỉ gắn cho một trong hai email, nên rơi đúng dòng
+      // không có link là thẻ hiện "Chưa gán thư mục" dù thư mục vẫn có thật.
+      // Nay GỘP hai dòng thành một thẻ: lấy link, chức vụ, tổ của dòng nào có,
+      // và coi là đã kích hoạt nếu BẤT KỲ email nào đã đăng nhập.
+      var daVe = {};
       var html = '';
       NHOM.forEach(function (nh) {
-        var ds = moi.filter(function (m) {
-          if (m.la_ky_thuat || nh.loc.indexOf(m.vai_tro) < 0) return false;
-          if (daVe[m.ho_ten]) return false;
-          daVe[m.ho_ten] = true;
-          return true;
+        var ds = [], viTri = {};
+        moi.forEach(function (m) {
+          if (m.la_ky_thuat || nh.loc.indexOf(m.vai_tro) < 0) return;
+          if (daVe[m.ho_ten]) return;           // đã vẽ ở nhóm trước
+          var i = viTri[m.ho_ten];
+          if (i === undefined) {
+            viTri[m.ho_ten] = ds.length;
+            ds.push({
+              ho_ten: m.ho_ten, chuc_vu: m.chuc_vu, to_chuyen_mon: m.to_chuyen_mon,
+              vai_tro: m.vai_tro, link_drive: m.link_drive, emails: [m.email]
+            });
+            return;
+          }
+          var g = ds[i];
+          g.emails.push(m.email);
+          if (!g.link_drive)    g.link_drive    = m.link_drive;
+          if (!g.chuc_vu)       g.chuc_vu       = m.chuc_vu;
+          if (!g.to_chuyen_mon) g.to_chuyen_mon = m.to_chuyen_mon;
         });
+        ds.forEach(function (g) { daVe[g.ho_ten] = true; });
         if (!ds.length) return;
         html += '<div class="dau-muc" style="text-align:left;margin:20px 0 10px"><div class="nhan-nho">' + nh.ten +
           ' · ' + ds.length + ' người</div></div><div class="luoi-cbgv">';
         html += ds.map(function (m) {
-          var u = nd[(m.email || '').toLowerCase()];
-          var daVao = !!(u && u.trang_thai === 'hoat_dong');
+          // Duyệt mọi email của người này: lấy ảnh đại diện đầu tiên tìm được,
+          // và chỉ cần MỘT email đã đăng nhập là coi như đã kích hoạt.
+          var u = null, daVao = false;
+          m.emails.forEach(function (e) {
+            var x = nd[(e || '').toLowerCase()];
+            if (!x) return;
+            if (!u || (!u.anh_dai_dien && x.anh_dai_dien)) u = x;
+            if (x.trang_thai === 'hoat_dong') daVao = true;
+          });
           // Chỉ nhận đường dẫn http(s) — ô link nhập tay có thể chứa 'javascript:'
           var link = /^https?:\/\//i.test(m.link_drive || '') ? m.link_drive : '';
           return '<div class="the-cbgv">' +
