@@ -163,14 +163,21 @@
       td.forEach(function (r) { oTD[r.thoi_diem] = r; });
       var trong = '<span class="nghieng">(nhà trường bổ sung)</span>';
 
+      // Thể thức NĐ 30 — dùng chung cách trình bày với xuat-word.js: tên
+      // trường ngắt sau cấp học (ô 38% quá hẹp, để Word tự ngắt là rớt chữ
+      // lẻ xuống dòng cuối), gạch chân chỉ dài 1/3-1/2 dòng chữ.
       var theThuc = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
-        '<td style="border:none;padding:0;width:38%;text-align:center;font-size:12pt">' +
-        chan(W().cauHinh('CO_QUAN_QUAN_LY').toUpperCase()) + '<br><b>' + chan(W().cauHinh('TEN_TRUONG').toUpperCase()) + '</b><br>' +
-        '<span style="font-size:12pt">Số: ' + chan(tt.so_ke_hoach || '……/KH-THDL') + '</span></td>' +
-        '<td style="border:none;padding:0;width:62%;text-align:center;font-size:12pt">' +
+        '<td style="border:none;padding:0;width:38%;text-align:center;vertical-align:top;font-size:12pt">' +
+        chan(W().cauHinh('CO_QUAN_QUAN_LY').toUpperCase()) + '<br>' +
+        '<b>' + W().ngatTenTruong(W().cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
+        W().gach(32) +
+        '<p style="margin:8pt 0 0;font-size:12pt">Số: ' + chan(tt.so_ke_hoach || '……/KH-THDL') + '</p></td>' +
+        '<td style="border:none;padding:0;width:62%;text-align:center;vertical-align:top;font-size:12pt">' +
         '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b><br>' +
-        '<b>Độc lập - Tự do - Hạnh phúc</b><br>' +
-        '<span class="nghieng">' + chan(W().diaDanh()) + ', ' + ngayBanHanh(tt.ngay_ban_hanh) + '</span></td></tr></table>';
+        '<b style="font-size:13pt">Độc lập - Tự do - Hạnh phúc</b>' +
+        W().gach(30) +
+        '<p class="nghieng" style="margin:12pt 0 0;font-size:13pt">' +
+        chan(W().diaDanh()) + ', ' + ngayBanHanh(tt.ngay_ban_hanh) + '</p></td></tr></table>';
 
       var b6 = ['Cuối học kỳ I', 'Cuối năm học'].map(function (thoiDiem, i) {
         var r = oTD[thoiDiem] || {};
