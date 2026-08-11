@@ -30,8 +30,8 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608130">
-  <link rel="stylesheet" href="style.css?v=202608130">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608140">
+  <link rel="stylesheet" href="style.css?v=202608140">
 </head>
 <body class="dang-khoa">
 
@@ -51,14 +51,20 @@
       <div class="ten dien-ten-truong">Trường Tiểu học Diễn Liên</div>
       <div class="dia-chi">Xã Quảng Châu, tỉnh Nghệ An</div>
     </div>
-    <nav class="menu">
-      <button data-di="home" class="dang-chon">Trang chủ</button>
-      <button data-di="hoso">Quản trị Hồ sơ</button>
-      <button data-di="hocsinh">Quản lý học sinh</button>
-      <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
-      <button data-di="dbcl">Đảm bảo chất lượng</button>
-    </nav>
-    <div class="khu-tai-khoan" id="khu-tai-khoan"></div>
+    <!-- Nút ☰ chỉ hiện khi thanh menu không đủ chỗ nằm một hàng (<1360px).
+         Khi đó menu và khu tài khoản gộp chung vào một bảng xổ xuống, nhờ vậy
+         đầu trang trên điện thoại chỉ còn một hàng: logo · tên trường · ☰ -->
+    <button class="nut-menu" id="nut-menu" aria-label="Mở menu" aria-expanded="false" aria-controls="khu-dieu-huong">☰</button>
+    <div class="khu-dieu-huong" id="khu-dieu-huong">
+      <nav class="menu">
+        <button data-di="home" class="dang-chon">Trang chủ</button>
+        <button data-di="hoso">Quản trị Hồ sơ</button>
+        <button data-di="hocsinh">Quản lý học sinh</button>
+        <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
+        <button data-di="dbcl">Đảm bảo chất lượng</button>
+      </nav>
+      <div class="khu-tai-khoan" id="khu-tai-khoan"></div>
+    </div>
   </div>
 </header>
 <div class="bang-xem-thu" id="bang-xem-thu">👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu — chưa nối cơ sở dữ liệu</div>
@@ -350,23 +356,23 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608130"></script>
+<script src="js/cauhinh.js?v=202608140"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608130"></script>
-<script src="js/du-lieu-sql.js?v=202608130"></script>
-<script src="js/quan-tri.js?v=202608130"></script>
-<script src="js/supabase-ket-noi.js?v=202608130"></script>
-<script src="js/app.js?v=202608130"></script>
-<script src="js/hoso-sua.js?v=202608130"></script>
-<script src="js/xuat-word.js?v=202608130"></script>
-<script src="js/tcqg.js?v=202608130"></script>
-<script src="js/tcqg-hoidong.js?v=202608130"></script>
-<script src="js/tcqg-word.js?v=202608130"></script>
-<script src="js/bach-lieu-shim.js?v=202608130"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608130"></script>
-<script src="js/co-so.js?v=202608130"></script>
-<script src="js/dbcl.js?v=202608130"></script>
-<script src="js/link-cbgv.js?v=202608130"></script>
-<script src="js/hocsinh.js?v=202608130"></script>
+<script src="js/du-lieu-demo.js?v=202608140"></script>
+<script src="js/du-lieu-sql.js?v=202608140"></script>
+<script src="js/quan-tri.js?v=202608140"></script>
+<script src="js/supabase-ket-noi.js?v=202608140"></script>
+<script src="js/app.js?v=202608140"></script>
+<script src="js/hoso-sua.js?v=202608140"></script>
+<script src="js/xuat-word.js?v=202608140"></script>
+<script src="js/tcqg.js?v=202608140"></script>
+<script src="js/tcqg-hoidong.js?v=202608140"></script>
+<script src="js/tcqg-word.js?v=202608140"></script>
+<script src="js/bach-lieu-shim.js?v=202608140"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608140"></script>
+<script src="js/co-so.js?v=202608140"></script>
+<script src="js/dbcl.js?v=202608140"></script>
+<script src="js/link-cbgv.js?v=202608140"></script>
+<script src="js/hocsinh.js?v=202608140"></script>
 </body>
 </html>

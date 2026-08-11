@@ -532,14 +532,15 @@
   }
 
   // ══════════════════ LƯU ══════════════════
+  // CHỈ gửi những cột thật sự đổi. Trước đây hàm này dựng lại CẢ bản ghi từ
+  // bản chụp TC nạp lúc mở trang, nên hai người cùng chấm một tiêu chí thì
+  // người bấm sau ghi đè bản chụp cũ lên bài của người bấm trước (mất trắng
+  // hiện trạng + tụt muc_dat). Hội đồng 7 người ngồi chấm cùng buổi là gặp.
   function luuTDG(ma, thayDoi, sauKhi) {
     xepHang(function () {
       var c = TC.filter(function (t) { return t.ma === ma; })[0];
       var banGhi = {
         nam_hoc: NAM, tieu_chi_ma: ma,
-        dat_m1: c.datM1, dat_m2: c.datM2,
-        hien_trang_m1: c.htM1 || null, hien_trang_m2: c.htM2 || null,
-        ghi_chu: c.ghiChu || null,
         cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
       };
       Object.keys(thayDoi).forEach(function (k) { banGhi[k] = thayDoi[k]; });
@@ -561,9 +562,12 @@
 
   window.tcqgSetMuc = function (ma, muc, dat) {
     if (!coQuyenCham()) { window.notify('Thầy cô không có quyền chấm mức.'); return; }
-    var c = TC.filter(function (t) { return t.ma === ma; })[0];
     var thayDoi;
-    if (muc === 1) thayDoi = dat ? { dat_m1: true, dat_m2: c.self >= 2 } : { dat_m1: false, dat_m2: false };
+    // Bấm "đạt Mức 1" thì KHÔNG đụng tới dat_m2: trước đây câu này gửi kèm
+    // dat_m2 = (c.self >= 2) lấy từ bản chụp cũ, nên nếu người khác vừa chấm
+    // đạt Mức 2 xong thì thao tác này hạ ngược Mức 2 xuống.
+    // Bỏ Mức 1 thì buộc phải bỏ luôn Mức 2 — ràng buộc tdg_muc_tuan_tu.
+    if (muc === 1) thayDoi = dat ? { dat_m1: true } : { dat_m1: false, dat_m2: false };
     else thayDoi = { dat_m1: true, dat_m2: dat };
     luuTDG(ma, thayDoi, function () {
       veStats(); veList(); veChiTiet();

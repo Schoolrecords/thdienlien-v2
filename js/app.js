@@ -39,9 +39,36 @@
       b.classList.toggle('dang-chon', b.getAttribute('data-di') === nutSang);
     });
     $('#hero').style.display = (ma === 'home') ? '' : 'none';
+    dongBangMenu();          // chọn xong thì bảng ☰ tự đóng
     window.scrollTo(0, 0);
   }
   window.chuyenManHinh = chuyenManHinh;
+
+  // ── Nút ☰ (chỉ hiện dưới 1360px, CSS lo phần ẩn/hiện) ──
+  function dongBangMenu() {
+    var khu = $('#khu-dieu-huong'), nut = $('#nut-menu');
+    if (!khu || !nut) return;
+    khu.classList.remove('mo');
+    nut.setAttribute('aria-expanded', 'false');
+  }
+  (function ganNutMenu() {
+    var khu = $('#khu-dieu-huong'), nut = $('#nut-menu');
+    if (!khu || !nut) return;
+    nut.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var mo = khu.classList.toggle('mo');
+      nut.setAttribute('aria-expanded', mo ? 'true' : 'false');
+    });
+    // Bấm ra ngoài thì đóng. Chip tài khoản bên trong bảng đã stopPropagation
+    // nên mở hộp tài khoản không làm sập cả bảng.
+    document.addEventListener('click', function (e) {
+      if (khu.contains(e.target) || e.target === nut) return;
+      dongBangMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') dongBangMenu();
+    });
+  })();
 
   // ── Đếm chung ──
   function demTrangThai(ds) {
@@ -124,7 +151,7 @@
       });
       vung.innerHTML = kq.length
         ? '<div class="sub open"><div class="sub-body" style="display:block"><table class="rec-tbl"><thead><tr>' +
-          '<th style="width:120px">Mã minh chứng<br><span class="th-phu">mã mới / mã cũ</span></th><th>Tên minh chứng</th>' +
+          '<th style="width:120px">Mã hồ sơ</th><th>Tên hồ sơ</th>' +
           '<th style="width:170px">Người phụ trách</th><th style="width:190px;text-align:right">Trạng thái</th></tr></thead><tbody>' +
           kq.map(function (h) { return dongBang(h, true); }).join('') + '</tbody></table></div></div>'
         : '<div class="the-thong-bao">Không tìm thấy hồ sơ phù hợp.</div>';
@@ -191,7 +218,7 @@
           ' onclick="event.stopPropagation();xuatHopWord(\'' + maHop + '\')">📄 Tải file Word</button>' +
           '<span class="sub-cnt">' + ds.length + ' hồ sơ</span><span class="sub-arrow">▶</span></div>' +
           '<div class="sub-body"><table class="rec-tbl"><thead><tr>' +
-          '<th style="width:120px">Mã minh chứng<br><span class="th-phu">mã mới / mã cũ</span></th><th>Tên minh chứng</th>' +
+          '<th style="width:120px">Mã hồ sơ</th><th>Tên hồ sơ</th>' +
           '<th style="width:170px">Người phụ trách</th><th style="width:190px;text-align:right">Trạng thái</th></tr></thead>' +
           '<tbody>' + ds.map(function (h) { return dongBang(h, false); }).join('') + '</tbody></table></div></div>';
       }).join('');

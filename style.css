@@ -106,6 +106,51 @@ header.dau-trang {
   .ten-khu { flex: 0 0 auto; margin-right: 0; }
   .khu-tai-khoan { margin-left: auto; }
 }
+/* Bọc menu + khu tài khoản để gộp chúng thành MỘT bảng xổ xuống trên máy hẹp.
+   display:contents nghĩa là trên màn rộng cái bọc này coi như không tồn tại —
+   nav và khu tài khoản vẫn là con trực tiếp của .khung như trước. */
+.khu-dieu-huong { display: contents; }
+.nut-menu { display: none; }
+
+/* ── Đầu trang trên điện thoại và máy tính bảng (dưới 1360px) ──
+   Trước đây 5 nút menu xuống dòng thành 2–3 hàng, cộng thêm cụm tên người
+   dùng, chiếm gần nửa màn hình điện thoại. Nay gói hết vào nút ☰ như bản
+   THCS Bạch Liêu: đầu trang chỉ còn một hàng, cao đúng 66px ở mọi bề rộng. */
+@media (max-width: 1359px) {
+  .dau-trang .khung { position: relative; flex-wrap: nowrap; }
+  .ten-khu { margin-right: auto; min-width: 0; }
+  .ten-khu .ten { font-size: 15.5px; }
+  .nut-menu {
+    display: grid; place-items: center; flex: 0 0 auto;
+    width: 44px; height: 44px; font-size: 21px; line-height: 1; cursor: pointer;
+    color: #fff; background: rgba(255, 255, 255, .1);
+    border: 1px solid rgba(255, 255, 255, .22); border-radius: 12px;
+  }
+  .nut-menu:hover { background: rgba(255, 255, 255, .18); }
+
+  .khu-dieu-huong {
+    display: none;
+    position: absolute; top: calc(100% + 8px); left: 12px; right: 12px; z-index: 200;
+    background: var(--dam-2); border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 14px; padding: 10px;
+    box-shadow: 0 18px 44px rgba(8, 18, 42, .45);
+  }
+  .khu-dieu-huong.mo { display: block; }
+  .khu-dieu-huong nav.menu {
+    flex-direction: column; gap: 6px; overflow: visible; padding: 0; max-width: none;
+  }
+  .khu-dieu-huong nav.menu button { width: 100%; text-align: left; }
+  .khu-dieu-huong .khu-tai-khoan {
+    margin: 10px 0 0; padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, .16);
+  }
+  .khu-dieu-huong .chip-nguoi,
+  .khu-dieu-huong .nut-dang-nhap { width: 100%; }
+  /* Hộp tài khoản nằm trong bảng thì trải thẳng ra, không xổ đè lên trang */
+  .khu-dieu-huong .hop-tai-khoan {
+    position: static; margin-top: 8px; min-width: 0; box-shadow: none;
+  }
+}
 .logo-truong {
   width: 46px; height: 46px; border-radius: 50%; background: #fff;
   object-fit: contain; padding: 2px; flex: 0 0 auto;
@@ -175,9 +220,14 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
    2 cột cho cân. Từ 1100px xếp đủ 5 cột, trả ô cuối về bình thường. */
 .dai-so-lieu .o:last-child { grid-column: span 2; }
 @media (min-width: 700px)  { .dai-so-lieu { grid-template-columns: repeat(3, 1fr); } }
+/* Từ 1100px cả 5 ô nằm trên MỘT hàng — lúc đó bỏ hẳn khe hở và ngăn nhau
+   bằng một đường tóc mảnh, đúng kiểu Bạch Liêu: nhìn ra một dải liền tràn
+   mờ dần chứ không phải 5 cái thẻ xếp cạnh nhau. Dưới 1100px vẫn giữ khe,
+   vì ô xuống hàng thì đường kẻ dọc sẽ đứng sai chỗ. */
 @media (min-width: 1100px) {
-  .dai-so-lieu { grid-template-columns: repeat(5, 1fr); }
+  .dai-so-lieu { grid-template-columns: repeat(5, 1fr); gap: 0; }
   .dai-so-lieu .o:last-child { grid-column: auto; }
+  .dai-so-lieu .o + .o { border-left: 1px solid rgba(255, 255, 255, .14); }
 }
 /* Ô KHÔNG có nền riêng — nền thuộc về cả dải, nhờ vậy vệt mờ chạy liền mạch */
 .dai-so-lieu .o {
@@ -194,27 +244,11 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
 .dai-so-lieu .so { font-size: 26px; font-weight: 700; color: var(--vang); line-height: 1.05; }
 .dai-so-lieu .nhan { font-size: 12.3px; color: #fff; opacity: .85; display: block; }
 
-/* ── Điện thoại: dải số liệu 2 cột rất hẹp, phải thu nhỏ huy hiệu và chữ,
-      nếu không nhãn "đầu hồ sơ được quản lý" chỉ còn ~64px bề ngang, vỡ chữ.
-      GIỮ 2 cột, KHÔNG hạ về 1 cột: ô cuối đang đặt grid-column:span 2, xuống
-      1 cột thì lưới tự nở thành 2 cột và bố cục vỡ. ── */
-@media (max-width: 560px) {
-  .dai-so-lieu { padding: 12px; gap: 8px; }
-  .dai-so-lieu .o { padding: 6px 2px; gap: 10px; }
-  .dai-so-lieu .bi { flex: 0 0 38px; width: 38px; height: 38px; font-size: 17px; }
-  .dai-so-lieu .so { font-size: 21px; }
-  .dai-so-lieu .nhan { font-size: 11.4px; line-height: 1.35; }
-  .hero .khung { padding: 28px 14px 22px; }
-  .hs-hero { padding: 24px 14px 22px; }
-  .hs-hero .hs-pill { padding: 9px 16px; font-size: 13px; }
-  .hs-nam-boc { flex-wrap: wrap; }
-  .the-khoi { padding: 16px 8px 14px; }
-  .the-khoi .hai-cot { gap: 14px; }
-  .the-khoi .hai-cot .so { font-size: 18px; }
-  .the-khoi .huy { width: 40px; height: 40px; font-size: 18px; margin-bottom: 9px; }
-  .the-khoi .ten-khoi { font-size: 15px; }
-  .cong-hop { padding: 26px 20px 20px; }
-}
+/* Các tinh chỉnh cho điện thoại đã CHUYỂN XUỐNG CUỐI TỆP — xem mục
+   "ĐIỆN THOẠI". Lý do: @media KHÔNG cộng thêm độ đặc hiệu, nên khi khối
+   @media đứng ở đây mà .the-khoi / .hs-hero / .hai-cot lại được khai báo
+   sau (dòng ~559–604), quy tắc sau thắng và 6/11 dòng tinh chỉnh thành
+   code chết. Quy tắc chung: khối @media phải nằm SAU mọi quy tắc nó sửa. */
 
 /* ═══ Khung nội dung ═══ */
 main { max-width: var(--rong-khung); margin: 0 auto; padding: 26px 16px 10px; }
@@ -405,7 +439,12 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
   background-size: 14px 14px, auto;
 }
-.dai-so-lieu .o { background-image: var(--cham-navy), linear-gradient(135deg, rgba(20, 48, 107, .82), rgba(30, 69, 147, .78)); }
+/* .dai-so-lieu .o KHÔNG có nền riêng — xem chú thích ở khối .dai-so-lieu:
+   cả dải là MỘT tấm nền duy nhất tắt dần sang phải để lộ ảnh trường. Dòng
+   gán background-image cho từng ô đã bị gỡ vì nó phá đúng hiệu ứng đó:
+   mỗi ô lại có tấm navy đục riêng, che mép phải và biến khe 10px giữa các
+   ô thành đường kẻ thật. Muốn giữ hoa văn chấm thì đặt lên CẢ DẢI, không
+   đặt lên từng ô. */
 
 /* ═══ Khu tài khoản + đăng nhập (thêm 10/8/2026) ═══ */
 .khu-tai-khoan { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
@@ -463,21 +502,46 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 .bang-trang-thai.loi  { background: #fdeaea; color: #a33; border-bottom: 1px solid #f2cccc; }
 
 /* Thẻ danh bạ CBGV-NV */
-.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+/* Thẻ CBGV kiểu Bạch Liêu: mũ navy có hoa văn chấm, huy hiệu chữ tắt tràn
+   xuống mép mũ, rồi tên · chức vụ · trạng thái · nút mở thư mục Drive.
+   Chiều cao rút còn ~60% bản Bạch Liêu (≈160px so với ≈265px): mũ mỏng hơn,
+   huy hiệu 40px thay vì 62px, bỏ dòng email — email đã có ở tab Quản trị. */
+.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; }
 .the-cbgv {
-  display: flex; align-items: center; gap: 11px;
-  background: var(--the); border: 1px solid var(--vien); border-radius: 14px; padding: 12px 14px;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column; text-align: center;
+  transition: transform .15s, box-shadow .15s;
 }
-.the-cbgv .anh { width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto; object-fit: cover; }
-.the-cbgv .anh.chu {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--kem); font-size: 21px;
+.the-cbgv:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20, 48, 107, .13); }
+.the-cbgv .mu {
+  height: 34px; position: relative;
+  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-size: 14px 14px, auto;
 }
-.the-cbgv .phan-chu { min-width: 0; }
-.the-cbgv b { font-size: 14.5px; display: block; }
-.the-cbgv small { display: block; font-size: 12px; color: var(--chu-mo); }
-.the-cbgv .da-vao { color: #2d8a6e; }
-.the-cbgv .chua-vao { color: #98a4b5; }
+.the-cbgv .mu .anh {
+  position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%);
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  background: #fff; color: var(--dam); font-size: 14px; font-weight: 800;
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 3px #fff, 0 3px 10px rgba(10, 25, 60, .25);
+}
+.the-cbgv .than {
+  padding: 26px 11px 11px; display: flex; flex-direction: column; gap: 2px; flex: 1;
+}
+.the-cbgv .than b { font-size: 14px; color: var(--dam); line-height: 1.3; }
+.the-cbgv .vt { font-size: 11.8px; color: var(--chu-mo); }
+.the-cbgv .tt { font-size: 11.2px; margin-bottom: 9px; }
+.the-cbgv .da-vao  { color: #1f7a5e; }
+.the-cbgv .chua-vao { color: #6b7688; }
+.the-cbgv .nut-hs {
+  margin-top: auto; display: block; width: 100%; text-decoration: none;
+  font: inherit; font-size: 12.4px; font-weight: 700; padding: 9px 8px;
+  border: 0; border-radius: 9px; background: var(--dam); color: #fff;
+}
+.the-cbgv .nut-hs:hover { background: var(--dam-2); }
+.the-cbgv .nut-hs.trong { background: #eef2f8; color: #6b7688; cursor: default; }
+
+.the-cbgv .than b, .the-cbgv .than small { display: block; }
 .nut-drive { margin-left: auto; text-decoration: none; font-size: 18px; flex: 0 0 auto; }
 .dong-ho-so .nut-drive { margin-left: 0; }
 
@@ -923,8 +987,11 @@ td.tdst { white-space: nowrap; text-align: right; }
 /* Hai cột làm việc */
 .kd-lam { display: grid; gap: 14px; grid-template-columns: 1fr; align-items: stretch; }
 @media (min-width: 1000px) { .kd-lam { grid-template-columns: 45fr 55fr; } }
-.kd-lam.rong { grid-template-columns: 1fr; }
-.kd-lam.rong .kd-trai { display: none; }
+/* Chế độ "Chỉnh sửa" (lớp .rong) TRƯỚC ĐÂY ẩn hẳn cột trái để lấy chỗ gõ.
+   Hệ quả: đang sửa thì mất luôn danh sách 15 tiêu chí, không nhảy sang tiêu
+   chí khác được và màn hình trông như một trang khác hẳn. Nay chỉ NỚI cột
+   phải, cột trái vẫn còn — thầy Chung yêu cầu giữ bố cục hai cột. */
+@media (min-width: 1000px) { .kd-lam.rong { grid-template-columns: 32fr 68fr; } }
 .kd-trai {
   background: var(--the); border: 1px solid var(--vien); border-radius: 13px;
   box-shadow: var(--bong); display: flex; flex-direction: column; overflow: hidden;
@@ -1273,4 +1340,109 @@ td.tdst { white-space: nowrap; text-align: right; }
 #mh-chuanqg .chu-thich-phap-ly {
   background: #f2f7ff; border: 1px solid #d8e6fb; border-radius: 11px;
   color: #33506e; font-size: 12.9px; text-align: left;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ĐIỆN THOẠI — phải nằm CUỐI TỆP
+   Khối này trước đây đứng ở dòng ~201, trước khi .the-khoi / .hs-hero /
+   .hai-cot được khai báo. @media không cộng thêm độ đặc hiệu, nên quy tắc
+   khai báo sau thắng và 6 trong 11 dòng dưới đây là code chết. Chuyển xuống
+   cuối là hết. Thêm dòng nào ở đây thì cũng phải giữ nó ở cuối tệp.
+
+   GIỮ dải số liệu 2 cột, KHÔNG hạ về 1 cột: ô cuối đang đặt grid-column:span 2,
+   xuống 1 cột thì lưới tự nở thành 2 cột và bố cục vỡ.
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 560px) {
+  .dai-so-lieu { padding: 12px; gap: 8px; }
+  .dai-so-lieu .o { padding: 6px 2px; gap: 10px; }
+  .dai-so-lieu .bi { flex: 0 0 38px; width: 38px; height: 38px; font-size: 17px; }
+  .dai-so-lieu .so { font-size: 21px; }
+  .dai-so-lieu .nhan { font-size: 11.4px; line-height: 1.35; }
+  .hero .khung { padding: 28px 14px 22px; }
+  .hs-hero { padding: 24px 14px 22px; }
+  .hs-hero .hs-pill { padding: 9px 16px; font-size: 13px; }
+  .hs-nam-boc { flex-wrap: wrap; }
+  .the-khoi { padding: 16px 8px 14px; }
+  .the-khoi .hai-cot { gap: 14px; }
+  .the-khoi .hai-cot .so { font-size: 18px; }
+  .the-khoi .huy { width: 40px; height: 40px; font-size: 18px; margin-bottom: 9px; }
+  .the-khoi .ten-khoi { font-size: 15px; }
+  .cong-hop { padding: 26px 20px 20px; }
+}
+
+/* Thanh công cụ TT57 dính ở top:66px — đúng bằng chiều cao đầu trang khi menu
+   nằm một hàng. Từ khi có nút ☰ (khối @media ở đầu tệp), đầu trang luôn cao
+   66px ở mọi bề rộng nên số này lại đúng. Dưới 1000px màn xếp dọc, dính thêm
+   chỉ tổ chiếm chỗ — cho về static. */
+@media (max-width: 999px) { .kd-thanh { position: static; } }
+
+/* Danh sách 15 tiêu chí bị nhốt trong hộp cuộn 640px → cuộn lồng: ngón tay
+   cuộn trong hộp thì trang đứng yên. Trên điện thoại người dùng đọc là
+   "trang bị kẹt". Chỉ giữ hộp cuộn khi màn đủ rộng để thấy cả hai cột. */
+@media (max-width: 999px) { #kd-list { max-height: none; } }
+
+/* Vùng chạm tối thiểu 44px trên thiết bị cảm ứng.
+   .nh-mc là nút gắn/gỡ mã minh chứng — thao tác lặp hàng trăm lần trong một
+   kỳ tự đánh giá — trước đây chỉ cao ~24px. Mẫu @media (hover:none) này đã có
+   sẵn ở khối .rec-tbl .drive, đây là mở rộng cho phần còn lại. */
+@media (hover: none) {
+  .nh-mc, .tag-crit, .chip-loc, .ct-quaylai, .nut-vien, .sub-word, .nut-luu-nd {
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+  .hs-dau button, .sheet-x { width: 44px; height: 44px; }
+}
+
+/* Trạng thái focus: cả tệp trước đây chỉ có 3 quy tắc :focus, hai trong số đó
+   còn viết outline:0. Người dùng bàn phím không biết mình đang ở đâu.
+   :focus-visible nên chuột bấm không hiện viền, chỉ hiện khi đi bằng Tab. */
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--chinh);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Người bị rối loạn tiền đình tắt hiệu ứng ở cấp hệ điều hành — tôn trọng. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   IN GIẤY
+   Nút "In danh sách" gọi window.print() từ TRONG lớp phủ .overlay, mà lớp phủ
+   là position:fixed — trình duyệt in phần tử fixed chỉ ra đúng một khung nhìn
+   đầu tiên, nên danh sách 30 em mất từ em thứ ~12 trở đi. Khối này gỡ fixed,
+   bỏ mọi thứ không thuộc về tờ giấy, và cấm cắt ngang một dòng bảng.
+   ════════════════════════════════════════════════════════════════════════════ */
+@media print {
+  header.dau-trang, nav.menu, .hero, .hs-hero, footer,
+  .bang-xem-thu, .bang-trang-thai, .toast, .sheet-x, .nut-kiem-tra { display: none !important; }
+
+  .overlay, .hs-lop {
+    position: static !important;
+    overflow: visible !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  .sheet, .hs-hop {
+    min-height: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .cuon-ngang { overflow: visible !important; }
+  .bang-quan-tri, .rec-tbl { min-width: 0 !important; font-size: 11pt; }
+  .bang-quan-tri thead, .rec-tbl thead { display: table-header-group; }
+  tr, .the-hop, .cat, .the-khoi { break-inside: avoid; }
+
+  body { background: #fff; color: #000; }
+  a[href]::after { content: ""; }   /* không in đuôi URL vào giữa câu */
+  @page { margin: 15mm 12mm; }
 }

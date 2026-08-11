@@ -117,6 +117,15 @@
     });
   };
 
+  // Chữ tắt trên huy hiệu: chữ đầu của HỌ + chữ đầu của TÊN — "Nguyễn Phúc Lộc"
+  // ra "NL", đúng kiểu thẻ của Bạch Liêu. Tên một chữ thì lấy đúng chữ đó.
+  function chuTat(hoTen) {
+    var tu = String(hoTen || '').trim().split(/\s+/).filter(Boolean);
+    if (!tu.length) return '?';
+    if (tu.length === 1) return tu[0].charAt(0).toUpperCase();
+    return (tu[0].charAt(0) + tu[tu.length - 1].charAt(0)).toUpperCase();
+  }
+
   // ── Danh bạ CBGV-NV (màn Hồ sơ CBGV) ──
   function napCBGV(may) {
     Promise.all([
@@ -151,15 +160,25 @@
           ' · ' + ds.length + ' người</div></div><div class="luoi-cbgv">';
         html += ds.map(function (m) {
           var u = nd[(m.email || '').toLowerCase()];
+          var daVao = !!(u && u.trang_thai === 'hoat_dong');
+          // Chỉ nhận đường dẫn http(s) — ô link nhập tay có thể chứa 'javascript:'
+          var link = /^https?:\/\//i.test(m.link_drive || '') ? m.link_drive : '';
           return '<div class="the-cbgv">' +
-            (u && u.anh_dai_dien ? '<img class="anh" src="' + thoat(u.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">' : '<span class="anh chu">👤</span>') +
-            '<div class="phan-chu"><b>' + thoat(m.ho_ten) + '</b>' +
-            '<small>' + thoat(m.chuc_vu || TEN_VAI_TRO[m.vai_tro]) +
+            '<div class="mu">' +
+            (u && u.anh_dai_dien
+              ? '<img class="anh" src="' + thoat(u.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">'
+              : '<span class="anh chu-tat">' + thoat(chuTat(m.ho_ten)) + '</span>') +
+            '</div>' +
+            '<div class="than">' +
+            '<b>' + thoat(m.ho_ten) + '</b>' +
+            '<small class="vt">' + thoat(m.chuc_vu || TEN_VAI_TRO[m.vai_tro]) +
             (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') + '</small>' +
-            '<small class="' + (u && u.trang_thai === 'hoat_dong' ? 'da-vao' : 'chua-vao') + '">' +
-            (u && u.trang_thai === 'hoat_dong' ? '● Đã kích hoạt tài khoản' : '○ Chưa đăng nhập lần nào') + '</small></div>' +
-            (m.link_drive ? '<a class="nut-drive" target="_blank" rel="noopener" href="' + thoat(m.link_drive) + '">📁</a>' : '') +
-            '</div>';
+            '<small class="tt ' + (daVao ? 'da-vao' : 'chua-vao') + '">' +
+            (daVao ? '● Đã kích hoạt tài khoản' : '○ Chưa đăng nhập lần nào') + '</small>' +
+            (link
+              ? '<a class="nut-hs" target="_blank" rel="noopener" href="' + thoat(link) + '">📁 Hồ sơ cá nhân</a>'
+              : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này">📁 Chưa gán thư mục</span>') +
+            '</div></div>';
         }).join('');
         html += '</div>';
       });

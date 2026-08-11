@@ -136,8 +136,8 @@
       ' &nbsp;·&nbsp; <b>Còn phải hoàn thiện:</b> ' + (ds.length - daCo) + '</p>' +
       '<table><thead><tr>' +
       '<th style="width:6%">TT</th>' +
-      '<th style="width:17%">Mã minh chứng<br><span style="font-weight:normal;font-size:10pt">mã mới / mã cũ</span></th>' +
-      '<th style="width:45%">Tên minh chứng</th>' +
+      '<th style="width:17%">Mã hồ sơ</th>' +
+      '<th style="width:45%">Tên hồ sơ</th>' +
       '<th style="width:14%">Trạng thái</th>' +
       '<th style="width:18%">Thời hạn hoàn thành</th>' +
       '</tr></thead><tbody>' + dong + '</tbody></table>' +

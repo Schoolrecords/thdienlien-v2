@@ -30,10 +30,14 @@
   var daNoi = false;
 
   // ── Đọc hết bảng lớn theo trang 1000 dòng (mẫu chung của dự án) ──
+  // BẮT BUỘC có .order(): PostgREST không hứa thứ tự nào cả nếu truy vấn
+  // không sắp xếp, nên phân trang bằng .range() có thể lấy lặp dòng của
+  // trang trước và bỏ sót dòng khác — sĩ số sai mà không có dấu hiệu gì.
+  // Một năm 863 em thì chưa chạm trần; thêm năm học nữa là lộ ngay.
   function taiHet(bang, cot, loc) {
     var ket = [], tu = 0, buoc = 1000;
     function trang() {
-      var q = window.MAY_CHU.from(bang).select(cot).range(tu, tu + buoc - 1);
+      var q = window.MAY_CHU.from(bang).select(cot).order('id').range(tu, tu + buoc - 1);
       (loc || []).forEach(function (l) { q = q.eq(l[0], l[1]); });
       return q.then(function (r) {
         if (r.error) throw r.error;
