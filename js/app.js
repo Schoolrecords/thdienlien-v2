@@ -119,9 +119,12 @@
     var suaDuoc = window.coQuyenSuaHoSo ? window.coQuyenSuaHoSo(h.ma) : false;
     return '<tr data-ma="' + thoatHTML(h.ma) + '">' +
       '<td class="code">' + thoatHTML(h.ma) +
+      // Dòng nhỏ dưới mã: mã trong danh mục cũ, để đối chiếu với hồ sơ giấy
+      // đang lưu. Hồ sơ mới lập theo TT57 thì chưa có mã cũ — hiện dấu gạch
+      // cho gọn, đừng ghi chữ kẻo cột đọc ra như bảng chuyển mã.
       (h.maCu
         ? '<span class="ma-cu" title="Mã theo danh mục cũ, dùng đối chiếu hồ sơ giấy">' + thoatHTML(h.maCu) + '</span>'
-        : '<span class="ma-cu ma-moi" title="Minh chứng mới theo Thông tư 57">mục mới</span>') + '</td>' +
+        : '<span class="ma-cu ma-moi" title="Hồ sơ mới lập theo Thông tư 57 — chưa có trong danh mục cũ">—</span>') + '</td>' +
       '<td class="rname">' + thoatHTML(h.ten) +
       (hienHop ? '<span class="hop-phu">' + thoatHTML(window.HOP[h.hop].ten) + '</span>' : '') +
       '<span class="crits">' + (h.tc || []).map(function (c) {

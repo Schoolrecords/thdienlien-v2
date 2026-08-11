@@ -19,9 +19,25 @@
 
 ## Bước 2 — Tạo dự án Supabase (10 phút)
 1. Vào supabase.com → đăng nhập bằng Gmail trường → **New project**: tên `th-dien-lien`, region **Singapore**, gói **Free**.
-2. Vào **SQL Editor**, dán và chạy LẦN LƯỢT TỪNG FILE (mỗi lượt một file, đúng thứ tự) trong thư mục `thdienlien-v2-tailieu/sql/`:
-   `01-nen-tang.sql` → `02-danh-muc-ho-so.sql` → `03-tieu-chi-tt57.sql` → `04-hoc-sinh-tt27.sql` → `05-tu-danh-gia.sql`
+2. Vào **SQL Editor**, dán và chạy LẦN LƯỢT TỪNG FILE (mỗi lượt một file, **đúng thứ tự số**) trong thư mục `thdienlien-v2-tailieu/sql/`.
+   **Chạy đủ cả 19 file** — app phụ thuộc bắt buộc vào 10 (cơ sở, sáp nhập), 14 (năm học tự động), 15 (mức chuẩn QG), 16–17 (bảo mật), 19 (số liệu 3 năm):
+
+   | Nhóm | File | Nội dung |
+   |---|---|---|
+   | Nền | `01` → `05` | nền tảng · danh mục hồ sơ · tiêu chí TT57 · học sinh TT27 · tự đánh giá |
+   | Bổ sung | `06` → `07` | seed tài khoản · quét Drive |
+   | Chuẩn hoá | `08` → `09` | chuẩn hoá danh mục đợt 1 và 2 |
+   | Sáp nhập | `10` | cơ sở · trường tiền thân · lớp học |
+   | Nạp dữ liệu | `11` → `13` | link Drive · link từ Sheet sống · 863 học sinh |
+   | Chỉnh | `14` → `15` | năm học tự động · mức chuẩn QG lên Mức 2 |
+   | Bảo mật | `16` → `17` | bịt lỗ ghi số liệu · thu hồi quyền `anon` |
+   | Đối chiếu | `18` | tra link CBGV (chỉ đọc, chạy khi cần) |
+   | Số liệu | `19` | chốt hàm gộp số liệu 3 năm |
+
 3. Sau file 03, chạy câu kiểm tra cuối file — nội hàm phải ra **0 dòng lệch**.
+   Các file 16, 17, 19 cũng có câu kiểm tra ở cuối — mọi dòng phải ra `OK`.
+4. ⚠️ **KHÔNG chạy lại `01`, `10`, `12` trên CSDL đã dùng thật** — chúng sẽ đè ngược cấu hình Ban giám hiệu đã sửa tay. Chỉ chạy khi dựng mới.
+5. ⚠️ **KHÔNG chạy lại `08`, `09`** sau khi đã dựng cây thư mục Drive theo mã minh chứng — hai file này đánh lại toàn bộ mã, chạy lại là mã lệch với tên thư mục.
 
 ## Bước 3 — Bật đăng nhập Google (10 phút)
 1. Supabase → Authentication → Sign In / Up → Google → bật, chép **Callback URL**.
