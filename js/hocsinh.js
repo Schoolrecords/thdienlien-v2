@@ -13,7 +13,7 @@
 //  3. Đổi năm mà lỗi thì TRẢ CẢ biến năm LẪN ô chọn về như cũ — không để ô chọn
 //     một đằng số liệu một nẻo, vì năm học in cả lên bản danh sách.
 //
-// Nghị định 13/2023: số định danh cá nhân nằm ở bảng riêng (hoc_sinh_dinh_danh),
+// Luật Bảo vệ dữ liệu cá nhân 2025: số định danh cá nhân nằm ở bảng riêng (hoc_sinh_dinh_danh),
 // màn này KHÔNG đọc và KHÔNG hiện.
 // ============================================================
 (function () {
@@ -295,7 +295,7 @@
           '<td>' + thoat(h.gioi_tinh || '') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<p style="font-size:12.6px;color:var(--chu-mo);margin-top:14px;line-height:1.7">' +
-      'Thông tin cá nhân của học sinh được bảo vệ theo Nghị định 13/2023/NĐ-CP. ' +
+      'Thông tin cá nhân của học sinh được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025. ' +
       '<b>Số định danh cá nhân có lưu trong hệ thống nhưng KHÔNG hiển thị ở màn hình này</b> — ' +
       'số đó nằm ở bảng riêng, chỉ quản trị đọc được.</p>';
 

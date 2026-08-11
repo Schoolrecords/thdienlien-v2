@@ -114,7 +114,7 @@
       .then(function (kq) {
         var ds = kq.data || [];
         hop.innerHTML = '<div class="nhan-nho" style="margin:14px 0 10px">60 thao tác gần nhất — nhật ký do máy chủ tự ghi, ' +
-          'không ai sửa/xóa được kể cả quản trị (Nghị định 13/2023/NĐ-CP).</div>' +
+          'không ai sửa/xóa được kể cả quản trị (Luật Bảo vệ dữ liệu cá nhân năm 2025).</div>' +
           (ds.length
             ? '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
               '<th>Thời gian</th><th>Ai</th><th>Làm gì</th><th>Ở đâu</th></tr></thead><tbody>' +

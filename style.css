@@ -1460,8 +1460,9 @@ td.tdst { white-space: nowrap; text-align: right; }
 .dh-dau b { font-size: 18px; color: var(--dam); letter-spacing: .4px; }
 .dh-dau small { display: block; color: var(--chu-mo); font-size: 13px; margin-top: 2px; }
 
-/* Thanh tab của module */
-.dh-thanh-tab { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 10px; }
+/* Thanh tab của module — cho XUỐNG DÒNG, không cuộn ngang: thầy Chung góp ý
+   11/8/2026 là không được có thanh trượt dưới dãy nút. */
+.dh-thanh-tab { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .dh-thanh-tab button {
   font: inherit; font-size: 13.2px; font-weight: 700; white-space: nowrap;
   padding: 10px 14px; border-radius: 999px; border: 1px solid var(--vien);
@@ -1627,3 +1628,30 @@ select.dh-o-nhap { width: auto; margin-top: 0; }
   .dh-nut-lon { flex: 1 1 auto; }
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════════
+   GÓP Ý GIAO DIỆN 11/8/2026 (thầy Chung) — nằm CUỐI TỆP để thắng quy tắc gốc
+   1) Menu chính KHÔNG hiện thanh trượt: vẫn cuộn được bằng tay/chạm khi thật
+      sự thiếu chỗ, nhưng ẩn thanh trượt (Windows luôn vẽ thanh trượt đè ngay
+      dưới dãy nút, rất rối mắt).
+   2) Nút đăng nhập / tài khoản thành NÚT TRÒN trên màn rộng — gọn đầu trang,
+      menu 6 nút đủ chỗ nằm một hàng. Dưới 1360px (trong bảng ☰) giữ nguyên
+      nút chữ đầy đủ để thầy cô mới dùng không phải đoán.
+   ════════════════════════════════════════════════════════════════════════════ */
+nav.menu { scrollbar-width: none; }
+nav.menu::-webkit-scrollbar { display: none; }
+
+.nut-dang-nhap { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.nut-dang-nhap .ic { width: 19px; height: 19px; flex: 0 0 auto; }
+
+@media (min-width: 1360px) {
+  .nut-dang-nhap {
+    width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%;
+  }
+  .nut-dang-nhap span { display: none; }
+  .chip-nguoi {
+    width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%;
+  }
+  .chip-nguoi .chip-chu { display: none; }
+  .chip-nguoi img, .chip-nguoi .anh-chu { width: 38px; height: 38px; }
+}

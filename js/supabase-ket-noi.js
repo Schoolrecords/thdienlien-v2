@@ -43,7 +43,7 @@
   function chanCong() {
     return '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
       'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
-      'Nghị định 13/2023/NĐ-CP.</div>';
+      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
   }
 
   // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
@@ -119,7 +119,11 @@
     if (!khu) return;
     var nd = window.NGUOI_DUNG;
     if (!nd) {
-      khu.innerHTML = '<button class="nut-dang-nhap" id="nut-dang-nhap">🔑 Đăng nhập</button>';
+      // Nút tròn trên màn rộng (CSS ẩn chữ, chỉ còn hình chìa khóa);
+      // trong bảng ☰ dưới 1360px vẫn là nút chữ đầy đủ.
+      khu.innerHTML = '<button class="nut-dang-nhap" id="nut-dang-nhap" title="Đăng nhập" aria-label="Đăng nhập">' +
+        '<svg class="ic" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9-9"/><path d="m17 6 3 3"/></svg>' +
+        '<span>Đăng nhập</span></button>';
       document.getElementById('nut-dang-nhap').addEventListener('click', dangNhap);
       return;
     }
