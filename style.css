@@ -1446,3 +1446,184 @@ td.tdst { white-space: nowrap; text-align: right; }
   a[href]::after { content: ""; }   /* không in đuôi URL vào giữa câu */
   @page { margin: 15mm 12mm; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MODULE ĐIỀU HÀNH NHÀ TRƯỜNG (dieu-hanh.js) — toàn bộ tiền tố .dh-
+   Thiết kế mobile-first: nút lớn, thao tác một tay, 4 màu trạng thái thống
+   nhất (xanh / vàng / đỏ / xám). Khối này nằm CUỐI TỆP; media query riêng của
+   nó đặt ngay sau các quy tắc gốc — đúng quy tắc "@media phải nằm sau mọi quy
+   tắc nó sửa" đã ghi trong nhật ký dự án.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Đầu ngày */
+.dh-dau { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; }
+.dh-dau b { font-size: 18px; color: var(--dam); letter-spacing: .4px; }
+.dh-dau small { display: block; color: var(--chu-mo); font-size: 13px; margin-top: 2px; }
+
+/* Thanh tab của module */
+.dh-thanh-tab { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; margin-bottom: 10px; }
+.dh-thanh-tab button {
+  font: inherit; font-size: 13.2px; font-weight: 700; white-space: nowrap;
+  padding: 10px 14px; border-radius: 999px; border: 1px solid var(--vien);
+  background: #fff; color: #3b4a63; cursor: pointer; min-height: 44px;
+}
+.dh-thanh-tab button.on { background: var(--dam); border-color: var(--dam); color: #fff; }
+
+.dh-loc-cs { margin: 0 0 10px; }
+.dh-noi-dung { min-height: 200px; }
+
+/* Băng trạng thái toàn trường — chữ to, một giây là hiểu */
+.dh-bang { border-radius: 13px; padding: 15px 18px; font-size: 16.5px; font-weight: 800; margin: 2px 0 12px; text-align: center; letter-spacing: .3px; }
+.dh-bang.xanh { background: var(--ok-nen); color: var(--ok); border: 1px solid #bfe6cf; }
+.dh-bang.vang { background: var(--canh-nen); color: var(--canh); border: 1px solid #f1e2b5; }
+.dh-bang.do   { background: var(--thieu-nen); color: var(--thieu); border: 1px solid #f2cccc; }
+.dh-bang.xam  { background: #f1f4f8; color: #5b6b80; border: 1px solid #dfe5ec; }
+
+/* 5 thẻ số liệu: dùng lại .luoi-thong-ke/.o-so, chỉ nới lưới cho 5 ô */
+.dh-5the { grid-template-columns: repeat(5, 1fr); }
+
+/* Tiêu đề nhỏ trong tab */
+.dh-tieu-de { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: var(--dam); margin: 18px 0 8px; }
+.dh-tieu-de:first-child { margin-top: 4px; }
+
+/* Hai cột trên màn rộng, một cột trên điện thoại */
+.dh-hai-cot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; }
+
+/* Hàng trạng thái một điểm trường / một sự việc */
+.dh-diem-hang {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 11px;
+  padding: 11px 13px; margin-bottom: 8px;
+}
+.dh-diem-hang .tt { flex: 1; min-width: 0; }
+.dh-diem-hang .tt b { font-size: 14px; }
+.dh-diem-hang .tt small { display: block; color: var(--chu-mo); font-size: 12.6px; margin-top: 2px; line-height: 1.5; }
+
+/* Chấm màu trạng thái — vẽ bằng CSS, không dùng emoji (in ra giấy vẫn rõ) */
+.dh-cham { flex: 0 0 14px; width: 14px; height: 14px; border-radius: 50%; margin-top: 3px; }
+.dh-cham.xanh { background: #17a45c; }
+.dh-cham.vang { background: #e5a50f; }
+.dh-cham.do   { background: #d64545; }
+.dh-cham.xam  { background: #b9c2ce; }
+
+.dh-ul { margin: 0 0 10px; padding-left: 20px; font-size: 13.6px; line-height: 1.9; color: #33415a; }
+
+/* Nút lớn chọn nhanh (Đủ / Có vắng, mức độ báo việc…) */
+.dh-chon-hang { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dh-nut-lon {
+  font: inherit; font-size: 14px; font-weight: 800; cursor: pointer;
+  min-height: 48px; padding: 10px 18px; border-radius: 11px;
+  border: 1.6px solid var(--vien); background: #fff; color: #33415a;
+}
+.dh-nut-lon.on { background: var(--dam); border-color: var(--dam); color: #fff; }
+.dh-nut-lon.phu { border-style: dashed; }
+.dh-nut-nho {
+  font: inherit; font-size: 12.8px; font-weight: 700; cursor: pointer;
+  min-height: 40px; padding: 7px 13px; border-radius: 9px;
+  border: 1px solid var(--vien); background: #fff; color: var(--dam);
+}
+
+/* Ba nút an toàn — tính năng trung tâm, phải to và rõ nhất màn */
+.dh-an3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.dh-an-toan {
+  font: inherit; cursor: pointer; border-radius: 13px; padding: 14px 8px;
+  border: 2px solid var(--vien); background: #fff; text-align: center; min-height: 76px;
+}
+.dh-an-toan b { display: block; font-size: 14.5px; }
+.dh-an-toan small { display: block; color: var(--chu-mo); font-size: 11.6px; margin-top: 3px; }
+.dh-an-toan.xanh.on { background: var(--ok-nen); border-color: #17a45c; }
+.dh-an-toan.vang.on { background: var(--canh-nen); border-color: #e5a50f; }
+.dh-an-toan.do.on   { background: var(--thieu-nen); border-color: #d64545; }
+
+/* Hộp chọn tên (GV vắng / HS vắng) */
+.dh-hop-chon { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.dh-ghi-chu-nho { flex-basis: 100%; font-size: 12.4px; color: var(--chu-mo); line-height: 1.6; margin-top: 6px; }
+
+/* Ô nhập chung */
+.dh-o-nhap {
+  font: inherit; font-size: 13.5px; width: 100%; box-sizing: border-box;
+  border: 1px solid var(--vien); border-radius: 10px; padding: 10px 12px;
+  background: #fff; margin-top: 6px;
+}
+select.dh-o-nhap { width: auto; margin-top: 0; }
+.dh-tick { display: flex; gap: 9px; align-items: flex-start; font-size: 13.4px; color: #33415a; margin-top: 14px; line-height: 1.55; }
+.dh-tick input { width: 19px; height: 19px; margin-top: 1px; }
+
+/* Nút gửi to bản mobile */
+.dh-nut-gui {
+  font: inherit; font-size: 15.5px; font-weight: 800; letter-spacing: .4px; cursor: pointer;
+  display: block; width: 100%; min-height: 54px; margin: 16px 0 6px;
+  border: 0; border-radius: 13px; background: var(--dam); color: #fff;
+}
+.dh-nut-gui.mo { opacity: .45; }
+
+/* Thẻ điểm danh một lớp */
+.dh-lop-the { background: var(--the); border: 1px solid var(--vien); border-radius: 12px; padding: 13px 15px; margin-bottom: 9px; }
+.dh-lop-ten { font-size: 15px; font-weight: 800; color: var(--dam); margin-bottom: 9px; }
+.dh-lop-ten small { font-weight: 600; color: var(--chu-mo); }
+.dh-lop-xong { font-size: 13.4px; color: var(--ok); font-weight: 700; line-height: 1.6; }
+
+/* Dạy thay theo tiết */
+.dh-tiet {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--the); border: 1px solid #f2cccc; border-radius: 10px;
+  padding: 10px 13px; margin-bottom: 7px;
+}
+.dh-tiet.xong { border-color: var(--vien); }
+.dh-tiet-so { font-weight: 800; font-size: 13px; color: var(--dam); flex: 0 0 52px; }
+.dh-tiet-mon { flex: 1; font-size: 13.6px; }
+.dh-tiet-gv { font-size: 13px; font-weight: 700; color: var(--ok); }
+.dh-tiet-gv.thieu { color: var(--thieu); }
+
+.dh-goiy {
+  font: inherit; text-align: left; cursor: pointer; display: block; width: 100%;
+  background: #fff; border: 1.6px solid var(--vien); border-radius: 11px;
+  padding: 11px 14px; margin-bottom: 8px;
+}
+.dh-goiy:hover { border-color: var(--dam); }
+.dh-goiy b { font-size: 14px; color: var(--dam); }
+.dh-goiy small { display: block; color: var(--chu-mo); font-size: 12.4px; margin: 3px 0 4px; }
+.dh-goiy span { font-size: 12.6px; font-weight: 700; color: var(--ok); }
+
+/* Việc trong tuần */
+.dh-viec-tom { font-size: 13.6px; font-weight: 700; color: #33415a; background: var(--the); border: 1px solid var(--vien); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+.dh-giao-viec { background: #f6f9fe; border: 1px dashed #c9dbff; border-radius: 11px; padding: 10px 12px 12px; margin-bottom: 14px; }
+.dh-giao-viec .dh-chon-hang { margin-top: 8px; }
+.dh-nguoi-nhom { margin-bottom: 14px; }
+.dh-nguoi-ten { font-size: 13.6px; font-weight: 800; color: var(--dam); margin-bottom: 6px; }
+.dh-nguoi-ten small { font-weight: 600; color: var(--chu-mo); }
+.dh-viec {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 10px;
+  padding: 9px 12px; margin-bottom: 6px;
+}
+.dh-viec.qua-han { border-color: #f2cccc; background: #fffafa; }
+.dh-viec .tt { flex: 1; min-width: 0; }
+.dh-viec .tt b { font-size: 13.6px; font-weight: 700; }
+.dh-viec .tt small { display: block; color: var(--chu-mo); font-size: 12.2px; margin-top: 2px; }
+.dh-viec-tt { font: inherit; font-size: 17px; line-height: 1; cursor: pointer; border: 0; background: none; padding: 4px; min-width: 34px; min-height: 34px; }
+.dh-muc { font-size: 11px; font-weight: 800; border-radius: 6px; padding: 2px 7px; vertical-align: 1px; }
+.dh-muc.qt { background: var(--canh-nen); color: var(--canh); }
+.dh-muc.kh { background: var(--thieu-nen); color: var(--thieu); }
+.dh-do { color: var(--thieu); }
+.dh-vang { color: var(--canh); font-weight: 700; }
+.dh-xanh { color: var(--ok); font-weight: 700; }
+
+/* Nhật ký điều hành */
+.dh-nk { border-left: 3px solid var(--vien); padding-left: 14px; }
+.dh-nk-dong { display: flex; gap: 10px; font-size: 13.2px; line-height: 1.6; margin-bottom: 9px; color: #33415a; }
+.dh-nk-luc { flex: 0 0 62px; font-weight: 800; color: var(--chu-mo); font-size: 12.2px; padding-top: 1px; }
+
+/* Điện thoại: 5 thẻ về 2 cột (ô cuối chiếm cả hàng), hai cột về một */
+@media (max-width: 900px) {
+  .dh-5the { grid-template-columns: repeat(2, 1fr); }
+  .dh-5the .o-so:last-child { grid-column: span 2; }
+  .dh-hai-cot { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .dh-bang { font-size: 14.5px; padding: 13px 12px; }
+  .dh-an3 { gap: 6px; }
+  .dh-an-toan b { font-size: 13px; }
+  .dh-nut-lon { flex: 1 1 auto; }
+}
+

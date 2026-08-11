@@ -30,8 +30,8 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608142">
-  <link rel="stylesheet" href="style.css?v=202608142">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608143">
+  <link rel="stylesheet" href="style.css?v=202608143">
 </head>
 <body class="dang-khoa">
 
@@ -58,6 +58,7 @@
     <div class="khu-dieu-huong" id="khu-dieu-huong">
       <nav class="menu">
         <button data-di="home" class="dang-chon">Trang chủ</button>
+        <button data-di="dieuhanh">Điều hành</button>
         <button data-di="hoso">Quản trị Hồ sơ</button>
         <button data-di="hocsinh">Quản lý học sinh</button>
         <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
@@ -107,9 +108,30 @@
 </section>
 
 <main>
+  <!-- ═══ MODULE ĐIỀU HÀNH NHÀ TRƯỜNG (bản demo giao diện — js/dieu-hanh.js) ═══ -->
+  <section class="man-hinh" id="mh-dieuhanh">
+    <div class="dau-muc">
+      <div class="nhan-nho">Trung tâm điều hành hằng ngày</div>
+      <h2>Điều hành nhà trường</h2>
+      <p>"Một vài nút chạm — nắm tình hình toàn trường." Mỗi dữ liệu chỉ nhập một lần:
+      người phụ trách điểm trường báo cáo đầu buổi, giáo viên điểm danh lớp,
+      hệ thống tự tổng hợp lên bảng điều hành của Ban giám hiệu.</p>
+    </div>
+    <div id="vung-dieuhanh"></div>
+  </section>
+
   <!-- ═══ TRANG CHỦ ═══ -->
   <section class="man-hinh hien" id="mh-home">
     <div class="luoi-module">
+      <div class="the-module v-xanh-la" onclick="chuyenManHinh('dieuhanh')">
+        <div class="bi"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5"/><path d="M12 5V3"/><path d="M5.6 6.6 4.2 5.2M18.4 6.6l1.4-1.4"/></svg></div>
+        <h3>Điều hành nhà trường</h3>
+        <div class="chip-hang"><span class="chip">An toàn xanh</span><span class="chip">Điểm danh</span><span class="chip">Việc hôm nay</span></div>
+        <p>Trung tâm điều hành hằng ngày: báo cáo đầu buổi từng điểm trường, điểm danh, dạy thay,
+        giao việc và báo việc — một vài nút chạm, nắm tình hình toàn trường.</p>
+        <div class="chan-the">Mở điều hành <span class="mui-ten">→</span></div>
+        <span class="hinh-chim"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.4 2.4 4.6-5.4"/></svg></span>
+      </div>
       <div class="the-module v-lam" onclick="chuyenManHinh('hoso')">
         <div class="bi"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></div>
         <h3>Hồ sơ số</h3>
@@ -356,23 +378,24 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Nghị định 13/2023/NĐ-CP
 </footer>
 
-<script src="js/cauhinh.js?v=202608142"></script>
+<script src="js/cauhinh.js?v=202608143"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608142"></script>
-<script src="js/du-lieu-sql.js?v=202608142"></script>
-<script src="js/quan-tri.js?v=202608142"></script>
-<script src="js/supabase-ket-noi.js?v=202608142"></script>
-<script src="js/app.js?v=202608142"></script>
-<script src="js/hoso-sua.js?v=202608142"></script>
-<script src="js/xuat-word.js?v=202608142"></script>
-<script src="js/tcqg.js?v=202608142"></script>
-<script src="js/tcqg-hoidong.js?v=202608142"></script>
-<script src="js/tcqg-word.js?v=202608142"></script>
-<script src="js/bach-lieu-shim.js?v=202608142"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608142"></script>
-<script src="js/co-so.js?v=202608142"></script>
-<script src="js/dbcl.js?v=202608142"></script>
-<script src="js/link-cbgv.js?v=202608142"></script>
-<script src="js/hocsinh.js?v=202608142"></script>
+<script src="js/du-lieu-demo.js?v=202608143"></script>
+<script src="js/du-lieu-sql.js?v=202608143"></script>
+<script src="js/quan-tri.js?v=202608143"></script>
+<script src="js/supabase-ket-noi.js?v=202608143"></script>
+<script src="js/app.js?v=202608143"></script>
+<script src="js/hoso-sua.js?v=202608143"></script>
+<script src="js/xuat-word.js?v=202608143"></script>
+<script src="js/tcqg.js?v=202608143"></script>
+<script src="js/tcqg-hoidong.js?v=202608143"></script>
+<script src="js/tcqg-word.js?v=202608143"></script>
+<script src="js/bach-lieu-shim.js?v=202608143"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608143"></script>
+<script src="js/co-so.js?v=202608143"></script>
+<script src="js/dbcl.js?v=202608143"></script>
+<script src="js/link-cbgv.js?v=202608143"></script>
+<script src="js/hocsinh.js?v=202608143"></script>
+<script src="js/dieu-hanh.js?v=202608143"></script>
 </body>
 </html>
