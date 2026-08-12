@@ -121,6 +121,9 @@
   function daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) {
     var tk = {};
     (thongKe || []).forEach(function (t) { tk[t.ma] = t; });
+    // Cột phu_trach_email do sql/20 thêm — CSDL chưa chạy sql/20 thì ẨN cột
+    // này đi, kẻo lệnh Lưu gửi cột không tồn tại làm hỏng cả việc sửa tên/địa chỉ
+    var coCotPT = !(dsCoSo || []).length || ('phu_trach_email' in dsCoSo[0]);
     var chonTruong = [{ ma: '', ten: '—' }].concat((dsTruong || []).map(function (t) {
       return { ma: t.ma, ten: t.ten };
     }));
@@ -140,7 +143,7 @@
       'trên màn Điều hành (Ban giám hiệu luôn báo được mọi điểm).</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th>Mã</th><th>Tên cơ sở</th><th>Loại</th><th>Địa chỉ</th><th>Trường tiền thân</th>' +
-      '<th>Người phụ trách</th>' +
+      (coCotPT ? '<th>Người phụ trách</th>' : '') +
       '<th>Lớp</th><th>HS</th><th>CBGV</th><th>Đang dùng</th><th></th></tr></thead><tbody>' +
       (dsCoSo || []).map(function (c) {
         var t = tk[c.ma] || {};
@@ -159,7 +162,7 @@
             { ma: 'diem_truong', ten: TEN_LOAI.diem_truong }]) + '</td>' +
           '<td>' + o('dia_chi', c.dia_chi, 'text', 160) + '</td>' +
           '<td>' + chon('truong_cu_ma', c.truong_cu_ma, chonTruong) + '</td>' +
-          '<td>' + chon('phu_trach_email', c.phu_trach_email, dsPT) + '</td>' +
+          (coCotPT ? '<td>' + chon('phu_trach_email', c.phu_trach_email, dsPT) + '</td>' : '') +
           '<td style="text-align:center">' + (t.so_lop || 0) + '</td>' +
           '<td style="text-align:center">' + (t.so_hoc_sinh || 0) + '</td>' +
           '<td style="text-align:center">' + (t.so_cbgv || 0) +
@@ -224,14 +227,17 @@
       may.from('moi_tai_khoan').select('email, ho_ten, chuc_vu')
         .eq('la_ky_thuat', false).order('ho_ten')
     ]).then(function (kq) {
-      var loi = kq.filter(function (r) { return r.error; })[0];
+      // Danh sách nhân sự (kq[5]) chỉ phục vụ ô chọn người phụ trách — lỗi
+      // thì thẻ vẫn mở bình thường, đừng để nó kéo sập cả băng CNQG
+      var loi = kq.slice(0, 5).filter(function (r) { return r.error; })[0];
       if (loi) {
         hop.innerHTML = '<div class="the-thong-bao">Không đọc được dữ liệu cơ sở: ' +
           thoat(loi.error.message) + '<br><br>Nếu báo thiếu bảng thì chạy <b>sql/10-sap-nhap.sql</b> trên Supabase.</div>';
         return;
       }
       var tt = kq[0].data, sn = kq[1].data, dsCoSo = kq[2].data || [],
-          thongKe = kq[3].data || [], dsTruong = kq[4].data || [], dsGV = kq[5].data || [];
+          thongKe = kq[3].data || [], dsTruong = kq[4].data || [],
+          dsGV = kq[5].error ? [] : (kq[5].data || []);
 
       hop.innerHTML = daiTrangThai(tt) + daiKhaiBao(sn) +
         daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) + daiTruong(dsTruong);

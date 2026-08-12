@@ -568,6 +568,14 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   color: #fff; background: var(--chinh); border: none; border-radius: 8px; padding: 7px 13px;
 }
 .nut-luu-nd:hover { filter: brightness(1.1); }
+/* Nút xóa tài khoản — cố tình để viền rỗng, nhạt hơn nút Lưu để khỏi bấm nhầm */
+.nut-xoa-nd {
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px;
+  color: var(--thieu); background: var(--the);
+  border: 1.5px solid var(--thieu); border-radius: 8px; padding: 5.5px 11px;
+}
+.nut-xoa-nd:hover { background: var(--thieu-nen); }
+.nut-xoa-nd:disabled { opacity: .5; cursor: default; }
 
 /* ════════════════════════════════════════════════════════════
    MODULE HỒ SƠ kiểu Bạch Liêu (thêm 10/8/2026)
@@ -1387,7 +1395,7 @@ td.tdst { white-space: nowrap; text-align: right; }
    kỳ tự đánh giá — trước đây chỉ cao ~24px. Mẫu @media (hover:none) này đã có
    sẵn ở khối .rec-tbl .drive, đây là mở rộng cho phần còn lại. */
 @media (hover: none) {
-  .nh-mc, .tag-crit, .chip-loc, .ct-quaylai, .nut-vien, .sub-word, .nut-luu-nd {
+  .nh-mc, .tag-crit, .chip-loc, .ct-quaylai, .nut-vien, .sub-word, .nut-luu-nd, .nut-xoa-nd {
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .hs-dau button, .sheet-x { width: 44px; height: 44px; }
@@ -1654,4 +1662,21 @@ nav.menu::-webkit-scrollbar { display: none; }
   }
   .chip-nguoi .chip-chu { display: none; }
   .chip-nguoi img, .chip-nguoi .anh-chu { width: 38px; height: 38px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ĐIỀU HÀNH ĐỢT 2 (12/8/2026) — vá mobile cho các hàng có nút hành động.
+   Nằm CUỐI TỆP để thắng khai báo gốc (.dh-diem-hang, .dh-nut-nho, .chip-loc).
+   1) .dh-diem-hang thêm flex-wrap: hàng "Cần tôi xử lý" / đề xuất có 2 nút
+      (Duyệt · Từ chối) — màn 360px không được bóp chữ nút thành cột dọc.
+   2) .dh-nut-nho không co, không ngắt chữ giữa từ.
+   3) .chip-loc trong khu Điều hành nâng vùng chạm lên 40px (chip gốc của
+      module khác chỉ ~33px — KHÔNG sửa khai báo gốc kẻo ảnh hưởng nơi khác).
+   ════════════════════════════════════════════════════════════════════════════ */
+.dh-diem-hang { flex-wrap: wrap; }
+.dh-nut-nho { white-space: nowrap; flex: 0 0 auto; }
+.dh-hop-chon .chip-loc, .dh-chon-hang .chip-loc, .dh-loc-cs .chip-loc { min-height: 40px; }
+@media (max-width: 560px) {
+  /* nút hành động rơi hẳn xuống dòng dưới, phần chữ chiếm trọn hàng trên */
+  .dh-diem-hang .tt { flex: 1 1 100%; }
 }
