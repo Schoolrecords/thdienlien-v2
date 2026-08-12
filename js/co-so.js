@@ -118,11 +118,16 @@
   }
 
   // ══════════ 3. BẢNG CƠ SỞ ══════════
-  function daiCoSo(dsCoSo, thongKe, dsTruong) {
+  function daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) {
     var tk = {};
     (thongKe || []).forEach(function (t) { tk[t.ma] = t; });
     var chonTruong = [{ ma: '', ten: '—' }].concat((dsTruong || []).map(function (t) {
       return { ma: t.ma, ten: t.ten };
+    }));
+    // Người phụ trách chọn từ danh sách nhân sự — gán bằng gõ tay dễ sai một
+    // ký tự email là người đó không báo cáo đầu buổi được
+    var chonPhuTrach = [{ ma: '', ten: '— chưa gán —' }].concat((dsGV || []).map(function (g) {
+      return { ma: g.email, ten: (g.ho_ten || g.email) + (g.chuc_vu ? ' · ' + g.chuc_vu : '') };
     }));
 
     return '<div class="dau-muc" style="text-align:left;margin:22px 0 10px">' +
@@ -130,12 +135,21 @@
       '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:8px">' +
       'Số lớp / học sinh đếm theo năm học ' + thoat(window.CAU_HINH.NAM_HOC || '') +
       '. Cột CBGV đếm từ danh sách mời (bỏ tài khoản kỹ thuật) — đây là đội ngũ thật, ' +
-      'khác với số người đã kích hoạt tài khoản ghi bên dưới.</div>' +
+      'khác với số người đã kích hoạt tài khoản ghi bên dưới. ' +
+      '<b>Người phụ trách</b> là người báo cáo đầu buổi + An toàn xanh của điểm trường đó ' +
+      'trên màn Điều hành (Ban giám hiệu luôn báo được mọi điểm).</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th>Mã</th><th>Tên cơ sở</th><th>Loại</th><th>Địa chỉ</th><th>Trường tiền thân</th>' +
+      '<th>Người phụ trách</th>' +
       '<th>Lớp</th><th>HS</th><th>CBGV</th><th>Đang dùng</th><th></th></tr></thead><tbody>' +
       (dsCoSo || []).map(function (c) {
         var t = tk[c.ma] || {};
+        // Email đã gán mà không còn trong danh sách nhân sự: vẫn phải hiện ra,
+        // nếu không thì mở bảng rồi bấm Lưu là lặng lẽ mất gán
+        var dsPT = chonPhuTrach;
+        if (c.phu_trach_email && !chonPhuTrach.filter(function (m) { return m.ma === c.phu_trach_email; }).length) {
+          dsPT = chonPhuTrach.concat([{ ma: c.phu_trach_email, ten: c.phu_trach_email + ' (ngoài danh sách)' }]);
+        }
         return '<tr data-ma="' + thoat(c.ma) + '">' +
           '<td><b>' + thoat(c.ma) + '</b></td>' +
           '<td>' + o('ten', c.ten, 'text', 170) + '</td>' +
@@ -145,6 +159,7 @@
             { ma: 'diem_truong', ten: TEN_LOAI.diem_truong }]) + '</td>' +
           '<td>' + o('dia_chi', c.dia_chi, 'text', 160) + '</td>' +
           '<td>' + chon('truong_cu_ma', c.truong_cu_ma, chonTruong) + '</td>' +
+          '<td>' + chon('phu_trach_email', c.phu_trach_email, dsPT) + '</td>' +
           '<td style="text-align:center">' + (t.so_lop || 0) + '</td>' +
           '<td style="text-align:center">' + (t.so_hoc_sinh || 0) + '</td>' +
           '<td style="text-align:center">' + (t.so_cbgv || 0) +
@@ -205,7 +220,9 @@
       may.from('sap_nhap').select('*').eq('id', 1).maybeSingle(),
       may.from('co_so').select('*').order('so_tt'),
       may.from('v_co_so_thong_ke').select('*'),
-      may.from('truong_tien_than').select('*').order('ma')
+      may.from('truong_tien_than').select('*').order('ma'),
+      may.from('moi_tai_khoan').select('email, ho_ten, chuc_vu')
+        .eq('la_ky_thuat', false).order('ho_ten')
     ]).then(function (kq) {
       var loi = kq.filter(function (r) { return r.error; })[0];
       if (loi) {
@@ -214,10 +231,10 @@
         return;
       }
       var tt = kq[0].data, sn = kq[1].data, dsCoSo = kq[2].data || [],
-          thongKe = kq[3].data || [], dsTruong = kq[4].data || [];
+          thongKe = kq[3].data || [], dsTruong = kq[4].data || [], dsGV = kq[5].data || [];
 
       hop.innerHTML = daiTrangThai(tt) + daiKhaiBao(sn) +
-        daiCoSo(dsCoSo, thongKe, dsTruong) + daiTruong(dsTruong);
+        daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) + daiTruong(dsTruong);
 
       // Lưu khai báo sáp nhập
       hop.querySelector('.nut-luu-sn').addEventListener('click', function () {
