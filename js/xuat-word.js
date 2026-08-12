@@ -43,7 +43,17 @@
       .replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').trim();
   }
 
-  function khungWord(tieuDeTab, than) {
+  // Khổ giấy: Word BỎ QUA "@page{size:…}" không tên — phải khai báo section có
+  // tên (@page Section1), thêm mso-page-orientation và bọc thân bài trong
+  // <div class="Section1"> thì Word mới dựng đúng khổ. Bản trước chỉ đổi size
+  // nên xuất ra vẫn là A4 dọc.
+  //   ngang = false → 21 × 29,7cm · lề trên 2 · dưới 2 · trái 3 · phải 1,5 (NĐ 30)
+  //   ngang = true  → 29,7 × 21cm · lề trên 1,5 · dưới 1,5 · trái 2 · phải 1,5
+  //                   → bề ngang chữ 26,2cm cho các bảng nhiều cột
+  function khungWord(tieuDeTab, than, ngang) {
+    var trang = ngang
+      ? 'size:29.7cm 21cm;mso-page-orientation:landscape;margin:1.5cm 1.5cm 1.5cm 2cm'
+      : 'size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm';
     return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
       'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">' +
@@ -51,14 +61,22 @@
       '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>' +
       '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
       '<style>' +
-      '@page{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}' +
+      '@page Section1{' + trang + '}div.Section1{page:Section1}' +
       'body{' + FONT + ';font-size:13pt;line-height:1.5;color:#000}' +
       'table{border-collapse:collapse;width:100%}' +
-      'th,td{border:1px solid #000;padding:4pt 6pt;font-size:12pt;vertical-align:top}' +
+      // Bảng gắn class "co-dinh" thì Word giữ đúng bề rộng cột đã khai, không tự
+      // nong cột theo nội dung dài nhất (áp cho cả bảng chứ không áp toàn cục,
+      // để các bảng cũ giữ nguyên cách dàn cột đã kiểm chứng).
+      'table.co-dinh{table-layout:fixed;mso-table-layout-alt:fixed}' +
+      'th,td{border:1px solid #000;padding:4pt 6pt;font-size:12pt;vertical-align:top;' +
+      'word-wrap:break-word;overflow-wrap:break-word}' +
       'th{background:#e8e8e8;font-weight:bold;text-align:center}' +
       'thead{display:table-header-group}tr{page-break-inside:avoid}' +
       '.giua{text-align:center}.phai{text-align:right}.nghieng{font-style:italic}' +
-      '</style></head><body>' + than + '</body></html>';
+      // Ô chứa đường dẫn Drive: chuỗi ID dài không có dấu cách, phải cho ngắt
+      // giữa chừng, nếu không Word nong cột đó ra và bóp các cột còn lại.
+      '.duongdan{font-size:10.5pt;word-break:break-all}' +
+      '</style></head><body><div class="Section1">' + than + '</div></body></html>';
   }
 
   // Đường kẻ ngang dưới tên cơ quan / tiêu ngữ — dựng bằng DÃY DẤU CÁCH CỨNG

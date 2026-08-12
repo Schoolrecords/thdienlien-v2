@@ -21,9 +21,10 @@
   }
 
   function khungNgang(tieuDe, than) {
-    // A4 NGANG cho bảng nhiều cột
-    return W().khungWord(tieuDe, than).replace('@page{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}',
-      '@page{size:29.7cm 21cm;margin:1.5cm 1.5cm 1.5cm 2cm}');
+    // A4 NGANG cho bảng nhiều cột. Trước đây hàm này thay chuỗi @page trong
+    // khung dọc — Word bỏ qua @page không tên nên bản xuất ra vẫn là A4 dọc.
+    // Khổ ngang bây giờ do chính khungWord dựng bằng section có tên.
+    return W().khungWord(tieuDe, than, true);
   }
 
   function kyHoiDong(tv) {
@@ -122,7 +123,7 @@
         '<td class="giua"><b>' + (x.h.link ? '<a href="' + chan(x.h.link) + '">' + chan(x.h.ma) + '</a>' : chan(x.h.ma)) + '</b></td>' +
         '<td>' + chan(x.h.ten) + (banGhi.ghi_chu ? '<br><span class="nghieng" style="font-size:10.5pt">' + chan(banGhi.ghi_chu) + '</span>' : '') + '</td>' +
         '<td class="giua">' + x.tc.join(', ') + '</td>' +
-        '<td>' + (x.h.link ? chan(x.h.link) : (banGhi.dinh_dang ? chan(banGhi.dinh_dang) : 'Hồ sơ lưu tại trường')) + '</td>' +
+        '<td class="duongdan">' + (x.h.link ? chan(x.h.link) : (banGhi.dinh_dang ? chan(banGhi.dinh_dang) : 'Hồ sơ lưu tại trường')) + '</td>' +
         '<td>' + chan(x.h.phuTrach || '') + '</td>' +
         '<td class="giua">' + (TEN_TT[x.h.tt] || '') + '</td></tr>';
     }).join('');
@@ -131,9 +132,11 @@
       '<p class="giua nghieng" style="font-size:12pt;margin:2pt 0 4pt">' + chan(nhan) + ' · Năm học ' + chan(W().cauHinh('NAM_HOC')) + '</p>' +
       '<p class="giua nghieng" style="font-size:11pt;margin:0 0 12pt">(Bản dùng trong nội bộ nhà trường — bản nộp Sở theo đúng mẫu 05 cột ' +
       'tại mục II khoản 4 Phụ lục IV được kết xuất kèm Báo cáo tự đánh giá.)</p>' +
-      '<table><thead><tr><th style="width:4%">TT</th><th style="width:10%">Mã minh chứng</th><th style="width:26%">Tên minh chứng</th>' +
-      '<th style="width:9%">Dùng cho tiêu chí</th><th style="width:28%">Định dạng, vị trí lưu trữ / đường dẫn</th>' +
-      '<th style="width:13%">Người phụ trách</th><th style="width:10%">Trạng thái</th></tr></thead><tbody>' + dong + '</tbody></table>' +
+      // A4 ngang, bề ngang chữ 26,2cm — cột chia theo tỉ lệ dưới đây:
+      // TT 1,05 · mã 2,62 · tên 6,29 · tiêu chí 2,10 · đường dẫn 7,07 · phụ trách 3,93 · trạng thái 3,14 (cm)
+      '<table class="co-dinh"><thead><tr><th style="width:4%">TT</th><th style="width:10%">Mã minh chứng</th><th style="width:24%">Tên minh chứng</th>' +
+      '<th style="width:8%">Dùng cho tiêu chí</th><th style="width:27%">Định dạng, vị trí lưu trữ / đường dẫn</th>' +
+      '<th style="width:15%">Người phụ trách</th><th style="width:12%">Trạng thái</th></tr></thead><tbody>' + dong + '</tbody></table>' +
       '<p style="margin:8pt 0 0">Tổng: ' + ds.length + ' minh chứng — đã có ' + dem.co + ', đang cập nhật ' + dem.dang + ', chưa có ' + dem.chua + '.' +
       (dem.chua ? ' <span class="nghieng">Nhà trường bổ sung các minh chứng còn thiếu trước khi hoàn thiện báo cáo.</span>' : '') + '</p>';
     W().taiVe(khungNgang('Danh mục minh chứng', than), 'danh-muc-minh-chung-' + W().cauHinh('NAM_HOC') + '.doc');
