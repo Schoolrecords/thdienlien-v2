@@ -176,13 +176,12 @@
         { ten: 'Cô Nguyễn Thị A.', coSo: 'CS01', lyDo: 'Nghỉ ốm', buoi: 'ca_ngay' },
         { ten: 'Thầy Trần Văn B.', coSo: 'CS02', lyDo: 'Công tác', buoi: 'ca_ngay' }
       ],
-      ddLop: { sang: { '1A': { siSo: 35, soVang: 0, luc: '7:02' }, '2A': { siSo: 33, soVang: 1, luc: '7:04' }, '4A': { siSo: 34, soVang: 2, luc: '7:06' } }, chieu: {} },
-      hsVang: [
-        { lop: '2A', buoi: 'sang', ma: 'M1', ten: 'Nguyễn Văn An (mẫu)', phep: 'co_phep' },
-        { lop: '4A', buoi: 'sang', ma: 'M2', ten: 'Trần Thị Bích (mẫu)', phep: 'co_phep' },
-        { lop: '4A', buoi: 'sang', ma: 'M3', ten: 'Lê Văn Cường (mẫu)', phep: 'chua_ro' }
-      ],
-      nghiDai: [{ ten: 'Lê Văn Cường (mẫu)', lop: '4A', soBuoi: 3 }],
+      // Điểm danh học sinh đã gỡ khỏi giao diện (VNEDU lo phần đó) — dọn luôn
+      // dữ liệu mẫu, kẻo bản xem thử công khai vẫn nhắc "⚠ Nghỉ nhiều buổi:
+      // Lê Văn Cường (mẫu)" cho một chức năng không còn thẻ nào để mở.
+      ddLop: { sang: {}, chieu: {} },
+      hsVang: [],
+      nghiDai: [],
       viec: [
         { id: 1, noiDung: 'Hoàn thiện hồ sơ phổ cập gửi UBND xã', nguoiTen: 'Cô Lê Thị C.', nguoiEmail: '', coSo: 'CS01', han: homNayISO(), muc: 'quan_trong', tt: 'xong' },
         { id: 2, noiDung: 'Kiểm kê thiết bị dạy học đầu năm', nguoiTen: 'Thầy Phạm Văn D.', nguoiEmail: '', coSo: 'CS01', han: homNayISO(), muc: 'binh_thuong', tt: 'xong' },
@@ -331,6 +330,10 @@
       .then(function (moi) { return napHomNay(moi); })
       .then(function (moi) {
         DL = moi; THAT = true; LOI_SQL = ''; DANG_NAP = false;
+        // Vứt bảng công đã dựng ở BẢN MẪU. Trang mở khóa trước khi nạp xong,
+        // ai bấm vào thẻ trong lúc chờ là bảng công dựng bằng tên giả — không
+        // xóa thì nó nằm nguyên dưới băng xanh "đang chạy dữ liệu thật".
+        CONG_THU = ''; CONG_KQ = null;
         veDieuHanh();
       })
       .catch(function (e) {
@@ -414,10 +417,11 @@
         moi.gvVang.push({ ten: g.ho_ten, email: g.email, coSo: g.co_so_ma, lyDo: g.ly_do, buoi: g.buoi,
           denNgay: g.den_ngay, baoMuon: g.bao_muon });
       });
+      // Điểm danh HS đã gỡ khỏi giao diện — vẫn ĐỌC bảng để dữ liệu cũ không
+      // mất và bật lại được, nhưng KHÔNG đẩy vào nhật ký nữa: nhắc một việc
+      // không còn thẻ nào để mở chỉ làm người dùng đi tìm vô ích.
       (kq[2].data || []).forEach(function (d) {
         moi.ddLop[d.buoi][d.lop] = { siSo: d.si_so, soVang: d.so_vang, luc: gioTu(d.ghi_luc) };
-        moi.nhatKy.push({ khi: d.ghi_luc, chu: '🎒 Lớp ' + d.lop + ' điểm danh ' + tenBuoi(d.buoi) + ': ' +
-          (d.so_vang ? 'vắng ' + d.so_vang + ' em' : 'đủ ' + d.si_so + '/' + d.si_so) });
       });
       var t0 = homNayISO(), demNghi = {};
       (kq[3].data || []).forEach(function (v) {
@@ -666,12 +670,14 @@
         nut: '<button class="dh-nut-nho" onclick="DH.tbXacNhan(' + x.id + ')">✓ Tôi đã nhận</button>' });
     });
 
-    // 6 · Học sinh nghỉ nhiều buổi (BGH)
+    // 6 · Học sinh nghỉ nhiều buổi (BGH) — nguồn là hs_vang của thẻ Điểm danh
+    // HS nay đã ẩn, nên dòng này chỉ còn hiện nếu CSDL còn dữ liệu cũ trong 7
+    // ngày. KHÔNG kèm nút "Xem": thẻ đó không còn trên thanh, bấm sẽ lạc chỗ.
     if (qt) (DL.nghiDai || []).forEach(function (n) {
       ds.push({ mau: 'vang',
         chu: '<b>Nghỉ nhiều buổi:</b> ' + thoat(n.ten) + ' (' + thoat(n.lop) + ')' +
           '<small>' + n.soBuoi + ' buổi trong 7 ngày — nhờ GVCN liên hệ gia đình</small>',
-        nut: '<button class="dh-nut-nho" onclick="DH.tab(\'diemdanh\')">Xem</button>' });
+        nut: '' });
     });
 
     // 7 · Việc ĐẾN HẠN hôm nay của tôi (chưa xong, chưa quá hạn — nhắc nhẹ)
@@ -713,7 +719,9 @@
     var the5 =
       '<div class="luoi-thong-ke dh-5the">' +
       '<div class="o-so"><div class="so trang">' + (t.gvTong - t.gvVang.length) + '/' + t.gvTong + '</div><div class="nhan">CBGV-NV có mặt · ' + t.gvVang.length + ' vắng</div></div>' +
-      '<div class="o-so"><div class="so trang">' + (t.hsTong - t.hsVang).toLocaleString('vi-VN') + '/' + t.hsTong.toLocaleString('vi-VN') + '</div><div class="nhan">học sinh · ' + t.hsVang + ' vắng · ' + t.lopDaDD + '/' + t.lopTong + ' lớp đã điểm danh</div></div>' +
+      // Học sinh: chỉ nêu quy mô. Số vắng/đã điểm danh đã bỏ cùng lúc với thẻ
+      // Điểm danh HS — không ai nhập nữa thì để "0 vắng · 0/25 lớp" là bịa.
+      '<div class="o-so"><div class="so trang">' + t.hsTong.toLocaleString('vi-VN') + '</div><div class="nhan">học sinh · ' + t.lopTong + ' lớp</div></div>' +
       '<div class="o-so"><div class="so xanh">' + t.soXanh + '/' + t.dsCS.length + '</div><div class="nhan">điểm trường an toàn' + (t.soChua ? ' · ' + t.soChua + ' chưa xác nhận' : '') + '</div></div>' +
       '<div class="o-so"><div class="so vang">' + t.vXong + '/' + t.viecTong + '</div><div class="nhan">việc hoàn thành' + (t.vQuaHan ? ' · ' + t.vQuaHan + ' quá hạn' : '') + '</div></div>' +
       '<div class="o-so"><div class="so ' + (t.svCanXuLy ? 'hong' : 'xanh') + '">' + t.svCanXuLy + '</div><div class="nhan">sự việc cần xử lý</div></div>' +
@@ -773,8 +781,14 @@
   var BC_MO_CHON_GV = false;
 
   function veBaoCao() {
-    // Phiếu kiểm tra điểm trường nối dưới phần báo cáo — chỉ BGH thấy
-    return veBaoCaoChinh() + (laQT() ? veKiemTraDT() : '');
+    // Ba tầng cùng một chuyện "ai có mặt": hằng ngày báo cáo đầu buổi ·
+    // xuống điểm thì tick phiếu kiểm tra (BGH) · cuối tháng bảng công tự
+    // cộng ra từ chính sổ vắng đã bấm mỗi ngày — không ai nhập lại lần nào.
+    // Giáo viên không phụ trách điểm nào thì veBaoCaoChinh() chỉ là một khối
+    // từ chối. Thẻ này nay là lối DUY NHẤT tới bảng công của chính họ — đẩy
+    // bảng công lên trước, đừng bắt cuộn qua lời từ chối mới thấy dòng mình.
+    if (!laQT() && !coSoDuocBao().length) return veBangCong() + veBaoCaoChinh();
+    return veBaoCaoChinh() + (laQT() ? veKiemTraDT() : '') + veBangCong();
   }
 
   // ── Phiếu kiểm tra điểm trường: 5 mục tick nhanh trên điện thoại,
@@ -886,19 +900,15 @@
           '</div>' : '')
         : '');
 
-    // HS: tự tổng từ điểm danh các lớp của cơ sở này
+    // HS: chỉ nhắc quy mô điểm trường. Chuyên cần học sinh theo dõi trên
+    // VNEDU — app này KHÔNG bắt nhập lại, nên cũng không hỏi số vắng ở đây.
     var cacLop = Object.keys(DL.lop).filter(function (l) { return DL.lop[l].coSo === BC_CS; });
-    var hsTongCS = 0, daDD = 0, vangCS = 0;
-    cacLop.forEach(function (l) {
-      hsTongCS += DL.lop[l].siSo;
-      var d = DL.ddLop[b][l];
-      if (d) { daDD++; vangCS += d.soVang; }
-    });
+    var hsTongCS = 0;
+    cacLop.forEach(function (l) { hsTongCS += DL.lop[l].siSo; });
     var oHS = '<div class="dh-tieu-de">2 · Học sinh</div>' +
-      '<div class="hd-kiem ' + (daDD === cacLop.length && cacLop.length ? 'xanh' : 'vang') + '" style="margin-top:2px">' +
-      'Sĩ số: <b>' + hsTongCS.toLocaleString('vi-VN') + '</b> em / ' + cacLop.length + ' lớp · ' +
-      'các lớp đã điểm danh: <b>' + daDD + '/' + cacLop.length + '</b> · báo vắng <b>' + vangCS + '</b> em. ' +
-      'Hệ thống tự cộng từ điểm danh của giáo viên — người phụ trách <b>không nhập lại</b>.</div>';
+      '<div class="hd-kiem xanh" style="margin-top:2px">' +
+      'Sĩ số điểm trường: <b>' + hsTongCS.toLocaleString('vi-VN') + '</b> em / ' + cacLop.length + ' lớp. ' +
+      'Chuyên cần từng em theo dõi trên <b>VNEDU</b> — phần này không nhập lại.</div>';
 
     var nutAT = function (ma, chu, phu) {
       return '<button class="dh-an-toan ' + ma + (BC_ANTOAN === ma ? ' on' : '') + '" onclick="DH.bcAnToan(\'' + ma + '\')">' +
@@ -926,6 +936,379 @@
       oGV + oHS + oAT + oGhiChu + oChieu +
       '<button class="dh-nut-gui' + (BC_ANTOAN ? '' : ' mo') + '" onclick="DH.bcGui()">XÁC NHẬN ĐẦU BUỔI</button>' +
       '<div class="dh-ghi-chu-nho" style="text-align:center">Sau khi xác nhận, dashboard Ban giám hiệu cập nhật ngay lập tức.</div>';
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // BẢNG CÔNG THÁNG (nằm trong thẻ Điểm danh GV)
+  //
+  // KHÔNG có bảng cong_thang trên CSDL — bảng công TÍNH RA từ gv_vang mỗi
+  // lần mở. Chép số sang một bảng riêng là tự đẻ hai nguồn sự thật: sửa sổ
+  // vắng mà bảng công đứng yên, cuối năm không ai biết tin bên nào.
+  //
+  // Đơn vị là BUỔI (tiểu học dạy 2 buổi/ngày) — trùng đơn vị của gv_vang,
+  // khỏi quy đổi. Số buổi chuẩn = số ngày làm việc × 2, trong đó ngày làm
+  // việc lấy từ cau_hinh.ngay_lam_viec trừ đi bảng ngay_nghi (sql/30).
+  //
+  // ⚠️ CHƯA có cột dạy thay / thừa giờ: hai số đó phải có thời khóa biểu
+  //    mới tính được (đợt D). Thà để trống còn hơn bịa ra một con số mà
+  //    người ta đem đi tính tiền.
+  // ════════════════════════════════════════════════════════════
+  var CONG_THANG = '';        // 'yyyy-mm' đang xem
+  var CONG_KQ = null;         // kết quả đã tính (kèm .thang để đối chiếu)
+  var CONG_THU = '';          // tháng ĐÃ gọi nạp — chặn nạp lại vô hạn khi lỗi
+  var CONG_DANG = false;
+  var CONG_LOI = '';
+  var CONG_CO_NGHI = true;    // false = chưa chạy sql/30 (thiếu bảng ngay_nghi)
+  var CONG_NGHI_MAU = [];     // ngày nghỉ khai ở BẢN MẪU (không ghi CSDL)
+  // Cận dưới của nút lùi tháng — không chặn thì bấm giữ lùi về tận 1999,
+  // mỗi lần một truy vấn mạng. Hai năm đủ cho mọi việc đối chiếu của trường.
+  var MOC_CONG_SOM = '';      // gán sau, khi đã có thangNay()/thangDich()
+
+  var CONG_LY_DO = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Việc riêng', 'Khác'];
+  var TEN_LOAI_NGHI = {
+    le: 'Nghỉ lễ — không tính công', nghi_bu: 'Nghỉ bù — không tính công',
+    nghi_khac: 'Nghỉ khác — không tính công', lam_bu: 'Đi làm bù — CÓ tính công'
+  };
+
+  function thangNay() { var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1); }
+  function thangDich(ym, buoc) {
+    var n = +ym.slice(0, 4), m = +ym.slice(5, 7) + buoc;
+    n += Math.floor((m - 1) / 12);
+    m = ((m - 1) % 12 + 12) % 12 + 1;
+    return n + '-' + pad2(m);
+  }
+  // NĐ 30: chỉ tháng 1 và tháng 2 mới thêm số 0
+  function thangSo(ym) { var m = +ym.slice(5, 7); return m < 3 ? '0' + m : String(m); }
+  function thangChu(ym) { return 'tháng ' + thangSo(ym) + '/' + ym.slice(0, 4); }
+  function soNgayThang(ym) { return new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0).getDate(); }
+  MOC_CONG_SOM = thangDich(thangNay(), -24);
+  function isoCua(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  // Danh sách ngày LÀM VIỆC của tháng. thuLam theo chuẩn ISO 1=Thứ Hai…7=CN
+  // (getDay() trả 0 cho Chủ nhật nên phải đổi). Thứ tự ưu tiên: lịch tuần →
+  // ngày nghỉ đè lên → 'lam_bu' đè lên tất (hoán đổi ngày nghỉ dịp lễ).
+  function ngayLamTrongThang(ym, thuLam, dsNghi) {
+    var soNgay = soNgayThang(ym), nam = +ym.slice(0, 4), thg = +ym.slice(5, 7);
+    var khongLam = {}, lamBu = {};
+    (dsNghi || []).forEach(function (n) {
+      if (n.loai === 'lam_bu') lamBu[n.ngay] = 1; else khongLam[n.ngay] = 1;
+    });
+    var ds = [];
+    for (var i = 1; i <= soNgay; i++) {
+      var iso = ym + '-' + pad2(i);
+      var thu = new Date(nam, thg - 1, i).getDay();
+      var co = thuLam.indexOf(thu === 0 ? 7 : thu) >= 0;
+      if (khongLam[iso]) co = false;
+      if (lamBu[iso]) co = true;
+      if (co) ds.push(iso);
+    }
+    return ds;
+  }
+
+  // Gộp khoảng trắng thừa: danh sách nhân sự ghi "Trần  Văn Nam" (hai dấu
+  // cách) mà sổ vắng ghi "Trần Văn Nam" thì phải coi là MỘT người
+  function chuanTen(t) { return String(t || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+  function khoaNguoi(email, ten) {
+    return email ? 'e:' + String(email).trim().toLowerCase() : 't:' + chuanTen(ten);
+  }
+
+  function tinhCong(ym, dsVang, dsNghi, thuLam) {
+    var soNgay = soNgayThang(ym);
+    var dau = ym + '-01', cuoi = ym + '-' + pad2(soNgay);
+    var dsLam = ngayLamTrongThang(ym, thuLam, dsNghi);
+    // Tháng ĐANG DIỄN RA thì chỉ tính tới hôm nay. Ngày 14 mà ghi "có mặt
+    // 42/42 buổi" là hứa trước một việc chưa xảy ra — trên tờ giấy đem đi
+    // tính lương. Ngược lại, cô đang nghỉ thai sản sẽ bị ghi "vắng cả tháng"
+    // ngay từ mùng 2.
+    var t0 = homNayISO();
+    var dangDienRa = (ym === t0.slice(0, 7));
+    if (dangDienRa) {
+      dsLam = dsLam.filter(function (iso) { return iso <= t0; });
+    }
+    var laLam = {};
+    dsLam.forEach(function (iso) { laLam[iso] = 1; });
+
+    var nguoi = {}, thuTu = [];
+    function them(k, ten, email, coSo, trongDs) {
+      if (nguoi[k]) return nguoi[k];
+      nguoi[k] = { ten: ten, email: email || '', coSo: coSo || '',
+        buoi: {}, baoMuon: 0, trongDs: trongDs };
+      thuTu.push(k);
+      return nguoi[k];
+    }
+    // Gieo TOÀN BỘ danh sách nhân sự trước: người không vắng buổi nào vẫn
+    // phải có dòng đủ công — đó mới là bảng công, không phải danh sách vắng.
+    (DL.gvDs || []).forEach(function (g, i) {
+      var k = khoaNguoi(g.email, g.ten);
+      // Hai người CHƯA CÓ EMAIL mà trùng tên (bảo vệ và cấp dưỡng cùng tên)
+      // đụng chung một khóa. Gộp lại là công người này chạy sang người kia,
+      // lại nuốt mất một dòng — nên tách bằng chỉ số.
+      if (nguoi[k]) k = k + '#' + i;
+      them(k, g.ten, g.email, g.coSo, true);
+    });
+    // Cầu nối theo TÊN: dòng vắng của nhân viên chưa có email (hợp đồng) phải
+    // rơi đúng vào dòng nhân sự của người đó, chứ không đẻ thêm một dòng
+    // "ngoài danh sách". Tên trùng nhau thì bỏ cầu nối — thà tách hai dòng
+    // còn hơn cộng công của người này sang người kia.
+    var theoTen = {};
+    (DL.gvDs || []).forEach(function (g) {
+      var t = chuanTen(g.ten);
+      if (!t) return;
+      theoTen[t] = theoTen[t] === undefined ? khoaNguoi(g.email, g.ten) : null;
+    });
+
+    (dsVang || []).forEach(function (v) {
+      if (!v || !v.ngay) return;
+      var kh = khoaNguoi(v.email, v.ho_ten);
+      if (!nguoi[kh]) {
+        var k2 = theoTen[chuanTen(v.ho_ten)];
+        if (k2) kh = k2;
+      }
+      var ng = them(kh, v.ho_ten, v.email, v.co_so_ma, false);
+      var tu = v.ngay < dau ? dau : v.ngay;
+      var den = v.den_ngay || v.ngay;
+      if (den > cuoi) den = cuoi;
+      if (tu > den) return;
+      var d = new Date(+tu.slice(0, 4), +tu.slice(5, 7) - 1, +tu.slice(8, 10));
+      var coBuoi = false;      // dòng này có rơi buổi nào vào tháng đang xem không
+      for (var b = 0; b < 40; b++) {
+        var iso = isoCua(d);
+        if (iso > den) break;
+        if (laLam[iso]) {
+          coBuoi = true;
+          // Hai dòng chồng nhau (đơn đã duyệt + báo cáo đầu buổi cùng ngày)
+          // chỉ được tính MỘT buổi — khóa theo ngày|buổi, ghi lần đầu thắng.
+          if (v.buoi !== 'chieu' && ng.buoi[iso + '|sang'] === undefined) {
+            ng.buoi[iso + '|sang'] = v.ly_do || 'Khác';
+          }
+          if (v.buoi !== 'sang' && ng.buoi[iso + '|chieu'] === undefined) {
+            ng.buoi[iso + '|chieu'] = v.ly_do || 'Khác';
+          }
+        }
+        d.setDate(d.getDate() + 1);
+      }
+      // Chỉ ghi ⚠ khi dòng thật sự rơi buổi vào tháng này — đơn vắt hai tháng
+      // mà cộng ⚠ cho cả hai, hoặc đơn rơi trọn vào Thứ Bảy–Chủ nhật mà vẫn
+      // cộng ⚠, đều là trách oan người ta.
+      if (v.bao_muon && coBuoi) ng.baoMuon++;
+    });
+
+    var buoiChuan = dsLam.length * 2;
+    var hang = thuTu.map(function (k) {
+      var ng = nguoi[k], theo = {}, tong = 0;
+      Object.keys(ng.buoi).forEach(function (kk) {
+        var ld = ng.buoi[kk];
+        if (CONG_LY_DO.indexOf(ld) < 0) ld = 'Khác';
+        theo[ld] = (theo[ld] || 0) + 1;
+        tong++;
+      });
+      return { ten: ng.ten, email: ng.email, coSo: ng.coSo, theo: theo, tong: tong,
+        coMat: Math.max(0, buoiChuan - tong), baoMuon: ng.baoMuon, trongDs: ng.trongDs };
+    });
+    // Sắp theo cơ sở (đúng thứ tự khai báo) rồi theo TÊN như danh sách trường
+    var ttCS = {};
+    (DL.coSo || []).forEach(function (c, i) { ttCS[c.ma] = i; });
+    function tenCuoi(t) { var p = String(t || '').trim().split(/\s+/); return p[p.length - 1] || ''; }
+    hang.sort(function (a, b) {
+      var ca = ttCS[a.coSo] === undefined ? 99 : ttCS[a.coSo];
+      var cb = ttCS[b.coSo] === undefined ? 99 : ttCS[b.coSo];
+      return ca - cb || tenCuoi(a.ten).localeCompare(tenCuoi(b.ten), 'vi') ||
+        String(a.ten).localeCompare(String(b.ten), 'vi');
+    });
+    return { thang: ym, soNgayLam: dsLam.length, buoiChuan: buoiChuan,
+      dangDienRa: dangDienRa, tinhDen: dangDienRa ? t0 : cuoi,
+      nghi: (dsNghi || []).slice().sort(function (a, b) { return a.ngay < b.ngay ? -1 : 1; }),
+      hang: hang };
+  }
+
+  function napCong(ym) {
+    if (!/^\d{4}-\d{2}$/.test(ym)) return;
+    CONG_THU = ym; CONG_DANG = true; CONG_LOI = '';
+    var soNgay = soNgayThang(ym), dau = ym + '-01', cuoi = ym + '-' + pad2(soNgay);
+
+    if (!THAT) {
+      // Bản mẫu: dựng vài dòng vắng GIẢ ĐỊNH rơi đúng ngày làm việc của tháng
+      // đang xem, để thầy cô nhìn thấy bảng có số chứ không phải bảng trống.
+      var nghiMau = CONG_NGHI_MAU.filter(function (n) { return n.ngay.slice(0, 7) === ym; });
+      // Chỉ lấy ngày ĐÃ QUA — tinhCong cắt tháng đang diễn ra tại hôm nay,
+      // chọn ngày tương lai thì bảng mẫu ra trống trơn suốt đầu tháng
+      var t0m = homNayISO();
+      var lam = ngayLamTrongThang(ym, [1, 2, 3, 4, 5], nghiMau)
+        .filter(function (iso) { return iso <= t0m; });
+      var mau = [];
+      if (lam.length > 5) {
+        mau = [
+          { ngay: lam[1], den_ngay: null, buoi: 'ca_ngay', ho_ten: 'Cô Nguyễn Thị A.',
+            email: 'mau0@mau', co_so_ma: 'CS01', ly_do: 'Nghỉ ốm', bao_muon: true },
+          { ngay: lam[2], den_ngay: lam[4], buoi: 'ca_ngay', ho_ten: 'Thầy Phạm Văn D.',
+            email: 'mau2@mau', co_so_ma: 'CS01', ly_do: 'Công tác', bao_muon: false },
+          { ngay: lam[3], den_ngay: null, buoi: 'sang', ho_ten: 'Cô Bùi Thị K.',
+            email: 'mau6@mau', co_so_ma: 'CS01', ly_do: 'Việc riêng', bao_muon: false }
+        ];
+      }
+      CONG_CO_NGHI = true;
+      CONG_KQ = tinhCong(ym, mau, nghiMau, [1, 2, 3, 4, 5]);
+      CONG_DANG = false;
+      return;
+    }
+
+    var may = window.MAY_CHU;
+    Promise.all([
+      // Mọi dòng vắng CHẠM vào tháng: bắt đầu trước ngày cuối tháng, và
+      // (nghỉ 1 ngày thì ngày đó ≥ đầu tháng) hoặc (nghỉ dài thì kéo tới ≥ đầu tháng)
+      may.from('gv_vang')
+        .select('ngay, den_ngay, buoi, ho_ten, email, co_so_ma, ly_do, bao_muon')
+        .lte('ngay', cuoi)
+        // ⚠ KHÔNG thêm dấu ')' ở cuối — supabase-js tự bọc thành or=(…).
+        // Thừa một ngoặc là PostgREST đọc ngày thành "2026-08-01)" rồi hỏng
+        // cả truy vấn. Đối chiếu đúng bản đã chạy thật ở napHomNay.
+        .or('and(den_ngay.is.null,ngay.gte.' + dau + '),den_ngay.gte.' + dau),
+      may.from('ngay_nghi').select('id, ngay, loai, ten')
+        .gte('ngay', dau).lte('ngay', cuoi).order('ngay'),
+      may.from('cau_hinh').select('gia_tri').eq('khoa', 'ngay_lam_viec').limit(1)
+    ]).then(function (kq) {
+      if (kq[0].error) throw kq[0].error;
+      var nghi = [];
+      CONG_CO_NGHI = true;
+      if (kq[1].error) {
+        if (!loiThieuBang(kq[1].error)) throw kq[1].error;
+        CONG_CO_NGHI = false;              // chưa chạy sql/30 — vẫn cộng được, chỉ thiếu ngày lễ
+      } else {
+        nghi = kq[1].data || [];
+      }
+      var thuLam = [1, 2, 3, 4, 5];
+      if (!kq[2].error && kq[2].data && kq[2].data[0] && kq[2].data[0].gia_tri) {
+        var ds = String(kq[2].data[0].gia_tri).split(',')
+          .map(function (x) { return parseInt(x, 10); })
+          .filter(function (x) { return x >= 1 && x <= 7; });
+        if (ds.length) thuLam = ds;
+      }
+      CONG_KQ = tinhCong(ym, kq[0].data || [], nghi, thuLam);
+      CONG_DANG = false;
+      veGiu();
+    }).catch(function (e) {
+      CONG_LOI = 'Không đọc được bảng công: ' + ((e && e.message) || e);
+      CONG_KQ = null; CONG_DANG = false;
+      veGiu();
+    });
+  }
+
+  function veBangCong() {
+    if (!CONG_THANG) CONG_THANG = thangNay();
+    if (!CONG_DANG && CONG_THU !== CONG_THANG) napCong(CONG_THANG);
+
+    var tieuDe = '<div class="dh-tieu-de" style="margin-top:22px">📋 Bảng công ' + thangChu(CONG_THANG) + '</div>';
+    var truoc = thangDich(CONG_THANG, -1), sau = thangDich(CONG_THANG, 1);
+    var dieuHuong = '<div class="dh-chon-hang" style="margin-bottom:8px">' +
+      (CONG_THANG > MOC_CONG_SOM
+        ? '<button class="chip-loc" onclick="DH.congThang(-1)">← ' + thangChu(truoc) + '</button>' : '') +
+      (CONG_THANG < thangNay()
+        ? '<button class="chip-loc" onclick="DH.congThang(1)">' + thangChu(sau) + ' →</button>' : '') +
+      '</div>';
+
+    if (!CONG_KQ || CONG_KQ.thang !== CONG_THANG) {
+      return tieuDe + dieuHuong + '<div class="the-thong-bao">' +
+        (CONG_LOI ? '⚠ ' + thoat(CONG_LOI) : 'Đang cộng bảng công…') + '</div>';
+    }
+
+    var k = CONG_KQ, qt = laQT();
+    // BGH xem toàn trường; giáo viên xem đúng dòng của mình (RLS vẫn cho đọc
+    // hết — đây là lọc hiển thị cho đỡ tò mò, không phải hàng rào bảo mật)
+    var hang = qt ? k.hang : k.hang.filter(function (h) {
+      return emailBang(h.email, emailToi()) || (!h.email && h.ten === tenToi());
+    });
+
+    var nhieuCS = DL.coSo.length > 1;
+    var soCot = 1 + (nhieuCS ? 1 : 0) + CONG_LY_DO.length + 3;
+    var dauBang = '<tr><th class="cot-dinh" style="text-align:left">CBGV-NV</th>' +
+      (nhieuCS ? '<th style="text-align:center">Cơ sở</th>' : '') +
+      CONG_LY_DO.map(function (l) { return '<th style="text-align:center">' + l + '</th>'; }).join('') +
+      '<th style="text-align:center">Tổng vắng</th><th style="text-align:center">Có mặt</th>' +
+      '<th style="text-align:center">⚠</th></tr>';
+    var than = hang.length
+      ? hang.map(function (h) {
+          // Cột tên DÍNH khi cuộn ngang: bảng 10 cột rộng gần 2,5 màn điện
+          // thoại, trôi mất cột tên là nhìn thấy số mà không biết của ai.
+          return '<tr><td class="cot-dinh"><b>' + thoat(h.ten) + '</b>' +
+            (h.trongDs ? '' : ' <small class="dh-vang">(ngoài danh sách nhân sự)</small>') + '</td>' +
+            (nhieuCS ? '<td style="text-align:center">' + thoat(tenCoSo(h.coSo)) + '</td>' : '') +
+            CONG_LY_DO.map(function (l) {
+              return '<td style="text-align:center">' + (h.theo[l] || '') + '</td>';
+            }).join('') +
+            '<td style="text-align:center">' + (h.tong ? '<b>' + h.tong + '</b>' : '') + '</td>' +
+            '<td style="text-align:center"><b>' + h.coMat + '</b></td>' +
+            '<td style="text-align:center">' + (h.baoMuon ? '<b class="dh-do">' + h.baoMuon + '</b>' : '') + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="' + soCot + '">' + (qt
+          ? 'Chưa có dữ liệu nhân sự.'
+          : 'Chưa tra được dòng của thầy/cô — thường là do email tài khoản khác email trong ' +
+            'danh sách nhân sự. Nhờ Ban giám hiệu đối chiếu ở Quản trị → Tài khoản.') +
+        '</td></tr>';
+
+    var bang = '<div class="cuon-ngang"><table class="bang-quan-tri nho bang-cong"><thead>' + dauBang +
+      '</thead><tbody>' + than + '</tbody></table></div>';
+
+    var canhBaoNghi = CONG_CO_NGHI ? '' :
+      '<div class="hd-kiem vang">Chưa cài bảng ngày nghỉ (tệp <b>sql/30-bang-cong.sql</b>) — ' +
+      'bảng công đang tính theo lịch tuần, <b>chưa trừ ngày lễ</b>. Nhờ quản trị chạy sql/30 rồi tải lại trang.</div>';
+
+    // Khối này là khối DUY NHẤT của module dựng số bằng phép tính, nên phải
+    // đeo nhãn thật/mẫu rõ hơn cả các khối khác — số công là số đi tính lương.
+    var nhan = THAT
+      ? '<div class="hd-kiem xanh" style="margin-top:0">Cộng từ sổ vắng THẬT của nhà trường.</div>'
+      : '<div class="hd-kiem vang" style="margin-top:0">🧪 <b>BẢN MẪU</b> — tên người và số buổi dưới đây là ' +
+        'DỮ LIỆU GIẢ ĐỊNH, không phải nhân sự thật. Đăng nhập để xem bảng công thật.</div>';
+
+    var mocTinh = k.dangDienRa
+      ? 'Tháng chưa kết thúc — <b>tính đến hết ngày ' + ngayVN(k.tinhDen) + '</b>: '
+      : 'Cả ' + thangChu(CONG_THANG) + ': ';
+    var moTa = '<div class="dh-ghi-chu-nho" style="margin-top:0">Đơn vị là <b>buổi</b> (2 buổi/ngày). ' +
+      mocTinh + '<b>' + k.soNgayLam + '</b> ngày làm việc = <b>' + k.buoiChuan + '</b> buổi chuẩn. ' +
+      'Toàn bộ số liệu cộng ra từ sổ vắng đã bấm mỗi ngày — <b>không ai nhập lại</b>. ' +
+      'Cột ⚠ đếm số lần báo nghỉ <b>sau hạn</b> (quy định là báo trước ít nhất 1 buổi). ' +
+      'Danh sách lấy từ <b>danh sách nhân sự</b> của trường (' + k.hang.length + ' người); ' +
+      'ai chưa có trong đó thì chưa có dòng. ' +
+      'Dạy thay và thừa giờ <b>chưa có</b>: hai số đó cần thời khóa biểu.</div>';
+
+    var nutWord = qt
+      ? '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.congWord()">📄 Xuất Word (A4 ngang)</button>' +
+        (k.dangDienRa
+          ? '<div class="dh-ghi-chu-nho">Xuất giữa tháng thì bản Word ghi rõ "tính đến ngày ' +
+            ngayVN(k.tinhDen) + '" — đợi hết tháng mới là bản chốt.</div>'
+          : '')
+      : '';
+
+    return tieuDe + dieuHuong + nhan + canhBaoNghi + moTa + bang + nutWord + veNgayNghi();
+  }
+
+  // ── Khai ngày nghỉ của tháng (BGH) — Tết và Giỗ Tổ theo âm lịch, số ngày
+  //    nghỉ thêm dịp Quốc khánh do Chính phủ báo hằng năm, nên phải nhập tay ──
+  function veNgayNghi() {
+    if (!laQT() || !CONG_KQ) return '';
+    var ym = CONG_THANG, dau = ym + '-01', cuoi = ym + '-' + pad2(soNgayThang(ym));
+    var ds = CONG_KQ.nghi.length
+      ? CONG_KQ.nghi.map(function (n) {
+          return '<div class="dh-diem-hang" style="padding:8px 12px">' +
+            '<span class="dh-cham ' + (n.loai === 'lam_bu' ? 'xanh' : 'vang') + '"></span>' +
+            '<div class="tt"><b>' + ngayVN(n.ngay) + ' — ' + thoat(n.ten) + '</b>' +
+            '<small>' + (TEN_LOAI_NGHI[n.loai] || thoat(n.loai)) + '</small></div>' +
+            (n.id ? '<button class="dh-nut-nho" onclick="DH.nghiXoa(' + n.id + ')">Xóa</button>' : '') +
+            '</div>';
+        }).join('')
+      : '<div class="dh-ghi-chu-nho">Tháng này chưa khai ngày nghỉ nào.</div>';
+
+    return '<div class="dh-tieu-de" style="margin-top:18px">📌 Ngày nghỉ trong ' + thangChu(ym) + '</div>' + ds +
+      '<div class="dh-chon-hang" style="margin-top:8px;flex-wrap:wrap">' +
+      '<input class="dh-o-nhap" type="date" id="dh-nghi-ngay" style="width:auto;margin-top:0" min="' + dau + '" max="' + cuoi + '">' +
+      '<input class="dh-o-nhap" id="dh-nghi-ten" style="max-width:220px;margin-top:0" placeholder="Tên ngày nghỉ (VD: Nghỉ bù Tết)">' +
+      '<select class="dh-o-nhap" id="dh-nghi-loai" style="width:auto;margin-top:0">' +
+      Object.keys(TEN_LOAI_NGHI).map(function (m) {
+        return '<option value="' + m + '">' + TEN_LOAI_NGHI[m] + '</option>';
+      }).join('') + '</select>' +
+      '<button class="dh-nut-nho" onclick="DH.nghiThem()">＋ Thêm</button></div>' +
+      '<div class="dh-ghi-chu-nho">Ngày lễ dương lịch cố định đã gieo sẵn. <b>Tết Nguyên đán, Giỗ Tổ Hùng Vương</b> theo âm lịch ' +
+      'và số ngày nghỉ thêm dịp Quốc khánh thì Ban giám hiệu tự khai ở đây. Chọn <b>Đi làm bù</b> cho ngày hoán đổi ' +
+      'rơi vào thứ Bảy / Chủ nhật.</div>';
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1279,7 +1662,7 @@
       '<div class="dh-nk">' + (DL.nhatKy.length ? DL.nhatKy.map(function (n) {
         return '<div class="dh-nk-dong"><span class="dh-nk-luc">' + thoat(n.luc) + '</span><span>' + thoat(n.chu) + '</span></div>';
       }).join('') : '<div class="dh-nk-dong"><span>Chưa có hoạt động nào hôm nay.</span></div>') + '</div>' +
-      '<div class="dh-ghi-chu-nho">Báo cáo đầu buổi, an toàn xanh, điểm danh, báo việc và kết quả xử lý ' +
+      '<div class="dh-ghi-chu-nho">Báo cáo đầu buổi, an toàn xanh, đề xuất – phê duyệt, báo việc và kết quả xử lý ' +
       'tự ghi vết ở đây (giao việc lưu vết ở nhật ký hệ thống) — đây là nguồn để sau này <b>tự sinh báo cáo ngày / tuần / tháng</b>, không nhập lại.</div>';
 
     return '<div class="dh-tieu-de" style="margin-top:0">Sự việc đang theo dõi</div>' + dsSV + formBV + nhatKy;
@@ -1352,10 +1735,13 @@
   // KHUNG MODULE
   // ════════════════════════════════════════════════════════════
   var TAB = 'homnay';
+  // Thẻ "🎒 Điểm danh HS" ĐÃ ẨN (14/8/2026) — VNEDU đã làm việc đó, bắt cô
+  // giáo nhập hai lần thì hai tuần là bỏ. Mã veDiemDanh() và các hàm dd* GIỮ
+  // NGUYÊN, bảng diem_danh_lop/hs_vang trên CSDL cũng giữ: muốn bật lại chỉ
+  // cần trả một dòng vào DS_TAB dưới đây, không phải viết lại gì.
   var DS_TAB = [
     { ma: 'homnay', ten: '📊 Hôm nay' },
-    { ma: 'baocao', ten: '🟢 Báo cáo đầu buổi' },
-    { ma: 'diemdanh', ten: '🎒 Điểm danh HS' },
+    { ma: 'baocao', ten: '🟢 Điểm danh GV' },
     { ma: 'dexuat', ten: '🔄 Đề xuất' },
     { ma: 'daythay', ten: '👨‍🏫 Dạy thay' },
     { ma: 'viec', ten: '✅ Việc trong tuần' },
@@ -1429,7 +1815,7 @@
     var soLieu;
     if (qt) {
       soLieu = '👨‍🏫 <b>' + (t.gvTong - t.gvVang.length) + '/' + t.gvTong + '</b> CBGV có mặt · ' +
-        '👧 <b>' + (t.hsTong - t.hsVang).toLocaleString('vi-VN') + '/' + t.hsTong.toLocaleString('vi-VN') + '</b> học sinh · ' +
+        '👧 <b>' + t.hsTong.toLocaleString('vi-VN') + '</b> học sinh · ' +
         '🟢 <b>' + t.soXanh + '/' + t.dsCS.length + '</b> điểm trường an toàn' +
         (t.soChua ? ' · ⚪ <b>' + t.soChua + '</b> chưa xác nhận' : '');
     } else {
@@ -1457,6 +1843,11 @@
 
   // Sau MỖI thao tác ghi thật: đọc lại "hôm nay" rồi vẽ — màn luôn đúng CSDL
   function taiLai() {
+    // Mọi thao tác ghi đều đi qua đây, và ba trong số đó ĐỔI SỔ VẮNG:
+    // báo cáo đầu buổi (chèn gv_vang), sửa báo cáo (xóa gv_vang), duyệt đơn
+    // nghỉ (hàm duyet_de_xuat chèn gv_vang). Không dọn bộ nhớ đệm thì bảng
+    // công đứng yên cả phiên, xuất Word ra thiếu đúng buổi vừa khai.
+    CONG_THU = ''; CONG_KQ = null;
     if (!THAT) { veDieuHanh(); return Promise.resolve(); }
     return napHomNay(DL).then(function () { veDieuHanh(); })
       .catch(function (e) { window.notify('Lỗi đọc lại dữ liệu: ' + (e.message || e)); });
@@ -1473,7 +1864,8 @@
     'dh-tb-tieude', 'dh-tb-noidung', 'dh-tb-phamvi',
     'dh-viec-noidung', 'dh-viec-nguoi', 'dh-viec-han', 'dh-viec-muc',
     'dh-vm-noidung', 'dh-vm-nguoi', 'dh-vm-chuky', 'dh-vm-thu', 'dh-vm-ngay',
-    'dh-vm-thang', 'dh-vm-truoc'];
+    'dh-vm-thang', 'dh-vm-truoc',
+    'dh-nghi-ngay', 'dh-nghi-ten', 'dh-nghi-loai'];
   var O_GIU_TICK = ['dh-bc-1buoi', 'dh-tb-xacnhan'];
   function veGiu() {
     var luu = {}, tick = {};
@@ -2047,6 +2439,131 @@
           (canXuLy.length ? ' — ' + canXuLy.length + ' mục ⚠ đã thành sự việc để theo dõi.' : '.'));
         return taiLai();
       }).catch(baoLoi);
+    },
+
+    // ── Bảng công tháng ──
+    congThang: function (buoc) {
+      var moi = thangDich(CONG_THANG || thangNay(), buoc);
+      if (moi > thangNay() || moi < MOC_CONG_SOM) return;   // không đi quá hai đầu
+      CONG_THANG = moi; CONG_KQ = null; CONG_LOI = '';
+      veGiu();
+    },
+    nghiThem: function () {
+      var ngay = (($('#dh-nghi-ngay') || {}).value || '').trim();
+      var ten = (($('#dh-nghi-ten') || {}).value || '').trim();
+      var loai = (($('#dh-nghi-loai') || {}).value || 'le');
+      if (!ngay) { window.notify('Chọn ngày trước đã.'); return; }
+      if (!ten) { window.notify('Ghi tên ngày nghỉ (ví dụ: Nghỉ bù Tết Nguyên đán).'); return; }
+      if (ngay.slice(0, 7) !== CONG_THANG) {
+        window.notify('Ngày này không thuộc ' + thangChu(CONG_THANG) + ' — chuyển sang tháng đó rồi thêm.');
+        return;
+      }
+      if (!THAT) {
+        if (CONG_NGHI_MAU.filter(function (n) { return n.ngay === ngay; }).length) {
+          window.notify('Ngày ' + ngayVN(ngay) + ' đã được khai rồi.');
+          return;
+        }
+        // id âm = dòng của bản mẫu, để nút Xóa vẫn hiện và gỡ được
+        CONG_NGHI_MAU.push({ id: -CONG_NGHI_MAU.length - 1, ngay: ngay, loai: loai, ten: ten });
+        CONG_THU = ''; CONG_KQ = null;      // dựng lại cả bảng mẫu cho đúng
+        veGiu(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.');
+        return;
+      }
+      window.MAY_CHU.from('ngay_nghi')
+        .insert({ ngay: ngay, loai: loai, ten: ten, nguoi_ghi_id: idToi() })
+        .then(function (r) {
+          if (r.error) {
+            // 23505 = trùng ngày (unique) · 42501 = RLS chặn (không phải BGH)
+            var ma = r.error.code;
+            baoLoi(ma === '23505'
+              ? { message: 'Ngày ' + ngayVN(ngay) + ' đã được khai rồi — xóa dòng cũ nếu muốn sửa.' }
+              : ma === '42501'
+                ? { message: 'Chỉ Ban giám hiệu mới khai được ngày nghỉ.' }
+                : r.error);
+            return;
+          }
+          // Dọn ô nhập, kẻo veGiu() khôi phục đúng giá trị vừa gửi rồi người
+          // ta bấm Thêm lần nữa theo phản xạ và ăn ngay lỗi trùng ngày
+          var oN = $('#dh-nghi-ngay'), oT = $('#dh-nghi-ten');
+          if (oN) oN.value = '';
+          if (oT) oT.value = '';
+          CONG_THU = ''; CONG_KQ = null;     // buộc tính lại tháng đang xem
+          window.notify('📌 Đã thêm — bảng công tính lại ngay.');
+          veGiu();
+        });
+    },
+    nghiXoa: function (id) {
+      if (!id) return;
+      if (!window.confirm('Xóa ngày nghỉ này? Bảng công của cả trường sẽ tính lại.')) return;
+      if (!THAT) {
+        CONG_NGHI_MAU = CONG_NGHI_MAU.filter(function (n) { return n.id !== id; });
+        CONG_THU = ''; CONG_KQ = null;
+        veGiu(); return;
+      }
+      window.MAY_CHU.from('ngay_nghi').delete().eq('id', id).select()
+        .then(function (r) {
+          if (r.error) { baoLoi(r.error); return; }
+          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới xóa được ngày nghỉ.'); return; }
+          CONG_THU = ''; CONG_KQ = null;
+          veGiu();
+        });
+    },
+    congWord: function () {
+      var W = window.WORD_TIEN_ICH;
+      if (!W) { window.notify('Chưa nạp được bộ xuất Word (js/xuat-word.js).'); return; }
+      if (!CONG_KQ || CONG_KQ.thang !== CONG_THANG) { window.notify('Bảng công chưa tính xong.'); return; }
+      if (!laQT()) { window.notify('Chỉ Ban giám hiệu mới xuất được bảng công toàn trường.'); return; }
+      var k = CONG_KQ, nhieuCS = DL.coSo.length > 1;
+      // Bảng gắn class "co-dinh" thì PHẢI khai bề rộng từng cột, nếu không
+      // Word tự dàn theo nội dung: cột họ tên co lại còn hơn 4cm, "Nguyễn Thị
+      // Thanh Huyền" bị bẻ ba dòng trong khi năm cột số bỏ trống một nửa.
+      var rTen = nhieuCS ? 20 : 26, rCS = nhieuCS ? 12 : 0;
+      var rLyDo = 8, rCuoi = (100 - rTen - rCS - rLyDo * CONG_LY_DO.length) / 3;
+      var dau = '<tr><th style="text-align:left;width:' + rTen + '%">Họ và tên</th>' +
+        (nhieuCS ? '<th style="width:' + rCS + '%">Cơ sở</th>' : '') +
+        CONG_LY_DO.map(function (l) {
+          return '<th style="width:' + rLyDo + '%">' + W.chan(l) + '</th>';
+        }).join('') +
+        '<th style="width:' + rCuoi + '%">Tổng vắng</th>' +
+        '<th style="width:' + rCuoi + '%">Có mặt</th>' +
+        '<th style="width:' + rCuoi + '%">Báo muộn</th></tr>';
+      var than = k.hang.map(function (h, i) {
+        return '<tr><td>' + (i + 1) + '. ' + W.chan(h.ten) + '</td>' +
+          (nhieuCS ? '<td class="giua">' + W.chan(tenCoSo(h.coSo)) + '</td>' : '') +
+          CONG_LY_DO.map(function (l) {
+            return '<td class="giua">' + (h.theo[l] || '') + '</td>';
+          }).join('') +
+          '<td class="giua">' + (h.tong || '') + '</td>' +
+          '<td class="giua"><b>' + h.coMat + '</b></td>' +
+          '<td class="giua">' + (h.baoMuon || '') + '</td></tr>';
+      }).join('');
+      var dsNghi = k.nghi.length
+        ? '<p style="margin-top:10pt"><b>Ngày nghỉ trong tháng:</b> ' +
+          k.nghi.map(function (n) {
+            return W.chan(ngayVN(n.ngay) + ' (' + n.ten + ')' + (n.loai === 'lam_bu' ? ' — đi làm bù' : ''));
+          }).join(' · ') + '.</p>'
+        : '';
+      var thanBai = W.theThuc() +
+        '<p class="giua" style="margin-top:18pt"><b style="font-size:14pt">BẢNG TỔNG HỢP NGÀY CÔNG</b></p>' +
+        '<p class="giua" style="margin-top:2pt"><b>Tháng ' + thangSo(CONG_THANG) + ' năm ' + CONG_THANG.slice(0, 4) + '</b></p>' +
+        (k.dangDienRa
+          ? '<p class="giua nghieng" style="margin-top:2pt">(Tháng chưa kết thúc — tính đến hết ngày ' +
+            W.chan(ngayVN(k.tinhDen)) + ')</p>'
+          : '') +
+        '<p style="margin-top:12pt">Đơn vị tính: <b>buổi</b> (mỗi ngày 2 buổi). ' +
+        (k.dangDienRa ? 'Tính đến ngày ' + W.chan(ngayVN(k.tinhDen)) + ', tháng này đã qua <b>'
+                      : 'Tháng này có <b>') +
+        k.soNgayLam + '</b> ngày làm việc, tương ứng <b>' + k.buoiChuan + '</b> buổi chuẩn. ' +
+        'Số liệu tổng hợp từ sổ theo dõi vắng hằng ngày của các điểm trường; danh sách gồm <b>' +
+        k.hang.length + '</b> cán bộ, giáo viên, nhân viên có tên trong danh sách nhân sự nhà trường.</p>' +
+        '<table class="co-dinh"><thead>' + dau + '</thead><tbody>' + than + '</tbody></table>' +
+        dsNghi +
+        '<p class="nghieng" style="margin-top:10pt;font-size:12pt">Ghi chú: bảng chưa bao gồm số tiết dạy thay ' +
+        'và giờ dạy vượt định mức.' +
+        (k.dangDienRa ? ' Đây <b>chưa phải bản chốt tháng</b>.' : '') + '</p>' +
+        W.khoiKy('NGƯỜI LẬP BẢNG', THAT ? tenToi() : '');
+      W.taiVe(W.khungWord('Bảng công ' + thangChu(CONG_THANG), thanBai, true),
+        'bang-cong-' + CONG_THANG + '.doc');
     }
   };
 

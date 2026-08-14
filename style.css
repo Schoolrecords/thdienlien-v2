@@ -1680,3 +1680,33 @@ nav.menu::-webkit-scrollbar { display: none; }
   /* nút hành động rơi hẳn xuống dòng dưới, phần chữ chiếm trọn hàng trên */
   .dh-diem-hang .tt { flex: 1 1 100%; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BẢNG CÔNG THÁNG (14/8/2026) — đợt A "tư duy lại module Điều hành".
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* 1) Cột họ tên DÍNH khi cuộn ngang. Bảng công có tới 10 cột, rộng gần 2,5 màn
+      điện thoại; cuộn sang xem cột "Có mặt" thì cột tên đã trôi khỏi màn —
+      nhìn thấy số mà không biết của ai. Chỉ áp cho .bang-cong, không đụng các
+      bảng quản trị khác. */
+   ⚠ .bang-quan-tri gốc đặt overflow:hidden (để bo góc). Ô sticky nằm trong
+      một hộp overflow khác hộp đang cuộn thì trình duyệt KHÔNG dính — phải trả
+      bảng này về overflow:visible, đổi lại mất bo góc, đáng. */
+.bang-cong { overflow: visible; }
+.bang-cong .cot-dinh {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--the); box-shadow: 1px 0 0 var(--vien);
+}
+.bang-cong thead .cot-dinh { background: var(--kem); z-index: 2; }
+
+/* 2) Vùng chạm 44px trên máy CẢM ỨNG. Khối "đợt 2" ở trên đặt .dh-chon-hang
+      .chip-loc = 40px với đặc tả 0,2,0, thắng cả khai báo 44px trong
+      @media (hover:none) — nên trên điện thoại nút thật ra bị HẠ xuống 40px.
+      Khai lại ở đây cho đúng ngưỡng 44px mà chính dự án đã đặt ra, và bổ sung
+      .dh-nut-nho (trước nay không nằm trong danh sách cảm ứng nào). */
+@media (hover: none) {
+  .dh-hop-chon .chip-loc, .dh-chon-hang .chip-loc, .dh-loc-cs .chip-loc,
+  .dh-nut-nho {
+    min-height: 44px; display: inline-flex; align-items: center;
+  }
+}
