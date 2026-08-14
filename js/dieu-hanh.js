@@ -334,6 +334,8 @@
         // ai bấm vào thẻ trong lúc chờ là bảng công dựng bằng tên giả — không
         // xóa thì nó nằm nguyên dưới băng xanh "đang chạy dữ liệu thật".
         CONG_THU = ''; CONG_KQ = null;
+        // Module con cũng phải vứt bản mẫu của nó — cùng một cái bẫy
+        if (window.LT && window.LT.datLai) window.LT.datLai();
         veDieuHanh();
       })
       .catch(function (e) {
@@ -753,9 +755,9 @@
       : '<li>Không có ai vắng ' + tenBuoi(t.buoi) + ' này.</li>';
 
     var dayThayChu = THAT
-      ? '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — xem bản mẫu ở thẻ Dạy thay.</div>'
+      ? '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — xem bản mẫu ở cuối thẻ <b>📅 Lịch tuần</b>.</div>'
       : (t.tietThieu
-        ? '<div class="hd-kiem do">🔴 Lớp 3B còn <b>' + t.tietThieu + ' tiết chưa có người dạy thay</b> — <a href="javascript:DH.tab(\'daythay\')">bố trí ngay →</a></div>'
+        ? '<div class="hd-kiem do">🔴 Lớp 3B còn <b>' + t.tietThieu + ' tiết chưa có người dạy thay</b> — <a href="javascript:DH.tab(\'lichtuan\')">bố trí ngay →</a></div>'
         : '<div class="hd-kiem xanh">🟢 Mọi lớp có giáo viên vắng đều đã bố trí dạy thay.</div>');
 
     var nghiDai = DL.nghiDai.length
@@ -1476,10 +1478,19 @@
   // ════════════════════════════════════════════════════════════
   function veDayThay() {
     var daDu = DAY_THAY.every(function (x) { return x.gv; });
-    return '<div class="hd-kiem vang" style="margin-top:0">🧪 <b>BẢN MẪU</b> — bố trí dạy thay theo TIẾT cần thời khóa biểu. ' +
+    // Phần này nay nối SAU lịch công tác tuần (là dữ liệu thật) trên cùng một
+    // màn cuộn. Phải có tiêu đề và băng cảnh báo riêng, kẻo cuộn tới đây gặp
+    // "Lớp 3B" rồi tưởng lớp 3B thật đang thiếu người dạy.
+    return '<div class="dh-tieu-de" style="margin-top:26px">👨‍🏫 Dạy thay theo tiết</div>' +
+      '<div class="hd-kiem vang" style="margin-top:0">🧪 <b>BẢN MẪU — toàn bộ tên người, tên lớp dưới đây là GIẢ ĐỊNH.</b> ' +
+      'Bố trí dạy thay theo TIẾT cần thời khóa biểu. ' +
       'Khi nhà trường gửi file TKB Excel, hệ thống sẽ đọc và mở chức năng này với dữ liệu thật. ' +
       'Nguyên tắc đã chốt: giáo viên báo nghỉ <b>trước ít nhất 1 buổi</b>; báo muộn vẫn gửi được nhưng bị đánh dấu ⚠.</div>' +
-      '<button class="dh-nut-nho" style="margin-bottom:10px" onclick="window.notify(\'Khi có thời khóa biểu thật (Excel), nạp tại đây — hệ thống đọc bằng SheetJS ngay trên trình duyệt.\')">📥 Nạp thời khóa biểu (Excel)</button>' +
+      // Nút nạp TKB là việc của Ban giám hiệu — trước đây thẻ Dạy thay riêng
+      // nên giáo viên không mở tới, nay nó nằm trong thẻ họ xem mỗi ngày
+      (laQT()
+        ? '<button class="dh-nut-nho" style="margin-bottom:10px" onclick="window.notify(\'Khi có thời khóa biểu thật (Excel), nạp tại đây — hệ thống đọc bằng SheetJS ngay trên trình duyệt.\')">📥 Nạp thời khóa biểu (Excel)</button>'
+        : '') +
       '<div class="dh-tieu-de">Đơn báo nghỉ (mẫu)</div>' +
       '<div class="dh-diem-hang"><span class="dh-cham vang"></span>' +
       '<div class="tt"><b>Cô Nguyễn Thị A. — Nghỉ ốm</b>' +
@@ -1492,7 +1503,7 @@
           (x.gv ? '<span class="dh-tiet-gv">🟢 ' + thoat(x.gv) + '</span>'
                 : '<span class="dh-tiet-gv thieu">🔴 chưa có người</span>') + '</div>';
       }).join('') +
-      (daDu ? '' :
+      (daDu || !laQT() ? '' :
         '<div class="dh-tieu-de">Gợi ý người dạy thay các tiết còn thiếu</div>' +
         '<div class="dh-ghi-chu-nho" style="margin-top:0">Hệ thống tra thời khóa biểu, chỉ hiện người <b>rảnh</b>; xếp trên: cùng điểm trường → ' +
         'cùng khối → <b>ít tiết dạy thay trong tháng</b> (chia đều, không dồn một người).</div>' +
@@ -1743,7 +1754,9 @@
     { ma: 'homnay', ten: '📊 Hôm nay' },
     { ma: 'baocao', ten: '🟢 Điểm danh GV' },
     { ma: 'dexuat', ten: '🔄 Đề xuất' },
-    { ma: 'daythay', ten: '👨‍🏫 Dạy thay' },
+    // Dạy thay nay nằm TRONG thẻ Lịch tuần: nó vốn là hệ quả của thời khóa
+    // biểu cộng với người vắng, đứng riêng một thẻ thì lạc lõng.
+    { ma: 'lichtuan', ten: '📅 Lịch tuần' },
     { ma: 'viec', ten: '✅ Việc trong tuần' },
     { ma: 'thongbao', ten: '📢 Thông báo' },
     { ma: 'baoviec', ten: '⚠️ Báo việc' }
@@ -1791,7 +1804,12 @@
       TAB === 'baocao' ? veBaoCao() :
       TAB === 'diemdanh' ? veDiemDanh() :
       TAB === 'dexuat' ? veDeXuat() :
-      TAB === 'daythay' ? veDayThay() :
+      // Lịch tuần ở tệp riêng (js/lich-tuan.js); thiếu tệp thì vẫn còn phần
+      // Dạy thay chứ không để thẻ trắng trơn
+      TAB === 'lichtuan' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
+      // 'daythay' là mã thẻ CŨ, không còn trên thanh — ai còn giữ trạng thái
+      // cũ thì đưa về đúng thẻ mới chứ đừng để lạc sang màn không tab nào sáng
+      TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
       TAB === 'thongbao' ? veThongBao() :
       TAB === 'viec' ? veViec() : veBaoViec();
 
@@ -1841,6 +1859,23 @@
       '</div></div>';
   }
 
+  // ════════════════════════════════════════════════════════════
+  // CẦU NỐI cho các module con của Điều hành (js/lich-tuan.js…)
+  // Cố ý trả bằng HÀM chứ không phải giá trị: DL và THAT thay đổi sau khi
+  // đăng nhập, module con giữ tham chiếu cũ là hiện dữ liệu mẫu mãi mãi.
+  // ════════════════════════════════════════════════════════════
+  window.DH_KHO = {
+    dl: function () { return DL; },
+    that: function () { return THAT; },
+    nam: function () { return NAM; },
+    laQT: laQT, emailToi: emailToi, idToi: idToi, tenToi: tenToi,
+    tenCoSo: tenCoSo, coSoCuaToi: coSoCuaToi,
+    thoat: thoat, nhay: nhay, ngayVN: ngayVN, homNayISO: homNayISO, pad2: pad2,
+    loiThieuBang: loiThieuBang, TEN_THU: TEN_THU,
+    veLai: function () { veGiu(); },
+    baoLoi: function (e) { baoLoi(e); }
+  };
+
   // Sau MỖI thao tác ghi thật: đọc lại "hôm nay" rồi vẽ — màn luôn đúng CSDL
   function taiLai() {
     // Mọi thao tác ghi đều đi qua đây, và ba trong số đó ĐỔI SỔ VẮNG:
@@ -1859,7 +1894,7 @@
   // Vẽ lại NHƯNG GIỮ mọi ô đang nhập dở — innerHTML xóa sạch form, người
   // đang gõ lý do mà bấm một chip là mất chữ. Một hàm dùng chung thay cho
   // việc từng handler tự lưu-đặt-lại (trước đây mỗi nơi nhớ một ô, sót nhau).
-  var O_GIU = ['dh-bc-ghichu', 'dh-kt-ghichu', 'dh-bv-mota', 'dh-bv-coso',
+  var O_GIU_GOC = ['dh-bc-ghichu', 'dh-kt-ghichu', 'dh-bv-mota', 'dh-bv-coso',
     'dh-dx-noidung', 'dh-dx-tu', 'dh-dx-den', 'dh-dx-buoi', 'dh-dx-coso',
     'dh-tb-tieude', 'dh-tb-noidung', 'dh-tb-phamvi',
     'dh-viec-noidung', 'dh-viec-nguoi', 'dh-viec-han', 'dh-viec-muc',
@@ -1869,6 +1904,9 @@
   var O_GIU_TICK = ['dh-bc-1buoi', 'dh-tb-xacnhan'];
   function veGiu() {
     var luu = {}, tick = {};
+    // Module con khai thêm ô của nó qua window.LT.oGiu — không thì mỗi lần vẽ
+    // lại là mất chữ đang gõ trong khung thêm việc của Lịch tuần
+    var O_GIU = O_GIU_GOC.concat((window.LT && window.LT.oGiu) || []);
     O_GIU.forEach(function (id) {
       var e = $('#' + id);
       if (e) luu[id] = e.value;
@@ -2109,7 +2147,9 @@
     // ── Dạy thay (mẫu) ──
     dtChon: function (gv) {
       DAY_THAY.forEach(function (x) { if (!x.gv) x.gv = gv; });
-      veDieuHanh();
+      // veGiu chứ không veDieuHanh: phần Dạy thay nay nằm CHUNG một màn cuộn
+      // với khung nhập của Lịch tuần, vẽ trắng là bay hết chữ đang gõ dở
+      veGiu();
       window.notify('Bản mẫu — khi có thời khóa biểu, phân công sẽ ghi thật và báo cho giáo viên.');
     },
 
