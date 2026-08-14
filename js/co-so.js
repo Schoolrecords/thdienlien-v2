@@ -46,7 +46,9 @@
   }
   function chon(ten, giaTri, ds) {
     return '<select data-c="' + ten + '">' + ds.map(function (m) {
-      return '<option value="' + m.ma + '"' + (m.ma === (giaTri || '') ? ' selected' : '') +
+      // m.ma có thể là email người dùng nhập (chonPhuTrach) — phải thoát, kẻo
+      // một dấu nháy kép là thoát khỏi thuộc tính value
+      return '<option value="' + thoat(m.ma) + '"' + (m.ma === (giaTri || '') ? ' selected' : '') +
         '>' + thoat(m.ten) + '</option>';
     }).join('') + '</select>';
   }
@@ -203,6 +205,79 @@
       '<div style="margin-top:10px"><button class="nut-them-tt">+ Thêm trường tiền thân</button></div>';
   }
 
+  // ══════════ 5. PHÂN LỚP VỀ ĐIỂM TRƯỜNG ══════════
+  // `lop_hoc` là nơi DUY NHẤT ánh xạ (năm học, lớp) → cơ sở (quy tắc đã chốt
+  // của dự án). Số lớp và sĩ số từng điểm trường ĐẾM THẬT từ đây, không nhập
+  // tay — nên thiếu màn này thì khai xong ba điểm trường vẫn thấy
+  // "Diễn Đồng: 0 lớp · 0 HS", và mọi con số theo điểm trường ở bảng điều
+  // hành, bảng công, dự giờ đều lệch theo.
+  //
+  // ⚠️ co_so_ma = NULL nghĩa là TOÀN TRƯỜNG / cơ sở chính, KHÔNG phải
+  //    "chưa biết" — nên ô chọn ghi rõ chữ, đừng để trống trơn.
+  function daiPhanLop(dsLop, dsCoSo, namHoc) {
+    var chonCS = [{ ma: '', ten: '— Cơ sở chính (mặc định) —' }].concat(
+      (dsCoSo || []).filter(function (c) { return c.hoat_dong !== false; })
+        .map(function (c) { return { ma: c.ma, ten: c.ten }; }));
+
+    var dau = '<div class="dau-muc" style="text-align:left;margin:22px 0 10px">' +
+      '<div class="nhan-nho">Phân lớp về điểm trường — năm học ' + thoat(namHoc || '') + '</div></div>';
+
+    if (!(dsLop || []).length) {
+      return dau + '<div class="the-thong-bao">Năm học này chưa có dữ liệu lớp. ' +
+        'Nạp danh sách học sinh trước (Quản trị → Học sinh), rồi quay lại đây phân lớp về từng điểm trường.</div>';
+    }
+
+    var theoKhoi = {};
+    dsLop.forEach(function (l) { (theoKhoi[l.khoi] = theoKhoi[l.khoi] || []).push(l); });
+
+    return dau +
+      '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:8px">' +
+      'Mỗi lớp thuộc đúng MỘT điểm trường. Số lớp và sĩ số ở bảng trên tự đếm từ đây — ' +
+      'không có bảng nào nhập tay hai con số đó. Lớp để <b>Cơ sở chính</b> thì vẫn tính về cơ sở chính.</div>' +
+      '<div class="dh-chon-hang" style="margin-bottom:10px;flex-wrap:wrap">' +
+      '<span style="font-size:13px;align-self:center">Gán nhanh mọi lớp đang hiện về:</span>' +
+      '<select class="dh-o-nhap" id="cs-gan-nhanh" style="width:auto;max-width:100%;margin-top:0">' +
+      chonCS.map(function (c) {
+        return '<option value="' + thoat(c.ma) + '">' + thoat(c.ten) + '</option>';
+      }).join('') + '</select>' +
+      '<button class="nut-gan-nhanh">Áp cho tất cả</button>' +
+      '<span style="font-size:12.5px;color:var(--chu-mo);align-self:center">— chỉ đổi trên màn, bấm Lưu mới ghi</span>' +
+      '</div>' +
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho" id="cs-bang-lop"><thead><tr>' +
+      '<th>Khối</th><th>Lớp</th><th>Điểm trường</th></tr></thead><tbody>' +
+      Object.keys(theoKhoi).sort(function (a, b) { return a - b; }).map(function (k) {
+        return theoKhoi[k].sort(function (a, b) { return String(a.lop).localeCompare(String(b.lop), 'vi'); })
+          .map(function (l, i) {
+            // ⚠️ Cơ sở đã NGỪNG HOẠT ĐỘNG không nằm trong chonCS. Lớp đang trỏ
+            // vào đó thì không option nào khớp → trình duyệt tự chọn option
+            // đầu (Cơ sở chính), mà data-goc vẫn là mã cũ → vòng so sánh coi
+            // là "đã đổi" và bấm Lưu một lớp là ghi NULL cho CẢ ĐIỂM TRƯỜNG.
+            // Cùng bài học đã ghi ở bảng Cơ sở: người ngoài danh sách vẫn phải
+            // hiện ra, không thì mở bảng rồi bấm Lưu là lặng lẽ mất gán.
+            var dsRieng = chonCS;
+            if (l.co_so_ma && !chonCS.filter(function (m) { return m.ma === l.co_so_ma; }).length) {
+              var cu = (dsCoSo || []).filter(function (c) { return c.ma === l.co_so_ma; })[0];
+              dsRieng = chonCS.concat([{ ma: l.co_so_ma,
+                ten: ((cu && cu.ten) || l.co_so_ma) + ' (đã ngừng hoạt động)' }]);
+            }
+            return '<tr data-lop="' + thoat(l.lop) + '" data-khoi="' + thoat(String(l.khoi)) +
+              '" data-goc="' + thoat(l.co_so_ma || '') + '">' +
+              (i === 0
+                ? '<td rowspan="' + theoKhoi[k].length + '" style="text-align:center;vertical-align:middle"><b>' + thoat(String(k)) + '</b></td>'
+                : '') +
+              '<td><b>' + thoat(l.lop) + '</b></td>' +
+              '<td><select class="cs-lop-cs dh-o-nhap" style="width:auto;max-width:100%;margin-top:0">' +
+              dsRieng.map(function (c) {
+                return '<option value="' + thoat(c.ma) + '"' +
+                  ((l.co_so_ma || '') === c.ma ? ' selected' : '') + '>' + thoat(c.ten) + '</option>';
+              }).join('') + '</select></td></tr>';
+          }).join('');
+      }).join('') +
+      '</tbody></table></div>' +
+      '<div style="margin-top:10px"><button class="nut-luu-lop">💾 Lưu phân lớp</button> ' +
+      '<span class="cs-lop-nhac" style="font-size:12.5px;color:var(--chu-mo)"></span></div>';
+  }
+
   // Sinh mã kế tiếp dạng TIỀN TỐ + 2 chữ số
   function maKeTiep(ds, tienTo) {
     var lon = 0;
@@ -225,7 +300,9 @@
       may.from('v_co_so_thong_ke').select('*'),
       may.from('truong_tien_than').select('*').order('ma'),
       may.from('moi_tai_khoan').select('email, ho_ten, chuc_vu')
-        .eq('la_ky_thuat', false).order('ho_ten')
+        .eq('la_ky_thuat', false).order('ho_ten'),
+      Promise.resolve({ data: null, error: null }),   // chỗ trống, giữ chỉ số kq
+      may.from('lop_hoc').select('nam_hoc, lop, khoi, co_so_ma')
     ]).then(function (kq) {
       // Danh sách nhân sự (kq[5]) chỉ phục vụ ô chọn người phụ trách — lỗi
       // thì thẻ vẫn mở bình thường, đừng để nó kéo sập cả băng CNQG
@@ -238,9 +315,21 @@
       var tt = kq[0].data, sn = kq[1].data, dsCoSo = kq[2].data || [],
           thongKe = kq[3].data || [], dsTruong = kq[4].data || [],
           dsGV = kq[5].error ? [] : (kq[5].data || []);
+      // ⚠️ Năm học lấy từ window.CAU_HINH.NAM_HOC, KHÔNG đọc cột cau_hinh.nam_hoc.
+      // Cột đó là bản DỰ PHÒNG ĐÓNG BĂNG (sql/14), chỉ dùng khi
+      // nam_hoc_tu_dong='khong', và chỉ được cập nhật một lần lúc chạy tay
+      // sql/14 — không trigger, không cron. du-lieu-sql.js đã cài đúng thứ tự
+      // ưu tiên rồi. Đọc thẳng cột đó thì sau mốc 30/08 màn này vẫn đề năm cũ
+      // và ADMIN PHÂN LỚP CHO NĂM MỚI NHƯNG GHI VÀO NĂM CŨ, không cách nào biết.
+      var namHoc = ((window.CAU_HINH || {}).NAM_HOC) || '';
+      if (kq[7].error) { window.notify('Không đọc được bảng lop_hoc: ' + kq[7].error.message); }
+      var dsLop = kq[7].error ? [] : (kq[7].data || []).filter(function (l) {
+        return l.nam_hoc === namHoc;
+      });
 
       hop.innerHTML = daiTrangThai(tt) + daiKhaiBao(sn) +
-        daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) + daiTruong(dsTruong);
+        daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) +
+        daiPhanLop(dsLop, dsCoSo, namHoc) + daiTruong(dsTruong);
 
       // Lưu khai báo sáp nhập
       hop.querySelector('.nut-luu-sn').addEventListener('click', function () {
@@ -268,6 +357,55 @@
             .catch(function (e) { nut.textContent = 'Lưu'; batLoi(e); });
         });
       });
+
+      // ── Phân lớp về điểm trường ──
+      var nutGan = hop.querySelector('.nut-gan-nhanh');
+      if (nutGan) {
+        nutGan.addEventListener('click', function () {
+          var oGan = hop.querySelector('#cs-gan-nhanh');
+          var gia = oGan.value;
+          var ten = oGan.options[oGan.selectedIndex].textContent;
+          var ds = Array.prototype.slice.call(hop.querySelectorAll('.cs-lop-cs'));
+          // Nút nằm ngay cạnh ô chọn, mà ô chọn mở ra ở "Cơ sở chính" — bấm
+          // thử một cái là cả trường về một điểm. Phải hỏi.
+          if (!window.confirm('Áp "' + ten + '" cho TẤT CẢ ' + ds.length +
+              ' lớp? Phân lớp hiện tại trên màn sẽ bị thay hết (chưa ghi cơ sở dữ liệu).')) return;
+          ds.forEach(function (e) { e.value = gia; });
+          hop.querySelector('.cs-lop-nhac').textContent =
+            'Đã áp cho ' + ds.length + ' lớp — bấm 💾 Lưu phân lớp mới ghi. Muốn hoàn tác thì rời thẻ rồi mở lại.';
+        });
+      }
+      var nutLuuLop = hop.querySelector('.nut-luu-lop');
+      if (nutLuuLop) {
+        nutLuuLop.addEventListener('click', function () {
+          var nut = this;
+          // Chỉ ghi những lớp THỰC SỰ đổi — 25 lớp mà upsert cả 25 thì nhật ký
+          // đầy dòng "không đổi gì", sau này dò lại lịch sử rất khổ.
+          var doi = [];
+          Array.prototype.slice.call(hop.querySelectorAll('#cs-bang-lop tbody tr')).forEach(function (tr) {
+            var moi = tr.querySelector('.cs-lop-cs').value || '';
+            if (moi === (tr.getAttribute('data-goc') || '')) return;
+            doi.push({ nam_hoc: namHoc, lop: tr.getAttribute('data-lop'),
+              khoi: parseInt(tr.getAttribute('data-khoi'), 10) || 1,
+              co_so_ma: moi || null });
+          });
+          if (!doi.length) { window.notify('Không có lớp nào thay đổi.'); return; }
+          if (!namHoc) { window.notify('Chưa xác định được năm học — kiểm tra cấu hình.'); return; }
+          nut.textContent = '…'; nut.disabled = true;
+          // upsert theo khoá chính (nam_hoc, lop): chỉ đổi cột co_so_ma, giữ
+          // nguyên khoi và ghi_chu của dòng cũ
+          may.from('lop_hoc').upsert(doi, { onConflict: 'nam_hoc,lop' }).select()
+            .then(function (r) {
+              if (r.error) throw r.error;
+              if (!r.data || !r.data.length) {
+                throw new Error('Máy chủ nhận lệnh nhưng không dòng nào đổi — chỉ Ban giám hiệu mới phân lớp được.');
+              }
+              window.notify('✅ Đã phân ' + r.data.length + ' lớp về điểm trường. Số lớp và sĩ số ở bảng trên tính lại ngay.');
+              veTabCS(hop);
+            })
+            .catch(function (e) { nut.textContent = '💾 Lưu phân lớp'; nut.disabled = false; batLoi(e); });
+        });
+      }
 
       // Lưu từng dòng trường tiền thân
       Array.prototype.slice.call(hop.querySelectorAll('.nut-luu-tt')).forEach(function (nut) {
