@@ -50,6 +50,11 @@
     return thu[d.getDay()] + ', ngày ' + d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
   }
   function buoiHienTai() { return new Date().getHours() < 12 ? 'sang' : 'chieu'; }
+  // Công tắc Sáng/Chiều của bản thiết kế: người dùng chọn buổi để XEM và để
+  // BÁO CÁO. null = theo đồng hồ. Mọi màn dùng buoiXem(), không dùng thẳng
+  // buoiHienTai() nữa — nếu không thì bấm 'Chiều' xong màn vẫn hiện buổi sáng.
+  var BUOI_XEM = null;
+  function buoiXem() { return BUOI_XEM || buoiHienTai(); }
   function tenBuoi(b) { return b === 'sang' ? 'buổi sáng' : 'buổi chiều'; }
 
   // ── Đề xuất: danh mục loại + tên hiển thị ──
@@ -153,9 +158,9 @@
   function duLieuMau() {
     return {
       coSo: [
-        { ma: 'CS01', ten: 'Cơ sở chính', loai: 'chinh', phuTrach: '', gvTong: 20 },
-        { ma: 'CS02', ten: 'Điểm trường số 2 (mẫu)', loai: 'diem_truong', phuTrach: '', gvTong: 10 },
-        { ma: 'CS03', ten: 'Điểm trường số 3 (mẫu)', loai: 'diem_truong', phuTrach: '', gvTong: 7 }
+        { ma: 'CS01', ten: 'Điểm chính Diễn Liên', loai: 'chinh', phuTrach: '', gvTong: 20 },
+        { ma: 'CS02', ten: 'Điểm trường Diễn Đồng', loai: 'diem_truong', phuTrach: '', gvTong: 10 },
+        { ma: 'CS03', ten: 'Điểm trường Diễn Thái', loai: 'diem_truong', phuTrach: '', gvTong: 7 }
       ],
       gvDs: ['Cô Nguyễn Thị A.', 'Cô Lê Thị C.', 'Thầy Phạm Văn D.', 'Cô Hoàng Thị E.',
         'Cô Vũ Thị G.', 'Thầy Đỗ Văn H.', 'Cô Bùi Thị K.'].map(function (t, i) {
@@ -168,8 +173,10 @@
       },
       hsTong: 863,
       baoCao: {
-        CS01: { sang: { anToan: 'xanh', luc: '7:05', ghiChu: '', chieuKhongHoc: false } },
-        CS02: { sang: { anToan: 'vang', luc: '7:12', ghiChu: 'Đường ống nước khu vệ sinh bị rò, đã khoá van tạm.', chieuKhongHoc: false } },
+        CS01: { sang: { anToan: 'xanh', luc: '7:05', ghiChu: '', chieuKhongHoc: false,
+          dien: 'on', nuoc: 'on', csvc: 'on' } },
+        CS02: { sang: { anToan: 'vang', luc: '7:12', ghiChu: 'Đường ống nước khu vệ sinh bị rò, đã khoá van tạm.',
+          chieuKhongHoc: false, dien: 'on', nuoc: 'loi', csvc: 'on' } },
         CS03: {}
       },
       gvVang: [
@@ -335,6 +342,10 @@
         // xóa thì nó nằm nguyên dưới băng xanh "đang chạy dữ liệu thật".
         CONG_THU = ''; CONG_KQ = null;
         // Module con cũng phải vứt bản mẫu của nó — cùng một cái bẫy
+        // Dọn nốt trạng thái XEM của bản mẫu: bản mẫu có 3 cơ sở, trường thật
+        // có thể chỉ 1 — giữ LOC_CS='CS02' là màn Tổng quan trắng không lối ra.
+        LOC_CS = 'all'; BUOI_XEM = null; BC_CS = ''; KT_CS = ''; CONG_CHOT = [];
+        BC_CSVC = { dien: '', nuoc: '', csvc: '' };
         if (window.LT && window.LT.datLai) window.LT.datLai();
         if (window.DG && window.DG.datLai) window.DG.datLai();
         veDieuHanh();
@@ -358,7 +369,11 @@
     var t = homNayISO(), tuan = ngayISOCach(-6);
     return Promise.all([
       may.from('bao_cao_dau_buoi')
-        .select('co_so_ma, buoi, an_toan, ghi_chu, chieu_khong_hoc, gui_luc').eq('ngay', t),
+        // select('*') chứ KHÔNG liệt kê cột: đẩy web lên trước khi chạy sql/34
+        // thì ba cột dien/nuoc/csvc chưa tồn tại, PostgREST trả 42703 mà
+        // loiThieuBang() không nhận ra → cả module rơi về BẢN MẪU, hiệu
+        // trưởng mở app thấy tên người giả định. Lấy hết cột là miễn nhiễm.
+        .select('*').eq('ngay', t),
       may.from('gv_vang')
         .select('ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay, bao_muon')
         .lte('ngay', t)
@@ -381,7 +396,9 @@
       may.from('kiem_tra_diem_truong').select('*').order('kt_luc', { ascending: false }).limit(30),
       may.from('cong_viec_mau').select('*').order('id'),
       // đơn CHỜ DUYỆT lấy riêng không giới hạn — kẻo đơn cũ tụt khỏi trang 200 dòng
-      may.from('de_xuat').select('*').eq('trang_thai', 'cho_duyet').order('gui_luc')
+      may.from('de_xuat').select('*').eq('trang_thai', 'cho_duyet').order('gui_luc'),
+      // mốc giờ báo cáo đầu buổi (sql/34) — mỗi trường một giờ vào lớp
+      may.from('cau_hinh').select('khoa, gia_tri').in('khoa', ['gio_bao_cao_sang', 'gio_bao_cao_chieu'])
     ]).then(function (kq) {
       kq.slice(0, 6).forEach(function (r) { if (r.error) throw r.error; });
       // Nguồn tùy chọn: thiếu bảng (chưa chạy sql/25) → trả null; lỗi khác vẫn ném
@@ -410,6 +427,7 @@
         if (!moi.baoCao[b.co_so_ma]) moi.baoCao[b.co_so_ma] = {};
         moi.baoCao[b.co_so_ma][b.buoi] = {
           anToan: b.an_toan, ghiChu: b.ghi_chu || '',
+          dien: b.dien || '', nuoc: b.nuoc || '', csvc: b.csvc || '',
           chieuKhongHoc: !!b.chieu_khong_hoc, luc: gioTu(b.gui_luc)
         };
         moi.nhatKy.push({ khi: b.gui_luc, chu: tenCoSoTho(moi, b.co_so_ma) + ' báo cáo ' + tenBuoi(b.buoi) + ': ' +
@@ -515,6 +533,10 @@
           thu: m2.thu, ngay: m2.ngay, thang: m2.thang, sinhTruoc: m2.sinh_truoc_ngay,
           dangBat: m2.dang_bat });
       });
+      if (kq[12] && !kq[12].error) (kq[12].data || []).forEach(function (c) {
+        if (c.khoa === 'gio_bao_cao_sang' && c.gia_tri) GIO_BC.sang = c.gia_tri;
+        if (c.khoa === 'gio_bao_cao_chieu' && c.gia_tri) GIO_BC.chieu = c.gia_tri;
+      });
       moi.nhatKy.sort(function (a, b) { return String(b.khi).localeCompare(String(a.khi)); });
       moi.nhatKy = moi.nhatKy.map(function (n) { return { luc: gioTu(n.khi), chu: n.chu }; });
       return moi;
@@ -561,7 +583,7 @@
   function tinh() {
     var dsCS = LOC_CS === 'all' ? DL.coSo : DL.coSo.filter(function (c) { return c.ma === LOC_CS; });
     var maCS = dsCS.map(function (c) { return c.ma; });
-    var b = buoiHienTai();
+    var b = buoiXem();
 
     var gvTong = 0;
     dsCS.forEach(function (c) { gvTong += c.gvTong; });
@@ -614,25 +636,27 @@
   // xử lý xong dòng tự biến mất (dữ liệu đọc lại từ CSDL).
   // ════════════════════════════════════════════════════════════
   function canXuLyDs() {
-    var ds = [], b = buoiHienTai(), t = homNayISO(), qt = laQT();
+    var ds = [], b = buoiXem(), t = homNayISO(), qt = laQT();
     var toi = emailToi();
 
     // 1 · Đề xuất chờ duyệt (BGH)
     if (qt) (DL.deXuat || []).forEach(function (d) {
       if (d.tt !== 'cho_duyet') return;
-      ds.push({ mau: 'do',
+      ds.push({ mau: 'do', loai: 'ĐỀ XUẤT', pill: 'vang',
         chu: '<b>' + thoat(d.ten) + '</b> — ' + thoat(tenLoaiDX(d.loai)) +
           (d.tuNgay ? ' ' + ngayVN(d.tuNgay) + (d.denNgay ? '–' + ngayVN(d.denNgay) : '') +
             (d.buoi !== 'ca_ngay' ? ' (' + tenBuoi(d.buoi) + ')' : '') : '') +
           '<small>' + thoat(d.noiDung) + '</small>',
-        nut: '<button class="dh-nut-nho" onclick="DH.dxDuyet(' + d.id + ', true)">✓ Duyệt</button>' +
-             '<button class="dh-nut-nho" onclick="DH.dxDuyet(' + d.id + ', false)">✗ Từ chối</button>' });
+        nut: '<button class="dh-nut-hd xanh" onclick="DH.dxDuyet(' + d.id + ', true)">✓ Duyệt</button>' +
+             '<button class="dh-nut-hd vien" onclick="DH.dxDuyet(' + d.id + ', false)">✗ Trao đổi lại</button>' });
     });
 
     // 2 · Sự việc chưa ai tiếp nhận (BGH)
     if (qt) (DL.suViec || []).forEach(function (s) {
       if (s.tt !== 'moi') return;
       ds.push({ mau: s.muc === 'do' ? 'do' : 'vang',
+        loai: s.muc === 'do' ? 'XỬ LÝ NGAY' : 'CẦN LƯU Ý',
+        pill: s.muc === 'do' ? 'do' : 'vang',
         chu: '<b>' + thoat(s.loai) + ' — ' + thoat(tenCoSo(s.coSo)) + '</b><small>' +
           thoat(s.moTa) + ' (' + thoat(s.nguoiTen) + ', ' + s.luc + ')</small>',
         nut: '<button class="dh-nut-nho" onclick="DH.svTiepNhan(' + s.id + ')">Tiếp nhận</button>' });
@@ -649,7 +673,7 @@
       }
       var cuaToi = duocBao.indexOf(c.ma) >= 0;
       if (!qt && !cuaToi) return;    // GV thường không cần thấy dòng này
-      ds.push({ mau: 'xam',
+      ds.push({ mau: 'xam', loai: 'CHƯA BÁO CÁO', pill: 'xam',
         chu: '<b>' + thoat(c.ten) + '</b> chưa xác nhận An toàn ' + tenBuoi(b),
         nut: cuaToi ? '<button class="dh-nut-nho" onclick="DH.tab(\'baocao\')">Báo cáo ngay</button>' : '' });
     });
@@ -658,7 +682,7 @@
     (DL.viec || []).forEach(function (v) {
       if (!(v.han && v.han < t && v.tt !== 'xong')) return;
       if (!qt && !emailBang(v.nguoiEmail, toi)) return;
-      ds.push({ mau: 'vang',
+      ds.push({ mau: 'vang', loai: 'QUÁ HẠN', pill: 'do',
         chu: '<b>Việc quá hạn:</b> ' + thoat(v.noiDung) +
           '<small>' + thoat(v.nguoiTen) + ' · hạn ' + ngayVN(v.han) + '</small>',
         nut: '<button class="dh-nut-nho" onclick="DH.tab(\'viec\')">Xem</button>' });
@@ -667,7 +691,7 @@
     // 5 · Thông báo quan trọng TÔI chưa xác nhận (mọi vai trò)
     (DL.thongBao || []).forEach(function (x) {
       if (!tbCanToiXN(x)) return;
-      ds.push({ mau: 'vang',
+      ds.push({ mau: 'vang', loai: 'THÔNG BÁO', pill: 'navy',
         chu: '<b>Thông báo cần xác nhận:</b> ' + thoat(x.tieuDe) +
           '<small>' + thoat(x.nguoiGui) + ' · ' + ngayVN(x.ngay) + '</small>',
         nut: '<button class="dh-nut-nho" onclick="DH.tbXacNhan(' + x.id + ')">✓ Tôi đã nhận</button>' });
@@ -677,7 +701,7 @@
     // HS nay đã ẩn, nên dòng này chỉ còn hiện nếu CSDL còn dữ liệu cũ trong 7
     // ngày. KHÔNG kèm nút "Xem": thẻ đó không còn trên thanh, bấm sẽ lạc chỗ.
     if (qt) (DL.nghiDai || []).forEach(function (n) {
-      ds.push({ mau: 'vang',
+      ds.push({ mau: 'vang', loai: 'HỌC SINH', pill: 'vang',
         chu: '<b>Nghỉ nhiều buổi:</b> ' + thoat(n.ten) + ' (' + thoat(n.lop) + ')' +
           '<small>' + n.soBuoi + ' buổi trong 7 ngày — nhờ GVCN liên hệ gia đình</small>',
         nut: '' });
@@ -686,7 +710,7 @@
     // 7 · Việc ĐẾN HẠN hôm nay của tôi (chưa xong, chưa quá hạn — nhắc nhẹ)
     if (!qt) (DL.viec || []).forEach(function (v) {
       if (!emailBang(v.nguoiEmail, toi) || v.tt === 'xong' || v.han !== t) return;
-      ds.push({ mau: 'vang',
+      ds.push({ mau: 'vang', loai: 'ĐẾN HẠN', pill: 'vang',
         chu: '<b>Đến hạn hôm nay:</b> ' + thoat(v.noiDung),
         nut: '<button class="dh-nut-nho" onclick="DH.tab(\'viec\')">Xem</button>' });
     });
@@ -694,85 +718,276 @@
     return ds;
   }
 
-  function veCanXuLy() {
-    var ds = canXuLyDs();
-    if (!ds.length) {
-      return '<div class="hd-kiem xanh" style="margin-top:10px">👍 <b>Không có việc nào chờ thầy/cô xử lý.</b> ' +
-        'Mọi ngoại lệ (đơn chờ duyệt, sự việc, việc quá hạn, điểm trường chưa báo…) sẽ tự xuất hiện ở đây.</div>';
-    }
-    return '<div class="dh-tieu-de" style="margin-top:14px">🔔 Cần tôi xử lý ' +
-      '<span class="dh-do">(' + ds.length + ')</span></div>' +
-      ds.map(function (r) {
-        return '<div class="dh-diem-hang"><span class="dh-cham ' + r.mau + '"></span>' +
-          '<div class="tt">' + r.chu + '</div>' + (r.nut || '') + '</div>';
-      }).join('');
+  // (Khối "Cần tôi xử lý" của bố cục CŨ đã bỏ — bản thiết kế v3 thay bằng
+  //  veHangCho() với pill loại việc và nút một chạm. Xoá hẳn thay vì để lại
+  //  mã chết, kẻo lần sau sửa nhầm chỗ.)
+
+  // ════════════════════════════════════════════════════════════
+  // MÀN TỔNG QUAN — bản thiết kế v3 phương án 1b
+  // Ba tầng: dải trạng thái toàn trường → MỖI ĐIỂM TRƯỜNG MỘT CỘT (so sánh
+  // ngang được) → hàng đợi "Cần Ban giám hiệu xử lý" mỗi dòng một nút.
+  // Trên điện thoại mỗi cột co thành một thẻ viền trái màu trạng thái (CSS lo).
+  // ════════════════════════════════════════════════════════════
+
+  // Mốc giờ báo cáo lấy từ cau_hinh (sql/34) — quá giờ mà điểm chưa gửi thì
+  // bảng điều hành tự sinh dòng "CHƯA BÁO CÁO". Mỗi trường một giờ vào lớp.
+  var GIO_BC = { sang: '07:15', chieu: '13:45' };
+  function quaGioBaoCao() {
+    var m = /^(\d{1,2}):(\d{2})$/.exec(GIO_BC[buoiXem()] || '');
+    if (!m) return false;
+    var d = new Date();
+    return d.getHours() * 60 + d.getMinutes() > (+m[1]) * 60 + (+m[2]);
   }
 
-  // ════════════════════════════════════════════════════════════
-  // TAB 1 · ĐIỀU HÀNH HÔM NAY
-  // ════════════════════════════════════════════════════════════
-  function veHomNay() {
+  function tenPhuTrach(email) {
+    if (!email) return 'chưa gán phụ trách';
+    var g = DL.gvDs.filter(function (x) { return emailBang(x.email, email); })[0];
+    return g ? g.ten : email;
+  }
+
+  // Gom mọi thứ cần biết về MỘT điểm trường trong buổi đang xem
+  function tinhDiem(c) {
+    var b = buoiXem();
+    var bc = (DL.baoCao[c.ma] || {})[b];
+    var sang = (DL.baoCao[c.ma] || {}).sang;
+    var nghiChieu = b === 'chieu' && !bc && sang && sang.chieuKhongHoc;
+
+    var gvCS = DL.gvDs.filter(function (g) { return g.coSo === c.ma; }).length;
+    var vang = gvVangBuoi(b).filter(function (g) { return g.coSo === c.ma; }).length;
+    var cacLop = Object.keys(DL.lop).filter(function (l) { return DL.lop[l].coSo === c.ma; });
+    var hs = 0;
+    cacLop.forEach(function (l) { hs += DL.lop[l].siSo; });
+    var svMo = (DL.suViec || []).filter(function (s) {
+      return s.coSo === c.ma && s.tt !== 'da_xu_ly';
+    }).length;
+
+    // Cơ sở vật chất: gộp ba mục điện · nước · phòng học của phiếu đầu buổi
+    var loi = [];
+    if (bc) {
+      if (bc.dien === 'loi') loi.push('điện');
+      if (bc.nuoc === 'loi') loi.push('nước');
+      if (bc.csvc === 'loi') loi.push('phòng học');
+    }
+    var csvcChu = !bc ? '—' : (loi.length ? 'Có vấn đề: ' + loi.join(', ') : 'Bình thường');
+
+    var mau = nghiChieu ? 'xam'
+      : !bc ? 'xam'
+      : bc.anToan === 'xanh' ? 'xanh'
+      : bc.anToan === 'vang' ? 'vang' : 'do';
+
+    return {
+      ma: c.ma, ten: c.ten, bc: bc, nghiChieu: nghiChieu, mau: mau,
+      pill: nghiChieu ? 'Chiều không học' : (bc ? 'Đã báo cáo' : 'Chưa báo cáo'),
+      phuTrach: tenPhuTrach(c.phuTrach),
+      quyMo: cacLop.length + ' lớp · ' + hs.toLocaleString('vi-VN') + ' HS',
+      anToan: !bc ? '—' : bc.anToan === 'xanh' ? 'Xanh' : bc.anToan === 'vang' ? 'Vàng' : 'Đỏ',
+      csvc: csvcChu, csvcLoi: loi.length > 0,
+      gv: (gvCS - vang) + '/' + gvCS, svMo: svMo,
+      ghiChu: bc ? (bc.ghiChu || '') : ''
+    };
+  }
+
+  var MAU_HEX = { xanh: '#1e7f4f', vang: '#b7791f', do: '#c0392b', xam: '#8494b3' };
+
+  function veTongQuan() {
+    var b = buoiXem();
+    // Van an toàn: bản mẫu có 3 cơ sở, trường thật có thể chỉ 1. Lọc theo mã
+    // không còn tồn tại là màn TRẮNG, mà hàng chip lọc cũng không hiện (chỉ
+    // hiện khi ≥2 cơ sở) nên không có đường bấm về — phải F5 mới thoát.
+    if (LOC_CS !== 'all' && !DL.coSo.filter(function (c) { return c.ma === LOC_CS; }).length) {
+      LOC_CS = 'all';
+    }
+    var dsCS = LOC_CS === 'all' ? DL.coSo : DL.coSo.filter(function (c) { return c.ma === LOC_CS; });
+    var ds = dsCS.map(tinhDiem);
     var t = tinh();
-    var bang;
-    if (t.soDo) bang = '<div class="dh-bang do">🔴 CÓ SỰ VIỆC CẦN XỬ LÝ NGAY</div>';
-    else if (t.soChua) bang = '<div class="dh-bang xam">⚪ ' + t.soChua + ' điểm trường CHƯA XÁC NHẬN ' + tenBuoi(t.buoi) + ' — chưa được coi là an toàn</div>';
-    else if (t.soVang) bang = '<div class="dh-bang vang">🟡 Có điểm trường cần lưu ý</div>';
-    else bang = '<div class="dh-bang xanh">🟢 TOÀN TRƯỜNG AN TOÀN</div>';
 
-    var the5 =
-      '<div class="luoi-thong-ke dh-5the">' +
-      '<div class="o-so"><div class="so trang">' + (t.gvTong - t.gvVang.length) + '/' + t.gvTong + '</div><div class="nhan">CBGV-NV có mặt · ' + t.gvVang.length + ' vắng</div></div>' +
-      // Học sinh: chỉ nêu quy mô. Số vắng/đã điểm danh đã bỏ cùng lúc với thẻ
-      // Điểm danh HS — không ai nhập nữa thì để "0 vắng · 0/25 lớp" là bịa.
-      '<div class="o-so"><div class="so trang">' + t.hsTong.toLocaleString('vi-VN') + '</div><div class="nhan">học sinh · ' + t.lopTong + ' lớp</div></div>' +
-      '<div class="o-so"><div class="so xanh">' + t.soXanh + '/' + t.dsCS.length + '</div><div class="nhan">điểm trường an toàn' + (t.soChua ? ' · ' + t.soChua + ' chưa xác nhận' : '') + '</div></div>' +
-      '<div class="o-so"><div class="so vang">' + t.vXong + '/' + t.viecTong + '</div><div class="nhan">việc hoàn thành' + (t.vQuaHan ? ' · ' + t.vQuaHan + ' quá hạn' : '') + '</div></div>' +
-      '<div class="o-so"><div class="so ' + (t.svCanXuLy ? 'hong' : 'xanh') + '">' + t.svCanXuLy + '</div><div class="nhan">sự việc cần xử lý</div></div>' +
-      '</div>';
+    var daBao = ds.filter(function (d) { return d.bc || d.nghiChieu; }).length;
+    var coDo = ds.some(function (d) { return d.mau === 'do'; });
+    var coVang = ds.some(function (d) { return d.mau === 'vang'; });
+    // Mục cơ sở vật chất "Có vấn đề" cũng phải kéo dải trạng thái xuống VÀNG.
+    // Chỉ nhìn ô An toàn thì tick "mất nước khu B" xong vẫn báo ỔN ĐỊNH.
+    var coCSVC = ds.some(function (d) { return d.csvcLoi; });
+    var mauTT = coDo ? 'do' : (coVang || coCSVC) ? 'vang'
+      : (daBao === ds.length && ds.length) ? 'xanh' : 'xam';
+    var chuTT = coDo ? 'Toàn trường: CÓ SỰ VIỆC CẦN XỬ LÝ NGAY'
+      : coVang ? 'Toàn trường: MỨC VÀNG — có điểm cần lưu ý'
+      : coCSVC ? 'Toàn trường: MỨC VÀNG — có điểm báo hỏng cơ sở vật chất'
+      : (daBao === ds.length && ds.length) ? 'Toàn trường: ỔN ĐỊNH'
+      : 'Toàn trường: chờ ' + (ds.length - daBao) + ' điểm báo cáo';
 
-    var hangCS = DL.coSo.map(function (c) {
-      var bc = (DL.baoCao[c.ma] || {})[t.buoi];
-      var sang = (DL.baoCao[c.ma] || {}).sang;
-      var cham, chu, nutBC = '';
-      if (t.buoi === 'chieu' && !bc && sang && sang.chieuKhongHoc) {
-        cham = 'xam'; chu = 'Chiều nay không học (đã báo từ buổi sáng)';
-      } else if (!bc) {
-        cham = 'xam'; chu = 'Chưa báo cáo ' + tenBuoi(t.buoi);
-        if (coSoDuocBao().indexOf(c.ma) >= 0) nutBC = '<button class="dh-nut-nho" onclick="DH.tab(\'baocao\')">Báo cáo ngay</button>';
+    var kpis = [
+      { so: daBao + '/' + ds.length, nhan: 'điểm đã báo cáo', mau: daBao === ds.length ? 'xanh' : 'vang' },
+      { so: coDo ? 'Đỏ' : coVang ? 'Vàng' : 'Xanh', nhan: 'an toàn toàn trường', mau: mauTT },
+      { so: (t.gvTong - t.gvVang.length) + '/' + t.gvTong, nhan: 'CBGV có mặt', mau: 'navy' },
+      { so: t.dxCho, nhan: 'đề xuất chờ duyệt', mau: t.dxCho ? 'vang' : 'xanh' },
+      { so: t.svCanXuLy, nhan: 'sự việc mở', mau: t.svCanXuLy ? 'do' : 'xanh' }
+    ];
+
+    var dai = '<div class="dh-dai-tt">' +
+      '<div class="tt-chinh"><span class="dh-cham-to" style="background:' + MAU_HEX[mauTT] + '"></span>' +
+      '<b>' + thoat(chuTT) + '</b></div>' +
+      kpis.map(function (k) {
+        return '<div class="dh-kpi"><b style="color:' +
+          (k.mau === 'navy' ? '#14306b' : MAU_HEX[k.mau]) + '">' + thoat(String(k.so)) + '</b> ' + thoat(k.nhan) + '</div>';
+      }).join('') + '</div>';
+
+    var cot = '<div class="dh-cot-diem">' + ds.map(function (d) {
+      return '<div class="dh-diem-cot ' + d.mau + '">' +
+        '<div class="dh-diem-dau ' + d.mau + '">' +
+        '<div class="hang"><div class="ten">' + thoat(d.ten) + '</div>' +
+        '<div class="pill">' + thoat(d.pill) + '</div></div>' +
+        '<div class="phu">' + thoat(d.phuTrach) + ' · ' + thoat(d.quyMo) + '</div></div>' +
+        '<div class="dh-diem-than">' +
+        '<div class="dh-diem-dong"><span>An toàn</span><b style="color:' +
+          (d.bc ? MAU_HEX[d.mau] : '#8494b3') + '">' + thoat(d.anToan) + '</b></div>' +
+        '<div class="dh-diem-dong"><span>CSVC · điện nước</span><b style="color:' +
+          (d.csvcLoi ? MAU_HEX.do : d.bc ? MAU_HEX.xanh : '#8494b3') + '">' + thoat(d.csvc) + '</b></div>' +
+        '<div class="dh-diem-dong"><span>GV có mặt</span><b style="color:#14306b">' + thoat(d.gv) + '</b></div>' +
+        '<div class="dh-diem-dong"><span>Sự việc mở</span><b style="color:#14306b">' + d.svMo + '</b></div>' +
+        '</div>' +
+        (d.ghiChu ? '<div class="dh-diem-note">' + thoat(d.ghiChu) + '</div>' : '') +
+        '</div>';
+    }).join('') + '</div>';
+
+    return dai + cot + veHangCho() + veDayThayNhac();
+  }
+
+  // ── Hàng đợi "Cần Ban giám hiệu xử lý" — mỗi dòng đúng MỘT nút ──
+  function veHangCho() {
+    var b = buoiXem();
+    var maCS = (LOC_CS === 'all' ? DL.coSo : DL.coSo.filter(function (c) { return c.ma === LOC_CS; }))
+      .map(function (c) { return c.ma; });
+    var ds = canXuLyDs();
+
+    // Quá giờ mà điểm chưa gửi báo cáo → THAY dòng "chưa xác nhận" của
+    // canXuLyDs bằng dòng CHƯA BÁO CÁO có nút Nhắc. Không thay mà chỉ thêm
+    // vào là mỗi điểm hiện HAI dòng, tiêu đề đếm gấp đôi, và trang chủ (chỉ
+    // đếm canXuLyDs) lại ra số khác — ba con số cho một việc.
+    if (laQT() && quaGioBaoCao()) {
+      ds = ds.filter(function (r) {
+        return String(r.chu || '').indexOf('chưa xác nhận An toàn') < 0;
+      });
+      var them = [];
+      DL.coSo.forEach(function (c) {
+        if (maCS.indexOf(c.ma) < 0) return;
+        var bc = (DL.baoCao[c.ma] || {})[b];
+        if (bc) return;
+        if (b === 'chieu') {
+          var sang = (DL.baoCao[c.ma] || {}).sang;
+          if (sang && sang.chieuKhongHoc) return;
+        }
+        them.push({ loai: 'CHƯA BÁO CÁO', pill: 'xam',
+          chu: thoat(c.ten) + ' chưa gửi báo cáo ' + tenBuoi(b),
+          nguon: 'quá ' + (GIO_BC[b] || '') + ' · ' + tenPhuTrach(c.phuTrach),
+          nut: 'Nhắc', ham: 'DH.nhacBaoCao(\'' + nhay(c.ma) + '\')' });
+      });
+      ds = them.concat(ds);   // giữ đúng thứ tự khai báo cơ sở, không đảo ngược
+    }
+
+    // Điểm báo mức ĐỎ hoặc có mục cơ sở vật chất "Có vấn đề" phải NHẢY LÊN
+    // hàng đợi. Thiếu hai nhánh này thì phụ trách tick "Nước có vấn đề" xong
+    // bảng điều hành vẫn báo "Toàn trường: ỔN ĐỊNH · 0 việc" — trái hẳn câu
+    // chính biểu mẫu hứa với người ta.
+    var themBC = [];
+    DL.coSo.forEach(function (c) {
+      if (maCS.indexOf(c.ma) < 0) return;
+      var bc = (DL.baoCao[c.ma] || {})[b];
+      if (!bc) return;
+      if (bc.anToan === 'do') {
+        themBC.push({ loai: 'XỬ LÝ NGAY', pill: 'do',
+          chu: thoat(c.ten) + ' báo <b>🔴 CÓ SỰ VIỆC</b>' + (bc.ghiChu ? ' — ' + thoat(bc.ghiChu) : ''),
+          nguon: 'báo cáo ' + tenBuoi(b) + ' lúc ' + thoat(bc.luc || ''),
+          nut: 'Xem điểm trường', ham: 'DH.locCS(\'' + nhay(c.ma) + '\')' });
       }
-      else if (bc.anToan === 'xanh') { cham = 'xanh'; chu = 'Đã xác nhận AN TOÀN lúc ' + bc.luc; }
-      else if (bc.anToan === 'vang') { cham = 'vang'; chu = 'Cần lưu ý (' + bc.luc + '): ' + bc.ghiChu; }
-      else { cham = 'do'; chu = 'CÓ SỰ VIỆC (' + bc.luc + '): ' + bc.ghiChu; }
-      return '<div class="dh-diem-hang"><span class="dh-cham ' + cham + '"></span>' +
-        '<div class="tt"><b>' + thoat(c.ten) + '</b><small>' + thoat(chu) + '</small></div>' + nutBC + '</div>';
+      var loi = [];
+      if (bc.dien === 'loi') loi.push('điện');
+      if (bc.nuoc === 'loi') loi.push('nước');
+      if (bc.csvc === 'loi') loi.push('phòng học');
+      if (loi.length) {
+        themBC.push({ loai: 'CSVC', pill: 'vang',
+          chu: thoat(c.ten) + ' báo <b>' + thoat(loi.join(', ')) + '</b> có vấn đề',
+          nguon: 'báo cáo ' + tenBuoi(b) + (bc.ghiChu ? ' — ' + thoat(bc.ghiChu) : ''),
+          nut: 'Ghi thành sự việc', ham: 'DH.svTuCsvc(\'' + nhay(c.ma) + '\')' });
+      }
+    });
+    ds = themBC.concat(ds);
+    if (!ds.length) {
+      return '<div class="dh-cho-khoi"><div class="dh-cho-dau">Cần Ban giám hiệu xử lý · 0 việc</div>' +
+        '<div class="dh-cho-hang"><span class="dh-pill xanh">ỔN</span>' +
+        '<div class="tt"><b>Không có việc nào chờ xử lý.</b>' +
+        '<small>Mọi ngoại lệ — đơn chờ duyệt, sự việc mới, điểm chưa báo cáo, việc quá hạn — sẽ tự hiện ở đây.</small>' +
+        '</div></div></div>';
+    }
+    return '<div class="dh-cho-khoi"><div class="dh-cho-dau">Cần Ban giám hiệu xử lý · ' +
+      ds.length + ' việc</div>' +
+      ds.map(function (r) {
+        // canXuLyDs() cũ trả {mau, chu, nut}; dòng tự sinh ở trên trả dạng mới
+        var pill = r.pill || (r.mau === 'do' ? 'do' : r.mau === 'vang' ? 'vang' : 'xam');
+        var loai = r.loai || (r.mau === 'do' ? 'XỬ LÝ NGAY' : r.mau === 'vang' ? 'CẦN LƯU Ý' : 'CHỜ');
+        var than = r.ham
+          ? '<div class="tt"><b>' + r.chu + '</b><small>' + thoat(r.nguon || '') + '</small></div>' +
+            '<button class="dh-nut-hd" onclick="' + r.ham + '">' + thoat(r.nut) + '</button>'
+          : '<div class="tt">' + r.chu + '</div>' + (r.nut || '');
+        return '<div class="dh-cho-hang"><span class="dh-pill ' + pill + '">' + thoat(loai) + '</span>' + than + '</div>';
+      }).join('') + '</div>';
+  }
+
+  // Nhắc dạy thay khi có GV vắng — giữ nguyên tinh thần bản cũ
+  function veDayThayNhac() {
+    if (THAT) {
+      return '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — ' +
+        'xem bản mẫu ở cuối màn <b>Lịch tuần</b>.</div>';
+    }
+    var thieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
+    return thieu
+      ? '<div class="hd-kiem do">🔴 Lớp 3B còn <b>' + thieu + ' tiết chưa có người dạy thay</b> — ' +
+        '<a href="javascript:DH.tab(\'lichtuan\')">bố trí ngay →</a></div>'
+      : '<div class="hd-kiem xanh">🟢 Mọi lớp có giáo viên vắng đều đã bố trí dạy thay.</div>';
+  }
+
+  // ── Bảng trạng thái từng CBGV trong buổi đang xem (màn Điểm danh GV) ──
+  // Nguồn vẫn là gv_vang: người phụ trách báo NGƯỜI VẮNG, mặc định là có mặt.
+  // Bản thiết kế bày ra dạng bảng từng người — đây là DẪN XUẤT, không đổi
+  // cách nhập, nên không đẻ thêm việc cho ai.
+  var PILL_VANG = {
+    'Nghỉ ốm': 'do', 'Nghỉ phép': 'vang', 'Việc riêng': 'vang',
+    'Công tác': 'navy', 'Tập huấn': 'navy', 'Khác': 'xam'
+  };
+  function veBangTrangThaiGV() {
+    var b = buoiXem();
+    var vang = {};
+    gvVangBuoi(b).forEach(function (g) {
+      vang[khoaGV(g.email, g.ten)] = g;
+    });
+    var nhieuCS = DL.coSo.length > 1;
+    var hang = (DL.gvDs || []).map(function (g) {
+      var v = vang[khoaGV(g.email, g.ten)];
+      var chuaBC = !(DL.baoCao[g.coSo] || {})[b];
+      var pill, chu;
+      if (v) { pill = PILL_VANG[v.lyDo] || 'vang'; chu = v.lyDo; }
+      else if (chuaBC) { pill = 'xam'; chu = 'Chưa điểm danh'; }
+      else { pill = 'xanh'; chu = 'Có mặt'; }
+      return '<tr><td class="cot-dinh"><b>' + thoat(g.ten) + '</b>' +
+        (g.chucVu ? '<br><small>' + thoat(g.chucVu) + '</small>' : '') + '</td>' +
+        (nhieuCS ? '<td>' + thoat(tenCoSo(g.coSo)) + '</td>' : '') +
+        '<td><span class="dh-pill ' + pill + '">' + thoat(chu) + '</span></td>' +
+        '<td>' + (v ? (v.denNgay ? 'đến ' + ngayVN(v.denNgay) : '') +
+          (v.baoMuon ? ' <b class="dh-do">⚠ báo muộn</b>' : '') : '') + '</td></tr>';
     }).join('');
 
-    var gvVangChu = t.gvVang.length
-      ? t.gvVang.map(function (g) {
-          return '<li>' + thoat(g.ten) + ' — ' + thoat(g.lyDo) +
-            (g.denNgay ? ' (đến ' + ngayVN(g.denNgay) + ')' : '') +
-            (g.baoMuon ? ' <span class="dh-do">⚠ báo muộn</span>' : '') + '</li>';
-        }).join('')
-      : '<li>Không có ai vắng ' + tenBuoi(t.buoi) + ' này.</li>';
-
-    var dayThayChu = THAT
-      ? '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — xem bản mẫu ở cuối thẻ <b>📅 Lịch tuần</b>.</div>'
-      : (t.tietThieu
-        ? '<div class="hd-kiem do">🔴 Lớp 3B còn <b>' + t.tietThieu + ' tiết chưa có người dạy thay</b> — <a href="javascript:DH.tab(\'lichtuan\')">bố trí ngay →</a></div>'
-        : '<div class="hd-kiem xanh">🟢 Mọi lớp có giáo viên vắng đều đã bố trí dạy thay.</div>');
-
-    var nghiDai = DL.nghiDai.length
-      ? '<div class="hd-kiem do">⚠ <b>Nghỉ nhiều buổi trong 7 ngày:</b> ' +
-        DL.nghiDai.map(function (n) { return thoat(n.ten) + ' (' + thoat(n.lop) + ' — ' + n.soBuoi + ' buổi)'; }).join(' · ') +
-        '</div>'
-      : '';
-
-    return bang + veCanXuLy() + the5 +
-      '<div class="dh-hai-cot">' +
-      '<div><div class="dh-tieu-de">Tình hình từng điểm trường</div>' + hangCS + '</div>' +
-      '<div><div class="dh-tieu-de">CBGV-NV vắng hôm nay</div>' +
-      '<ul class="dh-ul">' + gvVangChu + '</ul>' + dayThayChu + nghiDai + '</div>' +
-      '</div>';
+    return '<div class="dh-tieu-de" style="margin-top:22px">🧑‍🏫 Trạng thái CBGV-NV · ' + tenBuoi(b) + '</div>' +
+      '<div class="dh-ghi-chu-nho" style="margin-top:0">Bảng này <b>dẫn xuất</b> từ sổ vắng — người phụ trách chỉ báo ' +
+      'NGƯỜI VẮNG trong báo cáo đầu buổi, còn lại mặc định có mặt. Không ai phải điểm danh từng người.</div>' +
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho bang-cong"><thead><tr>' +
+      '<th class="cot-dinh" style="text-align:left">CBGV-NV</th>' +
+      (nhieuCS ? '<th>Điểm trường</th>' : '') +
+      '<th>Trạng thái</th><th>Ghi chú bảng công</th></tr></thead><tbody>' +
+      (hang || '<tr><td colspan="' + (nhieuCS ? 4 : 3) + '">Chưa có danh sách nhân sự.</td></tr>') +
+      '</tbody></table></div>';
+  }
+  function khoaGV(email, ten) {
+    return email ? 'e:' + String(email).trim().toLowerCase()
+      : 't:' + String(ten || '').trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -782,6 +997,9 @@
   var BC_ANTOAN = null;
   var BC_GV_VANG = {};     // email/tên -> lý do
   var BC_MO_CHON_GV = false;
+  // Ba mục cơ sở vật chất của màn 3c: '' = chưa chọn, 'on' | 'loi'
+  var BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+  var TEN_CSVC = { dien: 'Điện', nuoc: 'Nước', csvc: 'Phòng học – thiết bị' };
 
   function veBaoCao() {
     // Ba tầng cùng một chuyện "ai có mặt": hằng ngày báo cáo đầu buổi ·
@@ -790,8 +1008,7 @@
     // Giáo viên không phụ trách điểm nào thì veBaoCaoChinh() chỉ là một khối
     // từ chối. Thẻ này nay là lối DUY NHẤT tới bảng công của chính họ — đẩy
     // bảng công lên trước, đừng bắt cuộn qua lời từ chối mới thấy dòng mình.
-    if (!laQT() && !coSoDuocBao().length) return veBangCong() + veBaoCaoChinh();
-    return veBaoCaoChinh() + (laQT() ? veKiemTraDT() : '') + veBangCong();
+    return veBaoCaoChinh() + veBangTrangThaiGV() + (laQT() ? veKiemTraDT() : '');
   }
 
   // ── Phiếu kiểm tra điểm trường: 5 mục tick nhanh trên điện thoại,
@@ -846,9 +1063,9 @@
     }
     if (!BC_CS || duocBao.indexOf(BC_CS) < 0) {
       // Mặc định mở điểm CHƯA báo cáo buổi này
-      BC_CS = duocBao.filter(function (m) { return !(DL.baoCao[m] || {})[buoiHienTai()]; })[0] || duocBao[0];
+      BC_CS = duocBao.filter(function (m) { return !(DL.baoCao[m] || {})[buoiXem()]; })[0] || duocBao[0];
     }
-    var b = buoiHienTai();
+    var b = buoiXem();
     var daGui = (DL.baoCao[BC_CS] || {})[b];
 
     var chonCS = duocBao.length > 1
@@ -869,9 +1086,9 @@
     // GV của cơ sở đang báo
     var gvCS = DL.gvDs.filter(function (g) { return g.coSo === BC_CS; });
     var soVang = Object.keys(BC_GV_VANG).length;
-    var LY_DO = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Việc riêng', 'Khác'];
+    var LY_DO = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Tập huấn', 'Việc riêng', 'Khác'];
 
-    var oGV = '<div class="dh-tieu-de">1 · Cán bộ, giáo viên, nhân viên</div>' +
+    var oGV = '<div class="dh-tieu-de">3 · Cán bộ, giáo viên, nhân viên</div>' +
       '<div class="dh-chon-hang">' +
       '<button class="dh-nut-lon' + (!soVang && !BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvDu()">✓ Đủ ' + gvCS.length + '/' + gvCS.length + '</button>' +
       '<button class="dh-nut-lon' + (soVang || BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvVang()">Có người vắng</button>' +
@@ -908,8 +1125,7 @@
     var cacLop = Object.keys(DL.lop).filter(function (l) { return DL.lop[l].coSo === BC_CS; });
     var hsTongCS = 0;
     cacLop.forEach(function (l) { hsTongCS += DL.lop[l].siSo; });
-    var oHS = '<div class="dh-tieu-de">2 · Học sinh</div>' +
-      '<div class="hd-kiem xanh" style="margin-top:2px">' +
+    var oHS = '<div class="dh-ghi-chu-nho" style="margin-top:2px">' +
       'Sĩ số điểm trường: <b>' + hsTongCS.toLocaleString('vi-VN') + '</b> em / ' + cacLop.length + ' lớp. ' +
       'Chuyên cần từng em theo dõi trên <b>VNEDU</b> — phần này không nhập lại.</div>';
 
@@ -917,7 +1133,7 @@
       return '<button class="dh-an-toan ' + ma + (BC_ANTOAN === ma ? ' on' : '') + '" onclick="DH.bcAnToan(\'' + ma + '\')">' +
         '<b>' + chu + '</b><small>' + phu + '</small></button>';
     };
-    var oAT = '<div class="dh-tieu-de">3 · An toàn</div>' +
+    var oAT = '<div class="dh-tieu-de">1 · Tình hình an toàn</div>' +
       '<div class="dh-an3">' +
       nutAT('xanh', '🟢 AN TOÀN', 'Mọi việc bình thường') +
       nutAT('vang', '🟡 CẦN LƯU Ý', 'Có việc cần theo dõi') +
@@ -926,17 +1142,32 @@
       '<div class="dh-ghi-chu-nho">Bấm 🟢 là xác nhận nhanh: học sinh an toàn, hoạt động bình thường, cơ sở vật chất – điện nước – an ninh ' +
       'bình thường. <b>Không phải tick từng tiêu chí</b> khi mọi việc bình thường.</div>';
 
-    var oGhiChu = (BC_ANTOAN === 'vang' || BC_ANTOAN === 'do')
-      ? '<div class="dh-tieu-de">4 · Ghi chú</div>' +
-        '<textarea id="dh-bc-ghichu" class="dh-o-nhap" rows="2" placeholder="Mô tả ngắn vấn đề cần lưu ý / cần xử lý…"></textarea>'
-      : '';
+    // Mục 2 của màn 3c: ba dòng, mỗi dòng hai nút Ổn / Có vấn đề. Ghi vào
+    // ba cột riêng (sql/34) chứ không nhét vào ghi chú — có cột thì bảng
+    // điều hành mới hiện được "CSVC · điện nước" cho từng điểm.
+    var oCSVC = '<div class="dh-tieu-de">2 · Cơ sở vật chất · điện nước</div>' +
+      Object.keys(TEN_CSVC).map(function (m) {
+        return '<div class="dh-diem-hang" style="padding:8px 12px"><div class="tt"><b>' + TEN_CSVC[m] + '</b></div>' +
+          '<button class="chip-loc' + (BC_CSVC[m] === 'on' ? ' on' : '') +
+            '" onclick="DH.bcCsvc(\'' + m + '\', \'on\')">Ổn</button>' +
+          '<button class="chip-loc' + (BC_CSVC[m] === 'loi' ? ' on' : '') +
+            '" onclick="DH.bcCsvc(\'' + m + '\', \'loi\')">Có vấn đề</button>' +
+          '</div>';
+      }).join('') +
+      '<div class="dh-ghi-chu-nho">Không bắt buộc. Chọn <b>Có vấn đề</b> ở mục nào thì bảng điều hành hiện ngay mục đó cho Ban giám hiệu.</div>';
+
+    // Ô ghi chú LUÔN có (đặc tả màn 3c bước 3: không bắt buộc nhưng luôn hiện).
+    // Trước đây chỉ hiện khi chọn Vàng/Đỏ — chọn Xanh mà muốn ghi một câu thì
+    // không có chỗ, và đổi Vàng→Xanh là chữ đã gõ bay mất vì ô biến khỏi DOM.
+    var oGhiChu = '<div class="dh-tieu-de">4 · Ghi chú <small>(không bắt buộc)</small></div>' +
+      '<textarea id="dh-bc-ghichu" class="dh-o-nhap" rows="2" placeholder="VD: cành cây gãy sát sân sau, đã rào tạm…"></textarea>';
     var oChieu = b === 'sang'
       ? '<label class="dh-tick"><input type="checkbox" id="dh-bc-1buoi"> Chiều nay điểm trường <b>không học</b> (dashboard sẽ không chờ báo cáo chiều)</label>'
       : '';
 
     return chonCS +
       '<div class="hd-kiem xanh" style="margin-top:0">Đang báo cáo <b>' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</b> cho <b>' + thoat(tenCoSo(BC_CS)) + '</b>.</div>' +
-      oGV + oHS + oAT + oGhiChu + oChieu +
+      oAT + oCSVC + oGV + oHS + oGhiChu + oChieu +
       '<button class="dh-nut-gui' + (BC_ANTOAN ? '' : ' mo') + '" onclick="DH.bcGui()">XÁC NHẬN ĐẦU BUỔI</button>' +
       '<div class="dh-ghi-chu-nho" style="text-align:center">Sau khi xác nhận, dashboard Ban giám hiệu cập nhật ngay lập tức.</div>';
   }
@@ -963,11 +1194,14 @@
   var CONG_LOI = '';
   var CONG_CO_NGHI = true;    // false = chưa chạy sql/30 (thiếu bảng ngay_nghi)
   var CONG_NGHI_MAU = [];     // ngày nghỉ khai ở BẢN MẪU (không ghi CSDL)
+  var CONG_CHOT = [];         // các tháng 'yyyy-mm' đã chốt (bảng cong_thang_chot)
   // Cận dưới của nút lùi tháng — không chặn thì bấm giữ lùi về tận 1999,
   // mỗi lần một truy vấn mạng. Hai năm đủ cho mọi việc đối chiếu của trường.
   var MOC_CONG_SOM = '';      // gán sau, khi đã có thangNay()/thangDich()
 
-  var CONG_LY_DO = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Việc riêng', 'Khác'];
+  // 'Tập huấn' tách riêng khỏi 'Công tác' theo bản thiết kế — nó VẪN TÍNH
+  // CÔNG, khác hẳn nghỉ phép, nên phải là cột riêng chứ không gộp vào Khác.
+  var CONG_LY_DO = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Tập huấn', 'Việc riêng', 'Khác'];
   var TEN_LOAI_NGHI = {
     le: 'Nghỉ lễ — không tính công', nghi_bu: 'Nghỉ bù — không tính công',
     nghi_khac: 'Nghỉ khác — không tính công', lam_bu: 'Đi làm bù — CÓ tính công'
@@ -1168,7 +1402,8 @@
         .or('and(den_ngay.is.null,ngay.gte.' + dau + '),den_ngay.gte.' + dau),
       may.from('ngay_nghi').select('id, ngay, loai, ten')
         .gte('ngay', dau).lte('ngay', cuoi).order('ngay'),
-      may.from('cau_hinh').select('gia_tri').eq('khoa', 'ngay_lam_viec').limit(1)
+      may.from('cau_hinh').select('gia_tri').eq('khoa', 'ngay_lam_viec').limit(1),
+      may.from('cong_thang_chot').select('thang')
     ]).then(function (kq) {
       if (kq[0].error) throw kq[0].error;
       var nghi = [];
@@ -1186,6 +1421,7 @@
           .filter(function (x) { return x >= 1 && x <= 7; });
         if (ds.length) thuLam = ds;
       }
+      CONG_CHOT = (kq[3] && !kq[3].error) ? (kq[3].data || []).map(function (x) { return x.thang; }) : [];
       CONG_KQ = tinhCong(ym, kq[0].data || [], nghi, thuLam);
       CONG_DANG = false;
       veGiu();
@@ -1273,6 +1509,19 @@
       'ai chưa có trong đó thì chưa có dòng. ' +
       'Dạy thay và thừa giờ <b>chưa có</b>: hai số đó cần thời khóa biểu.</div>';
 
+    // "Chốt bảng công tháng" của bản thiết kế — KHÔNG chép số sang bảng khác
+    // (bảng công vẫn cộng từ sổ vắng), mà KHOÁ SỬA sổ vắng của tháng đó với
+    // người phụ trách điểm. Chốt rồi thì mọi con số đứng yên, nhưng vẫn luôn
+    // khớp sổ gốc — không bao giờ có hai nguồn sự thật.
+    var daChot = CONG_CHOT.indexOf(CONG_THANG) >= 0;
+    var nutChot = qt
+      ? (daChot
+        ? '<div class="hd-kiem xanh">🔒 <b>Đã chốt ' + thangChu(CONG_THANG) + '</b> — người phụ trách điểm ' +
+          'không sửa được sổ vắng của tháng này nữa. ' +
+          '<a href="javascript:DH.congMoChot()">Mở lại để đính chính</a></div>'
+        : '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.congChot()">🔒 Chốt bảng công tháng</button>')
+      : '';
+
     var nutWord = qt
       ? '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.congWord()">📄 Xuất Word (A4 ngang)</button>' +
         (k.dangDienRa
@@ -1281,7 +1530,7 @@
           : '')
       : '';
 
-    return tieuDe + dieuHuong + nhan + canhBaoNghi + moTa + bang + nutWord + veNgayNghi();
+    return tieuDe + dieuHuong + nhan + canhBaoNghi + moTa + bang + nutChot + nutWord + veNgayNghi();
   }
 
   // ── Khai ngày nghỉ của tháng (BGH) — Tết và Giỗ Tổ theo âm lịch, số ngày
@@ -1382,8 +1631,8 @@
       ? '<div class="dh-tieu-de">⏳ Chờ duyệt (' + choDuyet.length + ')</div>' +
         choDuyet.map(function (d) {
           return dongDX(d,
-            '<button class="dh-nut-nho" onclick="DH.dxDuyet(' + d.id + ', true)">✓ Duyệt</button>' +
-            '<button class="dh-nut-nho" onclick="DH.dxDuyet(' + d.id + ', false)">✗ Từ chối</button>');
+            '<button class="dh-nut-hd xanh" onclick="DH.dxDuyet(' + d.id + ', true)">✓ Duyệt</button>' +
+            '<button class="dh-nut-hd vien" onclick="DH.dxDuyet(' + d.id + ', false)">✗ Trao đổi lại</button>');
         }).join('')
       : '';
 
@@ -1419,7 +1668,7 @@
   var DS_DANG_MO = [];      // danh sách HS của lớp đang mở
 
   function veDiemDanh() {
-    var b = buoiHienTai();
+    var b = buoiXem();
     var theoKhoi = {};
     Object.keys(DL.lop).sort().forEach(function (l) {
       var k = DL.lop[l].khoi;
@@ -1469,7 +1718,7 @@
       return '<div class="dh-tieu-de">Khối ' + k + '</div>' + the;
     }).join('');
 
-    return '<div class="hd-kiem ' + (THAT ? 'xanh' : 'vang') + '" style="margin-top:0">Điểm danh <b>' + tenBuoi(buoiHienTai()) + ' ' +
+    return '<div class="hd-kiem ' + (THAT ? 'xanh' : 'vang') + '" style="margin-top:0">Điểm danh <b>' + tenBuoi(buoiXem()) + ' ' +
       ngayVN(homNayISO()) + '</b> — giáo viên dạy đầu buổi bấm lớp mình dạy: lớp đủ thì đúng MỘT nút, ' +
       'chỉ khi có em vắng mới chọn tên. Hệ thống ghi lại ai điểm danh, lúc mấy giờ.</div>' + noiDung;
   }
@@ -1677,7 +1926,14 @@
       '<div class="dh-ghi-chu-nho">Báo cáo đầu buổi, an toàn xanh, đề xuất – phê duyệt, báo việc và kết quả xử lý ' +
       'tự ghi vết ở đây (giao việc lưu vết ở nhật ký hệ thống) — đây là nguồn để sau này <b>tự sinh báo cáo ngày / tuần / tháng</b>, không nhập lại.</div>';
 
-    return '<div class="dh-tieu-de" style="margin-top:0">Sự việc đang theo dõi</div>' + dsSV + formBV + nhatKy;
+    // Bố cục hai cột theo bản thiết kế: bên trái là form báo việc (mọi giáo
+    // viên dùng), bên phải là danh sách sự việc đang theo dõi. Điện thoại tự
+    // xếp dọc (.dh-hai-cot đã lo). Nhật ký riêng của màn này bỏ đi — nay MỌI
+    // màn đều có khối nhật ký ở cuối, để hai chỗ là đọc hai lần.
+    return '<div class="dh-hai-cot">' +
+      '<div>' + formBV + '</div>' +
+      '<div><div class="dh-tieu-de" style="margin-top:0">Sự việc đang theo dõi</div>' + dsSV + '</div>' +
+      '</div>';
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1746,23 +2002,54 @@
   // ════════════════════════════════════════════════════════════
   // KHUNG MODULE
   // ════════════════════════════════════════════════════════════
-  var TAB = 'homnay';
-  // Thẻ "🎒 Điểm danh HS" ĐÃ ẨN (14/8/2026) — VNEDU đã làm việc đó, bắt cô
-  // giáo nhập hai lần thì hai tuần là bỏ. Mã veDiemDanh() và các hàm dd* GIỮ
-  // NGUYÊN, bảng diem_danh_lop/hs_vang trên CSDL cũng giữ: muốn bật lại chỉ
-  // cần trả một dòng vào DS_TAB dưới đây, không phải viết lại gì.
-  var DS_TAB = [
-    { ma: 'homnay', ten: '📊 Hôm nay' },
-    { ma: 'baocao', ten: '🟢 Điểm danh GV' },
-    { ma: 'dexuat', ten: '🔄 Đề xuất' },
-    // Dạy thay nay nằm TRONG thẻ Lịch tuần: nó vốn là hệ quả của thời khóa
-    // biểu cộng với người vắng, đứng riêng một thẻ thì lạc lõng.
-    { ma: 'lichtuan', ten: '📅 Lịch tuần' },
-    { ma: 'viec', ten: '✅ Việc trong tuần' },
-    { ma: 'dugio', ten: '👀 Dự giờ – Kiểm tra' },
-    { ma: 'thongbao', ten: '📢 Thông báo' },
-    { ma: 'baoviec', ten: '⚠️ Báo việc' }
+  // ── Bố cục theo bản bàn giao "Điều hành v3 — phương án 1b" (14/8/2026) ──
+  // Máy tính: thanh bên 232px phân nhóm nhiệm vụ. Điện thoại: thanh bên ẩn,
+  // thay bằng thanh tab dưới 4 mục chính + hàng chip cho 5 màn còn lại.
+  //
+  // Thẻ "Điểm danh HS" ĐÃ ẨN — VNEDU đã làm việc đó. Mã veDiemDanh() và các
+  // hàm dd* GIỮ NGUYÊN, bảng diem_danh_lop/hs_vang cũng giữ; bật lại chỉ cần
+  // trả một mục vào DS_NHOM.
+  var TAB = 'tongquan';
+  var DS_NHOM = [
+    { nhom: 'HÔM NAY', muc: [
+      { ma: 'tongquan', ten: 'Tổng quan', bi: '🏠', ngan: 'Hôm nay' },
+      { ma: 'baoviec', ten: 'Báo việc sự cố', bi: '⚡', ngan: 'Báo việc' } ] },
+    { nhom: 'NHÂN SỰ', muc: [
+      { ma: 'baocao', ten: 'Điểm danh GV', bi: '🧑‍🏫', ngan: 'Điểm danh' },
+      { ma: 'bangcong', ten: 'Bảng công tháng', bi: '📋' } ] },
+    { nhom: 'CÔNG VIỆC', muc: [
+      { ma: 'dexuat', ten: 'Đề xuất – duyệt', bi: '📝', ngan: 'Đề xuất' },
+      { ma: 'viec', ten: 'Giao việc', bi: '✅' } ] },
+    // Dạy thay nằm TRONG Lịch tuần: nó vốn là hệ quả của thời khóa biểu cộng
+    // với người vắng, đứng riêng một màn thì lạc lõng.
+    { nhom: 'KẾ HOẠCH', muc: [
+      { ma: 'lichtuan', ten: 'Lịch tuần', bi: '📅' },
+      { ma: 'dugio', ten: 'Dự giờ', bi: '👀' },
+      { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
+  // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
+  var TAB_MOBILE = ['tongquan', 'baocao', 'dexuat', 'baoviec'];
+
+  function moiMuc() {
+    var ds = [];
+    DS_NHOM.forEach(function (n) { n.muc.forEach(function (m) { ds.push(m); }); });
+    return ds;
+  }
+  function tenMan(ma) {
+    var m = moiMuc().filter(function (x) { return x.ma === ma; })[0];
+    return m ? m.ten : 'Tổng quan';
+  }
+  // Số đếm đỏ trên thanh bên / thanh tab
+  function demCho(ma) {
+    if (ma === 'dexuat') {
+      return laQT() ? (DL.deXuat || []).filter(function (d) { return d.tt === 'cho_duyet'; }).length : 0;
+    }
+    if (ma === 'thongbao') return (DL.thongBao || []).filter(tbCanToiXN).length;
+    if (ma === 'baoviec') {
+      return laQT() ? (DL.suViec || []).filter(function (s) { return s.tt === 'moi'; }).length : 0;
+    }
+    return 0;
+  }
 
   function veDieuHanh() {
     var vung = $('#vung-dieuhanh');
@@ -1781,43 +2068,95 @@
         'Đăng nhập để chạy với dữ liệu thật của nhà trường.</div>';
     }
 
-    var dauNgay = '<div class="dh-dau"><div><b>ĐIỀU HÀNH HÔM NAY</b><small>' + homNayChu() +
-      ' · ' + tenBuoi(buoiHienTai()) + '</small></div></div>';
+    // ── Thanh bên (máy tính) ──
+    var logo = '<div class="dh-sb-logo"><img src="img/logo.png" alt=""></div>';
+    var sb = '<div class="dh-sb">' +
+      '<div class="dh-sb-dau">' + logo +
+      '<div class="dh-sb-ten"><b>' + thoat((window.CAU_HINH || {}).TEN_TRUONG || 'Nhà trường') + '</b>' +
+      '<span>Điều hành nhà trường</span></div></div>' +
+      DS_NHOM.map(function (n) {
+        return '<div class="dh-sb-nhom">' + n.nhom + '</div>' + n.muc.map(function (m) {
+          var d = demCho(m.ma);
+          return '<button class="dh-sb-muc' + (TAB === m.ma ? ' on' : '') +
+            '" onclick="DH.tab(\'' + m.ma + '\')">' + thoat(m.ten) +
+            (d ? '<span class="dh-sb-badge">' + d + '</span>' : '') + '</button>';
+        }).join('');
+      }).join('') +
+      '<div class="dh-sb-chan">' + homNayChu() + '<br>Năm học ' + thoat(NAM || (window.CAU_HINH || {}).NAM_HOC || '') +
+      ' · ' + DL.coSo.length + ' điểm trường</div></div>';
 
-    // Bộ lọc cơ sở CHỈ hiện khi trường có ≥2 cơ sở (như quy tắc ở hocsinh.js)
-    var locCS = (TAB === 'homnay' && DL.coSo.length > 1)
+    // ── Đầu màn: nhãn vàng + tiêu đề + công tắc Sáng/Chiều ──
+    var b = buoiXem();
+    var dauMan = '<div class="dh-dau-man"><div style="flex:1;min-width:180px">' +
+      '<div class="dh-nhan-vang">TRUNG TÂM ĐIỀU HÀNH HẰNG NGÀY</div>' +
+      '<div class="dh-tieu-man">' + thoat(tenMan(TAB)) + '</div></div>' +
+      '<div class="dh-buoi">' +
+      '<button class="' + (b === 'sang' ? 'on' : '') + '" onclick="DH.buoi(\'sang\')">Sáng</button>' +
+      '<button class="' + (b === 'chieu' ? 'on' : '') + '" onclick="DH.buoi(\'chieu\')">Chiều</button>' +
+      '</div></div>';
+
+    // ── Điện thoại: 5 màn ngoài thanh tab đi bằng hàng chip này ──
+    var chipKhac = '<div class="dh-chon-hang chi-dien-thoai" style="overflow-x:auto;flex-wrap:nowrap">' +
+      moiMuc().filter(function (m) { return TAB_MOBILE.indexOf(m.ma) < 0; }).map(function (m) {
+        var d = demCho(m.ma);
+        return '<button class="chip-loc' + (TAB === m.ma ? ' on' : '') +
+          '" onclick="DH.tab(\'' + m.ma + '\')">' + m.bi + ' ' + thoat(m.ten) +
+          (d ? ' <b class="dh-do">(' + d + ')</b>' : '') + '</button>';
+      }).join('') + '</div>';
+
+    // Bộ lọc cơ sở CHỈ hiện ở Tổng quan khi trường có ≥2 cơ sở
+    var locCS = (TAB === 'tongquan' && DL.coSo.length > 1)
       ? '<div class="dh-chon-hang dh-loc-cs">' +
         [{ ma: 'all', ten: 'Toàn trường' }].concat(DL.coSo).map(function (c) {
           return '<button class="chip-loc' + (LOC_CS === c.ma ? ' on' : '') + '" onclick="DH.locCS(\'' + nhay(c.ma) + '\')">' + thoat(c.ten) + '</button>';
         }).join('') + '</div>'
       : '';
 
-    // Số đếm đỏ trên tab: đơn chờ duyệt (BGH) · thông báo tôi chưa xác nhận
-    var demDX = laQT() ? (DL.deXuat || []).filter(function (d) { return d.tt === 'cho_duyet'; }).length : 0;
-    var demTB = (DL.thongBao || []).filter(tbCanToiXN).length;
-    var thanhTab = '<div class="dh-thanh-tab">' + DS_TAB.map(function (x) {
-      var dem = x.ma === 'dexuat' ? demDX : x.ma === 'thongbao' ? demTB : 0;
-      return '<button class="' + (TAB === x.ma ? 'on' : '') + '" onclick="DH.tab(\'' + x.ma + '\')">' + x.ten +
-        (dem ? ' <b class="dh-do">(' + dem + ')</b>' : '') + '</button>';
-    }).join('') + '</div>';
-
     var noiDung =
-      TAB === 'homnay' ? veHomNay() :
+      TAB === 'tongquan' ? veTongQuan() :
       TAB === 'baocao' ? veBaoCao() :
+      TAB === 'bangcong' ? veBangCong() :
       TAB === 'diemdanh' ? veDiemDanh() :
       TAB === 'dexuat' ? veDeXuat() :
       // Lịch tuần ở tệp riêng (js/lich-tuan.js); thiếu tệp thì vẫn còn phần
-      // Dạy thay chứ không để thẻ trắng trơn
+      // Dạy thay chứ không để màn trắng trơn
       TAB === 'lichtuan' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
-      // 'daythay' là mã thẻ CŨ, không còn trên thanh — ai còn giữ trạng thái
-      // cũ thì đưa về đúng thẻ mới chứ đừng để lạc sang màn không tab nào sáng
+      // 'homnay' và 'daythay' là mã màn CŨ — ai còn giữ trạng thái cũ thì đưa
+      // về đúng màn mới, đừng để lạc sang chỗ không mục nào sáng
       TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       TAB === 'thongbao' ? veThongBao() :
-      TAB === 'viec' ? veViec() : veBaoViec();
+      TAB === 'viec' ? veViec() :
+      TAB === 'baoviec' ? veBaoViec() : veTongQuan();
 
-    vung.innerHTML = bang + dauNgay + thanhTab + locCS + '<div class="dh-noi-dung">' + noiDung + '</div>';
+    // ── Thanh tab dưới (điện thoại) ──
+    var tabM = '<div class="dh-tabm">' + TAB_MOBILE.map(function (ma) {
+      var m = moiMuc().filter(function (x) { return x.ma === ma; })[0] || { ten: ma, bi: '•' };
+      var d = demCho(ma);
+      return '<button class="' + (TAB === ma ? 'on' : '') + '" onclick="DH.tab(\'' + ma + '\')">' +
+        '<div class="bi">' + m.bi + '</div><div class="ch">' + thoat(m.ngan || m.ten) +
+        (d ? ' <b class="dh-do">' + d + '</b>' : '') + '</div></button>';
+    }).join('') + '</div>';
+
+    vung.innerHTML = '<div class="dh-khung">' + sb + '<div class="dh-noi">' +
+      dauMan + bang + chipKhac + locCS +
+      '<div class="dh-noi-dung">' + noiDung + '</div>' +
+      veNhatKyKhoi() + tabM + '</div></div>';
     veNhaCard();
+  }
+
+  // ── Khối "NHẬT KÝ ĐIỀU HÀNH HÔM NAY" — cuối MỌI màn, theo bản thiết kế.
+  //    Mọi thao tác tự ghi vào đây, không ai phải chép sổ lại. ──
+  function veNhatKyKhoi() {
+    var ds = (DL.nhatKy || []).slice(0, 6);
+    return '<div class="dh-nk-khoi"><b>NHẬT KÝ ĐIỀU HÀNH HÔM NAY</b>' +
+      (ds.length
+        ? ds.map(function (n) {
+            return '<div class="dong"><span class="gio">' + thoat(n.luc) + '</span>' +
+              '<span class="chu">' + thoat(n.chu) + '</span></div>';
+          }).join('')
+        : '<div class="dong"><span class="chu">Hôm nay chưa có thao tác nào được ghi nhận.</span></div>') +
+      '</div>';
   }
 
   // ── Khối tóm tắt trên TRANG CHỦ, cá nhân hóa theo vai trò ──
@@ -1853,7 +2192,7 @@
       : '<div style="margin-top:6px">👍 Không có việc nào chờ xử lý.</div>';
 
     vung.innerHTML = '<div class="the-thong-bao" style="margin-bottom:16px">' +
-      '<div style="font-size:13px;color:var(--chu-mo)">' + homNayChu() + ' · ' + tenBuoi(buoiHienTai()) + '</div>' +
+      '<div style="font-size:13px;color:var(--chu-mo)">' + homNayChu() + ' · ' + tenBuoi(buoiXem()) + '</div>' +
       '<div style="font-size:14.5px;margin-top:4px">' + soLieu + '</div>' + canhBao +
       '<div class="dh-chon-hang" style="margin-top:10px">' +
       '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
@@ -1964,35 +2303,129 @@
     },
     locCS: function (ma) { LOC_CS = ma; veDieuHanh(); },
 
+    // ── Công tắc Sáng/Chiều (bản thiết kế v3) ──
+    // Đổi buổi là đổi CẢ dữ liệu xem lẫn buổi sẽ báo cáo — người phụ trách
+    // biết trước chiều nghỉ thì gửi báo cáo chiều ngay từ sáng được.
+    buoi: function (b) {
+      BUOI_XEM = (b === 'sang' || b === 'chieu') ? b : null;
+      BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+      veGiu();
+    },
+
+    // Biến mục "Có vấn đề" của báo cáo đầu buổi thành SỰ VIỆC để theo dõi tới
+    // khi xử lý xong — không thì nó chỉ là một dòng chữ đỏ trong cột, sáng mai
+    // báo cáo mới đè lên là mất dấu.
+    svTuCsvc: function (ma) {
+      var c = DL.coSo.filter(function (x) { return x.ma === ma; })[0];
+      if (!c) return;
+      var bc = (DL.baoCao[ma] || {})[buoiXem()];
+      if (!bc) return;
+      var loi = [];
+      if (bc.dien === 'loi') loi.push('Điện');
+      if (bc.nuoc === 'loi') loi.push('Nước');
+      if (bc.csvc === 'loi') loi.push('Phòng học – thiết bị');
+      if (!loi.length) return;
+      var moTa = '[Báo cáo đầu buổi] ' + loi.join(', ') + ' có vấn đề' +
+        (bc.ghiChu ? ': ' + bc.ghiChu : '');
+      if (!THAT) {
+        DL.suViec.unshift({ id: Date.now(), loai: 'Điện / Nước', muc: 'vang', moTa: moTa,
+          coSo: ma, tt: 'moi', ketQua: '', nguoiTen: 'BGH (mẫu)', luc: gioPhut() });
+        veDieuHanh(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.');
+        return;
+      }
+      window.MAY_CHU.from('su_viec').insert({
+        loai: (bc.dien === 'loi' || bc.nuoc === 'loi') ? 'Điện / Nước' : 'Cơ sở vật chất',
+        muc: 'vang', mo_ta: moTa, co_so_ma: ma,
+        nguoi_bao_id: idToi(), nguoi_bao_ten: tenToi()
+      }).then(function (r) {
+        if (r.error) { baoLoi(r.error); return; }
+        window.notify('⚠ Đã ghi thành sự việc để theo dõi tới khi xử lý xong.');
+        taiLai();
+      });
+    },
+
+    // Nhắc điểm trường chưa gửi báo cáo — gửi một thông báo cần xác nhận,
+    // KHÔNG nhắn ngoài app: có vết trong nhật ký thì mới đối chiếu được sau.
+    nhacBaoCao: function (ma) {
+      var c = DL.coSo.filter(function (x) { return x.ma === ma; })[0];
+      if (!c) return;
+      var chu = 'Nhắc gửi báo cáo đầu buổi — ' + c.ten + ' (' + tenBuoi(buoiXem()) + ' ' +
+        ngayVN(homNayISO()) + ')';
+      if (!THAT) {
+        window.notify('Bản mẫu — đã nhắc ' + c.ten + '.');
+        return;
+      }
+      if (!DL.tbCoBang) { window.notify('Chức năng nhắc cần chạy sql/25 trên Supabase.'); return; }
+      // Bấm hai lần là hai thông báo, mà mỗi cái đòi cả điểm trường xác nhận —
+      // tiêu đề đã chứa tên điểm + buổi + ngày nên đủ làm khoá chống trùng.
+      var daNhac = (DL.thongBao || []).filter(function (x) {
+        return x.tieuDe === chu && x.ngay === homNayISO();
+      }).length;
+      if (daNhac) {
+        window.notify('Đã nhắc ' + c.ten + ' ' + daNhac + ' lần trong buổi này rồi.');
+        return;
+      }
+      window.MAY_CHU.from('thong_bao').insert({
+        tieu_de: chu,
+        noi_dung: 'Ban giám hiệu nhắc điểm trường gửi báo cáo đầu buổi trên hệ thống.',
+        can_xac_nhan: true, pham_vi: 'co_so', co_so_ma: ma,
+        // nguoi_gui_ten là NOT NULL và chưa có trigger chép tên — thiếu nó thì
+        // nút Nhắc thất bại 100% với lỗi tiếng Anh của Postgres.
+        nguoi_gui_id: idToi(), nguoi_gui_ten: tenToi()
+      }).then(function (r) {
+        if (r.error) { baoLoi(r.error); return; }
+        window.notify('🔔 Đã nhắc ' + c.ten + ' — lời nhắc vào nhật ký và cần xác nhận.');
+        taiLai();
+      });
+    },
+
     // ── Báo cáo đầu buổi ──
-    bcChonCS: function (ma) { BC_CS = ma; BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; veGiu(); },
+    bcChonCS: function (ma) { BC_CS = ma; BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' }; veGiu(); },
     bcGvDu: function () { BC_GV_VANG = {}; BC_MO_CHON_GV = false; veGiu(); },
     bcGvVang: function () { BC_MO_CHON_GV = true; veGiu(); },
     bcTickGv: function (nut) {
       var em = nut.getAttribute('data-email');
       if (BC_GV_VANG[em] !== undefined) delete BC_GV_VANG[em];
-      else BC_GV_VANG[em] = { ten: nut.getAttribute('data-ten'), lyDo: 'Nghỉ ốm', buoi: 'ca_ngay', denNgay: '' };
+      // Mặc định là ĐÚNG BUỔI đang báo cáo, không phải cả ngày: báo cáo
+      // chiều mà mặc định 'cả ngày' là trừ oan buổi sáng người ta đã dạy.
+      else BC_GV_VANG[em] = { ten: nut.getAttribute('data-ten'), lyDo: 'Nghỉ ốm', buoi: buoiXem(), denNgay: '' };
       veGiu();
     },
     bcLyDo: function (em, lyDo) { if (BC_GV_VANG[em]) BC_GV_VANG[em].lyDo = lyDo; },
     bcBuoiVang: function (em, buoi) { if (BC_GV_VANG[em]) BC_GV_VANG[em].buoi = buoi; },
     bcDenNgay: function (em, ngay) { if (BC_GV_VANG[em]) BC_GV_VANG[em].denNgay = ngay; },
     bcAnToan: function (ma) { BC_ANTOAN = ma; veGiu(); },
+    bcCsvc: function (m, gia) { BC_CSVC[m] = (BC_CSVC[m] === gia ? '' : gia); veGiu(); },
     bcSua: function () {
-      // Mở lại biểu mẫu: xóa dòng báo cáo buổi này (bản mới sẽ ghi đè).
-      // GV vắng do BÁO CÁO ghi hôm nay cũng xóa theo — kẻo tick lại là nhân
-      // đôi người vắng. Dòng sinh từ ĐỀ XUẤT đã duyệt thì giữ nguyên.
-      var b = buoiHienTai();
+      // Mở lại biểu mẫu: xóa dòng báo cáo BUỔI NÀY (bản mới sẽ ghi đè).
+      // GV vắng do chính báo cáo BUỔI NÀY ghi cũng xóa theo — kẻo tick lại là
+      // nhân đôi người vắng. Dòng sinh từ ĐỀ XUẤT đã duyệt thì giữ nguyên.
+      //
+      // ⚠️ PHẢI khoá theo BUỔI. Trước đây chỉ lọc theo ngày + cơ sở nên sửa
+      // báo cáo buổi CHIỀU là xóa sạch cả người vắng đã báo buổi SÁNG — mất
+      // dữ liệu thật, mất im lặng, và bảng công cuối tháng cộng thiếu. Dấu
+      // nguồn vì thế mang tên buổi: 'Báo cáo đầu buổi sang' / '… chieu'.
+      var b = buoiXem();
+      var dau = 'Báo cáo đầu buổi ' + b;
       if (!THAT) {
         delete (DL.baoCao[BC_CS] || {})[b];
-        DL.gvVang = DL.gvVang.filter(function (g) { return g.coSo !== BC_CS; });
+        DL.gvVang = DL.gvVang.filter(function (g) {
+          return !(g.coSo === BC_CS && (g.buoi === b || g.buoi === 'ca_ngay') && g.tuBaoCao);
+        });
         veDieuHanh(); return;
       }
       var may = window.MAY_CHU, t = homNayISO();
       may.from('gv_vang').delete()
-        .eq('ngay', t).eq('co_so_ma', BC_CS).eq('ghi_chu', 'Báo cáo đầu buổi')
+        .eq('ngay', t).eq('co_so_ma', BC_CS).in('ghi_chu', [dau, 'Báo cáo đầu buổi'])
+        .select()
         .then(function (r) {
           if (r.error) throw r.error;
+          // RLS chặn thì PostgREST trả 0 dòng chứ KHÔNG báo lỗi — phải nói ra,
+          // kẻo người dùng tick lại và sổ vắng có hai bộ dòng trùng.
+          if (!r.data || !r.data.length) {
+            window.notify('Không xóa được dòng vắng cũ (tháng đã chốt hoặc quá hạn sửa 2 ngày) — ' +
+              'đừng tick lại người vắng, kẻo trùng dòng.');
+          }
           return may.from('bao_cao_dau_buoi').delete()
             .eq('ngay', t).eq('buoi', b).eq('co_so_ma', BC_CS);
         })
@@ -2004,7 +2437,7 @@
     },
     bcGui: function () {
       if (!BC_ANTOAN) { window.notify('Chọn một trong ba nút An toàn trước khi xác nhận.'); return; }
-      var b = buoiHienTai();
+      var b = buoiXem();
       var ghiChu = (($('#dh-bc-ghichu') || {}).value || '').trim();
       var khongHocChieu = !!(($('#dh-bc-1buoi') || {}).checked);
       var dsVang = Object.keys(BC_GV_VANG).map(function (em) {
@@ -2015,7 +2448,7 @@
           co_so_ma: BC_CS,
           ly_do: v.lyDo, buoi: v.buoi || 'ca_ngay', ngay: homNayISO(),
           den_ngay: v.denNgay || null,
-          ghi_chu: 'Báo cáo đầu buổi',   // dấu nguồn — bcSua chỉ xóa dòng này
+          ghi_chu: 'Báo cáo đầu buổi ' + b,   // dấu nguồn KÈM BUỔI — bcSua xoá đúng buổi này
           nguoi_ghi_id: idToi() };
       });
       // CSDL có ràng buộc den_ngay >= ngay — chặn trước cho lời báo dễ hiểu
@@ -2024,17 +2457,20 @@
 
       if (!THAT) {
         if (!DL.baoCao[BC_CS]) DL.baoCao[BC_CS] = {};
-        DL.baoCao[BC_CS][b] = { anToan: BC_ANTOAN, ghiChu: ghiChu, luc: gioPhut(), chieuKhongHoc: khongHocChieu };
-        dsVang.forEach(function (v) { DL.gvVang.push({ ten: v.ho_ten, coSo: BC_CS, lyDo: v.ly_do, buoi: v.buoi, denNgay: v.den_ngay }); });
-        BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false;
-        TAB = 'homnay'; veDieuHanh();
+        DL.baoCao[BC_CS][b] = { anToan: BC_ANTOAN, ghiChu: ghiChu, luc: gioPhut(), chieuKhongHoc: khongHocChieu,
+          dien: BC_CSVC.dien, nuoc: BC_CSVC.nuoc, csvc: BC_CSVC.csvc };
+        dsVang.forEach(function (v) { DL.gvVang.push({ ten: v.ho_ten, coSo: BC_CS, lyDo: v.ly_do,
+          buoi: v.buoi, denNgay: v.den_ngay, tuBaoCao: true }); });
+        BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+        TAB = 'tongquan'; veDieuHanh();
         window.notify('Đã xác nhận (bản mẫu — chưa ghi cơ sở dữ liệu).');
         return;
       }
       var may = window.MAY_CHU;
       may.from('bao_cao_dau_buoi').upsert({
         ngay: homNayISO(), buoi: b, co_so_ma: BC_CS, an_toan: BC_ANTOAN,
-        ghi_chu: ghiChu || null, chieu_khong_hoc: khongHocChieu, nguoi_gui_id: idToi()
+        ghi_chu: ghiChu || null, chieu_khong_hoc: khongHocChieu, nguoi_gui_id: idToi(),
+        dien: BC_CSVC.dien || null, nuoc: BC_CSVC.nuoc || null, csvc: BC_CSVC.csvc || null
       }, { onConflict: 'ngay,buoi,co_so_ma' })
         .then(function (r) {
           if (r.error) throw r.error;
@@ -2042,8 +2478,8 @@
         })
         .then(function (r) {
           if (r.error) throw r.error;
-          BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false;
-          TAB = 'homnay';
+          BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+          TAB = 'tongquan';
           window.notify('✅ Đã xác nhận đầu buổi — dashboard đã cập nhật.');
           return taiLai();
         })
@@ -2052,7 +2488,7 @@
 
     // ── Điểm danh HS ──
     ddDu: function (lop) {
-      var b = buoiHienTai(), siSo = DL.lop[lop].siSo;
+      var b = buoiXem(), siSo = DL.lop[lop].siSo;
       if (!THAT) {
         DL.ddLop[b][lop] = { siSo: siSo, soVang: 0, luc: gioPhut() };
         veDieuHanh(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.');
@@ -2089,7 +2525,7 @@
     },
     ddPhep: function (ma, phep) { if (LOP_CHON[ma]) LOP_CHON[ma].phep = phep; },
     ddLuu: function (lop) {
-      var b = buoiHienTai(), siSo = DL.lop[lop].siSo;
+      var b = buoiXem(), siSo = DL.lop[lop].siSo;
       var dsVang = Object.keys(LOP_CHON).map(function (ma) {
         return { ngay: homNayISO(), buoi: b, nam_hoc: NAM, lop: lop,
           hoc_sinh_ma: ma, phep: LOP_CHON[ma].phep, nguoi_ghi_id: idToi() };
@@ -2124,7 +2560,7 @@
       });
     },
     ddSua: function (lop) {
-      var b = buoiHienTai();
+      var b = buoiXem();
       if (!THAT) {
         delete DL.ddLop[b][lop];
         DL.hsVang = DL.hsVang.filter(function (v) { return !(v.lop === lop && v.buoi === b); });
@@ -2550,6 +2986,37 @@
           if (r.error) { baoLoi(r.error); return; }
           if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới xóa được ngày nghỉ.'); return; }
           CONG_THU = ''; CONG_KQ = null;
+          veGiu();
+        });
+    },
+    congChot: function () {
+      if (CONG_KQ && CONG_KQ.dangDienRa &&
+          !window.confirm('Tháng ' + thangSo(CONG_THANG) + ' CHƯA KẾT THÚC. Vẫn chốt?')) return;
+      if (!window.confirm('Chốt bảng công ' + thangChu(CONG_THANG) + '?\n' +
+        'Người phụ trách điểm sẽ không sửa được sổ vắng của tháng này nữa (Ban giám hiệu vẫn mở lại được).')) return;
+      if (!THAT) { CONG_CHOT.push(CONG_THANG); veGiu(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.'); return; }
+      window.MAY_CHU.from('cong_thang_chot').insert({ thang: CONG_THANG }).then(function (r) {
+        if (r.error) {
+          baoLoi(r.error.code === '23505' ? { message: 'Tháng này đã chốt rồi.' } : r.error);
+          return;
+        }
+        CONG_THU = ''; CONG_KQ = null;
+        window.notify('🔒 Đã chốt bảng công ' + thangChu(CONG_THANG) + '.');
+        veGiu();
+      });
+    },
+    congMoChot: function () {
+      if (!window.confirm('Mở lại ' + thangChu(CONG_THANG) + ' để đính chính?')) return;
+      if (!THAT) {
+        CONG_CHOT = CONG_CHOT.filter(function (x) { return x !== CONG_THANG; });
+        veGiu(); return;
+      }
+      window.MAY_CHU.from('cong_thang_chot').delete().eq('thang', CONG_THANG).select()
+        .then(function (r) {
+          if (r.error) { baoLoi(r.error); return; }
+          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới mở lại được tháng đã chốt.'); return; }
+          CONG_THU = ''; CONG_KQ = null;
+          window.notify('🔓 Đã mở lại ' + thangChu(CONG_THANG) + '.');
           veGiu();
         });
     },
