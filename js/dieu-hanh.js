@@ -336,6 +336,7 @@
         CONG_THU = ''; CONG_KQ = null;
         // Module con cũng phải vứt bản mẫu của nó — cùng một cái bẫy
         if (window.LT && window.LT.datLai) window.LT.datLai();
+        if (window.DG && window.DG.datLai) window.DG.datLai();
         veDieuHanh();
       })
       .catch(function (e) {
@@ -1758,6 +1759,7 @@
     // biểu cộng với người vắng, đứng riêng một thẻ thì lạc lõng.
     { ma: 'lichtuan', ten: '📅 Lịch tuần' },
     { ma: 'viec', ten: '✅ Việc trong tuần' },
+    { ma: 'dugio', ten: '👀 Dự giờ – Kiểm tra' },
     { ma: 'thongbao', ten: '📢 Thông báo' },
     { ma: 'baoviec', ten: '⚠️ Báo việc' }
   ];
@@ -1810,6 +1812,7 @@
       // 'daythay' là mã thẻ CŨ, không còn trên thanh — ai còn giữ trạng thái
       // cũ thì đưa về đúng thẻ mới chứ đừng để lạc sang màn không tab nào sáng
       TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
+      TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       TAB === 'thongbao' ? veThongBao() :
       TAB === 'viec' ? veViec() : veBaoViec();
 
@@ -1906,7 +1909,9 @@
     var luu = {}, tick = {};
     // Module con khai thêm ô của nó qua window.LT.oGiu — không thì mỗi lần vẽ
     // lại là mất chữ đang gõ trong khung thêm việc của Lịch tuần
-    var O_GIU = O_GIU_GOC.concat((window.LT && window.LT.oGiu) || []);
+    var O_GIU = O_GIU_GOC
+      .concat((window.LT && window.LT.oGiu) || [])
+      .concat((window.DG && window.DG.oGiu) || []);
     O_GIU.forEach(function (id) {
       var e = $('#' + id);
       if (e) luu[id] = e.value;

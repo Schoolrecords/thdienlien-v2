@@ -1688,10 +1688,16 @@ nav.menu::-webkit-scrollbar { display: none; }
 /* 1) Cột họ tên DÍNH khi cuộn ngang. Bảng công có tới 10 cột, rộng gần 2,5 màn
       điện thoại; cuộn sang xem cột "Có mặt" thì cột tên đã trôi khỏi màn —
       nhìn thấy số mà không biết của ai. Chỉ áp cho .bang-cong, không đụng các
-      bảng quản trị khác. */
+      bảng quản trị khác.
    ⚠ .bang-quan-tri gốc đặt overflow:hidden (để bo góc). Ô sticky nằm trong
       một hộp overflow khác hộp đang cuộn thì trình duyệt KHÔNG dính — phải trả
-      bảng này về overflow:visible, đổi lại mất bo góc, đáng. */
+      bảng này về overflow:visible, đổi lại mất bo góc, đáng.
+   ⚠⚠ 14/8/2026: khối này từng có dấu ĐÓNG chú thích lọt vào giữa, biến ba
+      dòng chú thích thành BỘ CHỌN rác, và quy tắc overflow:visible bên dưới bị
+      trình duyệt vứt IM LẶNG — cột dính không chạy lần nào kể từ đợt A.
+      Bài học: CSS không báo lỗi bao giờ. Sửa chú thích xong phải quét lại
+      trạng thái mở/đóng bằng máy, và TUYỆT ĐỐI không viết dấu đóng chú thích
+      vào trong lời văn. */
 .bang-cong { overflow: visible; }
 .bang-cong .cot-dinh {
   position: sticky; left: 0; z-index: 1;
@@ -1795,3 +1801,35 @@ nav.menu::-webkit-scrollbar { display: none; }
   .lt-trongtam { border-left-color: #999 !important; }
   .lt-gio { background: none !important; color: #000 !important; font-weight: 700; padding: 0 !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DỰ GIỜ – KIỂM TRA NỘI BỘ (14/8/2026) — đợt C.
+   ════════════════════════════════════════════════════════════════════════════ */
+.dg-nhom { border: 1px solid var(--vien); border-radius: 10px; padding: 10px 12px; margin-top: 10px; background: var(--the); }
+.dg-nhom-ten {
+  font-size: 12px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--dam); font-weight: 700; margin-bottom: 6px;
+}
+.dg-tc { padding: 7px 0; }
+.dg-tc + .dg-tc { border-top: 1px dashed var(--vien); }
+.dg-tc-tt { font-size: 13.2px; line-height: 1.5; margin-bottom: 5px; }
+.dg-tc-tt i { color: var(--chu-mo); }
+.dg-trongtam {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--vang-sam); border: 1px solid var(--vang); border-radius: 5px; padding: 1px 5px;
+  white-space: nowrap;
+}
+.dg-chitiet {
+  margin-top: 6px; padding: 8px 10px; background: #f7f9fd; border-radius: 8px;
+  font-size: 12.8px; line-height: 1.55;
+}
+.dg-chitiet div + div { margin-top: 4px; }
+@media print {
+  .dg-nhom, .dg-tc { break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* Dải thẻ số của Dự giờ chỉ có 2–3 ô — dùng .dh-5the (ép 5 cột) thì hai ô co
+   lại còn 1/5 màn, chừa ba cột trống, và trên điện thoại ô cuối span 2 rơi hẳn
+   xuống hàng riêng. Lưới tự co vừa đúng số ô đang có. */
+.luoi-thong-ke.dg-dai-so { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.luoi-thong-ke.dg-dai-so .o-so:last-child { grid-column: auto; }
