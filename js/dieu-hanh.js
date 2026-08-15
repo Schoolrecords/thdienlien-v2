@@ -601,6 +601,52 @@
   function gvVangBuoi(b) {
     return DL.gvVang.filter(function (g) { return g.buoi === 'ca_ngay' || g.buoi === b; });
   }
+
+  // ════════════════════════════════════════════════════════════
+  // CHUYỂN DANH SÁCH VẮNG SANG APP THỜI KHÓA BIỂU
+  // ════════════════════════════════════════════════════════════
+  // Thầy Chung chốt 15/8/2026. Trước đây Hiệu trưởng phải khai "ai vắng" HAI
+  // lần: một lần ở đây (vào sổ vắng, cộng bảng công), một lần bên app TKB để
+  // bố trí dạy thay. Nay bấm một nút là sang thẳng, danh sách điền sẵn.
+  //
+  // 🔑 GẮN SAU DẤU "#", KHÔNG PHẢI "?" — phần sau dấu thăng KHÔNG BAO GIỜ
+  //    được trình duyệt gửi lên máy chủ. Tên giáo viên vì thế chỉ nằm trong
+  //    máy của người bấm, không đi ra ngoài, không vào nhật ký máy chủ nào.
+  //    Dùng "?" là tên người đi thẳng vào log của GitHub Pages.
+  //
+  // Giao thức (app TKB đọc theo đúng thoả thuận này — đổi thì phải sửa cả hai):
+  //    <URL_TKB>#hss-vang=<encodeURIComponent(JSON)>
+  //    JSON = { ngay: 'YYYY-MM-DD', buoi: 'sang'|'chieu',
+  //             ds: [ { ten, email, buoi, lyDo, coSo } ] }
+  //    · email có thể rỗng (nhân viên hợp đồng chưa có tài khoản) — khi đó
+  //      app TKB khớp theo HỌ TÊN.
+  //    · buoi của từng người có thể là 'ca_ngay'.
+  function urlDayThay() {
+    var b = buoiXem();
+    var ds = gvVangBuoi(b).map(function (g) {
+      return { ten: g.ten, email: g.email || '', buoi: g.buoi || 'ca_ngay',
+        lyDo: g.lyDo || '', coSo: tenCoSo(g.coSo) };
+    });
+    var goi = { ngay: homNayISO(), buoi: b, ds: ds };
+    var goc = (window.CAU_HINH || {}).URL_TKB || '';
+    return goc + '#hss-vang=' + encodeURIComponent(JSON.stringify(goi));
+  }
+
+  // Dải nút "Bố trí dạy thay" — chỉ hiện khi THẬT SỰ có người vắng buổi này.
+  // Không có ai vắng mà vẫn bày nút là mời người ta bấm vào chỗ trống.
+  function daiDayThay() {
+    var b = buoiXem();
+    var ds = gvVangBuoi(b);
+    if (!ds.length || !(window.CAU_HINH || {}).URL_TKB) return '';
+    var ten = ds.slice(0, 3).map(function (g) { return thoat(g.ten); }).join(' · ');
+    return '<div class="dh-sang-tkb">' +
+      '<div class="chu"><b>' + ds.length + ' người vắng ' + tenBuoi(b) + ' nay:</b> ' + ten +
+      (ds.length > 3 ? ' và ' + (ds.length - 3) + ' người nữa' : '') +
+      '<span>Bấm để sang app Thời khóa biểu bố trí dạy thay — danh sách này được ' +
+      'chuyển sẵn, không phải khai lại.</span></div>' +
+      '<a class="nut" href="' + thoat(urlDayThay()) + '" target="_blank" rel="noopener">' +
+      '👨‍🏫 Bố trí dạy thay ↗</a></div>';
+  }
   function tinh() {
     var dsCS = LOC_CS === 'all' ? DL.coSo : DL.coSo.filter(function (c) { return c.ma === LOC_CS; });
     var maCS = dsCS.map(function (c) { return c.ma; });
@@ -1047,11 +1093,12 @@
     if (THAT) {
       // Dạy thay là việc của app Thời khóa biểu — nó có cả thời khóa biểu lẫn
       // bộ sinh phương án để Hiệu trưởng chọn. Hồ sơ số KHÔNG làm lại việc đó,
-      // chỉ chỉ đường sang.
-      return '<div class="hd-kiem vang">👨‍🏫 <b>Bố trí dạy thay</b> làm ở app Thời khóa biểu — ' +
-        'app đó tự đưa ra phương án để Hiệu trưởng chọn. ' +
-        '<a href="' + thoat((window.CAU_HINH || {}).URL_TKB || '#') +
-        '" target="_blank" rel="noopener">mở app Thời khóa biểu ↗</a></div>';
+      // chỉ chuyển danh sách vắng sang rồi chỉ đường.
+      // Có người vắng → hiện thẳng dải sang app TKB (cùng một dải dùng ở màn
+      // Điểm danh, nên hai màn nói cùng một chuyện, không lệch nhau).
+      if (gvVangBuoi(buoiXem()).length) return daiDayThay();
+      return '<div class="hd-kiem xanh">🟢 Không có ai vắng ' + tenBuoi(buoiXem()) +
+        ' nay — chưa phải bố trí dạy thay.</div>';
     }
     var thieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
     return thieu
@@ -1105,7 +1152,10 @@
           : '') + '</td></tr>';
     }).join('');
 
-    return '<div class="dh-tieu-de" style="margin-top:22px">🧑‍🏫 Trạng thái CBGV-NV · ' + tenBuoi(b) + '</div>' +
+    // Dải sang app Thời khóa biểu đặt NGAY TRÊN bảng: nhìn thấy ai vắng thì
+    // ngay đó có đường đi tiếp, không phải nhớ rồi đi tìm.
+    return daiDayThay() +
+      '<div class="dh-tieu-de" style="margin-top:22px">🧑‍🏫 Trạng thái CBGV-NV · ' + tenBuoi(b) + '</div>' +
       '<div class="dh-ghi-chu-nho" style="margin-top:0">Bảng này <b>dẫn xuất</b> từ sổ vắng — người phụ trách chỉ báo ' +
       'NGƯỜI VẮNG trong báo cáo đầu buổi, còn lại mặc định có mặt. Không ai phải điểm danh từng người.</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho bang-cong"><thead><tr>' +

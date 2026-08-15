@@ -2248,6 +2248,24 @@ nav.menu::-webkit-scrollbar { display: none; }
   }
 }
 
+/* ── Dải "Bố trí dạy thay" — bắc cầu sang app Thời khóa biểu ───────────────
+   Chỉ hiện khi thật sự có người vắng buổi đang xem. Viền trái vàng vì đây là
+   việc CẦN LÀM, không phải thông báo suông. */
+.dh-sang-tkb {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: #fffaf1; border: 1px solid var(--vien); border-left: 5px solid #8f5d14;
+  border-radius: 13px; padding: 13px 17px; margin-top: 16px;
+}
+.dh-sang-tkb .chu { flex: 1; min-width: 260px; font-size: 13.5px; line-height: 1.55; }
+.dh-sang-tkb .chu b { color: var(--dam); }
+.dh-sang-tkb .chu span { display: block; font-size: 12px; color: var(--chu-mo); margin-top: 3px; }
+.dh-sang-tkb .nut {
+  background: var(--dam); color: #fff; border-radius: 10px; padding: 11px 18px;
+  font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap;
+  min-height: 44px; display: inline-flex; align-items: center; flex-shrink: 0;
+}
+.dh-sang-tkb .nut:hover { background: #1e4593; }
+
 /* ── Lưới thẻ tick: Cơ sở vật chất · Phiếu kiểm tra điểm trường ────────────
    Thay cho các hàng tràn hết bề ngang. Trên màn 1720px, nhãn nằm mép trái mà
    nút nằm mép phải thì mắt phải quét ngang cả sải tay mới biết mục nào đang
