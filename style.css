@@ -1856,27 +1856,77 @@ nav.menu::-webkit-scrollbar { display: none; }
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Khung: sidebar + vùng nội dung ── */
-.dh-khung {
-  display: flex; align-items: stretch; min-height: 620px;
-  background: var(--kem); border: 1px solid #d5deec; border-radius: 18px;
-  overflow: hidden; box-shadow: 0 10px 30px rgba(20, 48, 107, .12);
+/* ══════════════════════════════════════════════════════════════════════════
+   MÀN ĐIỀU HÀNH TRẢI RỘNG — thầy Chung chốt 15/8/2026
+   Cột điều hướng bên trái đã bỏ, thay bằng thanh tab ngang.
+   ══════════════════════════════════════════════════════════════════════════
+   ⚠️ ĐÂY LÀ NGOẠI LỆ CÓ CHỦ Ý của quy tắc "mọi khung dùng --rong-khung"
+   (mục 14 sổ dự án). Bảng điều hành có 5 thẻ số liệu + 3 thẻ điểm trường xếp
+   ngang, bó trong 1320px thì thẻ nào cũng hẹp và chữ xuống dòng lắt nhắt.
+   Các module khác GIỮ NGUYÊN --rong-khung — đừng nhân rộng ngoại lệ này.
+
+   Cách trải rộng: nới ra hai bên bằng margin âm tính từ chính giữa, KHÔNG
+   dùng transform — transform trên tổ tiên sẽ giết position:sticky của cột
+   tên bảng công (bẫy đã dính hai lần, mục 12.4).
+   Không để 100vw: màn 2560px mà trải hết thì mắt phải quét ngang cả sải tay,
+   đọc một hàng bảng là lạc dòng. 1720px là chỗ dừng. */
+.dh-rong { width: 100%; }
+
+/* Chỉ nới ra khi màn THỰC SỰ rộng. Dưới 1400px thì khung 1320px đã gần kín
+   màn rồi, nới thêm chẳng được bao nhiêu mà lại dễ sinh thanh cuộn ngang:
+   100vw tính CẢ thanh cuộn dọc (~15px) nên phép trừ hụt là tràn sang phải.
+   Trừ 48px là đã tính dư cho thanh cuộn. */
+@media (min-width: 1400px) {
+  .dh-rong {
+    width: min(100vw - 48px, 1720px);
+    margin-left: calc((100% - min(100vw - 48px, 1720px)) / 2);
+  }
 }
-.dh-sb {
-  width: 232px; flex-shrink: 0; background: var(--dam); color: #fff;
-  padding: 18px 0; display: flex; flex-direction: column;
+
+/* ── Thanh tab ngang (thay thanh bên) ── */
+.dh-tab-hang {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid var(--vien); border-radius: 14px;
+  padding: 0 6px 0 14px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(20, 48, 107, .05);
 }
-.dh-sb-dau {
-  padding: 0 20px 16px; display: flex; align-items: center; gap: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, .12);
+.dh-tab-cuon {
+  display: flex; gap: 2px; flex: 1; min-width: 0;
+  overflow-x: auto; scrollbar-width: thin;
 }
-/* Đầu thanh bên nay là NGÀY HÔM NAY, không phải logo + tên trường nữa —
-   hai thứ đó đã nằm ở đầu trang, cách chỗ này chừng 300px. */
-.dh-sb-ngay { line-height: 1.3; min-width: 0; }
-.dh-sb-ngay span {
-  display: block; font-size: 10px; font-weight: 800;
-  letter-spacing: .14em; color: var(--sb-mo);
+.dh-tab-nut {
+  border: 0; background: none; font: inherit; font-size: 13.5px; font-weight: 600;
+  color: var(--chu-mo); padding: 15px 13px 12px; cursor: pointer; white-space: nowrap;
+  border-bottom: 3px solid transparent;
 }
-.dh-sb-ngay b { display: block; font-weight: 700; font-size: 13px; margin-top: 2px; }
+.dh-tab-nut:hover { color: var(--dam); }
+.dh-tab-nut.on { color: var(--dam); font-weight: 800; border-bottom-color: var(--vang-sam); }
+.dh-tab-badge {
+  background: #c0392b; color: #fff; font-size: 10px; font-weight: 800;
+  border-radius: 999px; padding: 1px 6px; margin-left: 5px; vertical-align: 1px;
+}
+.dh-tab-phai {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding-right: 8px;
+}
+.dh-tab-ngay { font-size: 12.5px; color: var(--chu-mo); white-space: nowrap; }
+.dh-than { display: flex; flex-direction: column; gap: 16px; }
+
+/* Thanh tab ngang chỉ dành cho máy tính; điện thoại đi bằng thanh tab đáy
+   (ngón cái với tới) + hàng chip cuộn ngang — giữ nguyên như thiết kế 3b. */
+.chi-may-tinh { display: flex; }
+@media (max-width: 900px) { .chi-may-tinh { display: none; } }
+
+/* ── Năm thẻ số liệu ── */
+.dh-kpi-luoi {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 12px;
+}
+.dh-kpi-o {
+  background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 13px 16px 14px;
+}
+.dh-kpi-o .nhan { font-size: 11.5px; font-weight: 600; color: var(--chu-mo); }
+.dh-kpi-o .so { font-size: 27px; font-weight: 800; line-height: 1.15; margin: 3px 0 1px; }
+.dh-kpi-o .phu { font-size: 11.5px; color: var(--chu-mo); }
 
 /* Chip "dữ liệu thật": trước là băng cao chiếm trọn một dòng, nay một dòng
    mảnh — người mở app mỗi sáng chỉ cần biết đang chạy số thật hay số mẫu. */
@@ -1885,32 +1935,9 @@ nav.menu::-webkit-scrollbar { display: none; }
   background: var(--ok-nen); color: var(--ok); border: 1px solid #bfe3d2;
   border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 600;
 }
-.dh-sb-nhom {
-  padding: 14px 20px 6px; font-size: 10px; font-weight: 800;
-  letter-spacing: .14em; color: var(--sb-mo);
-}
-.dh-sb-muc {
-  display: flex; align-items: center; width: 100%; min-height: 40px;
-  padding: 9px 20px; border: 0; border-left: 3px solid transparent;
-  background: none; color: var(--sb-phu); font: inherit; font-size: 13px; font-weight: 600;
-  text-align: left; cursor: pointer;
-}
-.dh-sb-muc:hover { background: rgba(255, 255, 255, .07); color: #fff; }
-.dh-sb-muc.on {
-  color: #fff; font-weight: 800;
-  background: rgba(255, 255, 255, .14); border-left-color: var(--vang-sam);
-}
-.dh-sb-badge {
-  background: #c0392b; color: #fff; font-size: 10px; font-weight: 800;
-  border-radius: 999px; padding: 1px 6px; margin-left: 8px;
-}
-.dh-sb-chan {
-  margin-top: auto; padding: 14px 20px 0; font-size: 10.5px; color: var(--sb-mo);
-  border-top: 1px solid rgba(255, 255, 255, .12); line-height: 1.55;
-}
-.dh-noi { flex: 1; min-width: 0; padding: 22px 26px 30px; display: flex; flex-direction: column; gap: 16px; }
+/* (Đã bỏ .dh-sb-* và .dh-noi cùng lúc bỏ thanh bên navy — 15/8/2026.) */
 
-/* ── Đầu mỗi màn: nhãn vàng + tiêu đề + công tắc Sáng/Chiều ── */
+/* ── Đầu mỗi màn: nhãn vàng + tiêu đề + công tắc Sáng/Chiều — CHỈ điện thoại ── */
 .dh-dau-man { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .dh-nhan-vang {
   font-size: 11px; letter-spacing: .14em; font-weight: 800; color: var(--vang-sam);
@@ -1926,16 +1953,8 @@ nav.menu::-webkit-scrollbar { display: none; }
 }
 .dh-buoi button.on { background: var(--dam); color: #fff; }
 
-/* ── Dải trạng thái toàn trường + KPI ── */
-.dh-dai-tt {
-  background: #fff; border: 1px solid var(--vien); border-radius: 14px;
-  padding: 14px 20px; display: flex; gap: 26px; align-items: center; flex-wrap: wrap;
-}
-.dh-dai-tt .tt-chinh { display: flex; align-items: center; gap: 9px; }
-.dh-dai-tt .tt-chinh b { font-weight: 800; font-size: 14px; color: var(--dam); }
-.dh-cham-to { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.dh-kpi { font-size: 12.5px; color: var(--chu-mo); }
-.dh-kpi b { font-size: 15px; font-weight: 800; }
+/* (Dải trạng thái một hàng chữ .dh-dai-tt đã thay bằng năm thẻ .dh-kpi-o —
+    xem khối "Năm thẻ số liệu" phía trên.) */
 
 /* ── Mỗi điểm trường một cột ── */
 .dh-cot-diem {
@@ -2016,11 +2035,15 @@ nav.menu::-webkit-scrollbar { display: none; }
 
 /* ════════════════ ĐIỆN THOẠI ════════════════ */
 @media (max-width: 900px) {
-  .dh-khung { display: block; border-radius: 14px; min-height: 0; }
-  .dh-sb { display: none; }
-  .dh-noi { padding: 16px 14px 20px; gap: 14px; }
+  /* Điện thoại: .dh-rong thu về đúng bề ngang màn, không nới ra hai bên */
+  .dh-rong { width: 100%; margin-left: 0; }
+  .dh-than { gap: 14px; }
   .dh-tieu-man { font-size: 19px; }
-  .dh-dai-tt { padding: 12px 14px; gap: 12px 18px; }
+  /* Hai thẻ số liệu một hàng — năm thẻ xếp dọc thì phải cuộn hết màn mới
+     thấy con số cuối, mà năm con số này vốn để LIẾC. */
+  .dh-kpi-luoi { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dh-kpi-o { padding: 11px 13px 12px; }
+  .dh-kpi-o .so { font-size: 23px; }
   .dh-cot-diem { grid-template-columns: 1fr; }
   /* Trên điện thoại mỗi điểm là MỘT thẻ viền trái màu trạng thái (màn 3b),
      không phải cột đầu-thân như máy tính — liếc dọc nhanh hơn nhiều. */
@@ -2064,9 +2087,9 @@ nav.menu::-webkit-scrollbar { display: none; }
 }
 
 @media print {
-  .dh-sb, .dh-tabm, .dh-buoi, .dh-nut-hd { display: none !important; }
-  .dh-khung { border: 0; box-shadow: none; display: block; }
-  .dh-noi { padding: 0; }
+  .dh-tab-hang, .dh-tabm, .dh-buoi, .dh-nut-hd { display: none !important; }
+  /* In ra giấy thì khổ A4 quyết định bề ngang, không nới ra hai bên */
+  .dh-rong { width: 100%; margin-left: 0; }
   .dh-diem-cot, .dh-cho-hang { break-inside: avoid; page-break-inside: avoid; }
 }
 
@@ -2132,7 +2155,7 @@ nav.menu::-webkit-scrollbar { display: none; }
    Quy tắc dự án: mọi nút chạm ≥44px trên máy cảm ứng. Ba lớp nút mới và
    công tắc Sáng/Chiều chưa có tên trong danh sách nào.                        */
 @media (hover: none) {
-  .dh-nut-hd, .dh-buoi button, .dh-sb-muc {
+  .dh-nut-hd, .dh-buoi button, .dh-tab-nut {
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .dh-buoi button { justify-content: center; }
@@ -2140,10 +2163,12 @@ nav.menu::-webkit-scrollbar { display: none; }
 
 /* ── 3. ĐIỆN THOẠI ────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  /* Thanh tab dưới dùng position:sticky, mà tổ tiên .dh-khung có overflow:hidden
-     (để bo góc) — sticky neo vào hộp đó thay vì vào cửa sổ nên KHÔNG dính đáy
-     màn. Đúng cái bẫy đã trả giá ở cột dính của Bảng công. */
-  .dh-khung { overflow: visible; }
+  /* 🔑 Thanh tab dưới và cột tên bảng công đều dùng position:sticky. Tổ tiên
+     nào có overflow:hidden là sticky neo vào hộp đó thay vì vào cửa sổ →
+     không dính nữa. Bẫy này đã trả giá HAI lần (cột dính Bảng công đợt C,
+     thanh tab đáy đợt v3), cả hai lần thủ phạm là .dh-khung — hộp bo góc bọc
+     ngoài. Nay .dh-khung đã bỏ cùng thanh bên, .dh-rong KHÔNG đặt overflow.
+     ⚠️ Đừng thêm overflow:hidden vào .dh-rong hay .dh-than để bo góc gì đó. */
 
   /* Dòng hàng chờ: nút phải xuống dưới cùng và chiếm trọn bề ngang. Các dòng
      cũ phát ra .dh-nut-nho (không có order → 0 → nhảy lên TRƯỚC cả nhãn lẫn
@@ -2173,8 +2198,9 @@ nav.menu::-webkit-scrollbar { display: none; }
 /* ── 4. IN RA GIẤY ────────────────────────────────────────────────────────── */
 @media print {
   /* overflow:hidden trên tổ tiên làm trình duyệt cắt phần tràn khi phân trang —
-     bảng công và lịch tuần (thứ sinh ra để in) có nguy cơ mất từ trang 2. */
-  .dh-khung { overflow: visible !important; }
+     bảng công và lịch tuần (thứ sinh ra để in) có nguy cơ mất từ trang 2.
+     Hộp bọc .dh-khung đã bỏ; giữ dòng này phòng khi có hộp bọc mới. */
+  .dh-rong, .dh-than { overflow: visible !important; }
   /* Khổ A4 ~794px lọt vào mốc 900px nên hàng chip điện thoại bật lên, chip bên
      trong lại bị ẩn → còn một dải trống giữa tờ giấy. */
   .chi-dien-thoai { display: none !important; }

@@ -830,11 +830,8 @@
     var coCSVC = ds.some(function (d) { return d.csvcLoi; });
     var mauTT = coDo ? 'do' : (coVang || coCSVC) ? 'vang'
       : (daBao === ds.length && ds.length) ? 'xanh' : 'xam';
-    var chuTT = coDo ? 'Toàn trường: CÓ SỰ VIỆC CẦN XỬ LÝ NGAY'
-      : coVang ? 'Toàn trường: MỨC VÀNG — có điểm cần lưu ý'
-      : coCSVC ? 'Toàn trường: MỨC VÀNG — có điểm báo hỏng cơ sở vật chất'
-      : (daBao === ds.length && ds.length) ? 'Toàn trường: ỔN ĐỊNH'
-      : 'Toàn trường: chờ ' + (ds.length - daBao) + ' điểm báo cáo';
+    // (Dòng "Toàn trường: …" đã bỏ — nội dung của nó nay nằm trong dòng phụ
+    //  của hai thẻ đầu, để nguyên là nói hai lần cùng một chuyện.)
 
     // Chỉ cộng CBGV của những điểm ĐÃ báo cáo. Điểm chưa báo thì không biết
     // gì về nó, cộng vào là bịa; điểm nghỉ chiều cũng không có ai để đếm.
@@ -843,30 +840,64 @@
     dsBC.forEach(function (d) { gvCoBC += d.gvCo; gvTongBC += d.gvTongSo; });
     var duBaoCao = daBao === ds.length && ds.length > 0;
 
+    // ── NĂM THẺ SỐ LIỆU (bản thiết kế thầy Chung chọn 15/8/2026) ──
+    // Mỗi thẻ có DÒNG PHỤ trả lời ngay câu hỏi kế tiếp: "2/3 điểm" thì thiếu
+    // điểm nào, "33/37" thì bốn người kia đi đâu. Thiếu dòng đó thì nhìn số
+    // xong vẫn phải đi tìm — mà chính chỗ phải đi tìm mới là chỗ bỏ cuộc.
+    var conThieu = ds.length - daBao;
+    var soLuuY = ds.filter(function (d) { return d.mau === 'vang' || d.csvcLoi; }).length;
+    var soXuLy = ds.filter(function (d) { return d.mau === 'do'; }).length;
+
+    // Gom lý do vắng thành "2 nghỉ phép · 1 tập huấn"
+    var theoLyDo = {};
+    t.gvVang.forEach(function (g) {
+      var k = String(g.lyDo || 'vắng').toLowerCase();
+      theoLyDo[k] = (theoLyDo[k] || 0) + 1;
+    });
+    var chuVang = Object.keys(theoLyDo).map(function (k) { return theoLyDo[k] + ' ' + k; }).join(' · ');
+
+    var dxDiem = {};
+    (DL.deXuat || []).forEach(function (d) { if (d.tt === 'cho_duyet' && d.coSo) dxDiem[d.coSo] = 1; });
+    var soDiemDX = Object.keys(dxDiem).length;
+    var svGap = (DL.suViec || []).filter(function (s) {
+      return s.tt !== 'da_xu_ly' && s.muc === 'do';
+    }).length;
+
     var kpis = [
-      { so: daBao + '/' + ds.length, nhan: 'điểm đã báo cáo', mau: daBao === ds.length ? 'xanh' : 'vang' },
+      { nhan: 'Điểm đã báo cáo', so: daBao + '/' + ds.length,
+        phu: conThieu ? 'còn ' + conThieu + ' điểm chưa gửi' : 'tất cả điểm đã gửi',
+        mau: daBao === ds.length ? 'xanh' : 'vang' },
       // Tin XẤU thì hiện ngay dù chưa đủ điểm báo (một điểm báo Đỏ là cả trường
       // phải biết). Nhưng chữ "Xanh" — lời khẳng định cả trường an toàn — chỉ
-      // được nói khi MỌI điểm đã báo cáo. Trước đây chỗ này rơi thẳng vào
-      // 'Xanh' lúc chưa ai báo, chấm tròn tô xám mà chữ vẫn đọc là "Xanh
-      // an toàn toàn trường".
-      { so: coDo ? 'Đỏ' : coVang ? 'Vàng' : duBaoCao ? 'Xanh' : '—',
-        nhan: 'an toàn toàn trường', mau: mauTT },
-      { so: dsBC.length ? gvCoBC + '/' + gvTongBC : '—',
-        nhan: 'CBGV có mặt' +
-          (dsBC.length && dsBC.length < ds.length ? ' (' + dsBC.length + '/' + ds.length + ' điểm)' : ''),
+      // được nói khi MỌI điểm đã báo cáo.
+      { nhan: 'An toàn toàn trường',
+        so: coDo ? 'Đỏ' : coVang ? 'Vàng' : duBaoCao ? 'Xanh' : '—',
+        phu: soXuLy ? soXuLy + ' điểm cần xử lý ngay'
+           : soLuuY ? soLuuY + ' điểm cần lưu ý'
+           : duBaoCao ? 'mọi điểm báo an toàn'
+           : 'chờ ' + conThieu + ' điểm báo cáo',
+        mau: mauTT },
+      { nhan: 'GV có mặt', so: dsBC.length ? gvCoBC + '/' + gvTongBC : '—',
+        phu: !dsBC.length ? 'chưa điểm nào báo cáo'
+           : (chuVang || 'không ai vắng') +
+             (dsBC.length < ds.length ? ' · tính trên ' + dsBC.length + '/' + ds.length + ' điểm' : ''),
         mau: 'navy' },
-      { so: t.dxCho, nhan: 'đề xuất chờ duyệt', mau: t.dxCho ? 'vang' : 'xanh' },
-      { so: t.svCanXuLy, nhan: 'sự việc mở', mau: t.svCanXuLy ? 'do' : 'xanh' }
+      { nhan: 'Đề xuất chờ duyệt', so: t.dxCho,
+        phu: !t.dxCho ? 'không có đơn nào chờ'
+           : soDiemDX ? 'từ ' + soDiemDX + ' điểm trường' : 'chờ Ban giám hiệu',
+        mau: t.dxCho ? 'vang' : 'xanh' },
+      { nhan: 'Sự việc mở', so: t.svCanXuLy,
+        phu: !t.svCanXuLy ? 'không có sự việc nào'
+           : svGap ? svGap + ' cần xử lý ngay' : 'đang theo dõi',
+        mau: t.svCanXuLy ? 'do' : 'xanh' }
     ];
 
-    var dai = '<div class="dh-dai-tt">' +
-      '<div class="tt-chinh"><span class="dh-cham-to" style="background:' + MAU_HEX[mauTT] + '"></span>' +
-      '<b>' + thoat(chuTT) + '</b></div>' +
-      kpis.map(function (k) {
-        return '<div class="dh-kpi"><b style="color:' +
-          (k.mau === 'navy' ? '#14306b' : MAU_HEX[k.mau]) + '">' + thoat(String(k.so)) + '</b> ' + thoat(k.nhan) + '</div>';
-      }).join('') + '</div>';
+    var dai = '<div class="dh-kpi-luoi">' + kpis.map(function (k) {
+      return '<div class="dh-kpi-o"><div class="nhan">' + thoat(k.nhan) + '</div>' +
+        '<div class="so" style="color:' + (k.mau === 'navy' ? '#14306b' : MAU_HEX[k.mau]) + '">' +
+        thoat(String(k.so)) + '</div>' +
+        '<div class="phu">' + thoat(k.phu) + '</div></div>';
+    }).join('') + '</div>';
 
     var cot = '<div class="dh-cot-diem">' + ds.map(function (d) {
       return '<div class="dh-diem-cot ' + d.mau + '">' +
@@ -2113,28 +2144,37 @@
         'Đăng nhập để chạy với dữ liệu thật của nhà trường.</div>';
     }
 
-    // ── Thanh bên (máy tính) ──
-    // KHÔNG lặp lại logo + tên trường: đầu trang ngay phía trên đã có cả hai,
-    // cách chỗ này chừng 300px. Chỗ đắt giá nhất của thanh bên nên dành cho
-    // thứ mỗi sáng đều cần liếc — HÔM NAY là ngày nào, buổi nào.
-    var sb = '<div class="dh-sb">' +
-      '<div class="dh-sb-dau"><div class="dh-sb-ngay">' +
-      '<span>HÔM NAY</span><b>' + thoat(homNayChu()) + '</b></div></div>' +
-      DS_NHOM.map(function (n) {
-        return '<div class="dh-sb-nhom">' + n.nhom + '</div>' + n.muc.map(function (m) {
-          var d = demCho(m.ma);
-          return '<button class="dh-sb-muc' + (TAB === m.ma ? ' on' : '') +
-            '" onclick="DH.tab(\'' + m.ma + '\')">' + thoat(m.ten) +
-            (d ? '<span class="dh-sb-badge">' + d + '</span>' : '') + '</button>';
-        }).join('');
-      }).join('') +
-      // Ngày đã chuyển lên đầu thanh bên, chân chỉ còn bối cảnh năm học
-      '<div class="dh-sb-chan">Năm học ' + thoat(NAM || (window.CAU_HINH || {}).NAM_HOC || '') +
-      ' · ' + DL.coSo.length + ' điểm trường</div></div>';
-
-    // ── Đầu màn: nhãn vàng + tiêu đề + công tắc Sáng/Chiều ──
+    // ── THANH TAB NGANG (máy tính) — thay cho thanh bên navy ──
+    // Thầy Chung chốt 15/8/2026: bỏ cột điều hướng bên trái, trải rộng ra.
+    // Ba lý do cột trái phải đi: đầu trang ĐÃ có một hàng điều hướng 6 nút,
+    // thêm cột thứ hai là hai tầng menu chồng nhau; nó là khối navy đặc 232px
+    // dựng đứng giữa vùng làm việc sáng; và khung bị ép cao 620px nên màn nào
+    // ngắn là phần dưới cột thành mảng navy trống.
+    //
+    // GIỮ ĐỦ 9 MỤC, không gộp "Lịch & Dự giờ" như bản mẫu — mục 12.3 sổ dự án
+    // đã chốt hai màn đó phải để riêng, gộp lại là mất chức năng. Xếp ngang 9
+    // tab hết chừng 900px, vẫn thừa chỗ.
     var b = buoiXem();
-    var dauMan = '<div class="dh-dau-man"><div style="flex:1;min-width:180px">' +
+    var tabNgang = '<div class="dh-tab-hang chi-may-tinh">' +
+      '<div class="dh-tab-cuon">' +
+      moiMuc().map(function (m) {
+        var d = demCho(m.ma);
+        return '<button class="dh-tab-nut' + (TAB === m.ma ? ' on' : '') +
+          '" onclick="DH.tab(\'' + m.ma + '\')">' + thoat(m.ten) +
+          (d ? '<span class="dh-tab-badge">' + d + '</span>' : '') + '</button>';
+      }).join('') + '</div>' +
+      '<div class="dh-tab-phai">' +
+      '<span class="dh-tab-ngay">' + thoat(homNayChu()) + ' · ' + tenBuoi(b) + '</span>' +
+      '<div class="dh-buoi">' +
+      '<button class="' + (b === 'sang' ? 'on' : '') + '" onclick="DH.buoi(\'sang\')">Sáng</button>' +
+      '<button class="' + (b === 'chieu' ? 'on' : '') + '" onclick="DH.buoi(\'chieu\')">Chiều</button>' +
+      '</div></div></div>';
+
+    // ── Đầu màn: CHỈ CÒN TRÊN ĐIỆN THOẠI ──
+    // Máy tính đã biết đang ở màn nào nhờ tab sáng trên thanh ngang. Điện
+    // thoại thì thanh tab ngang ẩn đi (đi bằng thanh tab đáy + hàng chip),
+    // nên vẫn cần dòng tên màn, kèm công tắc Sáng/Chiều.
+    var dauMan = '<div class="dh-dau-man chi-dien-thoai"><div style="flex:1;min-width:180px">' +
       '<div class="dh-nhan-vang">TRUNG TÂM ĐIỀU HÀNH HẰNG NGÀY</div>' +
       '<div class="dh-tieu-man">' + thoat(tenMan(TAB)) + '</div></div>' +
       '<div class="dh-buoi">' +
@@ -2185,8 +2225,10 @@
         (d ? ' <b class="dh-do">' + d + '</b>' : '') + '</div></button>';
     }).join('') + '</div>';
 
-    vung.innerHTML = '<div class="dh-khung">' + sb + '<div class="dh-noi">' +
-      dauMan + bang + chipKhac + locCS +
+    // Không còn khung hộp có viền + bóng + min-height 620px. Nội dung chảy
+    // thẳng trên nền trang, trải rộng theo .dh-rong.
+    vung.innerHTML = '<div class="dh-rong">' + tabNgang +
+      '<div class="dh-than">' + dauMan + bang + chipKhac + locCS +
       '<div class="dh-noi-dung">' + noiDung + '</div>' +
       veNhatKyKhoi() + tabM + '</div></div>';
     veNhaCard();
