@@ -808,7 +808,15 @@
     };
   }
 
-  var MAU_HEX = { xanh: '#1e7f4f', vang: '#b7791f', do: '#c0392b', xam: '#8494b3' };
+  // Vàng #b7791f chỉ đạt 3,50:1 trên nền vàng nhạt và 3,64:1 trên trắng — mục
+  // 12.6 đã đo và chốt thay bằng #a06a1a. Trước nay mới áp cho nền thẻ, còn
+  // MAU_HEX vẫn giữ màu cũ nên CHỮ vẫn nhạt. Xám #8494b3 cũng vậy: dùng làm
+  // màu CHỮ thì chỉ 3,06:1. Người đọc là cô giáo đứng ngoài sân, nắng, điện
+  // thoại nhỏ — chữ thật thì ưu tiên đọc được.
+  // Vàng: #b7791f cũ chỉ 3,64:1 trên trắng; #a06a1a (mục 12.6) lên 4,59 nhưng
+  // đặt trên nền thẻ vàng nhạt #fffaf1 lại tụt còn 4,42 — đo bằng máy mới
+  // thấy. Dùng #8f5d14, chính là biến --canh của bảng màu, đạt cả hai nền.
+  var MAU_HEX = { xanh: '#1e7f4f', vang: '#8f5d14', do: '#c0392b', xam: '#5f7091' };
 
   function veTongQuan() {
     var b = buoiXem();
@@ -893,8 +901,10 @@
     ];
 
     var dai = '<div class="dh-kpi-luoi">' + kpis.map(function (k) {
-      return '<div class="dh-kpi-o"><div class="nhan">' + thoat(k.nhan) + '</div>' +
-        '<div class="so" style="color:' + (k.mau === 'navy' ? '#14306b' : MAU_HEX[k.mau]) + '">' +
+      var trong = String(k.so) === '—';
+      return '<div class="dh-kpi-o ' + k.mau + '"><div class="nhan">' + thoat(k.nhan) + '</div>' +
+        '<div class="so' + (trong ? ' trong' : '') + '" style="color:' +
+        (k.mau === 'navy' ? '#14306b' : MAU_HEX[k.mau]) + '">' +
         thoat(String(k.so)) + '</div>' +
         '<div class="phu">' + thoat(k.phu) + '</div></div>';
     }).join('') + '</div>';
@@ -991,7 +1001,12 @@
         '<small>Mọi ngoại lệ — đơn chờ duyệt, sự việc mới, điểm chưa báo cáo, việc quá hạn — sẽ tự hiện ở đây.</small>' +
         '</div></div></div>';
     }
-    return '<div class="dh-cho-khoi"><div class="dh-cho-dau">Cần Ban giám hiệu xử lý · ' +
+    // Khối này nặng hay nhẹ tùy CÓ VIỆC GẤP hay không: một dòng "XỬ LÝ NGAY"
+    // là cả khối mang viền đỏ, còn lại thì vàng. Lúc rỗng (nhánh trên) để
+    // trắng trơn — hàng đợi trống không đáng chiếm sự chú ý của ai.
+    var gap = ds.some(function (r) { return r.mau === 'do' || r.pill === 'do'; });
+    return '<div class="dh-cho-khoi ' + (gap ? 'gap' : 'luuy') + '">' +
+      '<div class="dh-cho-dau">Cần Ban giám hiệu xử lý · ' +
       ds.length + ' việc</div>' +
       ds.map(function (r) {
         // canXuLyDs() cũ trả {mau, chu, nut}; dòng tự sinh ở trên trả dạng mới
