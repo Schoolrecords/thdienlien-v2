@@ -259,18 +259,9 @@
   }
   DL = duLieuMau();
 
-  // Dạy thay — BẢN MẪU ở cả hai chế độ (chờ thời khóa biểu thật)
-  var DAY_THAY = [
-    { tiet: 1, mon: 'Toán', gv: 'Cô Lê Thị C.' },
-    { tiet: 2, mon: 'Tiếng Việt', gv: 'Cô Lê Thị C.' },
-    { tiet: 3, mon: 'Tiếng Việt', gv: null },
-    { tiet: 4, mon: 'Đạo đức', gv: null }
-  ];
-  var GOI_Y_RANH = [
-    { ten: 'Cô Hoàng Thị E.', nhan: 'Rảnh cả buổi · cùng khối 3 · tháng này dạy thay 2 tiết' },
-    { ten: 'Thầy Đỗ Văn H.', nhan: 'Rảnh tiết 3–4 · GV Thể chất · tháng này dạy thay 4 tiết' },
-    { ten: 'Cô Bùi Thị K.', nhan: 'Rảnh tiết 3 · GV Âm nhạc · tháng này dạy thay 6 tiết' }
-  ];
+  // (Đã bỏ DAY_THAY và GOI_Y_RANH ngày 15/8/2026 — hai mảng tên người, tên
+  //  lớp GIẢ ĐỊNH của khối "Dạy thay theo tiết" bản mẫu. Dạy thay nay là việc
+  //  của app Thời khóa biểu, xem veDayThay().)
 
   // ════════════════════════════════════════════════════════════
   // NẠP DỮ LIỆU THẬT (sau đăng nhập)
@@ -685,7 +676,10 @@
     var svCanXuLy = DL.suViec.filter(function (s) {
       return maCS.indexOf(s.coSo) >= 0 && s.tt !== 'da_xu_ly';
     }).length;
-    var tietThieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
+    // Số tiết chưa có người dạy thay nay do app Thời khóa biểu nắm, bên này
+    // không biết và cũng không nên đoán — trả 0 để chỗ nào còn đọc thì hiểu
+    // là "không có gì để báo", chứ đừng bịa một con số.
+    var tietThieu = 0;
     var dxCho = (DL.deXuat || []).filter(function (d) { return d.tt === 'cho_duyet'; }).length;
     var tbToiChuaXN = (DL.thongBao || []).filter(tbCanToiXN).length;
 
@@ -1100,11 +1094,10 @@
       return '<div class="hd-kiem xanh">🟢 Không có ai vắng ' + tenBuoi(buoiXem()) +
         ' nay — chưa phải bố trí dạy thay.</div>';
     }
-    var thieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
-    return thieu
-      ? '<div class="hd-kiem do">🔴 Lớp 3B còn <b>' + thieu + ' tiết chưa có người dạy thay</b> — ' +
-        '<a href="javascript:DH.tab(\'lichtuan\')">bố trí ngay →</a></div>'
-      : '<div class="hd-kiem xanh">🟢 Mọi lớp có giáo viên vắng đều đã bố trí dạy thay.</div>';
+    // Bản xem thử (chưa đăng nhập): trước đây báo "Lớp 3B còn 2 tiết chưa có
+    // người dạy thay" — tên lớp GIẢ ĐỊNH của khối bản mẫu đã gỡ. Nay nói đúng
+    // sự thật: bản xem thử không có ai vắng để mà bố trí.
+    return '<div class="hd-kiem xanh">🟢 Bản xem thử — chưa có giáo viên nào báo vắng.</div>';
   }
 
   // ── Bảng trạng thái từng CBGV trong buổi đang xem (màn Điểm danh GV) ──
@@ -1946,50 +1939,27 @@
   }
 
   // ════════════════════════════════════════════════════════════
-  // TAB 4 · DẠY THAY (bản mẫu — chờ thời khóa biểu)
+  // DẠY THAY — CHỈ ĐƯỜNG SANG APP THỜI KHÓA BIỂU
   // ════════════════════════════════════════════════════════════
+  // 🔴 ĐÃ GỠ 15/8/2026 (thầy Chung phát hiện còn sót): cả khối "Dạy thay theo
+  // tiết" trước đây là BẢN MẪU với tên người, tên lớp GIẢ ĐỊNH — cô Nguyễn Thị
+  // A., lớp 3B, nhật ký dạy thay bịa sẵn — cùng một nút "Nạp thời khóa biểu
+  // (Excel)" nay trỏ vào chức năng đã bỏ.
+  //
+  // App TKB làm việc này THẬT: có thời khóa biểu, tự sinh phương án dạy thay
+  // để Hiệu trưởng chọn, ghi vào bảng day_thay theo từng ngày. Bày bản mẫu
+  // bên cạnh một chức năng thật là mời người ta nhầm.
+  //
+  // Sổ vắng bên này nay tự chuyển sang app đó — xem daiDayThay() và
+  // GIAO-THUC-HSS-SANG-TKB.md.
   function veDayThay() {
-    var daDu = DAY_THAY.every(function (x) { return x.gv; });
-    // Phần này nay nối SAU lịch công tác tuần (là dữ liệu thật) trên cùng một
-    // màn cuộn. Phải có tiêu đề và băng cảnh báo riêng, kẻo cuộn tới đây gặp
-    // "Lớp 3B" rồi tưởng lớp 3B thật đang thiếu người dạy.
+    var url = (window.CAU_HINH || {}).URL_TKB;
+    if (!url) return '';
     return '<div class="dh-tieu-de" style="margin-top:26px">👨‍🏫 Dạy thay theo tiết</div>' +
-      '<div class="hd-kiem vang" style="margin-top:0">🧪 <b>BẢN MẪU — toàn bộ tên người, tên lớp dưới đây là GIẢ ĐỊNH.</b> ' +
-      'Bố trí dạy thay theo TIẾT cần thời khóa biểu. ' +
-      'Khi nhà trường gửi file TKB Excel, hệ thống sẽ đọc và mở chức năng này với dữ liệu thật. ' +
-      'Nguyên tắc đã chốt: giáo viên báo nghỉ <b>trước ít nhất 1 buổi</b>; báo muộn vẫn gửi được nhưng bị đánh dấu ⚠.</div>' +
-      // Nút nạp TKB là việc của Ban giám hiệu — trước đây thẻ Dạy thay riêng
-      // nên giáo viên không mở tới, nay nó nằm trong thẻ họ xem mỗi ngày
-      (laQT()
-        ? '<button class="dh-nut-nho" style="margin-bottom:10px" onclick="window.notify(\'Khi có thời khóa biểu thật (Excel), nạp tại đây — hệ thống đọc bằng SheetJS ngay trên trình duyệt.\')">📥 Nạp thời khóa biểu (Excel)</button>'
-        : '') +
-      '<div class="dh-tieu-de">Đơn báo nghỉ (mẫu)</div>' +
-      '<div class="dh-diem-hang"><span class="dh-cham vang"></span>' +
-      '<div class="tt"><b>Cô Nguyễn Thị A. — Nghỉ ốm</b>' +
-      '<small>Sáng nay · chủ nhiệm lớp 3B · báo lúc 20:15 hôm qua ✓ đúng quy định (trước ≥ 1 buổi)</small></div></div>' +
-      '<div class="dh-tieu-de">Lớp 3B — buổi sáng (theo thời khóa biểu mẫu)</div>' +
-      DAY_THAY.map(function (x) {
-        return '<div class="dh-tiet' + (x.gv ? ' xong' : '') + '">' +
-          '<span class="dh-tiet-so">Tiết ' + x.tiet + '</span>' +
-          '<span class="dh-tiet-mon">' + thoat(x.mon) + '</span>' +
-          (x.gv ? '<span class="dh-tiet-gv">🟢 ' + thoat(x.gv) + '</span>'
-                : '<span class="dh-tiet-gv thieu">🔴 chưa có người</span>') + '</div>';
-      }).join('') +
-      (daDu || !laQT() ? '' :
-        '<div class="dh-tieu-de">Gợi ý người dạy thay các tiết còn thiếu</div>' +
-        '<div class="dh-ghi-chu-nho" style="margin-top:0">Hệ thống tra thời khóa biểu, chỉ hiện người <b>rảnh</b>; xếp trên: cùng điểm trường → ' +
-        'cùng khối → <b>ít tiết dạy thay trong tháng</b> (chia đều, không dồn một người).</div>' +
-        GOI_Y_RANH.map(function (g) {
-          return '<button class="dh-goiy" onclick="DH.dtChon(\'' + thoat(g.ten) + '\')">' +
-            '<b>' + thoat(g.ten) + '</b><small>' + thoat(g.nhan) + '</small><span>Chọn dạy các tiết còn thiếu →</span></button>';
-        }).join('')) +
-      '<div class="dh-tieu-de">Nhật ký dạy thay tháng này (mẫu)</div>' +
-      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-      '<th>Giáo viên</th><th>Số tiết dạy thay</th><th>Thay cho</th></tr></thead><tbody>' +
-      '<tr><td>Cô Lê Thị C.</td><td style="text-align:center"><b>6</b></td><td>Cô Nguyễn Thị A. (ốm)</td></tr>' +
-      '<tr><td>Thầy Đỗ Văn H.</td><td style="text-align:center"><b>4</b></td><td>Thầy Trần Văn B. (công tác)</td></tr>' +
-      '</tbody></table></div>' +
-      '<div class="dh-ghi-chu-nho">Cuối tháng bảng này là căn cứ tính tăng giờ, xét thi đua — tự sinh từ thao tác bố trí, không ai phải ghi sổ lại.</div>';
+      '<div class="hd-kiem vang" style="margin-top:0">Bố trí dạy thay làm ở <b>app Thời khóa biểu</b> — ' +
+      'app đó có thời khóa biểu nên tự đưa ra phương án để Hiệu trưởng chọn. ' +
+      'Người vắng khai bên này được <b>chuyển sang tự động</b>, không phải khai lại. ' +
+      '<a href="' + thoat(url) + '" target="_blank" rel="noopener">mở app Thời khóa biểu ↗</a></div>';
   }
 
   // ════════════════════════════════════════════════════════════
@@ -2902,14 +2872,8 @@
         .catch(baoLoi);
     },
 
-    // ── Dạy thay (mẫu) ──
-    dtChon: function (gv) {
-      DAY_THAY.forEach(function (x) { if (!x.gv) x.gv = gv; });
-      // veGiu chứ không veDieuHanh: phần Dạy thay nay nằm CHUNG một màn cuộn
-      // với khung nhập của Lịch tuần, vẽ trắng là bay hết chữ đang gõ dở
-      veGiu();
-      window.notify('Bản mẫu — khi có thời khóa biểu, phân công sẽ ghi thật và báo cho giáo viên.');
-    },
+    // (Đã bỏ dtChon ngày 15/8/2026 cùng khối "Dạy thay theo tiết" bản mẫu —
+    //  chọn người dạy thay nay làm ở app Thời khóa biểu.)
 
     // ── Việc trong tuần ──
     vDoi: function (id) {
