@@ -1894,13 +1894,18 @@ nav.menu::-webkit-scrollbar { display: none; }
   display: flex; gap: 2px; flex: 1; min-width: 0;
   overflow-x: auto; scrollbar-width: thin;
 }
+/* Tab dạng VIÊN bo tròn, giống hệt menu chính ở đầu trang — mỗi nút có ranh
+   giới thật. Kiểu gạch-chân cũ để các mục dính thành một dòng chữ liền, nhìn
+   không ra đâu là nút bấm; mà đây là chỗ điều hướng chính của cả module. */
 .dh-tab-nut {
-  border: 0; background: none; font: inherit; font-size: 13.5px; font-weight: 600;
-  color: var(--chu-mo); padding: 15px 13px 12px; cursor: pointer; white-space: nowrap;
-  border-bottom: 3px solid transparent;
+  border: 1px solid transparent; background: none; font: inherit; font-size: 13.5px;
+  font-weight: 700; color: var(--chu); padding: 9px 15px; margin: 9px 3px 9px 0;
+  border-radius: 999px; cursor: pointer; white-space: nowrap;
 }
-.dh-tab-nut:hover { color: var(--dam); }
-.dh-tab-nut.on { color: var(--dam); font-weight: 800; border-bottom-color: var(--vang-sam); }
+.dh-tab-nut:hover { background: #eef2f9; border-color: var(--vien); }
+.dh-tab-nut.on {
+  background: var(--dam); color: #fff; font-weight: 800; border-color: var(--dam);
+}
 .dh-tab-badge {
   background: #c0392b; color: #fff; font-size: 10px; font-weight: 800;
   border-radius: 999px; padding: 1px 6px; margin-left: 5px; vertical-align: 1px;
@@ -1988,8 +1993,37 @@ nav.menu::-webkit-scrollbar { display: none; }
   border-left: 5px solid var(--chu-nhat); border-radius: 13px; overflow: hidden;
 }
 .dh-diem-cot.xanh { border-left-color: #1e7f4f; }
-.dh-diem-cot.vang { border-left-color: #b7791f; }
+.dh-diem-cot.vang { border-left-color: #8f5d14; }
 .dh-diem-cot.do   { border-left-color: #c0392b; }
+
+/* ── MÀU ĐỊNH DANH TỪNG ĐIỂM TRƯỜNG ──
+   Sáu tông trầm, gán xoay vòng theo thứ tự cơ sở (xem hàm mauCoSo trong
+   dieu-hanh.js). CỐ Ý không dùng xanh lá · vàng · đỏ vì ba màu đó đã mang
+   nghĩa TRẠNG THÁI — lẫn vào là người đọc không biết màu đang nói điều gì.
+   Đặt ở viền TRÊN + nền đầu thẻ, tách hẳn khỏi viền TRÁI của trạng thái. */
+.cs1 { --cs: #2f5aa8; --cs-nen: #eef3fb; }
+.cs2 { --cs: #17706b; --cs-nen: #eaf6f5; }
+.cs3 { --cs: #6b4a9c; --cs-nen: #f2eefa; }
+.cs4 { --cs: #a55b1e; --cs-nen: #fbf1e8; }
+.cs5 { --cs: #a63d6a; --cs-nen: #fbeef3; }
+.cs6 { --cs: #3f6d8c; --cs-nen: #eef4f8; }
+
+/* Chip lọc mang cùng màu định danh: vạch trái khi chưa chọn, nền đầy khi
+   đang chọn — bấm chip nào là mắt bắt ngay thẻ tương ứng bên dưới. */
+.dh-loc-cs .chip-loc { border-left: 3px solid var(--cs, var(--vien-dam)); }
+.dh-loc-cs .chip-loc.on {
+  background: var(--cs, var(--dam)); border-color: var(--cs, var(--dam)); color: #fff;
+}
+/* Dùng biến có giá trị dự phòng thay cho bộ chọn [class*="cs"] — bộ chọn đó
+   khớp cả những lớp khác tình cờ chứa "cs" (csvc chẳng hạn). Không có màu
+   định danh thì mọi thứ tự rơi về mặc định, không hỏng gì. */
+.dh-diem-cot { border-top: 4px solid var(--cs, transparent); }
+.dh-diem-cot .dh-diem-dau { background: var(--cs-nen, transparent); }
+.dh-diem-cot .dh-diem-dau .ten { color: var(--cs, var(--dam)); }
+/* Dòng "người phụ trách · N lớp · N HS": --chu-nhat #5f7091 đủ 4,98 trên nền
+   TRẮNG, nhưng đặt lên nền đầu thẻ đã nhuộm thì tụt còn 4,36–4,49. Đổi nền là
+   phải đo lại — không suy ra được. #4d5b76 đưa cả sáu tông về trên 5,4. */
+.dh-diem-cot .dh-diem-dau .phu { color: #4d5b76; }
 .dh-diem-dau { background: none; color: var(--chu); border-radius: 0; padding: 13px 16px 7px; }
 .dh-diem-dau .hang { display: flex; align-items: center; gap: 8px; }
 .dh-diem-dau .ten { font-weight: 800; font-size: 14.5px; flex: 1; min-width: 0; color: var(--dam); }

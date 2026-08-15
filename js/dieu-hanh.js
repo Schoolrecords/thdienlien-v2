@@ -135,6 +135,26 @@
     var c = DL.coSo.filter(function (x) { return x.ma === ma; })[0];
     return c ? c.ten : (ma || 'Toàn trường');
   }
+
+  // ════════════════════════════════════════════════════════════
+  // MÀU ĐỊNH DANH TỪNG ĐIỂM TRƯỜNG (thầy Chung yêu cầu 15/8/2026)
+  // ════════════════════════════════════════════════════════════
+  // Ba thẻ điểm trường trước đây trắng y hệt nhau, phải ĐỌC chữ mới biết thẻ
+  // nào là điểm nào — nhất là lúc cả ba cùng một trạng thái.
+  //
+  // Nhưng màu trạng thái (xanh/vàng/đỏ) đã chiếm viền trái rồi, nên hai chiều
+  // thông tin phải nằm HAI CHỖ khác nhau, không được lẫn:
+  //   · viền TRÊN + nền đầu thẻ  → màu ĐỊNH DANH điểm trường (cố định)
+  //   · viền TRÁI + pill + số     → màu TRẠNG THÁI hôm nay (đổi hằng ngày)
+  //
+  // Gán theo THỨ TỰ trong danh sách cơ sở, KHÔNG viết cứng theo tên điểm —
+  // trường còn thêm điểm nữa thì màu tự có, không phải sửa mã. Sáu màu xoay
+  // vòng, đều là tông trầm không chói và KHÔNG trùng ba màu trạng thái.
+  function mauCoSo(ma) {
+    if (!ma) return '';
+    var i = DL.coSo.map(function (c) { return c.ma; }).indexOf(ma);
+    return i < 0 ? '' : 'cs' + (i % 6 + 1);
+  }
   function coSoCuaToi() {
     var g = DL.gvDs.filter(function (x) { return emailBang(x.email, emailToi()); })[0];
     return g ? g.coSo : null;
@@ -910,7 +930,7 @@
     }).join('') + '</div>';
 
     var cot = '<div class="dh-cot-diem">' + ds.map(function (d) {
-      return '<div class="dh-diem-cot ' + d.mau + '">' +
+      return '<div class="dh-diem-cot ' + d.mau + ' ' + mauCoSo(d.ma) + '">' +
         '<div class="dh-diem-dau ' + d.mau + '">' +
         '<div class="hang"><div class="ten">' + thoat(d.ten) + '</div>' +
         '<div class="pill">' + thoat(d.pill) + '</div></div>' +
@@ -2207,10 +2227,13 @@
       }).join('') + '</div>';
 
     // Bộ lọc cơ sở CHỈ hiện ở Tổng quan khi trường có ≥2 cơ sở
+    // Chip lọc mang ĐÚNG màu định danh của thẻ điểm trường bên dưới — bấm chip
+    // nào là mắt bắt ngay được thẻ tương ứng, khỏi phải dò tên.
     var locCS = (TAB === 'tongquan' && DL.coSo.length > 1)
       ? '<div class="dh-chon-hang dh-loc-cs">' +
         [{ ma: 'all', ten: 'Toàn trường' }].concat(DL.coSo).map(function (c) {
-          return '<button class="chip-loc' + (LOC_CS === c.ma ? ' on' : '') + '" onclick="DH.locCS(\'' + nhay(c.ma) + '\')">' + thoat(c.ten) + '</button>';
+          return '<button class="chip-loc ' + mauCoSo(c.ma) + (LOC_CS === c.ma ? ' on' : '') +
+            '" onclick="DH.locCS(\'' + nhay(c.ma) + '\')">' + thoat(c.ten) + '</button>';
         }).join('') + '</div>'
       : '';
 
