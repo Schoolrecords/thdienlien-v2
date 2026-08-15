@@ -105,175 +105,92 @@
   };
 
   // ══════════════════════════════════════════════════════════════════
-  // SINH TỆP MẪU KHỔ A4 NGANG — định dạng SpreadsheetML 2003 (.xml)
+  // SINH TỆP MẪU .xlsx KHỔ A4 NGANG
   // ══════════════════════════════════════════════════════════════════
-  // Đã thử và LOẠI hai đường trước đó:
-  //  · .xlsx qua SheetJS  → bản miễn phí KHÔNG ghi được định dạng: không
-  //    viền, không màu, không khổ giấy. Đúng dữ liệu nhưng trắng trơn.
-  //  · .xls dựng bằng HTML → có viền và màu, nhưng ĐO BẰNG EXCEL thì khổ giấy
-  //    vẫn ra DỌC: Excel bỏ qua khối <x:WorksheetOptions> nhét trong HTML.
-  //
-  // SpreadsheetML 2003 là định dạng Excel GỐC nên nhận đủ: kiểu ô (viền, nền,
-  // phông), độ rộng cột, chiều cao dòng, gộp ô, VÀ trang in (A4 ngang, lề,
-  // vừa một trang ngang, đóng băng dòng tiêu đề, lặp tiêu đề khi sang trang,
-  // đầu trang – chân trang). Excel mở thẳng, và bộ đọc của app cũng đọc lại
-  // được — đã thử vòng tròn.
+  // Đã thử và loại hai đường trước đó, cả hai chỉ lộ khi ĐO BẰNG EXCEL:
+  //  · .xlsx qua SheetJS → bản miễn phí không ghi được định dạng, tệp trắng
+  //    trơn, in ra không dùng được.
+  //  · .xls / .xml dựng tay → đẹp, nhưng Windows không nhận là tệp Excel:
+  //    thầy cô tải về thấy "XML Document", nhấp đúp là mở bằng trình duyệt.
+  //    Đổi đuôi thành .xls thì Excel kêu "định dạng không khớp phần mở rộng".
+  // Nay dùng bộ đóng gói .xlsx thật ở js/xuat-excel.js.
   //
   // 🔑 MỖI KHỐI MỘT TRANG TÍNH (5 lớp): 25 lớp xếp ngang trên A4 thì mỗi cột
   //    còn hơn 1cm, chữ bé như kiến. Bảng 5 lớp vừa khít A4 ngang, và đúng
   //    nếp nhà trường vẫn in thời khóa biểu theo khối.
   function taoMauDep(dl, lops, tenCS, dsMon, tenTruong, namHoc) {
+    if (!window.EXCEL_DEP) { window.notify('Chưa nạp được js/xuat-excel.js.'); return; }
     var THU5 = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu'];
     var diaChi = (window.CAU_HINH || {}).DIA_CHI || '';
+    var chanTrang = '&L&9Năm học ' + namHoc + '&R&9Trang &P/&N';
 
-    function xml(s) {
-      return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-    }
-    // Một ô. kieu: mã Style; gop: số cột gộp thêm; gopDoc: số dòng gộp thêm;
-    // nhay: nhảy tới cột thứ mấy (1-based) — cần khi dòng trước đã gộp dọc.
-    function o(chu, kieu, gop, gopDoc, nhay, soThuc) {
-      return '<Cell' + (nhay ? ' ss:Index="' + nhay + '"' : '') +
-        (kieu ? ' ss:StyleID="' + kieu + '"' : '') +
-        (gop ? ' ss:MergeAcross="' + gop + '"' : '') +
-        (gopDoc ? ' ss:MergeDown="' + gopDoc + '"' : '') + '>' +
-        (chu === '' || chu == null ? '' :
-          '<Data ss:Type="' + (soThuc ? 'Number' : 'String') + '">' + xml(chu) + '</Data>') +
-        '</Cell>';
-    }
-    function dong(cells, cao) {
-      return '<Row' + (cao ? ' ss:Height="' + cao + '"' : '') + '>' + cells + '</Row>';
-    }
+    function o(v, k, gopN, gopD, so) { return { v: v, k: k, gopN: gopN, gopD: gopD, so: so }; }
+    var BO = { bo: 1 };                    // ô bị ô gộp bên trên/bên trái nuốt
 
-    // ── Bộ kiểu dùng chung ──
-    var vien = '<Borders>' +
-      ['Left', 'Top', 'Right', 'Bottom'].map(function (p) {
-        return '<Border ss:Position="' + p + '" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#7F8FA6"/>';
-      }).join('') + '</Borders>';
-    var giua = '<Alignment ss:Horizontal="Center" ss:Vertical="Center"/>';
-    var trai = '<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>';
-    var styles = '<Styles>' +
-      '<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Color="#1C2B4A"/></Style>' +
-      // tiêu đề trang
-      '<Style ss:ID="tt"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="16" ss:Bold="1" ss:Color="#14306B"/></Style>' +
-      '<Style ss:ID="tt2"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Color="#1C2B4A"/></Style>' +
-      '<Style ss:ID="tt3"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="10" ss:Italic="1" ss:Color="#5A6B8C"/></Style>' +
-      // hàng tiêu đề bảng: nền navy chữ trắng
-      '<Style ss:ID="dau">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>' +
-        '<Interior ss:Color="#14306B" ss:Pattern="Solid"/></Style>' +
-      // hàng tiêu đề phụ: nền xanh nhạt
-      '<Style ss:ID="dau2">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="10" ss:Bold="1" ss:Color="#14306B"/>' +
-        '<Interior ss:Color="#DDE5F0" ss:Pattern="Solid"/></Style>' +
-      // cột Thứ (gộp dọc)
-      '<Style ss:ID="thu">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Bold="1" ss:Color="#14306B"/>' +
-        '<Interior ss:Color="#EEF2F9" ss:Pattern="Solid"/></Style>' +
-      '<Style ss:ID="buoi">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="10" ss:Color="#5A6B8C"/></Style>' +
-      '<Style ss:ID="tiet">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="10" ss:Color="#5A6B8C"/></Style>' +
-      // ô để điền — buổi sáng nền trắng, buổi chiều nền xám rất nhạt
-      '<Style ss:ID="nhapS">' + trai + vien + '</Style>' +
-      '<Style ss:ID="nhapC">' + trai + vien +
-        '<Interior ss:Color="#F7F9FC" ss:Pattern="Solid"/></Style>' +
-      '<Style ss:ID="sis">' + giua + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="9" ss:Color="#5A6B8C"/>' +
-        '<Interior ss:Color="#EEF2F9" ss:Pattern="Solid"/></Style>' +
-      '<Style ss:ID="oL">' + trai + vien + '</Style>' +
-      '<Style ss:ID="oG">' + giua + vien + '</Style>' +
-      '<Style ss:ID="oB">' + trai + vien +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Bold="1" ss:Color="#1C2B4A"/></Style>' +
-      '<Style ss:ID="ky"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Italic="1"/></Style>' +
-      '<Style ss:ID="hd"><Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="11"/></Style>' +
-      '<Style ss:ID="hdb"><Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>' +
-        '<Font ss:FontName="Times New Roman" ss:Size="11" ss:Bold="1" ss:Color="#14306B"/></Style>' +
-      '</Styles>';
-
-    // ── Trang in: A4 ngang, vừa một trang ngang, đóng băng + lặp tiêu đề ──
-    function trangIn(dongDongBang, vuaMotTrang) {
-      return '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">' +
-        '<PageSetup>' +
-          '<Layout x:Orientation="Landscape" x:CenterHorizontal="1"/>' +
-          '<PageMargins x:Bottom="0.5" x:Left="0.4" x:Right="0.4" x:Top="0.5"/>' +
-          '<Header x:Data="&amp;R&amp;9' + xml(tenTruong) + '"/>' +
-          '<Footer x:Data="&amp;L&amp;9Năm học ' + xml(namHoc) + '&amp;R&amp;9Trang &amp;P/&amp;N"/>' +
-        '</PageSetup>' +
-        // ⚠️ HAI ĐIỀU KIỆN, THIẾU MỘT LÀ HỎNG — đo bằng Excel mới lộ ra:
-        //  · phải có <FitToPage/> để BẬT chế độ "co cho vừa trang". Không có
-        //    nó thì FitWidth/FitHeight bị bỏ qua hoàn toàn.
-        //  · TUYỆT ĐỐI không khai <Scale>: Excel coi đó là "phóng theo tỉ lệ
-        //    cố định" và nó ghi đè FitToPage.
-        // Lúc còn <Scale>100</Scale> và thiếu <FitToPage/>, một khối in ra
-        // BỐN trang dù đã khai vừa 1 trang ngang.
-        (vuaMotTrang ? '<FitToPage/>' : '') +
-        '<Print><ValidPrinterInfo/><PaperSizeIndex>9</PaperSizeIndex>' +
-          '<FitWidth>1</FitWidth><FitHeight>' + (vuaMotTrang ? 1 : 0) + '</FitHeight>' +
-          '<HorizontalResolution>600</HorizontalResolution></Print>' +
-        (dongDongBang
-          ? '<FreezePanes/><FrozenNoSplit/>' +
-            '<SplitHorizontal>' + dongDongBang + '</SplitHorizontal>' +
-            '<TopRowBottomPane>' + dongDongBang + '</TopRowBottomPane>' +
-            '<SplitVertical>3</SplitVertical><LeftColumnRightPane>3</LeftColumnRightPane>' +
-            '<ActivePane>0</ActivePane>'
-          : '') +
-        '<DoNotDisplayGridlines/>' +
-        '</WorksheetOptions>';
-    }
+    // ── Gom lớp theo khối ──
+    var theoKhoi = {};
+    lops.forEach(function (l) {
+      var k = (dl.lop[l] || {}).khoi || 0;
+      (theoKhoi[k] = theoKhoi[k] || []).push(l);
+    });
+    var cacKhoi = Object.keys(theoKhoi).sort(function (a, b) { return a - b; });
 
     // ── Một trang tính cho một khối ──
-    function trangKhoi(k, ds) {
-      var soCot = 3 + ds.length;
-      var cols = '<Column ss:Width="62"/><Column ss:Width="42"/><Column ss:Width="30"/>' +
-        ds.map(function () { return '<Column ss:Width="132"/>'; }).join('');
+    function trangKhoi(k) {
+      var ds = theoKhoi[k], soCot = 3 + ds.length;
+      var rows = [];
+      // ⚠️ Ô GỘP NGANG TỰ NHẢY CỘT — đừng chèn thêm ô đánh dấu phía sau.
+      // BO chỉ dành cho ô bị ô GỘP DỌC ở dòng trên nuốt mất. Chèn nhầm thì
+      // các cột sau bị đẩy lệch: hàng "Sĩ số" từng nhảy sang tận cột 1C, hai
+      // lớp đầu bỏ trống.
+      var hangGop = function (chu, kieu, cao) {
+        return { cao: cao, o: [o(chu, kieu, soCot - 1)] };
+      };
+      rows.push(hangGop(tenTruong + (diaChi ? ' · ' + diaChi : ''), 'tt2', 18));
+      rows.push(hangGop('THỜI KHÓA BIỂU KHỐI ' + k, 'tt', 30));
+      rows.push(hangGop('Năm học ' + namHoc + ' · Mỗi ô ghi:  Tên môn | Họ tên giáo viên', 'tt3', 20));
+      rows.push({ cao: 8, o: [] });
 
-      var r = '';
-      r += dong(o(tenTruong + (diaChi ? ' · ' + diaChi : ''), 'tt2', soCot - 1), 18);
-      r += dong(o('THỜI KHÓA BIỂU KHỐI ' + k, 'tt', soCot - 1), 30);
-      r += dong(o('Năm học ' + namHoc + ' · Mỗi ô ghi:  Tên môn | Họ tên giáo viên', 'tt3', soCot - 1), 20);
-      r += dong(o('', null, soCot - 1), 8);
-      // hàng tiêu đề (dòng thứ 5) — chỉ TÊN LỚP, không kèm gì khác
-      r += dong(o('Thứ', 'dau') + o('Buổi', 'dau') + o('Tiết', 'dau') +
-        ds.map(function (l) { return o(l, 'dau'); }).join(''), 26);
-      // hàng sĩ số: ba cột đầu để trống nên bộ đọc tự bỏ qua dòng này
-      r += dong(o('Sĩ số', 'sis', 2) +
-        ds.map(function (l) {
+      // Hàng tiêu đề — ô cột lớp CHỈ chứa TÊN LỚP, không kèm gì khác.
+      // Ghi kèm sĩ số xuống dòng trong cùng ô thì bộ đọc lấy cả cụm thành
+      // "1A\n31 HS" và không tra về lớp thật được.
+      rows.push({ cao: 26, o: [o('Thứ', 'dau'), o('Buổi', 'dau'), o('Tiết', 'dau')]
+        .concat(ds.map(function (l) { return o(l, 'dau'); })) });
+      // Hàng sĩ số: ba cột đầu gộp lại, bộ đọc tự bỏ qua vì không có số tiết
+      rows.push({ cao: 16, o: [o('Sĩ số', 'sis', 2)]
+        .concat(ds.map(function (l) {
           var x = dl.lop[l] || {};
           return o(x.siSo ? x.siSo + ' HS' : '—', 'sis');
-        }).join(''), 16);
+        })) });
 
       THU5.forEach(function (t) {
         for (var b = 0; b < 2; b++) {
           var tenB = b === 0 ? 'Sáng' : 'Chiều';
           var soT = b === 0 ? 4 : 3;
-          var kieuNhap = b === 0 ? 'nhapS' : 'nhapC';
+          var kNhap = b === 0 ? 'nhapS' : 'nhapC';
           for (var i = 1; i <= soT; i++) {
-            var c = '';
-            // Ô "Thứ" gộp cả 7 tiết trong ngày, ô "Buổi" gộp các tiết của buổi.
-            // Dòng nào bị ô gộp nuốt mất cột thì phải NHẢY chỉ số cột, nếu
-            // không Excel đẩy dữ liệu lệch sang phải một ô.
-            if (b === 0 && i === 1) c += o(t, 'thu', 0, 6);
-            if (i === 1) c += o(tenB, 'buoi', 0, soT - 1, (b === 0 && i === 1) ? 0 : 2);
-            c += o(i, 'tiet', 0, 0, (i === 1 ? 0 : 3), true);
-            c += ds.map(function () { return o('', kieuNhap); }).join('');
-            r += dong(c, 22);
+            var hang = [];
+            // Ô "Thứ" gộp trọn 7 tiết trong ngày, ô "Buổi" gộp các tiết của
+            // buổi. Dòng bị ô gộp nuốt phải đánh dấu BO, nếu không dữ liệu
+            // các cột sau bị đẩy lệch sang phải.
+            hang.push(b === 0 && i === 1 ? o(t, 'thu', 0, 6) : BO);
+            hang.push(i === 1 ? o(tenB, 'buoi', 0, soT - 1) : BO);
+            hang.push(o(i, 'tiet', 0, 0, true));
+            ds.forEach(function () { hang.push(o('', kNhap)); });
+            rows.push({ cao: 22, o: hang });
           }
         }
       });
-      r += dong(o('', null, soCot - 1), 10);
-      r += dong(o('Ngày …… tháng …… năm ………          HIỆU TRƯỞNG', 'ky', soCot - 1), 30);
+      rows.push({ cao: 10, o: [] });
+      rows.push(hangGop('Ngày …… tháng …… năm ………          HIỆU TRƯỞNG', 'ky', 30));
 
-      return '<Worksheet ss:Name="KHOI_' + k + '">' +
-        '<Table ss:ExpandedColumnCount="' + soCot + '" x:FullColumns="1" x:FullRows="1">' +
-        cols + r + '</Table>' + trangIn(6, true) + '</Worksheet>';
+      return {
+        ten: 'KHOI_' + k,
+        cols: [9, 7, 5].concat(ds.map(function () { return 21; })),
+        rows: rows,
+        in: { vuaTrang: true, dongBang: 6, cotBang: 3,
+              dauTrang: tenTruong, chanTrang: chanTrang }
+      };
     }
 
     // ── Trang hướng dẫn ──
@@ -281,31 +198,32 @@
       var d = [
         ['hdb', 'CÁCH ĐIỀN THỜI KHÓA BIỂU'],
         ['hd', ''],
-        ['hd', '1.  Mỗi khối một trang tính riêng ở dưới: KHOI_1, KHOI_2, … Tên lớp đã điền sẵn, đừng đổi.'],
-        ['hd', '2.  Mỗi ô ghi theo mẫu:      Tên môn | Họ tên giáo viên'],
-        ['hd', '     Ví dụ:      Toán | Nguyễn Thị Hòa'],
-        ['hd', '     Dùng dấu gạch đứng  |  ngăn giữa môn và tên người. Tiết trống thì để ô trống.'],
-        ['hd', '3.  Tên môn lấy đúng ở trang MON-HOC. Tên giáo viên lấy đúng ở trang GIAO-VIEN.'],
-        ['hd', '     Sai một chữ là phần mềm không tra về đúng người, đúng lớp.'],
-        ['hd', '4.  Khung sẵn: Thứ Hai–Thứ Sáu, sáng 4 tiết, chiều 3 tiết.'],
-        ['hd', '     Trường dạy khác thì thêm hoặc bớt DÒNG — phần mềm đọc theo dòng thật.'],
-        ['hd', '5.  Điền xong lưu lại, vào app:  Điều hành → Thời khóa biểu → Chọn tệp'],
+        ['hd', '1.   Mỗi khối một trang tính riêng: KHOI_1, KHOI_2 … Tên lớp đã điền sẵn, đừng đổi.'],
+        ['hd', '2.   Mỗi ô ghi theo mẫu:        Tên môn | Họ tên giáo viên'],
+        ['hd', '      Ví dụ:        Toán | Nguyễn Thị Hòa'],
+        ['hd', '      Dùng dấu gạch đứng  |  ngăn giữa môn và tên người. Tiết trống thì để ô trống.'],
+        ['hd', '3.   Tên môn lấy đúng ở trang MON-HOC. Tên giáo viên lấy đúng ở trang GIAO-VIEN.'],
+        ['hd', '      Sai một chữ là phần mềm không tra về đúng người, đúng lớp.'],
+        ['hd', '4.   Khung sẵn: Thứ Hai – Thứ Sáu, sáng 4 tiết, chiều 3 tiết.'],
+        ['hd', '      Trường dạy khác thì thêm hoặc bớt DÒNG — phần mềm đọc theo dòng thật.'],
+        ['hd', '5.   Điền xong lưu lại, vào app:   Điều hành → Thời khóa biểu → Chọn tệp'],
         ['hd', ''],
         ['hdb', 'PHẦN MỀM SẼ TỰ SOÁT GIÚP'],
-        ['hd', '·  Một giáo viên bị xếp hai lớp cùng một tiết'],
-        ['hd', '·  Tiết đã ghi môn nhưng chưa ghi tên người dạy'],
-        ['hd', '·  Lớp trong tệp lệch với danh sách lớp của trường'],
+        ['hd', '·   Một giáo viên bị xếp hai lớp cùng một tiết'],
+        ['hd', '·   Tiết đã ghi môn nhưng chưa ghi tên người dạy'],
+        ['hd', '·   Lớp trong tệp lệch với danh sách lớp của trường'],
         ['hd', ''],
         ['hdb', 'CÁC TRANG DANH MỤC'],
         ['hd', 'LOP · GIAO-VIEN · MON-HOC do phần mềm điền sẵn từ cơ sở dữ liệu nhà trường, không cần sửa.']
       ];
-      return '<Worksheet ss:Name="HUONG-DAN"><Table ss:ExpandedColumnCount="2">' +
-        '<Column ss:Width="640"/>' +
-        dong(o(tenTruong, 'tt2'), 18) +
-        dong(o('TỆP MẪU THỜI KHÓA BIỂU · Năm học ' + namHoc, 'tt'), 30) +
-        dong(o('', null), 10) +
-        d.map(function (x) { return dong(o(x[1], x[0]), 18); }).join('') +
-        '</Table>' + trangIn(0, false) + '</Worksheet>';
+      return {
+        ten: 'HUONG-DAN', cols: [96],
+        rows: [{ cao: 18, o: [o(tenTruong, 'tt2')] },
+               { cao: 30, o: [o('TỆP MẪU THỜI KHÓA BIỂU · Năm học ' + namHoc, 'tt')] },
+               { cao: 10, o: [] }]
+          .concat(d.map(function (x) { return { cao: 18, o: [o(x[1], x[0])] }; })),
+        in: { doc: true, dauTrang: tenTruong, chanTrang: chanTrang }
+      };
     }
 
     // ── Ba trang danh mục ──
@@ -314,63 +232,48 @@
         var ta = String(a.ten).trim().split(/\s+/).pop(), tb = String(b.ten).trim().split(/\s+/).pop();
         return ta.localeCompare(tb, 'vi') || String(a.ten).localeCompare(String(b.ten), 'vi');
       });
-      var tLop = '<Worksheet ss:Name="LOP"><Table ss:ExpandedColumnCount="4">' +
-        '<Column ss:Width="60"/><Column ss:Width="45"/><Column ss:Width="180"/><Column ss:Width="55"/>' +
-        dong(o('DANH SÁCH LỚP — phần mềm điền sẵn, không sửa', 'tt', 3), 26) +
-        dong(o('', null, 3), 8) +
-        dong(o('Lớp', 'dau') + o('Khối', 'dau') + o('Điểm trường', 'dau') + o('Sĩ số', 'dau'), 22) +
-        lops.map(function (l) {
-          var x = dl.lop[l] || {};
-          return dong(o(l, 'oB') + o(x.khoi || '', 'oG', 0, 0, 0, true) +
-            o(tenCS(x.coSo), 'oL') + o(x.siSo || 0, 'oG', 0, 0, 0, true), 18);
-        }).join('') + '</Table>' + trangIn(0, false) + '</Worksheet>';
+      var tLop = { ten: 'LOP', cols: [10, 8, 32, 9],
+        rows: [{ cao: 26, o: [o('DANH SÁCH LỚP — phần mềm điền sẵn, không sửa', 'tt', 3)] },
+               { cao: 8, o: [] },
+               { cao: 22, o: [o('Lớp', 'dau'), o('Khối', 'dau'), o('Điểm trường', 'dau'), o('Sĩ số', 'dau')] }]
+          .concat(lops.map(function (l) {
+            var x = dl.lop[l] || {};
+            return { cao: 18, o: [o(l, 'oB'), o(x.khoi || '', 'oG', 0, 0, true),
+              o(tenCS(x.coSo), 'oL'), o(x.siSo || 0, 'oG', 0, 0, true)] };
+          })),
+        in: { doc: true, dauTrang: tenTruong, chanTrang: chanTrang } };
 
-      var tGV = '<Worksheet ss:Name="GIAO-VIEN"><Table ss:ExpandedColumnCount="3">' +
-        '<Column ss:Width="180"/><Column ss:Width="150"/><Column ss:Width="180"/>' +
-        dong(o('CÁN BỘ, GIÁO VIÊN — chép đúng cột Họ tên sang bảng thời khóa biểu', 'tt', 2), 26) +
-        dong(o('', null, 2), 8) +
-        dong(o('Họ tên', 'dau') + o('Chức vụ', 'dau') + o('Điểm trường', 'dau'), 22) +
-        gvs.map(function (g) {
-          return dong(o(g.ten, 'oB') + o(g.chucVu || '', 'oL') + o(tenCS(g.coSo), 'oL'), 18);
-        }).join('') + '</Table>' + trangIn(0, false) + '</Worksheet>';
+      var tGV = { ten: 'GIAO-VIEN', cols: [30, 26, 32],
+        rows: [{ cao: 26, o: [o('CÁN BỘ, GIÁO VIÊN — chép đúng cột Họ tên sang bảng thời khóa biểu', 'tt', 2)] },
+               { cao: 8, o: [] },
+               { cao: 22, o: [o('Họ tên', 'dau'), o('Chức vụ', 'dau'), o('Điểm trường', 'dau')] }]
+          .concat(gvs.map(function (g) {
+            return { cao: 18, o: [o(g.ten, 'oB'), o(g.chucVu || '', 'oL'), o(tenCS(g.coSo), 'oL')] };
+          })),
+        in: { doc: true, dauTrang: tenTruong, chanTrang: chanTrang } };
 
-      var tMon = '<Worksheet ss:Name="MON-HOC"><Table ss:ExpandedColumnCount="3">' +
-        '<Column ss:Width="55"/><Column ss:Width="200"/><Column ss:Width="110"/>' +
-        dong(o('MÔN HỌC — Chương trình GDPT 2018', 'tt', 2), 26) +
-        dong(o('Cột "Dạy ở khối" cho biết môn đó có trong khối nào — khỏi xếp nhầm.', 'tt3', 2), 18) +
-        dong(o('', null, 2), 8) +
-        dong(o('Mã', 'dau') + o('Tên môn', 'dau') + o('Dạy ở khối', 'dau'), 22) +
-        dsMon.map(function (m) {
-          return dong(o(m[0], 'oG') + o(m[1], 'oB') + o(m[2], 'oG'), 18);
-        }).join('') + '</Table>' + trangIn(0, false) + '</Worksheet>';
+      var tMon = { ten: 'MON-HOC', cols: [9, 34, 20],
+        rows: [{ cao: 26, o: [o('MÔN HỌC — Chương trình GDPT 2018', 'tt', 2)] },
+               { cao: 18, o: [o('Cột "Dạy ở khối" cho biết môn đó có trong khối nào — khỏi xếp nhầm.', 'tt3', 2)] },
+               { cao: 8, o: [] },
+               { cao: 22, o: [o('Mã', 'dau'), o('Tên môn', 'dau'), o('Dạy ở khối', 'dau')] }]
+          .concat(dsMon.map(function (m) {
+            return { cao: 18, o: [o(m[0], 'oG'), o(m[1], 'oB'), o(m[2], 'oG')] };
+          })),
+        in: { doc: true, dauTrang: tenTruong, chanTrang: chanTrang } };
 
-      return tLop + tGV + tMon;
+      return [tLop, tGV, tMon];
     }
 
-    // Gom lớp theo khối
-    var theoKhoi = {};
-    lops.forEach(function (l) {
-      var k = (dl.lop[l] || {}).khoi || 0;
-      (theoKhoi[k] = theoKhoi[k] || []).push(l);
-    });
-    var cacKhoi = Object.keys(theoKhoi).sort(function (a, b) { return a - b; });
-
-    var wb = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n' +
-      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' +
-      ' xmlns:o="urn:schemas-microsoft-com:office:office"' +
-      ' xmlns:x="urn:schemas-microsoft-com:office:excel"' +
-      ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"' +
-      ' xmlns:html="http://www.w3.org/TR/REC-html40">' +
-      '<DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' +
-      '<Title>Thời khóa biểu — ' + xml(tenTruong) + '</Title>' +
-      '<Company>' + xml(tenTruong) + '</Company></DocumentProperties>' +
-      styles + trangHD() +
-      cacKhoi.map(function (k) { return trangKhoi(k, theoKhoi[k]); }).join('') +
-      trangDM() + '</Workbook>';
-
-    var ten = 'TKB-mau-' + khongDau(tenTruong) + '-' + String(namHoc).replace(/\D/g, '') + '.xml';
-    taiVe(new Blob(['﻿' + wb], { type: 'application/vnd.ms-excel;charset=utf-8' }), ten);
-    window.notify('✅ Đã tạo tệp mẫu ' + ten + ' — mở bằng Excel (khổ A4 ngang, mỗi khối một trang), ' +
+    var sheets = [trangHD()]
+      .concat(cacKhoi.map(trangKhoi))
+      .concat(trangDM());
+    var byte = window.EXCEL_DEP.tao({ sheets: sheets });
+    var ten = 'TKB-mau-' + khongDau(tenTruong) + '-' + String(namHoc).replace(/\D/g, '') + '.xlsx';
+    taiVe(new Blob([byte], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }), ten);
+    window.notify('✅ Đã tạo ' + ten + ' — mở bằng Excel (A4 ngang, mỗi khối một trang), ' +
       'điền xong lưu lại rồi nạp lên ở màn này.');
   }
 
