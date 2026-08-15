@@ -2118,13 +2118,21 @@
   // hàm dd* GIỮ NGUYÊN, bảng diem_danh_lop/hs_vang cũng giữ; bật lại chỉ cần
   // trả một mục vào DS_NHOM.
   var TAB = 'tongquan';
+  // ⚠️ THAY ĐỔI 15/8/2026 theo yêu cầu thầy Chung:
+  //  · "Điểm danh GV" + "Bảng công tháng" GỘP MỘT MỤC — vốn là hai tầng của
+  //    cùng một chuyện (ai có mặt hôm nay → cộng thành công cả tháng), tách ra
+  //    thì phải nhớ vào mục nào để xem gì.
+  //  · "Dự giờ" GỠ KHỎI THANH TAB. Mã `js/du-gio.js`, bảng dữ liệu và hàm SQL
+  //    (sql/33) GIỮ NGUYÊN — làm y như đã làm với Điểm danh học sinh ở mục
+  //    11.2: bật lại chỉ cần trả một dòng vào danh sách này. Muốn xoá hẳn dữ
+  //    liệu thì phải có lệnh riêng, và không lấy lại được.
+  //  · Thêm "Thời khóa biểu" — module mới, thay chỗ Dự giờ.
   var DS_NHOM = [
     { nhom: 'HÔM NAY', muc: [
       { ma: 'tongquan', ten: 'Tổng quan', bi: '🏠', ngan: 'Hôm nay' },
       { ma: 'baoviec', ten: 'Báo việc sự cố', bi: '⚡', ngan: 'Báo việc' } ] },
     { nhom: 'NHÂN SỰ', muc: [
-      { ma: 'baocao', ten: 'Điểm danh GV', bi: '🧑‍🏫', ngan: 'Điểm danh' },
-      { ma: 'bangcong', ten: 'Bảng công tháng', bi: '📋' } ] },
+      { ma: 'baocao', ten: 'Điểm danh & Chấm công', bi: '🧑‍🏫', ngan: 'Chấm công' } ] },
     { nhom: 'CÔNG VIỆC', muc: [
       { ma: 'dexuat', ten: 'Đề xuất – duyệt', bi: '📝', ngan: 'Đề xuất' },
       { ma: 'viec', ten: 'Giao việc', bi: '✅' } ] },
@@ -2132,7 +2140,7 @@
     // với người vắng, đứng riêng một màn thì lạc lõng.
     { nhom: 'KẾ HOẠCH', muc: [
       { ma: 'lichtuan', ten: 'Lịch tuần', bi: '📅' },
-      { ma: 'dugio', ten: 'Dự giờ', bi: '👀' },
+      { ma: 'tkb', ten: 'Thời khóa biểu', bi: '🗓️', ngan: 'TKB' },
       { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
@@ -2159,9 +2167,16 @@
     return 0;
   }
 
+  // Mã màn CŨ → màn tương ứng hiện nay. Không có bảng này thì ai đang mở dở
+  // một màn đã bị gộp hoặc gỡ (trạng thái còn trong bộ nhớ trình duyệt) sẽ
+  // rơi vào màn không có tab nào sáng, không biết đường quay lại.
+  var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao', daythay: 'lichtuan',
+                 dugio: 'tkb', homnay: 'tongquan' };
+
   function veDieuHanh() {
     var vung = $('#vung-dieuhanh');
     if (!vung) return;
+    if (MAN_CU[TAB]) TAB = MAN_CU[TAB];
 
     var bang;
     if (THAT) {
@@ -2239,8 +2254,12 @@
 
     var noiDung =
       TAB === 'tongquan' ? veTongQuan() :
-      TAB === 'baocao' ? veBaoCao() :
-      TAB === 'bangcong' ? veBangCong() :
+      // Điểm danh và Bảng công nay chung MỘT màn: báo cáo đầu buổi + trạng
+      // thái từng người ở trên, bảng công cộng dồn cả tháng ở dưới. Cùng một
+      // chuyện "ai có mặt", chỉ khác đơn vị thời gian.
+      TAB === 'baocao' ? (veBaoCao() + veBangCong()) :
+      TAB === 'tkb' ? (window.veTKB ? window.veTKB() :
+        '<div class="the-thong-bao">Chưa nạp được <b>js/thoi-khoa-bieu.js</b>.</div>') :
       TAB === 'diemdanh' ? veDiemDanh() :
       TAB === 'dexuat' ? veDeXuat() :
       // Lịch tuần ở tệp riêng (js/lich-tuan.js); thiếu tệp thì vẫn còn phần

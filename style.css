@@ -1890,10 +1890,10 @@ nav.menu::-webkit-scrollbar { display: none; }
   padding: 0 6px 0 14px; margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(20, 48, 107, .05);
 }
-.dh-tab-cuon {
-  display: flex; gap: 2px; flex: 1; min-width: 0;
-  overflow-x: auto; scrollbar-width: thin;
-}
+/* KHÔNG cuộn ngang — thầy Chung: "bỏ hẳn thanh trượt cho đỡ rối".
+   Chật thì XUỐNG DÒNG. Thanh trượt ngang vừa chiếm một dải xám dưới hàng tab,
+   vừa giấu mất mấy mục cuối: người dùng không biết bên phải còn gì để mà kéo. */
+.dh-tab-cuon { display: flex; flex-wrap: wrap; gap: 0 2px; flex: 1; min-width: 0; }
 /* Tab dạng VIÊN bo tròn, giống hệt menu chính ở đầu trang — mỗi nút có ranh
    giới thật. Kiểu gạch-chân cũ để các mục dính thành một dòng chữ liền, nhìn
    không ra đâu là nút bấm; mà đây là chỗ điều hướng chính của cả module. */
@@ -2238,6 +2238,36 @@ nav.menu::-webkit-scrollbar { display: none; }
     justify-content: center;
   }
 }
+
+/* ── THỜI KHÓA BIỂU (thoi-khoa-bieu.js) ───────────────────────────────────── */
+.tkb-tai {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: #fff; border: 1px solid var(--vien); border-left: 4px solid var(--dam);
+  border-radius: 14px; padding: 14px 18px;
+}
+.tkb-tai-chu { flex: 1; min-width: 240px; line-height: 1.5; }
+.tkb-tai-chu b { display: block; font-size: 14px; color: var(--dam); }
+.tkb-tai-chu span { font-size: 12px; color: var(--chu-mo); }
+.tkb-nut-tai {
+  background: var(--dam); color: #fff; border-radius: 10px; padding: 11px 18px;
+  font-weight: 700; font-size: 13px; cursor: pointer; flex-shrink: 0; min-height: 44px;
+  display: inline-flex; align-items: center;
+}
+.tkb-nut-tai:hover { background: #1e4593; }
+.tkb-nguon {
+  background: var(--o-con); border: 1px solid var(--vien); border-radius: 12px;
+  padding: 10px 15px; font-size: 12.5px; color: var(--chu); line-height: 1.6;
+}
+.tkb-canh { color: #8f5d14; font-weight: 600; }
+.tkb-tom { font-size: 13px; color: var(--chu-mo); margin: 10px 0 6px; }
+/* Hàng chọn lớp/giáo viên có thể rất dài (25 lớp, 35 người) — cho xuống dòng
+   chứ KHÔNG cuộn ngang, cùng lý do đã bỏ thanh trượt ở hàng tab. */
+.tkb-cuon-chon { flex-wrap: wrap; margin-bottom: 10px; }
+.tkb-bang td, .tkb-bang th { vertical-align: middle; }
+.tkb-bang tr.tkb-dau-thu td { border-top: 2px solid var(--vien-dam); }
+.tkb-trong { color: var(--chu-nhat); }
+.tkb-ngay td { min-width: 108px; font-size: 12px; }
+.tkb-ngay small { color: var(--chu-mo); }
 
 /* ── LÊN LỚP (len-lop.js) ─────────────────────────────────────────────────── */
 .ll-tom-tat {
