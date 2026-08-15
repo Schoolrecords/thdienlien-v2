@@ -395,7 +395,8 @@
         // trưởng mở app thấy tên người giả định. Lấy hết cột là miễn nhiễm.
         .select('*').eq('ngay', t),
       may.from('gv_vang')
-        .select('ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay, bao_muon')
+        // id + ghi_chu để màn Điểm danh xoá được đúng dòng ghi nhầm
+        .select('id, ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay, bao_muon, ghi_chu')
         .lte('ngay', t)
         .or('and(den_ngay.is.null,ngay.eq.' + t + '),den_ngay.gte.' + t),
       may.from('diem_danh_lop').select('lop, buoi, si_so, so_vang, ghi_luc').eq('ngay', t),
@@ -455,8 +456,8 @@
           (b.ghi_chu ? ' — ' + b.ghi_chu : '') });
       });
       (kq[1].data || []).forEach(function (g) {
-        moi.gvVang.push({ ten: g.ho_ten, email: g.email, coSo: g.co_so_ma, lyDo: g.ly_do, buoi: g.buoi,
-          denNgay: g.den_ngay, baoMuon: g.bao_muon });
+        moi.gvVang.push({ id: g.id, ten: g.ho_ten, email: g.email, coSo: g.co_so_ma, lyDo: g.ly_do,
+          buoi: g.buoi, ngay: g.ngay, denNgay: g.den_ngay, baoMuon: g.bao_muon, nguon: g.ghi_chu });
       });
       // Điểm danh HS đã gỡ khỏi giao diện — vẫn ĐỌC bảng để dữ liệu cũ không
       // mất và bật lại được, nhưng KHÔNG đẩy vào nhật ký nữa: nhắc một việc
@@ -1044,8 +1045,10 @@
   // Nhắc dạy thay khi có GV vắng — giữ nguyên tinh thần bản cũ
   function veDayThayNhac() {
     if (THAT) {
+      // Nay đã có màn Thời khóa biểu thật — chỉ đúng chỗ để nạp, đừng bắt
+      // người dùng đi tìm "bản mẫu ở cuối màn Lịch tuần" như trước.
       return '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — ' +
-        'xem bản mẫu ở cuối màn <b>Lịch tuần</b>.</div>';
+        '<a href="javascript:DH.tab(\'tkb\')">nạp ngay ở màn Thời khóa biểu →</a></div>';
     }
     var thieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
     return thieu
@@ -1086,7 +1089,17 @@
         (nhieuCS ? '<td>' + thoat(tenCoSo(g.coSo)) + '</td>' : '') +
         '<td><span class="dh-pill ' + pill + '">' + thoat(chu) + '</span></td>' +
         '<td>' + (v ? (v.denNgay ? 'đến ' + ngayVN(v.denNgay) : '') +
-          (v.baoMuon ? ' <b class="dh-do">⚠ báo muộn</b>' : '') : '') + '</td></tr>';
+          (v.baoMuon ? ' <b class="dh-do">⚠ báo muộn</b>' : '') : '') + '</td>' +
+        // Đường XOÁ dòng vắng ghi nhầm. Trước 15/8/2026 việc này đi nhờ nút
+        // "Sửa báo cáo" (nó xoá cả báo cáo lẫn sổ vắng cùng buổi); nay hai
+        // việc đã tách hai màn nên nếu không có nút này thì lưu nhầm là KẸT —
+        // mà đây là số liệu chảy thẳng vào bảng công, tức bảng lương.
+        // Chỉ hiện với admin/BGH và chỉ cho dòng do điểm danh ghi ra: dòng
+        // sinh từ ĐƠN NGHỈ đã duyệt phải rút đơn chứ không xoá lén ở đây.
+        '<td>' + (v && v.id && laQT() && String(v.nguon || '').indexOf('Điểm danh') === 0
+          ? '<button class="dh-nut-nho" onclick="DH.xoaVang(' + v.id + ', ' +
+            JSON.stringify(v.ten).replace(/"/g, '&quot;') + ')">Xoá</button>'
+          : '') + '</td></tr>';
     }).join('');
 
     return '<div class="dh-tieu-de" style="margin-top:22px">🧑‍🏫 Trạng thái CBGV-NV · ' + tenBuoi(b) + '</div>' +
@@ -1095,8 +1108,8 @@
       '<div class="cuon-ngang"><table class="bang-quan-tri nho bang-cong"><thead><tr>' +
       '<th class="cot-dinh" style="text-align:left">CBGV-NV</th>' +
       (nhieuCS ? '<th>Điểm trường</th>' : '') +
-      '<th>Trạng thái</th><th>Ghi chú bảng công</th></tr></thead><tbody>' +
-      (hang || '<tr><td colspan="' + (nhieuCS ? 4 : 3) + '">Chưa có danh sách nhân sự.</td></tr>') +
+      '<th>Trạng thái</th><th>Ghi chú bảng công</th><th></th></tr></thead><tbody>' +
+      (hang || '<tr><td colspan="' + (nhieuCS ? 5 : 4) + '">Chưa có danh sách nhân sự.</td></tr>') +
       '</tbody></table></div>';
   }
   function khoaGV(email, ten) {
@@ -1277,10 +1290,22 @@
         }).join('') + '</div>'
       : '';
 
-    return '<div class="dh-tieu-de">🧑‍🏫 Khai người vắng · ' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</div>' +
+    var dau = '<div class="dh-tieu-de">🧑‍🏫 Khai người vắng · ' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</div>' +
       '<div class="dh-ghi-chu-nho" style="margin-top:0">Chỉ báo NGƯỜI VẮNG, còn lại mặc định có mặt — ' +
       'không ai phải điểm danh từng người. Số này cộng thẳng ra bảng công cuối tháng.</div>' +
-      chonCS +
+      chonCS;
+
+    // Điểm trường chưa có ai được gán về thì nói thẳng, đừng bày nút
+    // "✓ Đủ 0/0" — trông như đã điểm danh xong trong khi thực ra chưa có
+    // người nào. Sau sáp nhập, hai phân hiệu mới rơi đúng vào cảnh này cho
+    // tới khi Ban giám hiệu gán nơi công tác cho từng người.
+    if (!gvCS.length) {
+      return dau + '<div class="hd-kiem vang">Chưa có cán bộ, giáo viên nào được gán về <b>' +
+        thoat(tenCoSo(BC_CS)) + '</b>.<br>Vào <b>Quản trị → Cơ sở &amp; Sáp nhập</b> gán nơi công tác ' +
+        'cho từng người, rồi mới khai vắng và tính bảng công cho điểm này được.</div>';
+    }
+
+    return dau +
       '<div class="dh-chon-hang">' +
       '<button class="dh-nut-lon' + (!soVang && !BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvDu()">✓ Đủ ' + gvCS.length + '/' + gvCS.length + '</button>' +
       '<button class="dh-nut-lon' + (soVang || BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvVang()">Có người vắng</button>' +
@@ -2639,6 +2664,30 @@
           BC_ANTOAN = null; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
           TAB = 'tongquan';
           window.notify('✅ Đã xác nhận đầu buổi — bảng điều hành đã cập nhật.');
+          return taiLai();
+        })
+        .catch(baoLoi);
+    },
+
+    // Xoá một dòng vắng ghi nhầm (bảng trạng thái CBGV, chỉ admin/BGH).
+    xoaVang: function (id, ten) {
+      if (!window.confirm('Xoá dòng vắng của ' + ten + ' hôm nay?\n\n' +
+        'Bảng công tháng sẽ cộng lại ngay. Nhật ký giữ vết ai xoá, lúc nào.')) return;
+      if (!THAT) {
+        DL.gvVang = DL.gvVang.filter(function (g) { return g.id !== id; });
+        veDieuHanh(); return;
+      }
+      // .select() để biết có xoá được THẬT không — RLS chặn (tháng đã chốt,
+      // quá hạn sửa) thì PostgREST trả 0 dòng chứ không báo lỗi, mà im lặng ở
+      // đây nghĩa là người dùng tưởng đã xoá còn bảng công vẫn trừ công.
+      window.MAY_CHU.from('gv_vang').delete().eq('id', id).select()
+        .then(function (r) {
+          if (r.error) { baoLoi(r.error); return; }
+          if (!r.data || !r.data.length) {
+            window.notify('Không xoá được — có thể tháng đã chốt bảng công, hoặc đã quá hạn sửa.');
+            return;
+          }
+          window.notify('Đã xoá dòng vắng của ' + ten + '.');
           return taiLai();
         })
         .catch(baoLoi);

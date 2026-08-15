@@ -106,7 +106,7 @@
     LOI_DOC = '';
     if (!window.XLSX) {
       LOI_DOC = 'Chưa nạp được thư viện đọc Excel (lib/xlsx.min.js).';
-      return window.veDieuHanhLai ? window.veDieuHanhLai() : veLai();
+      return veLai();
     }
     var fr = new FileReader();
     fr.onerror = function () { LOI_DOC = 'Không đọc được tệp.'; veLai(); };
