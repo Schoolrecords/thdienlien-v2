@@ -2137,18 +2137,20 @@ nav.menu::-webkit-scrollbar { display: none; }
    #5f7091 đạt 4,98:1 mà vẫn giữ sắc xanh xám của bộ màu. */
 :root { --chu-nhat: #5f7091; }
 
-/* Pill xám "CHƯA BÁO CÁO" nằm trên nền #eef1f6 — cần tối hơn nữa mới đủ:
-   #4d5b76 trên #eef1f6 = 6,03:1 (trước 2,70:1). */
-.dh-pill.xam { color: #4d5b76; }
-/* Pill vàng "CẦN LƯU Ý" trên #fdf3dc: #9a6416 = 4,52:1 (trước 3,30:1). */
-.dh-pill.vang { color: #9a6416; }
+/* (Hai dòng vá màu pill đã dọn — giá trị nay nằm ngay tại chỗ khai báo
+   `.dh-pill.*` ở khối giữa tệp, đo được 6,03 và 5,08. Để cả hai nơi thì
+   sửa một chỗ không ăn thua, đúng cái bẫy nói ở khối dưới đây.) */
 
-/* Đầu thẻ điểm trường — chữ TRẮNG trên nền màu trạng thái.
-   Xám #8494b3 → #69788f (3,06 → 4,48:1) · vàng #b7791f → #a06a1a (3,64 → 4,59:1).
-   Xanh #1e7f4f (5,00) và đỏ #c0392b (5,44) vốn đã đạt, giữ nguyên token. */
-.dh-diem-dau.xam { background: #69788f; }
-.dh-diem-dau.vang { background: #a06a1a; }
-.dh-diem-dau .phu { opacity: 1; color: rgba(255, 255, 255, .92); }
+/* 🔴 BA DÒNG CŨ Ở ĐÂY ĐÃ BỎ (15/8/2026) — chúng tô nền đặc cho đầu thẻ điểm
+   trường và đặt chữ phụ màu TRẮNG, phục vụ kiểu "đầu thẻ tô đặc" nay không
+   còn. Đầu thẻ giờ nền trắng, chữ navy.
+
+   ⚠️ CHÍNH LÀ CÁI BẪY ĐÃ GHI Ở MỤC 12.6 SỔ DỰ ÁN, lần này dính thêm một lần:
+   sửa `.dh-diem-dau` ở khối GIỮA tệp (~dòng 1993) mà quên ba dòng này ở CUỐI
+   tệp, nên nền xám và chữ trắng vẫn thắng — ra màn hình là chữ navy nằm trên
+   nền xám, thầy Chung nhìn thấy ngay là "quá mờ".
+   QUY TẮC: đụng vào `.dh-diem-*`, `.dh-pill`, `--chu-nhat`, `--sb-mo` thì
+   PHẢI grep cả tệp trước khi sửa — cuối tệp còn một khối vá tương phản nữa. */
 
 /* Nhãn nhóm và chân thanh bên: #7d92c4 trên navy chỉ 4,07:1, mà đây là chỉ
    dẫn điều hướng chính. #8ea3d2 đạt 5,00:1. */
