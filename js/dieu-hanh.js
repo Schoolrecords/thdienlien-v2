@@ -622,7 +622,19 @@
     var dxCho = (DL.deXuat || []).filter(function (d) { return d.tt === 'cho_duyet'; }).length;
     var tbToiChuaXN = (DL.thongBao || []).filter(tbCanToiXN).length;
 
+    // CBGV có mặt — chỉ tính trên những điểm ĐÃ báo cáo (xem chú thích ở
+    // tinhDiem). gvTong / gvVang bên dưới vẫn giữ nguyên vì nhiều chỗ khác
+    // cần con số tổng đội ngũ, không phải con số điểm danh.
+    var gvCoBC = 0, gvTongBC = 0, csDaBC = 0;
+    dsCS.forEach(function (c) {
+      if (!(DL.baoCao[c.ma] || {})[b]) return;
+      csDaBC++;
+      var v = gvVangBuoi(b).filter(function (g) { return g.coSo === c.ma; }).length;
+      gvCoBC += (c.gvTong - v); gvTongBC += c.gvTong;
+    });
+
     return { dsCS: dsCS, buoi: b, gvTong: gvTong, gvVang: gvVang,
+      csDaBC: csDaBC, gvCoBC: gvCoBC, gvTongBC: gvTongBC,
       hsTong: hsTong, hsVang: hsVang, lopDaDD: lopDaDD, lopTong: cacLop.length,
       soXanh: soXanh, soVang: soVang, soDo: soDo, soChua: soChua, soNghiChieu: soNghiChieu,
       viecTong: viec.length, vXong: viec.filter(function (v) { return v.tt === 'xong'; }).length,
@@ -782,7 +794,16 @@
       quyMo: cacLop.length + ' lớp · ' + hs.toLocaleString('vi-VN') + ' HS',
       anToan: !bc ? '—' : bc.anToan === 'xanh' ? 'Xanh' : bc.anToan === 'vang' ? 'Vàng' : 'Đỏ',
       csvc: csvcChu, csvcLoi: loi.length > 0,
-      gv: (gvCS - vang) + '/' + gvCS, svMo: svMo,
+      // ⚠️ CHƯA BÁO CÁO THÌ ĐỂ DẤU "—", ĐỪNG TÍNH RA SỐ.
+      // Sổ vắng rỗng KHÔNG có nghĩa là cả trường đi đủ — nó có nghĩa là chưa
+      // ai nói gì. Trước đây dòng này lấy thẳng (tổng − vắng) nên khi chưa
+      // điểm nào báo cáo vẫn hiện "37/37 có mặt", đứng ngay cạnh dòng "chờ 1
+      // điểm báo cáo". Đúng cái bẫy đã tránh ở bảng công tháng: khẳng định
+      // trước một việc chưa xảy ra, mà tờ giấy này đi vào bảng lương.
+      // Hai dòng An toàn và CSVC ngay trên đã để "—" từ đầu — nay thống nhất.
+      gv: !bc ? '—' : (gvCS - vang) + '/' + gvCS,
+      gvCo: gvCS - vang, gvTongSo: gvCS,
+      svMo: svMo,
       ghiChu: bc ? (bc.ghiChu || '') : ''
     };
   }
@@ -815,10 +836,26 @@
       : (daBao === ds.length && ds.length) ? 'Toàn trường: ỔN ĐỊNH'
       : 'Toàn trường: chờ ' + (ds.length - daBao) + ' điểm báo cáo';
 
+    // Chỉ cộng CBGV của những điểm ĐÃ báo cáo. Điểm chưa báo thì không biết
+    // gì về nó, cộng vào là bịa; điểm nghỉ chiều cũng không có ai để đếm.
+    var dsBC = ds.filter(function (d) { return d.bc; });
+    var gvCoBC = 0, gvTongBC = 0;
+    dsBC.forEach(function (d) { gvCoBC += d.gvCo; gvTongBC += d.gvTongSo; });
+    var duBaoCao = daBao === ds.length && ds.length > 0;
+
     var kpis = [
       { so: daBao + '/' + ds.length, nhan: 'điểm đã báo cáo', mau: daBao === ds.length ? 'xanh' : 'vang' },
-      { so: coDo ? 'Đỏ' : coVang ? 'Vàng' : 'Xanh', nhan: 'an toàn toàn trường', mau: mauTT },
-      { so: (t.gvTong - t.gvVang.length) + '/' + t.gvTong, nhan: 'CBGV có mặt', mau: 'navy' },
+      // Tin XẤU thì hiện ngay dù chưa đủ điểm báo (một điểm báo Đỏ là cả trường
+      // phải biết). Nhưng chữ "Xanh" — lời khẳng định cả trường an toàn — chỉ
+      // được nói khi MỌI điểm đã báo cáo. Trước đây chỗ này rơi thẳng vào
+      // 'Xanh' lúc chưa ai báo, chấm tròn tô xám mà chữ vẫn đọc là "Xanh
+      // an toàn toàn trường".
+      { so: coDo ? 'Đỏ' : coVang ? 'Vàng' : duBaoCao ? 'Xanh' : '—',
+        nhan: 'an toàn toàn trường', mau: mauTT },
+      { so: dsBC.length ? gvCoBC + '/' + gvTongBC : '—',
+        nhan: 'CBGV có mặt' +
+          (dsBC.length && dsBC.length < ds.length ? ' (' + dsBC.length + '/' + ds.length + ' điểm)' : ''),
+        mau: 'navy' },
       { so: t.dxCho, nhan: 'đề xuất chờ duyệt', mau: t.dxCho ? 'vang' : 'xanh' },
       { so: t.svCanXuLy, nhan: 'sự việc mở', mau: t.svCanXuLy ? 'do' : 'xanh' }
     ];
@@ -849,7 +886,12 @@
         '</div>';
     }).join('') + '</div>';
 
-    return dai + cot + veHangCho() + veDayThayNhac();
+    // THỨ TỰ: dải trạng thái → VIỆC CẦN XỬ LÝ → thẻ từng điểm trường.
+    // Hàng đợi trước đây nằm sau các thẻ điểm trường, phải cuộn mới thấy —
+    // trong khi nó chính là thứ Ban giám hiệu mở app để xem. Thẻ điểm trường
+    // là bức tranh nền, xem sau cũng được; việc quá hạn, đề xuất chờ duyệt,
+    // sự việc chưa ai tiếp nhận thì không.
+    return dai + veHangCho() + cot + veDayThayNhac();
   }
 
   // ── Hàng đợi "Cần Ban giám hiệu xử lý" — mỗi dòng đúng MỘT nút ──
@@ -2057,10 +2099,13 @@
 
     var bang;
     if (THAT) {
-      bang = '<div class="hd-kiem xanh">✅ <b>Đang chạy với dữ liệu thật</b> — năm học ' + thoat(NAM) +
-        ' · ' + DL.coSo.length + ' cơ sở · ' + DL.gvDs.length + ' CBGV-NV · ' +
-        Object.keys(DL.lop).length + ' lớp · ' + DL.hsTong.toLocaleString('vi-VN') + ' học sinh. ' +
-        'Mọi thao tác ghi vào cơ sở dữ liệu nhà trường và có nhật ký.</div>';
+      // Băng này từng chiếm trọn một dòng lớn với đủ năm con số. Cần thiết hồi
+      // mới nối cơ sở dữ liệu, nhưng người mở app mỗi sáng chỉ cần biết MỘT
+      // điều: đang chạy số thật hay số mẫu. Quy mô trường đã có ở chân thanh
+      // bên và dải trạng thái ngay dưới — nhắc lại lần nữa là nhiễu.
+      bang = '<div class="dh-chip-that">✅ Dữ liệu thật · ' +
+        Object.keys(DL.lop).length + ' lớp · ' + DL.hsTong.toLocaleString('vi-VN') + ' học sinh · ' +
+        'mọi thao tác đều vào nhật ký</div>';
     } else if (LOI_SQL) {
       bang = '<div class="hd-kiem do">⚠ ' + thoat(LOI_SQL) + '</div>';
     } else {
@@ -2069,11 +2114,12 @@
     }
 
     // ── Thanh bên (máy tính) ──
-    var logo = '<div class="dh-sb-logo"><img src="img/logo.png" alt=""></div>';
+    // KHÔNG lặp lại logo + tên trường: đầu trang ngay phía trên đã có cả hai,
+    // cách chỗ này chừng 300px. Chỗ đắt giá nhất của thanh bên nên dành cho
+    // thứ mỗi sáng đều cần liếc — HÔM NAY là ngày nào, buổi nào.
     var sb = '<div class="dh-sb">' +
-      '<div class="dh-sb-dau">' + logo +
-      '<div class="dh-sb-ten"><b>' + thoat((window.CAU_HINH || {}).TEN_TRUONG || 'Nhà trường') + '</b>' +
-      '<span>Điều hành nhà trường</span></div></div>' +
+      '<div class="dh-sb-dau"><div class="dh-sb-ngay">' +
+      '<span>HÔM NAY</span><b>' + thoat(homNayChu()) + '</b></div></div>' +
       DS_NHOM.map(function (n) {
         return '<div class="dh-sb-nhom">' + n.nhom + '</div>' + n.muc.map(function (m) {
           var d = demCho(m.ma);
@@ -2082,7 +2128,8 @@
             (d ? '<span class="dh-sb-badge">' + d + '</span>' : '') + '</button>';
         }).join('');
       }).join('') +
-      '<div class="dh-sb-chan">' + homNayChu() + '<br>Năm học ' + thoat(NAM || (window.CAU_HINH || {}).NAM_HOC || '') +
+      // Ngày đã chuyển lên đầu thanh bên, chân chỉ còn bối cảnh năm học
+      '<div class="dh-sb-chan">Năm học ' + thoat(NAM || (window.CAU_HINH || {}).NAM_HOC || '') +
       ' · ' + DL.coSo.length + ' điểm trường</div></div>';
 
     // ── Đầu màn: nhãn vàng + tiêu đề + công tắc Sáng/Chiều ──
@@ -2174,7 +2221,9 @@
 
     var soLieu;
     if (qt) {
-      soLieu = '👨‍🏫 <b>' + (t.gvTong - t.gvVang.length) + '/' + t.gvTong + '</b> CBGV có mặt · ' +
+      // Cùng nguyên tắc với màn Tổng quan: chưa điểm nào báo cáo thì "—".
+      soLieu = '👨‍🏫 <b>' + (t.csDaBC ? t.gvCoBC + '/' + t.gvTongBC : '—') + '</b> CBGV có mặt' +
+        (t.csDaBC && t.csDaBC < t.dsCS.length ? ' <small>(' + t.csDaBC + '/' + t.dsCS.length + ' điểm)</small>' : '') + ' · ' +
         '👧 <b>' + t.hsTong.toLocaleString('vi-VN') + '</b> học sinh · ' +
         '🟢 <b>' + t.soXanh + '/' + t.dsCS.length + '</b> điểm trường an toàn' +
         (t.soChua ? ' · ⚪ <b>' + t.soChua + '</b> chưa xác nhận' : '');

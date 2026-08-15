@@ -1869,15 +1869,22 @@ nav.menu::-webkit-scrollbar { display: none; }
   padding: 0 20px 16px; display: flex; align-items: center; gap: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
-.dh-sb-logo {
-  width: 32px; height: 32px; border-radius: 50%; background: #fff; color: var(--dam);
-  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px;
-  flex-shrink: 0; overflow: hidden;
+/* Đầu thanh bên nay là NGÀY HÔM NAY, không phải logo + tên trường nữa —
+   hai thứ đó đã nằm ở đầu trang, cách chỗ này chừng 300px. */
+.dh-sb-ngay { line-height: 1.3; min-width: 0; }
+.dh-sb-ngay span {
+  display: block; font-size: 10px; font-weight: 800;
+  letter-spacing: .14em; color: var(--sb-mo);
 }
-.dh-sb-logo img { width: 100%; height: 100%; object-fit: cover; }
-.dh-sb-ten { line-height: 1.25; min-width: 0; }
-.dh-sb-ten b { display: block; font-weight: 700; font-size: 12.5px; }
-.dh-sb-ten span { font-size: 10.5px; color: var(--sb-phu); }
+.dh-sb-ngay b { display: block; font-weight: 700; font-size: 13px; margin-top: 2px; }
+
+/* Chip "dữ liệu thật": trước là băng cao chiếm trọn một dòng, nay một dòng
+   mảnh — người mở app mỗi sáng chỉ cần biết đang chạy số thật hay số mẫu. */
+.dh-chip-that {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  background: var(--ok-nen); color: var(--ok); border: 1px solid #bfe3d2;
+  border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 600;
+}
 .dh-sb-nhom {
   padding: 14px 20px 6px; font-size: 10px; font-weight: 800;
   letter-spacing: .14em; color: var(--sb-mo);
