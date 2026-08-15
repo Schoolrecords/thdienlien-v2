@@ -1309,7 +1309,9 @@
       '<div class="hd-kiem xanh" style="margin-top:0">Đang báo cáo <b>' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</b> cho <b>' + thoat(tenCoSo(BC_CS)) + '</b>.</div>' +
       oAT + oCSVC + oGhiChu + oChieu +
       '<button class="dh-nut-gui' + (BC_ANTOAN ? '' : ' mo') + '" onclick="DH.bcGui()">XÁC NHẬN ĐẦU BUỔI</button>' +
-      '<div class="dh-ghi-chu-nho" style="text-align:center">Sau khi xác nhận, bảng điều hành của Ban giám hiệu cập nhật ngay.</div>';
+      // Căn TRÁI cho thẳng mép nút — nút nay rộng vừa nội dung chứ không trải
+      // hết hàng nữa, để căn giữa thì chữ lệch hẳn sang phải so với nút.
+      '<div class="dh-ghi-chu-nho">Sau khi xác nhận, bảng điều hành của Ban giám hiệu cập nhật ngay.</div>';
   }
 
   // ════════════════════════════════════════════════════════════
@@ -2151,7 +2153,7 @@
     // xếp dọc (.dh-hai-cot đã lo). Nhật ký riêng của màn này bỏ đi — nay MỌI
     // màn đều có khối nhật ký ở cuối, để hai chỗ là đọc hai lần.
     return '<div class="dh-hai-cot">' +
-      '<div>' + formBV + '</div>' +
+      '<div class="dh-cot-nhap">' + formBV + '</div>' +
       '<div><div class="dh-tieu-de" style="margin-top:0">Sự việc đang theo dõi</div>' + dsSV + '</div>' +
       '</div>';
   }

@@ -1573,11 +1573,25 @@ select.dh-o-nhap { width: auto; margin-top: 0; }
 .dh-tick input { width: 19px; height: 19px; margin-top: 1px; }
 
 /* Nút gửi to bản mobile */
+/* Nút gửi chính (XÁC NHẬN ĐẦU BUỔI · GỬI BÁO CÁO).
+   ⚠️ KHÔNG để width:100% trên máy tính. Kiểu nút trải hết bề ngang là kiểu
+   của ĐIỆN THOẠI — ngón cái chạm đâu cũng trúng. Bê nguyên lên màn 1720px
+   thì nó thành một thanh navy dài gần một mét cho ba chữ, vừa thô vừa lệch
+   hẳn so với nút "Lưu phiếu kiểm tra" nhỏ gọn ngay bên dưới.
+   Máy tính: rộng vừa nội dung, canh trái theo biểu mẫu. Điện thoại: trải
+   hết như cũ (xem @media dưới). */
 .dh-nut-gui {
-  font: inherit; font-size: 15.5px; font-weight: 800; letter-spacing: .4px; cursor: pointer;
-  display: block; width: 100%; min-height: 54px; margin: 16px 0 6px;
-  border: 0; border-radius: 13px; background: var(--dam); color: #fff;
+  font: inherit; font-size: 14.5px; font-weight: 800; letter-spacing: .3px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 250px; max-width: 100%; padding: 0 32px; min-height: 48px; margin: 16px 0 6px;
+  border: 0; border-radius: 11px; background: var(--dam); color: #fff;
 }
+.dh-nut-gui:hover { background: #1e4593; }
+
+/* Biểu mẫu nhập không nên rộng quá — ô một dòng kéo dài 900px thì mắt phải
+   quét cả sải tay mới hết, mà nội dung thật chỉ vài chữ. Giới hạn bề ngang
+   là cách thường dùng cho mọi biểu mẫu. */
+.dh-cot-nhap { max-width: 620px; }
 .dh-nut-gui.mo { opacity: .45; }
 
 /* Thẻ điểm danh một lớp */
@@ -1642,6 +1656,10 @@ select.dh-o-nhap { width: auto; margin-top: 0; }
   .dh-5the { grid-template-columns: repeat(2, 1fr); }
   .dh-5the .o-so:last-child { grid-column: span 2; }
   .dh-hai-cot { grid-template-columns: 1fr; }
+  /* Điện thoại: nút gửi trở lại trải hết bề ngang — ngón cái chạm đâu cũng
+     trúng, và bỏ luôn giới hạn bề ngang biểu mẫu vì màn đã hẹp sẵn. */
+  .dh-nut-gui { width: 100%; min-width: 0; }
+  .dh-cot-nhap { max-width: none; }
 }
 @media (max-width: 560px) {
   .dh-bang { font-size: 14.5px; padding: 13px 12px; }
