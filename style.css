@@ -2239,6 +2239,40 @@ nav.menu::-webkit-scrollbar { display: none; }
   }
 }
 
+/* ── Lưới thẻ tick: Cơ sở vật chất · Phiếu kiểm tra điểm trường ────────────
+   Thay cho các hàng tràn hết bề ngang. Trên màn 1720px, nhãn nằm mép trái mà
+   nút nằm mép phải thì mắt phải quét ngang cả sải tay mới biết mục nào đang
+   chọn gì — và càng rộng màn càng tệ. Thẻ giữ nhãn với nút cạnh nhau. */
+.dh-luoi-tick {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+  gap: 10px; margin-bottom: 4px;
+}
+.dh-o-tick {
+  background: #fff; border: 1px solid var(--vien); border-radius: 12px;
+  padding: 11px 14px 12px;
+}
+.dh-o-tick .nhan { font-size: 13px; font-weight: 700; color: var(--dam); margin-bottom: 8px; }
+.dh-o-tick .nut { display: flex; gap: 7px; flex-wrap: wrap; }
+.dh-o-tick .nut .chip-loc { margin: 0; }
+
+/* Khai người vắng (màn Điểm danh & Chấm công) */
+.dh-vang-ds {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 10px; margin-top: 10px;
+}
+.dh-vang-o {
+  background: #fff; border: 1px solid var(--vien); border-left: 4px solid #8f5d14;
+  border-radius: 12px; padding: 11px 14px 12px;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+}
+.dh-vang-o > b { flex: 1 1 100%; font-size: 13.5px; color: var(--dam); }
+.dh-vang-o .dh-o-nhap { width: auto; min-width: 118px; margin-top: 0; }
+.dh-vang-den {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12.5px; color: var(--chu-mo);
+}
+.dh-vang-den .dh-o-nhap { min-width: 0; }
+
 /* ── THỜI KHÓA BIỂU (thoi-khoa-bieu.js) ───────────────────────────────────── */
 .tkb-tai {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
