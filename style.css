@@ -1906,6 +1906,15 @@ nav.menu::-webkit-scrollbar { display: none; }
 .dh-tab-nut.on {
   background: var(--dam); color: #fff; font-weight: 800; border-color: var(--dam);
 }
+/* Mục mở sang APP KHÁC (Thời khóa biểu). Viền nét đứt để phân biệt ngay với
+   các tab đổi màn tại chỗ — bấm vào là rời khỏi Hồ sơ số, người dùng nên
+   biết trước điều đó. */
+.dh-tab-ngoai {
+  border: 1px dashed var(--vien-dam); color: var(--dam);
+  text-decoration: none; display: inline-flex; align-items: center;
+}
+.dh-tab-ngoai:hover { background: #eef2f9; border-style: solid; }
+.dh-chon-hang a.chip-loc { text-decoration: none; border-style: dashed; }
 .dh-tab-badge {
   background: #c0392b; color: #fff; font-size: 10px; font-weight: 800;
   border-radius: 999px; padding: 1px 6px; margin-left: 5px; vertical-align: 1px;

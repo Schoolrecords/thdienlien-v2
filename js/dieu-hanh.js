@@ -1045,10 +1045,13 @@
   // Nhắc dạy thay khi có GV vắng — giữ nguyên tinh thần bản cũ
   function veDayThayNhac() {
     if (THAT) {
-      // Nay đã có màn Thời khóa biểu thật — chỉ đúng chỗ để nạp, đừng bắt
-      // người dùng đi tìm "bản mẫu ở cuối màn Lịch tuần" như trước.
-      return '<div class="hd-kiem vang">👨‍🏫 Bố trí <b>dạy thay theo tiết</b> sẽ mở khi nạp thời khóa biểu — ' +
-        '<a href="javascript:DH.tab(\'tkb\')">nạp ngay ở màn Thời khóa biểu →</a></div>';
+      // Dạy thay là việc của app Thời khóa biểu — nó có cả thời khóa biểu lẫn
+      // bộ sinh phương án để Hiệu trưởng chọn. Hồ sơ số KHÔNG làm lại việc đó,
+      // chỉ chỉ đường sang.
+      return '<div class="hd-kiem vang">👨‍🏫 <b>Bố trí dạy thay</b> làm ở app Thời khóa biểu — ' +
+        'app đó tự đưa ra phương án để Hiệu trưởng chọn. ' +
+        '<a href="' + thoat((window.CAU_HINH || {}).URL_TKB || '#') +
+        '" target="_blank" rel="noopener">mở app Thời khóa biểu ↗</a></div>';
     }
     var thieu = DAY_THAY.filter(function (x) { return !x.gv; }).length;
     return thieu
@@ -2199,7 +2202,10 @@
     // với người vắng, đứng riêng một màn thì lạc lõng.
     { nhom: 'KẾ HOẠCH', muc: [
       { ma: 'lichtuan', ten: 'Lịch tuần', bi: '📅' },
-      { ma: 'tkb', ten: 'Thời khóa biểu', bi: '🗓️', ngan: 'TKB' },
+      // MỞ SANG APP KHÁC, không phải một màn của Hồ sơ số — xem chú thích
+      // "vì sao gỡ module Thời khóa biểu" ở đầu tệp.
+      { ma: 'tkb', ten: 'Thời khóa biểu ↗', bi: '🗓️', ngan: 'TKB',
+        ngoai: (window.CAU_HINH || {}).URL_TKB },
       { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
@@ -2229,8 +2235,10 @@
   // Mã màn CŨ → màn tương ứng hiện nay. Không có bảng này thì ai đang mở dở
   // một màn đã bị gộp hoặc gỡ (trạng thái còn trong bộ nhớ trình duyệt) sẽ
   // rơi vào màn không có tab nào sáng, không biết đường quay lại.
+  // 'tkb' nay là LIÊN KẾT NGOÀI chứ không còn là màn — ai giữ trạng thái cũ
+  // thì đưa về Tổng quan, đừng để rơi vào màn trắng không tab nào sáng.
   var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao', daythay: 'lichtuan',
-                 dugio: 'tkb', homnay: 'tongquan' };
+                 dugio: 'tongquan', tkb: 'tongquan', homnay: 'tongquan' };
 
   function veDieuHanh() {
     var vung = $('#vung-dieuhanh');
@@ -2266,6 +2274,13 @@
       '<div class="dh-tab-cuon">' +
       moiMuc().map(function (m) {
         var d = demCho(m.ma);
+        // Mục có địa chỉ ngoài thì mở TAB MỚI, không đổi màn. Dùng thẻ <a>
+        // chứ không phải nút: người dùng bấm giữ / chuột phải vẫn mở được
+        // tab mới theo thói quen, và trình đọc màn hình đọc đúng là liên kết.
+        if (m.ngoai) {
+          return '<a class="dh-tab-nut dh-tab-ngoai" href="' + thoat(m.ngoai) +
+            '" target="_blank" rel="noopener">' + thoat(m.ten) + '</a>';
+        }
         return '<button class="dh-tab-nut' + (TAB === m.ma ? ' on' : '') +
           '" onclick="DH.tab(\'' + m.ma + '\')">' + thoat(m.ten) +
           (d ? '<span class="dh-tab-badge">' + d + '</span>' : '') + '</button>';
@@ -2293,6 +2308,10 @@
     var chipKhac = '<div class="dh-chon-hang chi-dien-thoai" style="overflow-x:auto;flex-wrap:nowrap">' +
       moiMuc().filter(function (m) { return TAB_MOBILE.indexOf(m.ma) < 0; }).map(function (m) {
         var d = demCho(m.ma);
+        if (m.ngoai) {
+          return '<a class="chip-loc" href="' + thoat(m.ngoai) + '" target="_blank" rel="noopener">' +
+            m.bi + ' ' + thoat(m.ten) + '</a>';
+        }
         return '<button class="chip-loc' + (TAB === m.ma ? ' on' : '') +
           '" onclick="DH.tab(\'' + m.ma + '\')">' + m.bi + ' ' + thoat(m.ten) +
           (d ? ' <b class="dh-do">(' + d + ')</b>' : '') + '</button>';
@@ -2325,8 +2344,6 @@
       // phải nhớ vào hai chỗ mới xong việc buổi sáng, và "đã báo cáo" không
       // còn định nghĩa được rõ ràng.
       TAB === 'baocao' ? (veKhaiVang() + veBangTrangThaiGV() + veBangCong()) :
-      TAB === 'tkb' ? (window.veTKB ? window.veTKB() :
-        '<div class="the-thong-bao">Chưa nạp được <b>js/thoi-khoa-bieu.js</b>.</div>') :
       TAB === 'diemdanh' ? veDiemDanh() :
       TAB === 'dexuat' ? veDeXuat() :
       // Lịch tuần ở tệp riêng (js/lich-tuan.js); thiếu tệp thì vẫn còn phần

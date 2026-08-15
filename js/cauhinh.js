@@ -21,6 +21,12 @@ window.CAU_HINH = {
   NAM_HOC: '',
   SLOGAN: 'Vững bước tương lai – Tự tin hội nhập',
 
+  // --- App xếp Thời khóa biểu (dự án riêng: Schoolrecords/tkb) ---
+  // Hồ sơ số KHÔNG quản lý thời khóa biểu và KHÔNG bố trí dạy thay — app kia
+  // đã làm cả hai, lại làm sâu hơn (tự sinh phương án dạy thay để Hiệu trưởng
+  // chọn). Ở đây chỉ có một nút mở sang đó. Xem mục 13.7 sổ dự án.
+  URL_TKB: 'https://schoolrecords.github.io/tkb/',
+
   // --- Mục tiêu chất lượng ---
   // Trường đã đạt chuẩn quốc gia MỨC ĐỘ 2 từ năm 2022 (thầy Chung xác nhận 11/8/2026)
   MUC_TIEU_CHUAN_QG: 'Giữ vững và phát triển chuẩn quốc gia Mức độ 2',
