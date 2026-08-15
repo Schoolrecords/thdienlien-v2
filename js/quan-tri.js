@@ -24,6 +24,8 @@
     return !!u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu');
   }
 
+  function toiLaAi() { return (window.NGUOI_DUNG || {}).id; }
+
   window.moQuanTri = function (ma) {
     TAB = ma || 'tk';
     window.veQuanTri();
@@ -73,17 +75,24 @@
         var choDuyet = ds.filter(function (u) { return u.trang_thai === 'cho_duyet'; }).length;
 
         hop.innerHTML = '<div class="nhan-nho" style="margin:14px 0 10px">Đã đăng nhập ' + ds.length + ' tài khoản' +
-          (choDuyet ? ' · <b style="color:#c8901c">' + choDuyet + ' chờ duyệt</b>' : '') +
+          // --canh (#8f5d14) đạt 5,1:1 trên nền sáng; #c8901c cũ chỉ 3,3:1 và
+          // đã bị bỏ khỏi bảng màu phiên 14-15/8.
+          (choDuyet ? ' · <b style="color:var(--canh)">' + choDuyet + ' chờ duyệt</b>' : '') +
           ' — thầy cô có tên trong danh sách mời thì lần đầu đăng nhập là vào thẳng, không cần duyệt.</div>' +
           '<div class="cuon-ngang"><table class="bang-quan-tri"><thead><tr>' +
           '<th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>' +
           ds.map(function (u) {
-            return '<tr data-id="' + u.id + '"' + (u.trang_thai === 'cho_duyet' ? ' class="dong-cho"' : '') + '>' +
+            // Không vẽ nút Xóa ở dòng của chính mình và ở dòng admin/BGH —
+            // hàm xoa_tai_khoan trên máy chủ cũng chặn, đây chỉ là ẩn cho gọn.
+            var xoaDuoc = u.id !== toiLaAi() && u.vai_tro !== 'admin' && u.vai_tro !== 'ban_giam_hieu';
+            return '<tr data-id="' + u.id + '" data-email="' + thoat(u.email) + '"' +
+              (u.trang_thai === 'cho_duyet' ? ' class="dong-cho"' : '') + '>' +
               '<td><b>' + thoat(u.ho_ten) + '</b>' + (u.chuc_vu ? '<br><small>' + thoat(u.chuc_vu) + '</small>' : '') + '</td>' +
               '<td>' + thoat(u.email) + '</td>' +
               '<td>' + chonHTML('vai_tro', u.vai_tro, ['admin', 'ban_giam_hieu', 'to_truong', 'giao_vien', 'nhan_vien'], TEN_VAI_TRO) + '</td>' +
               '<td>' + chonHTML('trang_thai', u.trang_thai, ['cho_duyet', 'hoat_dong', 'khoa'], TEN_TRANG_THAI) + '</td>' +
-              '<td><button class="nut-luu-nd">Lưu</button></td></tr>';
+              '<td><button class="nut-luu-nd">Lưu</button>' +
+              (xoaDuoc ? '<button class="nut-xoa-nd">Xóa</button>' : '') + '</td></tr>';
           }).join('') + '</tbody></table></div>';
 
         Array.prototype.slice.call(hop.querySelectorAll('.nut-luu-nd')).forEach(function (nut) {
@@ -100,6 +109,46 @@
                 nut.textContent = ok ? 'Đã lưu ✓' : 'Lỗi!';
                 if (ok) dong.classList.remove('dong-cho');
                 setTimeout(function () { nut.textContent = 'Lưu'; }, 2500);
+              });
+          });
+        });
+
+        // Xóa hẳn: gọi hàm xoa_tai_khoan (sql/21-xoa-tai-khoan.sql). Hàm xóa ở
+        // auth.users, dòng nguoi_dung đi theo nhờ cascade. Mọi hàng rào nằm ở
+        // máy chủ; hộp thoại dưới đây chỉ để tay không nhanh hơn đầu.
+        Array.prototype.slice.call(hop.querySelectorAll('.nut-xoa-nd')).forEach(function (nut) {
+          nut.addEventListener('click', function () {
+            var dong = nut.closest('tr');
+            var email = dong.getAttribute('data-email');
+            if (!window.confirm(
+              'Xóa hẳn tài khoản ' + email + ' khỏi hệ thống?\n\n' +
+              'Người này mất toàn bộ quyền truy cập và biến khỏi danh sách. ' +
+              'Sổ nhật ký vẫn giữ vết ai xóa, lúc nào.\n\n' +
+              'Chỉ muốn chặn tạm thì chọn trạng thái 🔴 Khóa rồi bấm Lưu, đừng xóa.')) return;
+
+            nut.disabled = true; nut.textContent = '…';
+            window.MAY_CHU.rpc('xoa_tai_khoan', { p_id: dong.getAttribute('data-id') })
+              .then(function (r) {
+                if (r.error) {
+                  window.alert('Không xóa được.\n\n' + (r.error.message || 'Lỗi không rõ.'));
+                  nut.disabled = false; nut.textContent = 'Xóa';
+                  return;
+                }
+                if (r.data && r.data.con_trong_ds_moi) {
+                  window.alert('Đã xóa ' + email + '.\n\n' +
+                    'LƯU Ý: email này vẫn nằm trong DANH SÁCH MỜI, nên nếu người đó đăng nhập ' +
+                    'Google lần nữa thì tài khoản tự tạo lại và vào thẳng, không cần duyệt. ' +
+                    'Muốn chặn hẳn thì phải bỏ tên khỏi danh sách mời.');
+                }
+                veTaiKhoan(hop);
+              })
+              // Mạng rớt giữa chừng thì promise reject, không vào nhánh r.error
+              // ở trên — thiếu chỗ này là nút đứng mãi ở dấu "…" và admin tưởng
+              // đã xóa xong. Hỏng thì phải NÓI RA.
+              .catch(function (e) {
+                window.alert('Không gọi được máy chủ.\n\n' + ((e && e.message) || e) +
+                  '\n\nKiểm tra mạng rồi thử lại — chưa có gì bị xóa.');
+                nut.disabled = false; nut.textContent = 'Xóa';
               });
           });
         });
