@@ -54,6 +54,34 @@
 
   function kho() { return (window.DH_KHO && window.DH_KHO.dl) ? window.DH_KHO.dl() : null; }
 
+  // ══════════ NẠP TRỄ THƯ VIỆN ĐỌC EXCEL ══════════
+  // xlsx.min.js nặng 930 KB, bằng 61% toàn bộ trang, mà chỉ cần khi người
+  // dùng bấm CHỌN TỆP ở đúng màn này. Nạp sẵn trong index.html là bắt mọi
+  // thầy cô tải 930 KB mỗi lần mở app — trên điện thoại với mạng trường thì
+  // rất nặng. Nay chỉ nạp khi thật sự đọc tệp.
+  // (Tạo tệp mẫu KHÔNG cần thư viện này — bộ đóng gói .xlsx tự viết ở
+  //  js/xuat-excel.js chỉ nặng ~9 KB và đã nạp sẵn.)
+  var dangNap = null;
+  function napXLSX() {
+    if (window.XLSX) return Promise.resolve();
+    if (dangNap) return dangNap;                 // bấm hai lần không tải hai lần
+    dangNap = new Promise(function (xong, hong) {
+      var s = document.createElement('script');
+      // Bám theo số phiên bản của chính tệp này để không dính bộ nhớ đệm cũ
+      var v = (document.querySelector('script[src*="thoi-khoa-bieu.js"]') || {}).src || '';
+      var m = /[?&]v=(\d+)/.exec(v);
+      s.src = 'lib/xlsx.min.js' + (m ? '?v=' + m[1] : '');
+      s.onload = function () { xong(); };
+      s.onerror = function () {
+        dangNap = null;                          // hỏng thì cho thử lại
+        hong(new Error('Không tải được thư viện đọc Excel (lib/xlsx.min.js). ' +
+          'Kiểm tra mạng rồi chọn tệp lại.'));
+      };
+      document.head.appendChild(s);
+    });
+    return dangNap;
+  }
+
   function docMonHoc() {
     // Đọc danh mục môn + khối từ CSDL; lỗi hoặc chưa đăng nhập thì dùng bản
     // dự phòng ở trên (đúng seed sql/04, theo Chương trình GDPT 2018).
@@ -76,7 +104,8 @@
   }
 
   window.tkbTaiMau = function () {
-    if (!window.XLSX) { window.notify('Chưa nạp được thư viện Excel.'); return; }
+    // Tạo tệp mẫu KHÔNG đụng tới SheetJS — dùng bộ đóng gói riêng ở
+    // js/xuat-excel.js, nên bấm nút này không phải chờ tải 930 KB.
     var dl = kho();
     if (!dl) { window.notify('Chưa nạp được dữ liệu nhà trường — đăng nhập rồi thử lại.'); return; }
 
@@ -390,10 +419,27 @@
     var tep = input.files && input.files[0];
     if (!tep) return;
     LOI_DOC = '';
-    if (!window.XLSX) {
-      LOI_DOC = 'Chưa nạp được thư viện đọc Excel (lib/xlsx.min.js).';
-      return veLai();
+    // Nạp thư viện TRƯỚC rồi mới đọc. Lần đầu mất một hai giây tải 930 KB —
+    // nói ra để người dùng biết máy đang làm việc, đừng bấm lại.
+    LOI_DOC = '';
+    var vung = $('#tkb-vung');
+    if (!window.XLSX && vung) {
+      vung.insertAdjacentHTML('afterbegin',
+        '<div class="hd-kiem vang" id="tkb-dang-tai">⏳ Đang tải bộ đọc Excel (lần đầu, ~1 MB)…</div>');
     }
+    napXLSX().then(function () {
+      var x = document.getElementById('tkb-dang-tai');
+      if (x) x.remove();
+      docTep(tep);
+    }).catch(function (e) {
+      var x = document.getElementById('tkb-dang-tai');
+      if (x) x.remove();
+      LOI_DOC = (e && e.message) || String(e);
+      veLai();
+    });
+  };
+
+  function docTep(tep) {
     var fr = new FileReader();
     fr.onerror = function () { LOI_DOC = 'Không đọc được tệp.'; veLai(); };
     fr.onload = function (e) {
@@ -427,7 +473,7 @@
       veLai();
     };
     fr.readAsArrayBuffer(tep);
-  };
+  }
 
   function veLai() {
     var vung = $('#tkb-vung');
