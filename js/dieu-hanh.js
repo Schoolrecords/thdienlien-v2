@@ -707,7 +707,8 @@
       if (!qt && !cuaToi) return;    // GV thường không cần thấy dòng này
       ds.push({ mau: 'xam', loai: 'CHƯA BÁO CÁO', pill: 'xam',
         chu: '<b>' + thoat(c.ten) + '</b> chưa xác nhận An toàn ' + tenBuoi(b),
-        nut: cuaToi ? '<button class="dh-nut-nho" onclick="DH.tab(\'baocao\')">Báo cáo ngay</button>' : '' });
+        // Báo cáo đầu buổi nay nằm ở màn BÁO VIỆC, không phải màn Điểm danh
+        nut: cuaToi ? '<button class="dh-nut-nho" onclick="DH.tab(\'baoviec\')">Báo cáo ngay</button>' : '' });
     });
 
     // 4 · Việc quá hạn — BGH thấy hết, cá nhân thấy việc của mình
@@ -1109,15 +1110,11 @@
   var BC_CSVC = { dien: '', nuoc: '', csvc: '' };
   var TEN_CSVC = { dien: 'Điện', nuoc: 'Nước', csvc: 'Phòng học – thiết bị' };
 
-  function veBaoCao() {
-    // Ba tầng cùng một chuyện "ai có mặt": hằng ngày báo cáo đầu buổi ·
-    // xuống điểm thì tick phiếu kiểm tra (BGH) · cuối tháng bảng công tự
-    // cộng ra từ chính sổ vắng đã bấm mỗi ngày — không ai nhập lại lần nào.
-    // Giáo viên không phụ trách điểm nào thì veBaoCaoChinh() chỉ là một khối
-    // từ chối. Thẻ này nay là lối DUY NHẤT tới bảng công của chính họ — đẩy
-    // bảng công lên trước, đừng bắt cuộn qua lời từ chối mới thấy dòng mình.
-    return veBaoCaoChinh() + veBangTrangThaiGV() + (laQT() ? veKiemTraDT() : '');
-  }
+  // (Hàm veBaoCao() gộp ba khối đã bỏ ngày 15/8/2026 — ba khối đó nay chia về
+  //  hai màn theo việc NHẬP / XEM, xem chú thích ở chỗ chọn nội dung tab.
+  //  Ba tầng của cùng một chuyện "ai có mặt" thì vẫn nguyên: hằng ngày báo cáo
+  //  đầu buổi · xuống điểm thì tick phiếu kiểm tra · cuối tháng bảng công tự
+  //  cộng ra từ chính sổ vắng đã bấm mỗi ngày — không ai nhập lại lần nào.)
 
   // ── Phiếu kiểm tra điểm trường: 5 mục tick nhanh trên điện thoại,
   //    mục ⚠ tự sinh thành SỰ VIỆC, phiếu tự vào nhật ký — không nhập lại ──
@@ -2130,7 +2127,7 @@
   var DS_NHOM = [
     { nhom: 'HÔM NAY', muc: [
       { ma: 'tongquan', ten: 'Tổng quan', bi: '🏠', ngan: 'Hôm nay' },
-      { ma: 'baoviec', ten: 'Báo việc sự cố', bi: '⚡', ngan: 'Báo việc' } ] },
+      { ma: 'baoviec', ten: 'Báo việc', bi: '⚡', ngan: 'Báo việc' } ] },
     { nhom: 'NHÂN SỰ', muc: [
       { ma: 'baocao', ten: 'Điểm danh & Chấm công', bi: '🧑‍🏫', ngan: 'Chấm công' } ] },
     { nhom: 'CÔNG VIỆC', muc: [
@@ -2254,10 +2251,20 @@
 
     var noiDung =
       TAB === 'tongquan' ? veTongQuan() :
-      // Điểm danh và Bảng công nay chung MỘT màn: báo cáo đầu buổi + trạng
-      // thái từng người ở trên, bảng công cộng dồn cả tháng ở dưới. Cùng một
-      // chuyện "ai có mặt", chỉ khác đơn vị thời gian.
-      TAB === 'baocao' ? (veBaoCao() + veBangCong()) :
+      // ── CHIA VIỆC GIỮA HAI MÀN (thầy Chung chốt 15/8/2026) ──
+      // "Báo việc"            = nơi NHẬP  → báo cáo đầu buổi (an toàn · cơ sở
+      //                          vật chất · ai vắng) + sự việc đột xuất +
+      //                          phiếu kiểm tra điểm trường của Ban giám hiệu
+      // "Điểm danh & Chấm công" = nơi XEM → bảng từng người có mặt/vắng +
+      //                          bảng công tháng
+      //
+      // 🔑 Báo cáo đầu buổi phải đi NGUYÊN MỘT KHỐI sang màn Báo việc, không
+      // xé mục 1-2 sang một màn còn mục 3 ở lại: nó là MỘT hành động, ghi vào
+      // MỘT bản ghi, và app căn đúng bản ghi đó để biết điểm nào chưa báo cáo
+      // (dòng "quá 13:45 — Nhắc" ở màn Tổng quan). Xé đôi thì cô phụ trách
+      // phải nhớ vào hai chỗ mới xong việc buổi sáng, và "đã báo cáo" không
+      // còn định nghĩa được rõ ràng.
+      TAB === 'baocao' ? (veBangTrangThaiGV() + veBangCong()) :
       TAB === 'tkb' ? (window.veTKB ? window.veTKB() :
         '<div class="the-thong-bao">Chưa nạp được <b>js/thoi-khoa-bieu.js</b>.</div>') :
       TAB === 'diemdanh' ? veDiemDanh() :
@@ -2271,7 +2278,10 @@
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       TAB === 'thongbao' ? veThongBao() :
       TAB === 'viec' ? veViec() :
-      TAB === 'baoviec' ? veBaoViec() : veTongQuan();
+      // Báo cáo đầu buổi lên TRƯỚC: việc hằng ngày, ai cũng phải làm.
+      // Báo sự việc đột xuất ở giữa, phiếu kiểm tra điểm (chỉ BGH) ở cuối.
+      TAB === 'baoviec' ? (veBaoCaoChinh() + veBaoViec() + (laQT() ? veKiemTraDT() : '')) :
+      veTongQuan();
 
     // ── Thanh tab dưới (điện thoại) ──
     var tabM = '<div class="dh-tabm">' + TAB_MOBILE.map(function (ma) {
