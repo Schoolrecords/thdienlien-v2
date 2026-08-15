@@ -93,11 +93,15 @@
     $('#tk-hoc-sinh').textContent = Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN');
     $('#hs-tong').textContent = d.tong;
     $('#hs-co').textContent = d.co;
-    $('#hs-co-nhan').textContent = 'Đã có — ' + Math.round(d.co * 100 / d.tong) + '%';
+    // Chắn phép chia cho 0: kho hồ sơ rỗng (hoặc đọc lỗi) thì d.tong = 0 →
+    // 0/0 ra NaN, thầy cô nhìn thấy dòng "Đã có — NaN%" và thanh tiến độ dài
+    // vô định. Dòng 168 dưới đây vốn đã chắn, chỗ này thì chưa.
+    var ptCo = d.tong ? Math.round(d.co * 100 / d.tong) : 0;
+    $('#hs-co-nhan').textContent = d.tong ? 'Đã có — ' + ptCo + '%' : 'Chưa có dữ liệu';
     $('#hs-dang').textContent = d.dang;
     $('#hs-chua').textContent = d.chua;
     $('#td-tong').style.width = '100%';
-    $('#td-co').style.width = Math.round(d.co * 100 / d.tong) + '%';
+    $('#td-co').style.width = ptCo + '%';
   }
 
   // ════════════════════════════════════════════════════════════
