@@ -29,6 +29,194 @@
   var DU_LIEU = null;     // { tiet: [...], nguon: '', luc: '' }
   var LOI_DOC = '';
 
+  // ══════════════════════════════════════════════════════════════════
+  // TẠO TỆP MẪU — app điền sẵn mọi thứ đã biết, trường chỉ điền phần
+  // app không thể biết (tiết nào học môn gì, ai dạy).
+  // ══════════════════════════════════════════════════════════════════
+  // 🔑 VÌ SAO PHẢI CÓ TỆP MẪU DO APP TẠO:
+  // Tệp của phần mềm xếp lịch ghi tên lớp, tên giáo viên theo cách của nó —
+  // "Điểm trường Diễn Liên" hay "Diễn Liên", "Cô Hòa" hay "Nguyễn Thị Hòa".
+  // Lệch một chữ là app không tra được về đúng người, đúng lớp. Tệp mẫu chép
+  // sẵn DANH SÁCH THẬT từ cơ sở dữ liệu nhà trường vào các tab danh mục, nên
+  // người điền chỉ việc chọn lại, không gõ tay.
+  //
+  // Khung tiết mặc định: Thứ Hai–Thứ Sáu, sáng 4 tiết, chiều 3 tiết — đúng
+  // nếp tiểu học 2 buổi/ngày. Trường dạy khác thì thêm/bớt DÒNG trong tab
+  // TKB, app đọc theo dòng thật chứ không ép khung này.
+  var MON_DP = [
+    ['TV', 'Tiếng Việt', '1, 2, 3, 4, 5'], ['TOAN', 'Toán', '1, 2, 3, 4, 5'],
+    ['DD', 'Đạo đức', '1, 2, 3, 4, 5'], ['TNXH', 'Tự nhiên và Xã hội', '1, 2, 3'],
+    ['KH', 'Khoa học', '4, 5'], ['LSDL', 'Lịch sử và Địa lí', '4, 5'],
+    ['THCN', 'Tin học và Công nghệ', '3, 4, 5'], ['NN1', 'Ngoại ngữ 1 (Tiếng Anh)', '3, 4, 5'],
+    ['GDTC', 'Giáo dục thể chất', '1, 2, 3, 4, 5'], ['AN', 'Âm nhạc', '1, 2, 3, 4, 5'],
+    ['MT', 'Mĩ thuật', '1, 2, 3, 4, 5'], ['HDTN', 'Hoạt động trải nghiệm', '1, 2, 3, 4, 5']
+  ];
+
+  function kho() { return (window.DH_KHO && window.DH_KHO.dl) ? window.DH_KHO.dl() : null; }
+
+  function docMonHoc() {
+    // Đọc danh mục môn + khối từ CSDL; lỗi hoặc chưa đăng nhập thì dùng bản
+    // dự phòng ở trên (đúng seed sql/04, theo Chương trình GDPT 2018).
+    if (!window.MAY_CHU || !(window.DH_KHO && window.DH_KHO.that && window.DH_KHO.that())) {
+      return Promise.resolve(MON_DP);
+    }
+    return Promise.all([
+      window.MAY_CHU.from('mon_hoc').select('ma, ten, so_tt').order('so_tt'),
+      window.MAY_CHU.from('mon_hoc_khoi').select('mon_ma, khoi')
+    ]).then(function (kq) {
+      if (kq[0].error || kq[1].error || !(kq[0].data || []).length) return MON_DP;
+      var khoi = {};
+      (kq[1].data || []).forEach(function (x) {
+        (khoi[x.mon_ma] = khoi[x.mon_ma] || []).push(x.khoi);
+      });
+      return kq[0].data.map(function (m) {
+        return [m.ma, m.ten, (khoi[m.ma] || []).sort(function (a, b) { return a - b; }).join(', ')];
+      });
+    }).catch(function () { return MON_DP; });
+  }
+
+  window.tkbTaiMau = function () {
+    if (!window.XLSX) { window.notify('Chưa nạp được thư viện Excel.'); return; }
+    var dl = kho();
+    if (!dl) { window.notify('Chưa nạp được dữ liệu nhà trường — đăng nhập rồi thử lại.'); return; }
+
+    docMonHoc().then(function (dsMon) {
+      var CH = window.CAU_HINH || {};
+      var namHoc = (window.DH_KHO.nam && window.DH_KHO.nam()) || CH.NAM_HOC || '';
+      var tenTruong = CH.TEN_TRUONG || 'Nhà trường';
+
+      // ── Danh sách lớp thật, sắp theo khối rồi tên ──
+      var lops = Object.keys(dl.lop || {}).sort(function (a, b) {
+        var ka = (dl.lop[a] || {}).khoi || 0, kb = (dl.lop[b] || {}).khoi || 0;
+        return ka - kb || a.localeCompare(b, 'vi');
+      });
+      if (!lops.length) {
+        window.notify('Chưa có lớp nào của năm học ' + namHoc +
+          '. Nạp danh sách lớp trước (Quản trị → Lên lớp hoặc Cơ sở & Sáp nhập).');
+        return;
+      }
+      var tenCS = function (ma) {
+        var c = (dl.coSo || []).filter(function (x) { return x.ma === ma; })[0];
+        return c ? c.ten : (ma || '');
+      };
+
+      var wb = window.XLSX.utils.book_new();
+      var them = function (ten, aoa, cols) {
+        var ws = window.XLSX.utils.aoa_to_sheet(aoa);
+        if (cols) ws['!cols'] = cols;
+        window.XLSX.utils.book_append_sheet(wb, ws, ten);
+      };
+
+      // ── Tab 1: HƯỚNG DẪN ──
+      them('HUONG-DAN', [
+        ['THỜI KHÓA BIỂU — TỆP MẪU DO PHẦN MỀM HỒ SƠ SỐ TẠO'],
+        [tenTruong + ' · Năm học ' + namHoc],
+        [],
+        ['CÁCH ĐIỀN'],
+        ['1', 'Mở tab TKB. Mỗi cột là một lớp, đã điền sẵn tên lớp thật — ĐỪNG đổi tên cột.'],
+        ['2', 'Mỗi ô ghi theo mẫu:  Tên môn | Họ tên giáo viên'],
+        ['', 'Ví dụ:  Toán | Nguyễn Thị Hòa'],
+        ['', 'Dùng dấu gạch đứng | ngăn giữa môn và tên người. Tiết trống thì để ô trống.'],
+        ['3', 'Tên môn lấy đúng ở tab MON-HOC. Tên giáo viên lấy đúng ở tab GIAO-VIEN.'],
+        ['', 'Sai một chữ là phần mềm không tra về đúng người, đúng lớp.'],
+        ['4', 'Khung mặc định: Thứ Hai–Thứ Sáu, sáng 4 tiết, chiều 3 tiết.'],
+        ['', 'Trường dạy khác thì thêm hoặc bớt DÒNG — phần mềm đọc theo dòng thật.'],
+        ['5', 'Điền xong lưu lại, vào app: Điều hành → Thời khóa biểu → Chọn tệp .xlsx'],
+        [],
+        ['PHẦN MỀM SẼ TỰ SOÁT GIÚP'],
+        ['', '· Một giáo viên bị xếp hai lớp cùng một tiết'],
+        ['', '· Tiết đã ghi môn nhưng chưa ghi tên người dạy'],
+        ['', '· Lớp trong tệp lệch với danh sách lớp của trường'],
+        [],
+        ['LƯU Ý'],
+        ['', 'Các tab LOP, GIAO-VIEN, MON-HOC là danh mục để tra cứu, do phần mềm điền sẵn.'],
+        ['', 'Không cần sửa các tab đó. Phần mềm chỉ đọc tab TKB.'],
+        ['', 'Tab PHAN-CONG không bắt buộc — điền thì có thêm bảng phân công giảng dạy.']
+      ], [{ wch: 5 }, { wch: 100 }]);
+
+      // ── Tab 2: TKB (bảng chính) ──
+      var THU5 = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu'];
+      var tkb = [
+        ['THỜI KHÓA BIỂU — ' + tenTruong + ' · Năm học ' + namHoc],
+        ['Mỗi ô ghi:  Tên môn | Họ tên giáo viên      (ví dụ: Toán | Nguyễn Thị Hòa)'],
+        [],
+        ['Thứ', 'Buổi', 'Tiết'].concat(lops)
+      ];
+      THU5.forEach(function (t) {
+        for (var i = 1; i <= 4; i++) tkb.push([t, 'Sáng', i]);
+        for (var j = 1; j <= 3; j++) tkb.push([t, 'Chiều', j]);
+      });
+      them('TKB', tkb, [{ wch: 10 }, { wch: 7 }, { wch: 5 }].concat(
+        lops.map(function () { return { wch: 26 }; })));
+
+      // ── Tab 3: PHAN-CONG (không bắt buộc) ──
+      them('PHAN-CONG', [
+        ['BẢNG PHÂN CÔNG GIẢNG DẠY (không bắt buộc)'],
+        ['Điền nếu muốn có bảng phân công kèm số tiết mỗi người.'],
+        [],
+        ['Họ tên giáo viên', 'Lớp', 'Môn', 'Số tiết/tuần']
+      ], [{ wch: 28 }, { wch: 10 }, { wch: 26 }, { wch: 13 }]);
+
+      // ── Tab 4: LOP — điền sẵn từ cơ sở dữ liệu ──
+      var nhieuCS = (dl.coSo || []).length > 1;
+      them('LOP', [
+        ['DANH SÁCH LỚP — do phần mềm điền sẵn, không sửa'],
+        [],
+        ['Lớp', 'Khối', 'Điểm trường', 'Sĩ số']
+      ].concat(lops.map(function (l) {
+        var o = dl.lop[l] || {};
+        return [l, o.khoi || '', tenCS(o.coSo), o.siSo || 0];
+      })).concat([[], ['Tổng', lops.length + ' lớp',
+        nhieuCS ? (dl.coSo || []).length + ' điểm trường' : '',
+        lops.reduce(function (s, l) { return s + ((dl.lop[l] || {}).siSo || 0); }, 0) + ' học sinh']]),
+        [{ wch: 10 }, { wch: 7 }, { wch: 30 }, { wch: 8 }]);
+
+      // ── Tab 5: GIAO-VIEN — điền sẵn từ cơ sở dữ liệu ──
+      // Sắp theo TÊN (chữ cuối) — đúng cách thầy cô lập danh sách
+      var gvs = (dl.gvDs || []).slice().sort(function (a, b) {
+        var ta = String(a.ten).trim().split(/\s+/).pop(), tb = String(b.ten).trim().split(/\s+/).pop();
+        return ta.localeCompare(tb, 'vi') || String(a.ten).localeCompare(String(b.ten), 'vi');
+      });
+      them('GIAO-VIEN', [
+        ['DANH SÁCH CÁN BỘ, GIÁO VIÊN — do phần mềm điền sẵn, không sửa'],
+        ['Chép đúng cột "Họ tên" sang tab TKB.'],
+        [],
+        ['Họ tên', 'Chức vụ', 'Điểm trường']
+      ].concat(gvs.map(function (g) {
+        return [g.ten, g.chucVu || '', tenCS(g.coSo)];
+      })), [{ wch: 28 }, { wch: 26 }, { wch: 30 }]);
+
+      // ── Tab 6: MON-HOC ──
+      them('MON-HOC', [
+        ['DANH MỤC MÔN HỌC — Chương trình GDPT 2018'],
+        ['Chép đúng cột "Tên môn" sang tab TKB. Cột "Khối học" cho biết môn đó dạy ở khối nào.'],
+        [],
+        ['Mã', 'Tên môn', 'Khối học']
+      ].concat(dsMon), [{ wch: 8 }, { wch: 30 }, { wch: 16 }]);
+
+      // ── Xuất tệp ──
+      var byte = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      var ten = 'TKB-mau-' + khongDau(tenTruong) + '-' + (namHoc || '').replace(/\D/g, '') + '.xlsx';
+      taiVe(new Blob([byte], { type: 'application/octet-stream' }), ten);
+      window.notify('✅ Đã tạo tệp mẫu: ' + ten + ' — điền xong thì nạp lại ở màn này.');
+    });
+  };
+
+  function khongDau(s) {
+    return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+  function taiVe(blob, ten) {
+    var u = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = u; a.download = ten;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    // Thu hồi muộn: Safari trên iPad huỷ tải nếu URL mất ngay lập tức
+    setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+  }
+
   // ══════════ ĐỌC TỆP EXCEL ══════════
   // Trả về mảng phẳng: { thu, buoi, tiet, lop, mon, gv }
   // Một dòng = một tiết của một lớp. Đây là dạng duy nhất lưu vào cơ sở dữ
@@ -75,8 +263,11 @@
       cotLop.forEach(function (cl) {
         var o = String(d[cl.i] || '').trim();
         if (!o) return;
-        // Ô dạng "Tiếng Việt — Nguyễn Thị A". Dấu gạch có thể là — – hoặc -
-        var p = o.split(/\s+[—–-]\s+/);
+        // Ô dạng "Toán | Nguyễn Thị Hòa" (tệp mẫu app tạo) hoặc
+        // "Toán — Nguyễn Thị Hòa" (tệp của phần mềm xếp lịch).
+        // Gạch đứng an toàn hơn hẳn: tên người không bao giờ chứa "|", còn
+        // gạch ngang thì có (tên ghép, tên nước ngoài).
+        var p = o.split(/\s*\|\s*|\s+[—–]\s+|\s+-\s+/);
         ra.push({
           thu: thu, buoi: buoi, tiet: parseInt(tiet, 10) || 0,
           lop: cl.ten, mon: (p[0] || '').trim(), gv: (p[1] || '').trim()
@@ -211,12 +402,15 @@
   function daiTaiLen() {
     return '<div class="tkb-tai">' +
       '<div class="tkb-tai-chu"><b>Nạp thời khóa biểu từ tệp Excel</b>' +
-      '<span>Tệp do phần mềm xếp thời khóa biểu tạo ra — cần có các cột ' +
-      '<b>Thứ · Buổi · Tiết</b> rồi đến từng cột lớp, mỗi ô ghi <b>Môn — Giáo viên</b>. ' +
-      'App đọc tab theo LỚP; bảng theo giáo viên app tự dựng lại nên luôn khớp.</span></div>' +
+      '<span>Chưa có tệp thì bấm <b>Tải tệp mẫu</b> — phần mềm chép sẵn danh sách lớp, ' +
+      'giáo viên và môn học thật của trường vào tệp, điền xong nạp lại đây. ' +
+      'Tệp của phần mềm xếp lịch cũng đọc được, miễn có cột <b>Thứ · Buổi · Tiết</b> ' +
+      'rồi đến từng cột lớp.</span></div>' +
+      '<div class="tkb-nut-hang">' +
+      '<button class="tkb-nut-mau" onclick="tkbTaiMau()">⬇ Tải tệp mẫu</button>' +
       '<label class="tkb-nut-tai">📂 Chọn tệp .xlsx' +
       '<input type="file" accept=".xlsx,.xls" onchange="tkbChonTep(this)" hidden></label>' +
-      '</div>' +
+      '</div></div>' +
       (LOI_DOC ? '<div class="hd-kiem do">⚠ ' + thoat(LOI_DOC) + '</div>' : '');
   }
 
@@ -318,7 +512,7 @@
   function thanTKB() {
     if (!DU_LIEU) {
       return daiTaiLen() +
-        '<div class="the-thong-bao">Chưa nạp thời khóa biểu. Chọn tệp Excel ở trên.<br><br>' +
+        '<div class="the-thong-bao">Chưa nạp thời khóa biểu. Bấm <b>⬇ Tải tệp mẫu</b> ở trên nếu chưa có tệp.<br><br>' +
         '<b>Thời khóa biểu dùng để làm gì trong app:</b><br>' +
         '· Xem nhanh lớp nào đang học môn gì, ai dạy<br>' +
         '· Máy tự soát <b>một giáo viên bị xếp hai lớp cùng lúc</b> — thứ không ai dò nổi bằng mắt trên 710 tiết<br>' +

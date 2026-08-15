@@ -2282,12 +2282,18 @@ nav.menu::-webkit-scrollbar { display: none; }
 .tkb-tai-chu { flex: 1; min-width: 240px; line-height: 1.5; }
 .tkb-tai-chu b { display: block; font-size: 14px; color: var(--dam); }
 .tkb-tai-chu span { font-size: 12px; color: var(--chu-mo); }
-.tkb-nut-tai {
-  background: var(--dam); color: #fff; border-radius: 10px; padding: 11px 18px;
-  font-weight: 700; font-size: 13px; cursor: pointer; flex-shrink: 0; min-height: 44px;
-  display: inline-flex; align-items: center;
+.tkb-nut-hang { display: flex; gap: 9px; flex-wrap: wrap; flex-shrink: 0; }
+.tkb-nut-tai, .tkb-nut-mau {
+  border-radius: 10px; padding: 11px 18px; min-height: 44px;
+  font: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+  display: inline-flex; align-items: center; white-space: nowrap;
 }
+.tkb-nut-tai { background: var(--dam); color: #fff; border: 1px solid var(--dam); }
 .tkb-nut-tai:hover { background: #1e4593; }
+/* Tải mẫu là bước ĐẦU nhưng không phải việc chính — nút viền, không tô đặc,
+   để nút nạp tệp vẫn là chỗ mắt nhìn vào trước. */
+.tkb-nut-mau { background: #fff; color: var(--dam); border: 1px solid var(--vien-dam); }
+.tkb-nut-mau:hover { background: #eef2f9; }
 .tkb-nguon {
   background: var(--o-con); border: 1px solid var(--vien); border-radius: 12px;
   padding: 10px 15px; font-size: 12.5px; color: var(--chu); line-height: 1.6;
