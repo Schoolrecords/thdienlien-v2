@@ -43,12 +43,14 @@
   }
 
   function chanCong() {
+    // ⛔ KHÔNG bày ô chọn trường ở đây. App dùng chung cho nhiều trường, nhưng
+    //    mỗi trường phải thấy MỘT MÌNH mình: thầy cô Diễn Liên không việc gì
+    //    phải biết trường Châu Đình cũng dùng app này, và ngược lại.
+    //    Phân biệt trường bằng ĐỊA CHỈ (tên miền riêng, hoặc ?truong=<mã> mà
+    //    nhà trường cấp cho thầy cô), không bằng ô chọn. Xem §12.6 bản kế hoạch.
     return '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
       'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
-      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>' +
-      // Nhiều trường dùng chung app: cho người vào nhầm trường tự đổi, thay vì
-      // đăng nhập mãi không được mà không hiểu vì sao.
-      (window.htmlChonTruong ? window.htmlChonTruong('Bạn ở trường khác?') : '');
+      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
   }
 
   // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
@@ -82,7 +84,14 @@
         ? 'Tài khoản này đã bị khóa. Thầy cô liên hệ Ban giám hiệu để được mở lại.'
         : 'Thầy cô đã đăng nhập thành công, nhưng địa chỉ Gmail này chưa có trong ' +
           'danh sách của nhà trường nên cần Ban giám hiệu duyệt. Nếu thầy cô dùng ' +
-          'Gmail khác với địa chỉ đã đăng ký, hãy đăng xuất rồi đăng nhập lại đúng địa chỉ đó.') +
+          'Gmail khác với địa chỉ đã đăng ký, hãy đăng xuất rồi đăng nhập lại đúng địa chỉ đó.' +
+          // Nhiều trường dùng chung mã nguồn này, mỗi trường một hệ thống riêng.
+          // Người vào nhầm địa chỉ trường khác sẽ dừng đúng ở đây — nhắc một câu
+          // để họ tìm đường về, nhưng KHÔNG nêu tên trường nào cả.
+          (window.DS_TRUONG && Object.keys(window.DS_TRUONG).length > 1
+            ? '<br><br>Nếu thầy cô công tác ở trường khác: mỗi trường có một hệ thống ' +
+              'và một đường dẫn riêng — thầy cô mở đúng đường dẫn nhà trường mình đã cấp.'
+            : '')) +
       '</div>' +
       '<button class="nut-phu" id="nut-thoat-cong">↩ Đăng xuất</button>' +
       chanCong();
