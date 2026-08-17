@@ -2389,6 +2389,64 @@ nav.menu::-webkit-scrollbar { display: none; }
 .ll-o.vang b { color: var(--canh); }
 .ll-o.do b { color: var(--thieu); }
 
+/* ═══ MÀN THIẾT LẬP (js/thiet-lap.js): Cài đặt · Thông tin trường · Danh sách mời ═══
+   Mobile-first: mỗi ô một dòng, nhãn nằm trên. Từ 720px trở lên xếp hai cột. */
+.tl-nhom {
+  margin: 14px 0; padding: 14px; background: var(--the);
+  border: 1px solid var(--vien); border-radius: var(--bo-goc);
+}
+.tl-nhom h4 { margin: 0 0 10px; font-size: 14.5px; }
+.tl-o { display: block; margin-bottom: 12px; }
+.tl-o:last-child { margin-bottom: 0; }
+.tl-nhan { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.tl-o input {
+  width: 100%; font: inherit; font-size: 14.5px; padding: 9px 11px;
+  border: 1px solid var(--vien-dam); border-radius: 9px; background: #fff; color: var(--chu);
+}
+.tl-o input:focus { outline: 2px solid var(--chinh); outline-offset: -1px; }
+.tl-o small { display: block; margin-top: 3px; font-size: 12px; color: var(--chu-mo); line-height: 1.5; }
+@media (min-width: 720px) {
+  .tl-nhom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .tl-nhom h4 { grid-column: 1 / -1; margin-bottom: 0; }
+  .tl-o { margin-bottom: 0; }
+}
+
+.tl-day-nut { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0 4px; }
+.tl-bao { font-size: 13px; color: var(--chu-mo); }
+.nut-chinh {
+  font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer;
+  background: var(--chinh); color: #fff; border: 0; border-radius: 10px; padding: 11px 18px;
+}
+.nut-chinh:hover { filter: brightness(1.08); }
+.nut-chinh:disabled { opacity: .55; cursor: default; }
+
+.tl-dan { margin: 12px 0; border: 1px dashed var(--vien-dam); border-radius: var(--bo-goc); padding: 12px 14px; }
+.tl-dan summary { font-weight: 700; font-size: 14px; cursor: pointer; }
+.tl-dan textarea {
+  width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+  padding: 10px; border: 1px solid var(--vien-dam); border-radius: 9px; margin-bottom: 10px;
+}
+
+.tl-tien-do { font-size: 15px; margin: 6px 0 12px; }
+.tl-buoc { display: flex; flex-direction: column; gap: 10px; }
+.tl-mot-buoc {
+  display: flex; align-items: center; gap: 12px; padding: 13px 14px;
+  background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc);
+}
+.tl-mot-buoc[data-di-toi] { cursor: pointer; }
+.tl-mot-buoc[data-di-toi]:hover { border-color: var(--chinh); }
+.tl-mot-buoc.xong { border-left: 4px solid var(--ok); }
+.tl-mot-buoc.chua { border-left: 4px solid var(--canh); }
+.tl-dau {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: 14px;
+}
+.tl-mot-buoc.xong .tl-dau { background: var(--ok); color: #fff; }
+.tl-mot-buoc.chua .tl-dau { background: var(--kem); color: var(--chu-mo); }
+.tl-viec { flex: 1 1 auto; font-size: 14px; line-height: 1.5; }
+.tl-viec small { color: var(--chu-mo); }
+.tl-mui { flex: 0 0 auto; font-size: 22px; color: var(--chu-nhat); }
+
 /* ── 4. IN RA GIẤY ────────────────────────────────────────────────────────── */
 @media print {
   /* overflow:hidden trên tổ tiên làm trình duyệt cắt phần tràn khi phân trang —
