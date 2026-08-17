@@ -63,12 +63,15 @@
         + chan(d.trim()) + '</p>';
     }).join('');
   }
+  // ⚠️ App dùng chung cho nhiều trường: KHÔNG đặt giá trị dự phòng mang tên một
+  //    trường cụ thể. Trống thì thấy ngay mà sửa; in nhầm tên trường khác vào
+  //    văn bản đã đóng dấu thì không sửa được nữa.
   function tenTruong() {
-    return (typeof CAU_HINH !== 'undefined' && CAU_HINH.TEN_TRUONG) || 'Trường Tiểu học Diễn Liên';
+    return (typeof CAU_HINH !== 'undefined' && CAU_HINH.TEN_TRUONG) || '';
   }
   function ngayThang() {
     const d = new Date();
-    return (CAU_HINH.DIA_DANH || 'Quảng Châu') + ', ngày ' + d.getDate()
+    return (CAU_HINH.DIA_DANH || '') + ', ngày ' + d.getDate()
       + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
   }
 
@@ -261,7 +264,7 @@
           ['b) Địa chỉ, thông tin liên hệ', chan(CAU_HINH.DIA_CHI_TRUONG || '')
             + (CAU_HINH.DIEN_THOAI ? '<br>Điện thoại: ' + chan(CAU_HINH.DIEN_THOAI) : '')
             + (CAU_HINH.EMAIL_TRUONG ? '<br>Thư điện tử: ' + chan(CAU_HINH.EMAIL_TRUONG) : '')],
-          ['c) Cơ quan quản lý trực tiếp', chan(CAU_HINH.CO_QUAN_QUAN_LY || 'Sở Giáo dục và Đào tạo Nghệ An')],
+          ['c) Cơ quan quản lý trực tiếp', chan(CAU_HINH.CO_QUAN_THUONG || CAU_HINH.CO_QUAN_QUAN_LY || '')],
           ['d) Loại hình và cấp học', 'Công lập — Tiểu học'],
           ['đ) Năm thành lập', chan(String(bc.nam_thanh_lap || '').trim()
             || '(nhà trường bổ sung theo quyết định thành lập)')]
@@ -520,7 +523,7 @@
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 5pt">Cơ sở giáo dục <b>' + chan(ketLuan) + '</b>.</p>'
       + '<p style="' + TR + 'font-size:11.5pt;font-style:italic;margin:0 0 5pt;text-align:justify">Căn cứ khoản 3 Điều 5 Thông tư số 57/2026/TT-BGDĐT: đạt Mức 1 khi tất cả tiêu chí bắt buộc đạt Mức 1 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên; đạt Mức 2 khi tất cả tiêu chí bắt buộc đạt Mức 2 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1.</p>'
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 3pt">4. Đề xuất, kiến nghị</p>'
-      + '<p style="' + AB + '">a) Với Sở Giáo dục và Đào tạo Nghệ An</p>'
+      + '<p style="' + AB + '">a) Với ' + chan(CAU_HINH.CO_QUAN_THUONG || '') + '</p>'
       + oNhap(bc.kn_so, 'nhà trường bổ sung')
       + '<p style="' + AB + '">b) Với Uỷ ban nhân dân xã '
         + chan(CAU_HINH.DIA_DANH || '') + '</p>'

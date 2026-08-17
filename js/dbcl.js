@@ -51,7 +51,7 @@
     { bi: '🤝', tu: 'Giáo viên chủ nhiệm', den: 'Ban đại diện CMHS lớp',
       mo: 'Cam kết chỉ tiêu chất lượng lớp tại buổi họp phụ huynh đầu năm.',
       pl: 'chưa có mẫu — cần bổ sung', mau: '#1e7a55' },
-    { bi: '📋', tu: 'Hiệu trưởng', den: 'UBND xã Quảng Châu',
+    { bi: '📋', tu: 'Hiệu trưởng', den: (window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản',
       mo: 'Cam kết chỉ tiêu chất lượng toàn trường với cơ quan quản lý: kết quả học tập, đội ngũ, cơ sở vật chất, khen thưởng.',
       pl: 'Phụ lục 16', mau: '#c26a1f' },
     { bi: '🏫', tu: 'Nhà trường', den: 'Ban đại diện CMHS trường',

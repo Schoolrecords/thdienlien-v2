@@ -178,9 +178,9 @@
   function duLieuMau() {
     return {
       coSo: [
-        { ma: 'CS01', ten: 'Điểm chính Diễn Liên', loai: 'chinh', phuTrach: '', gvTong: 20 },
-        { ma: 'CS02', ten: 'Điểm trường Diễn Đồng', loai: 'diem_truong', phuTrach: '', gvTong: 10 },
-        { ma: 'CS03', ten: 'Điểm trường Diễn Thái', loai: 'diem_truong', phuTrach: '', gvTong: 7 }
+        { ma: 'CS01', ten: 'Điểm chính', loai: 'chinh', phuTrach: '', gvTong: 20 },
+        { ma: 'CS02', ten: 'Điểm trường số 1', loai: 'diem_truong', phuTrach: '', gvTong: 10 },
+        { ma: 'CS03', ten: 'Điểm trường số 2', loai: 'diem_truong', phuTrach: '', gvTong: 7 }
       ],
       gvDs: ['Cô Nguyễn Thị A.', 'Cô Lê Thị C.', 'Thầy Phạm Văn D.', 'Cô Hoàng Thị E.',
         'Cô Vũ Thị G.', 'Thầy Đỗ Văn H.', 'Cô Bùi Thị K.'].map(function (t, i) {

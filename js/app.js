@@ -382,13 +382,67 @@
     document.body.style.overflow = 'hidden';
   };
 
+  // ── Nhận diện trường ──
+  // Một mã nguồn dùng chung cho nhiều trường (xem js/cauhinh.js). Mọi chỗ mang
+  // tên trường trong index.html đều điền từ đây, KHÔNG ghi cứng trong HTML.
+  // Gọi HAI lần: lúc khởi động, và lại một lần nữa trong du-lieu-sql.js sau khi
+  // bảng cau_hinh trên CSDL ghi đè CAU_HINH (CSDL mới là nguồn chuẩn).
+  function datNhanDienTruong() {
+    var C = window.CAU_HINH || {};
+    var anh = (C.THU_MUC_ANH || 'img/') + 'logo.png';
+
+    document.title = 'Hồ sơ số — ' + (C.TEN_TRUONG || '');
+    $$('.dien-ten-truong').forEach(function (e) { e.textContent = C.TEN_TRUONG || ''; });
+    $$('.dien-dia-chi').forEach(function (e) { e.textContent = C.DIA_CHI_TRUONG || ''; });
+    $$('.dien-chu-quan').forEach(function (e) { e.textContent = C.DON_VI_CHU_QUAN || ''; });
+    var oMuc = document.getElementById('tk-muc-cqg');
+    if (oMuc) oMuc.textContent = C.MUC_CHUAN_QG || '–';
+
+    // Trường chưa gửi logo riêng → thư mục của trường còn trống, ảnh sẽ hỏng.
+    // Bắt sự kiện lỗi để quay về logo chung, đừng để vỡ ảnh trên đầu trang.
+    $$('.dien-logo').forEach(function (e) {
+      e.onerror = function () { this.onerror = null; this.src = 'img/logo.png'; };
+      e.src = anh;
+    });
+    ['icon', 'apple-touch-icon'].forEach(function (r) {
+      var l = document.querySelector('link[rel="' + r + '"]');
+      if (l) l.href = anh;
+    });
+
+    // Ảnh nền dải đầu trang chủ. Thiếu tệp thì dải chỉ còn nền màu — không vỡ.
+    document.documentElement.style.setProperty(
+      '--anh-truong', 'url("' + (C.THU_MUC_ANH || 'img/') + 'truong.jpg")');
+
+    // Các thẻ og:*/twitter:* — xem chú thích trong index.html: bọ đọc thẻ của
+    // Zalo/Facebook không chạy JS nên phần này chỉ có tác dụng với trình duyệt.
+    var tenDayDu = 'Hệ thống Hồ sơ số — ' + (C.TEN_TRUONG || '');
+    var anhTuyetDoi = location.origin && location.origin !== 'null'
+      ? location.origin + location.pathname.replace(/[^/]*$/, '') + anh : anh;
+    [['meta[property="og:site_name"]', C.TEN_TRUONG || ''],
+     ['meta[property="og:title"]', tenDayDu],
+     ['meta[name="twitter:title"]', tenDayDu],
+     ['meta[property="og:image:alt"]', 'Logo ' + (C.TEN_TRUONG || '')],
+     ['meta[property="og:image"]', anhTuyetDoi],
+     ['meta[name="twitter:image"]', anhTuyetDoi]
+    ].forEach(function (c) {
+      var m = document.querySelector(c[0]);
+      if (m) m.setAttribute('content', c[1]);
+    });
+  }
+  window.datNhanDienTruong = datNhanDienTruong;
+
   // ── Khởi động ──
   document.addEventListener('DOMContentLoaded', function () {
-    $$('.dien-ten-truong').forEach(function (e) { e.textContent = window.CAU_HINH.TEN_TRUONG; });
+    datNhanDienTruong();
     $('#dien-slogan').textContent = window.CAU_HINH.SLOGAN;
     $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
-    $('#dien-muc-tieu').textContent = window.CAU_HINH.MUC_TIEU_CHUAN_QG.toLowerCase();
-    if (window.DA_NOI) $('#bang-xem-thu').style.display = 'none';
+    $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
+    if (window.DA_NOI) {
+      $('#bang-xem-thu').style.display = 'none';
+    } else if (window.htmlChonTruong) {
+      // Chế độ xem thử không có màn đăng nhập, nên ô đổi trường đặt luôn ở đây.
+      $('#bang-xem-thu').innerHTML += ' ' + window.htmlChonTruong('· Xem trường:');
+    }
 
     $$('nav.menu button').forEach(function (b) {
       b.addEventListener('click', function () { chuyenManHinh(b.getAttribute('data-di')); });

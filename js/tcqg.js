@@ -42,8 +42,8 @@
       ['tong_hop_xac_nhan', 'Tổng hợp, xác nhận kết quả', 0]] },
     { nhom: 'Phần III — Kết luận, kiến nghị', muc: [
       ['khai_quat', 'Khái quát kết quả tự đánh giá', 0],
-      ['kn_so', 'Kiến nghị với Sở GD&ĐT Nghệ An', 0],
-      ['kn_ubnd', 'Kiến nghị với UBND xã Quảng Châu', 0],
+      ['kn_so', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành'), 0],
+      ['kn_ubnd', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản'), 0],
       ['kn_khac', 'Kiến nghị khác (nếu có — trống thì báo cáo không in mục này)', 0]] }
   ];
   var MUC_DGTC = [

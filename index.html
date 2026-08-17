@@ -12,7 +12,14 @@
   <!-- ═══ Thẻ chia sẻ: Zalo, Facebook, Messenger, Google ═══
        Zalo và Facebook đọc các thẻ og:* để dựng khung xem trước khi dán đường
        dẫn. Ảnh BẮT BUỘC là địa chỉ đầy đủ https://… — để đường dẫn tương đối
-       (img/logo.png) thì hai bên đều không tải được và khung xem trước trắng trơn. -->
+       (img/logo.png) thì hai bên đều không tải được và khung xem trước trắng trơn.
+
+       ⚠️ ĐA TRƯỜNG: app dùng chung một index.html cho nhiều trường, tên trường
+       do JS điền lúc chạy (datNhanDienTruong trong js/app.js). Nhưng bọ đọc thẻ
+       của Zalo/Facebook KHÔNG chạy JS — nên khung xem trước khi chia sẻ link
+       LUÔN hiện trường đặt sẵn dưới đây. Trường khác muốn khung xem trước mang
+       tên mình thì phải có tên miền riêng + một trang giới thiệu riêng; đừng
+       nhân bản cả index.html này ra, sẽ lệch bản mỗi lần thêm màn hình. -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Trường Tiểu học Diễn Liên">
   <meta property="og:locale" content="vi_VN">
@@ -30,15 +37,15 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608173">
-  <link rel="stylesheet" href="style.css?v=202608173">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608174">
+  <link rel="stylesheet" href="style.css?v=202608174">
 </head>
 <body class="dang-khoa">
 
 <!-- Cổng vào: khóa sẵn từ HTML, js/supabase-ket-noi.js mở khóa sau khi xác thực -->
 <div class="cong-vao" id="cong-vao">
   <div class="cong-hop" id="cong-hop">
-    <img class="logo" src="img/logo.png" alt="">
+    <img class="logo dien-logo" src="img/logo.png" alt="">
     <h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">Trường Tiểu học Diễn Liên</span></h1>
     <div class="dang-cho">Đang kiểm tra phiên đăng nhập…</div>
   </div>
@@ -46,10 +53,10 @@
 
 <header class="dau-trang">
   <div class="khung">
-    <img class="logo-truong" src="img/logo.png" alt="Logo trường">
+    <img class="logo-truong dien-logo" src="img/logo.png" alt="Logo trường">
     <div class="ten-khu">
       <div class="ten dien-ten-truong">Trường Tiểu học Diễn Liên</div>
-      <div class="dia-chi">Xã Quảng Châu, tỉnh Nghệ An</div>
+      <div class="dia-chi dien-dia-chi">Xã Quảng Châu, tỉnh Nghệ An</div>
     </div>
     <!-- Nút ☰ chỉ hiện khi thanh menu không đủ chỗ nằm một hàng (<1360px).
          Khi đó menu và khu tài khoản gộp chung vào một bảng xổ xuống, nhờ vậy
@@ -102,7 +109,7 @@
       <div class="o"><span class="bi"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span><div><div class="so">15</div><div class="nhan">tiêu chí tự đánh giá TT57</div></div></div>
       <div class="o"><span class="bi"><svg class="ic" viewBox="0 0 24 24"><path d="M21.4 10.9a1 1 0 0 0 0-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></span><div><div class="so" id="tk-lop">–</div><div class="nhan">lớp · 5 khối lớp</div></div></div>
       <div class="o"><span class="bi"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></span><div><div class="so" id="tk-hoc-sinh">–</div><div class="nhan">học sinh</div></div></div>
-      <div class="o"><span class="bi"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg></span><div><div class="so">Mức 2</div><div class="nhan">phấn đấu giữ vững và phát triển</div></div></div>
+      <div class="o"><span class="bi"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg></span><div><div class="so" id="tk-muc-cqg">–</div><div class="nhan">phấn đấu giữ vững và phát triển</div></div></div>
     </div>
   </div>
 </section>
@@ -377,31 +384,31 @@
 
 <footer>
   <div class="ten dien-ten-truong">Trường Tiểu học Diễn Liên</div>
-  Xã Quảng Châu, Tỉnh Nghệ An · Năm học <span id="dien-nam-hoc"></span><br>
+  <span class="dien-dia-chi">Xã Quảng Châu, Tỉnh Nghệ An</span> · Năm học <span id="dien-nam-hoc"></span><br>
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025
 </footer>
 
-<script src="js/cauhinh.js?v=202608173"></script>
+<script src="js/cauhinh.js?v=202608174"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608173"></script>
-<script src="js/du-lieu-sql.js?v=202608173"></script>
-<script src="js/quan-tri.js?v=202608173"></script>
-<script src="js/supabase-ket-noi.js?v=202608173"></script>
-<script src="js/app.js?v=202608173"></script>
-<script src="js/hoso-sua.js?v=202608173"></script>
-<script src="js/xuat-word.js?v=202608173"></script>
-<script src="js/tcqg.js?v=202608173"></script>
-<script src="js/tcqg-hoidong.js?v=202608173"></script>
-<script src="js/tcqg-word.js?v=202608173"></script>
-<script src="js/bach-lieu-shim.js?v=202608173"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608173"></script>
-<script src="js/co-so.js?v=202608173"></script>
-<script src="js/len-lop.js?v=202608173"></script>
-<script src="js/dbcl.js?v=202608173"></script>
-<script src="js/link-cbgv.js?v=202608173"></script>
-<script src="js/hocsinh.js?v=202608173"></script>
-<script src="js/dieu-hanh.js?v=202608173"></script>
-<script src="js/lich-tuan.js?v=202608173"></script>
+<script src="js/du-lieu-demo.js?v=202608174"></script>
+<script src="js/du-lieu-sql.js?v=202608174"></script>
+<script src="js/quan-tri.js?v=202608174"></script>
+<script src="js/supabase-ket-noi.js?v=202608174"></script>
+<script src="js/app.js?v=202608174"></script>
+<script src="js/hoso-sua.js?v=202608174"></script>
+<script src="js/xuat-word.js?v=202608174"></script>
+<script src="js/tcqg.js?v=202608174"></script>
+<script src="js/tcqg-hoidong.js?v=202608174"></script>
+<script src="js/tcqg-word.js?v=202608174"></script>
+<script src="js/bach-lieu-shim.js?v=202608174"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608174"></script>
+<script src="js/co-so.js?v=202608174"></script>
+<script src="js/len-lop.js?v=202608174"></script>
+<script src="js/dbcl.js?v=202608174"></script>
+<script src="js/link-cbgv.js?v=202608174"></script>
+<script src="js/hocsinh.js?v=202608174"></script>
+<script src="js/dieu-hanh.js?v=202608174"></script>
+<script src="js/lich-tuan.js?v=202608174"></script>
 <!-- SheetJS đọc tệp Excel thời khóa biểu. Bản CHO TRÌNH DUYỆT: chỉ có
      XLSX.read(mảng byte), KHÔNG có readFile. Nạp trước thoi-khoa-bieu.js. -->
 <!-- ⚠️ MODULE THỜI KHÓA BIỂU ĐÃ GỠ (15/8/2026) — thầy Chung chốt.
@@ -419,6 +426,6 @@
        lib/xlsx.min.js       · thư viện đọc Excel, 930 KB
 -->
 
-<script src="js/du-gio.js?v=202608173"></script>
+<script src="js/du-gio.js?v=202608174"></script>
 </body>
 </html>

@@ -18,7 +18,10 @@
 
   // Cờ + hằng cấu hình các file Bạch Liêu trông đợi
   window.CAU_HINH.DA_NOI = !!window.DA_NOI;
-  if (!window.CAU_HINH.DIA_DANH) window.CAU_HINH.DIA_DANH = 'Quảng Châu';
+  // ⛔ ĐỪNG đặt lại DIA_DANH ở đây. Trước có dòng gán mặc định 'Quảng Châu' —
+  //    app nay dùng chung cho nhiều trường, dòng đó làm trường khác bị in
+  //    "Quảng Châu, ngày…" vào bản Word. Địa danh chỉ lấy từ js/cauhinh.js
+  //    hoặc bảng cau_hinh của chính trường đó; thiếu thì để trống cho thấy mà sửa.
 
   // sbClient được Bạch Liêu gán một lần sau đăng nhập; ở Diễn Liên client
   // nằm trong window.MAY_CHU và tạo muộn — getter để luôn lấy bản mới nhất.

@@ -64,12 +64,28 @@
       if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
       if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
       if (ch.muc_tieu_chuan_qg) window.CAU_HINH.MUC_TIEU_CHUAN_QG = ch.muc_tieu_chuan_qg;
+      // Bảy khoá dưới đây trước bị BỎ QUÊN: có trong bảng cau_hinh nhưng không
+      // ai đọc, nên sửa trên CSDL không có tác dụng gì. Vá 17/8/2026.
+      // ⚠️ ch.dia_chi là ĐỊA CHỈ TRƯỜNG, còn CAU_HINH.DIA_CHI là địa chỉ
+      //    Supabase — trùng tên, gán nhầm là mất kết nối CSDL.
+      if (ch.co_quan_quan_ly) window.CAU_HINH.CO_QUAN_QUAN_LY = ch.co_quan_quan_ly;
+      if (ch.chu_quan_thuong) window.CAU_HINH.CHU_QUAN_THUONG = ch.chu_quan_thuong;
+      if (ch.co_quan_thuong) window.CAU_HINH.CO_QUAN_THUONG = ch.co_quan_thuong;
+      if (ch.dia_chi) window.CAU_HINH.DIA_CHI_TRUONG = ch.dia_chi;
+      if (ch.dia_danh) window.CAU_HINH.DIA_DANH = ch.dia_danh;
+      if (ch.pho_hieu_truong) window.CAU_HINH.PHO_HIEU_TRUONG = ch.pho_hieu_truong;
+      if (ch.dien_thoai) window.CAU_HINH.DIEN_THOAI = ch.dien_thoai;
+      if (ch.email_truong) window.CAU_HINH.EMAIL_TRUONG = ch.email_truong;
+      if (ch.so_cbgv) window.CAU_HINH.SO_CBGV = parseInt(ch.so_cbgv, 10);
+      if (ch.muc_chuan_qg) window.CAU_HINH.MUC_CHUAN_QG = ch.muc_chuan_qg;
       // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
       // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
       // sửa mã — tránh mỗi nơi một con số.
       if (ch.so_lop) window.CAU_HINH.SO_LOP = parseInt(ch.so_lop, 10);
       if (ch.so_hoc_sinh) window.CAU_HINH.SO_HOC_SINH = parseInt(ch.so_hoc_sinh, 10);
-      document.querySelectorAll('.dien-ten-truong').forEach(function (e) { e.textContent = window.CAU_HINH.TEN_TRUONG; });
+      // Điền lại tên trường, địa chỉ, logo, tiêu đề tab… theo CẤU HÌNH TRÊN CSDL
+      // (nguồn chuẩn), đè lên bản dự phòng trong js/cauhinh.js.
+      if (typeof window.datNhanDienTruong === 'function') window.datNhanDienTruong();
       var oSlogan = document.getElementById('dien-slogan');
       if (oSlogan) oSlogan.textContent = window.CAU_HINH.SLOGAN;
       var oNamHoc = document.getElementById('dien-nam-hoc');

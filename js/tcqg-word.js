@@ -249,7 +249,8 @@
 
         '<table style="border:none;width:100%;margin-top:14pt"><tr>' +
         '<td style="border:none;width:45%;font-size:11.5pt;vertical-align:top"><b class="nghieng">Nơi nhận:</b><br>' +
-        chan(tt.noi_nhan || '- Sở GD&ĐT Nghệ An;- UBND xã Quảng Châu;- Lưu: VT.').split(/;\s*/).join('<br>') + '</td>' +
+        chan(tt.noi_nhan || ('- ' + W().cauHinh('CO_QUAN_THUONG') + ';- ' +
+          W().cauHinh('CHU_QUAN_THUONG') + ';- Lưu: VT.')).split(/;\s*/).join('<br>') + '</td>' +
         '<td style="border:none;width:55%;text-align:center;font-size:12pt"><b>HIỆU TRƯỞNG</b><br>' +
         '<span class="nghieng">(Ký tên, đóng dấu)</span><div style="height:56pt"></div><b>' + chan(W().cauHinh('HIEU_TRUONG')) + '</b></td>' +
         '</tr></table>';

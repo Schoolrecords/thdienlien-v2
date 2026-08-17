@@ -461,7 +461,9 @@
       } else {
         var mucDo = /Mức 2/.test(xep.ket_luan) ? 2 : 1;
         ketLuan = '<div class="hd-kiem xanh">✔ Đáp ứng đồng thời bốn điều kiện khoản 1 Điều 16 — tương ứng chuẩn quốc gia Mức độ ' + mucDo +
-          '. Quyền xem xét, công nhận thuộc Sở GD&ĐT Nghệ An (Điều 17).</div>';
+          '. Quyền xem xét, công nhận thuộc ' +
+          ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành') +
+          ' (Điều 17).</div>';
       }
 
       hop.innerHTML =

@@ -1,0 +1,14 @@
+THƯ MỤC ẢNH — TRƯỜNG TIỂU HỌC CHÂU ĐÌNH
+========================================
+Cần hai tệp, đặt đúng tên dưới đây (chưa có thì app tự dùng logo chung):
+
+  logo.png    Logo trường. Vuông, nền trong suốt, cạnh >= 256px.
+              Dùng làm: biểu tượng tab trình duyệt, logo đầu trang,
+              logo màn đăng nhập, ảnh xem trước khi chia sẻ link Zalo/Facebook.
+
+  truong.jpg  Ảnh chụp toàn cảnh trường, ngang, rộng >= 1600px.
+              Dùng làm: ảnh nền dải đầu trang chủ. Chưa có thì dải đó chỉ
+              còn nền màu xanh — vẫn dùng bình thường, không vỡ giao diện.
+
+KHÔNG đặt con dấu, chữ ký ảnh của Hiệu trưởng vào đây.
+Đây là repo CÔNG KHAI trên GitHub, ai cũng tải về được.

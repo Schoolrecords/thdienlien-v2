@@ -35,15 +35,20 @@
   function hopCong() { return document.getElementById('cong-hop'); }
 
   function dauCong() {
-    return '<img class="logo" src="img/logo.png" alt="">' +
+    var C = window.CAU_HINH || {};
+    return '<img class="logo dien-logo" src="' + thoat((C.THU_MUC_ANH || 'img/') + 'logo.png') +
+      '" alt="" onerror="this.onerror=null;this.src=\'img/logo.png\'">' +
       '<h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">' +
-      thoat(window.CAU_HINH.TEN_TRUONG) + '</span></h1>';
+      thoat(C.TEN_TRUONG) + '</span></h1>';
   }
 
   function chanCong() {
     return '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
       'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
-      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
+      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>' +
+      // Nhiều trường dùng chung app: cho người vào nhầm trường tự đổi, thay vì
+      // đăng nhập mãi không được mà không hiểu vì sao.
+      (window.htmlChonTruong ? window.htmlChonTruong('Bạn ở trường khác?') : '');
   }
 
   // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
