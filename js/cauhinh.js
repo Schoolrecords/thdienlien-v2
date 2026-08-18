@@ -106,7 +106,10 @@ window.DS_TRUONG = {
 };
 
 // ============================================================
-// CHỌN TRƯỜNG: tên miền → ?truong=<mã> → lựa chọn đã nhớ → mặc định
+// CHỌN TRƯỜNG: ?truong=<mã> → tên miền → lựa chọn đã nhớ → mặc định
+// (Thứ tự này khớp §2 bản kế hoạch nhân bản. Trước đây dòng chú thích ghi
+//  ngược "tên miền → ?truong=" trong khi mã làm đúng — đọc chú thích mà sửa
+//  theo là hỏng cách chào hàng nêu ở bước 1 bên dưới.)
 // ============================================================
 (function () {
   // Gộp hai đối tượng — viết tay theo lối ES5 cho đồng nhất với cả dự án.

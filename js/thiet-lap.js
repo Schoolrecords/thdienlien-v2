@@ -20,6 +20,17 @@
   function may() { return window.MAY_CHU; }
   function bao(t) { if (window.notify) window.notify(t); else window.alert(t); }
 
+  // Mất mạng giữa chừng thì lời hứa bị TỪ CHỐI chứ không trả về {error}, nên
+  // nhánh .then không chạy và ô cứ đứng mãi ở "Đang tải…" — người dùng tưởng
+  // máy treo, ngồi chờ. Mọi lượt tải đầu của ba thẻ đều đi qua hàm này.
+  function bao_hong(hop, viec) {
+    return function (e) {
+      hop.innerHTML = '<div class="the-thong-bao">Không gọi được máy chủ khi ' + thoat(viec) +
+        '.<br><small>' + thoat((e && e.message) || e) + '</small><br><br>' +
+        'Thầy cô kiểm tra đường mạng rồi bấm lại thẻ này.</div>';
+    };
+  }
+
   // ══════════════════════════════════════════════════════════
   // CÁC Ô CỦA MÀN THÔNG TIN TRƯỜNG
   // [khoá trong bảng cau_hinh, nhãn, lời chỉ dẫn]
@@ -123,7 +134,7 @@
             o.textContent = '❌ Không gọi được máy chủ: ' + ((e && e.message) || e) + ' — chưa lưu được gì.';
           });
       });
-    });
+    }).catch(bao_hong(hop, 'đọc thông tin trường'));
   }
 
   // ══════════════════════════════════════════════════════════
@@ -164,7 +175,7 @@
         '<span class="nhan-nho">Tổng: <b>' + ds.length + '</b> người</span></div>';
 
       gan(hop);
-    });
+    }).catch(bao_hong(hop, 'đọc danh sách mời'));
   }
 
   function dongMoi(m) {
@@ -333,7 +344,7 @@
           if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); window.moQuanTri(e.getAttribute('data-di-toi')); }
         });
       });
-    });
+    }).catch(bao_hong(hop, 'kiểm tra tình trạng cài đặt'));
   }
 
   // Đăng ký ba thẻ. Đặt 🚀 Cài đặt lên đầu để trường mới thấy ngay việc phải làm.
