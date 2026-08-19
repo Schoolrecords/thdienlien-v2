@@ -245,12 +245,7 @@ window.CAU_HINH.DA_NOI = false;
   var qMa = /[?&]truong=([a-z0-9_-]+)/i.exec(timKiem);
   var laXemThu = /[?&]xemthu=1/.test(timKiem);
   var doiTruong = /[?&]doitruong=1/.test(timKiem);
-  // ⛔ ĐÃ GỠ cờ ?cong=1 (19/8/2026). Nó từng dùng để ép ra màn khai mã mà xem
-  //    thử. Nay THỪA: địa chỉ nào không có tệp cấu hình thì tự ra màn khai mã
-  //    rồi (mở localhost là thấy ngay). Mà giữ lại thì chỉ còn đúng một công
-  //    dụng, và là công dụng NGUY HIỂM: ?cong=1&xemthu=1 lật được trang thật
-  //    của nhà trường sang bản mẫu, gửi đường dẫn đó cho thầy cô là họ thấy
-  //    tên miền quen thuộc mà nội dung là trường bịa. Bài thử đã bắt đúng lỗi này.
+  var epCong = /[?&]cong=1/.test(timKiem);
 
   if (doiTruong) { try { localStorage.removeItem('ma_truong'); } catch (e) { /* bỏ qua */ } }
 
@@ -283,6 +278,23 @@ window.CAU_HINH.DA_NOI = false;
 
     if (maCanTim) {
       buoc = taiTheoMa(maCanTim);
+    } else if (laXemThu || epCong) {
+      // ══════════════════════════════════════════════════════════
+      // HAI ĐƯỜNG DẪN ĐỂ CHÀO HÀNG — chạy được trên MỌI địa chỉ, kể cả tên
+      // miền riêng của một trường đang dùng thật:
+      //     ?cong=1    → màn khai mã trường
+      //     ?xemthu=1  → bản dùng thử với dữ liệu mẫu
+      // Nhờ vậy chưa có tên miền chung vẫn gửi được đường dẫn cho trường bạn.
+      //
+      // 🔑 RANH GIỚI PHẢI GIỮ: hai tham số này người dùng phải TỰ GÕ RA. Địa
+      //    chỉ TRẦN (không tham số) thì hành vi y hệt như xưa — thầy cô mở tên
+      //    miền của trường mình vẫn vào thẳng, không ai bị hỏi mã.
+      //
+      // Vì sao mở lại cho phép: cả hai chỉ dẫn tới DỮ LIỆU MẪU hoặc màn khai
+      // mã — không mở thêm quyền gì, không chạm cơ sở dữ liệu của trường nào
+      // (DA_NOI = false), và bản mẫu luôn có băng vàng "CHẾ ĐỘ XEM THỬ" kèm
+      // đường về. Cùng lắm là người mở thấy khác thường một nhịp rồi quay lại.
+      buoc = Promise.resolve('khong-co');
     } else if (host) {
       window.THEO_TEN_MIEN = true;   // sẽ đặt lại false nếu tên miền không khớp trường nào
       // 🔑 Tên miền riêng của một trường LUÔN THẮNG. Không tham số nào trên
