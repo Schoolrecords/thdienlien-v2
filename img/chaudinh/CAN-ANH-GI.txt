@@ -8,7 +8,7 @@ Cần hai tệp, đặt đúng tên dưới đây (chưa có thì app tự dùng
 
   truong.jpg  Ảnh chụp toàn cảnh trường, ngang, rộng >= 1600px.
               Dùng làm: ảnh nền dải đầu trang chủ. Chưa có thì trang tự dùng
-              ẢNH HỌC TẬP dùng chung (img/nen-hoc-tap.jpg) —
+              ẢNH HỌC TẬP dùng chung (img/nen-hoc-tap.webp) —
               vẫn đẹp, vẫn dùng bình thường. Gửi ảnh thật thì đẹp hơn vì
               thầy cô nhìn ra trường mình.
 

@@ -214,31 +214,52 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
    (datNhanDienTruong).
 
    🔑 HAI LỚP NỀN chồng lên nhau, lớp ĐẦU nằm TRÊN:
-       lớp 1  ảnh thật của trường  (img/<mã>/truong.jpg)
-       lớp 2  ảnh dùng chung       (img/nen-hoc-tap.jpg)
+       lớp 1  ảnh thật của trường  (img/<mã>/truong.jpg)  — phủ KÍN, cover
+       lớp 2  ảnh dùng chung       (img/nen-hoc-tap.webp) — NẰM GỌN GÓC PHẢI
    Trường đã gửi ảnh thì lớp 1 phủ kín, không thấy lớp 2. Trường CHƯA gửi thì
-   lớp 1 tải hỏng (404) và lớp 2 lộ ra — trình duyệt tự lo, không cần một dòng
-   JS nào. Trước đây chỉ có một lớp nên trường chưa gửi ảnh thì dải đầu trang
-   là một mảng xanh trơn, trông như trang chưa dựng xong.
+   lớp 1 tải hỏng (404) và lớp 2 lộ ra — trình duyệt tự lo, không cần JS.
 
-   Ảnh dùng chung do thầy Chung chọn (19/8/2026). Gốc 2048×768 nặng 1,8 MB —
-   đã thu về 1600×600 và nén JPEG còn 111 KB. Ảnh nền nặng vài MB là thứ giết
-   trang ở nơi mạng chập chờn, mà đây đúng là hoàn cảnh của phần lớn trường. */
+   🖼 Ảnh dùng chung là PNG NỀN TRONG SUỐT, cố ý để 'contain' + neo phải chứ
+   KHÔNG 'cover'. Bản trước để cover nên ảnh phóng to phủ kín cả dải, chữ và
+   ảnh chồng lên nhau, mất hẳn ý đồ "ảnh minh hoạ nằm gọn một góc". Nền trong
+   suốt để màu navy của .hero ăn thẳng vào ảnh, không thấy đường viền hộp.
+
+   ⚡ WebP 176 KB thay cho PNG 684 KB — cùng chất lượng, nhẹ hơn bốn lần. PNG
+   giữ lại làm bản lùi cho trình duyệt cũ (khối @supports ngay dưới). Ảnh nền
+   nặng là thứ giết trang ở nơi mạng chập chờn, mà đó đúng là hoàn cảnh của
+   phần lớn trường. */
 .hero .anh {
   position: absolute; inset: 0;
-  background-image: var(--anh-truong, none), url('img/nen-hoc-tap.jpg');
-  background-position: right center;
-  background-size: cover;
+  background-image: var(--anh-truong, none), url('img/nen-hoc-tap.png');
+  background-position: right center, right center;
+  background-size: cover, contain;
   background-repeat: no-repeat;
 }
-/* Điện thoại: đổi sang bản 900px, 41 KB. Màn hẹp không nhìn ra khác biệt, mà
-   tiết kiệm được hai phần ba dung lượng. */
-@media (max-width: 760px) {
-  .hero .anh { background-image: var(--anh-truong, none), url('img/nen-hoc-tap-nho.jpg'); }
+/* Trình duyệt hiểu WebP thì dùng bản nhẹ. Viết trong @supports để trình duyệt
+   cũ không nuốt trôi cả dòng rồi mất luôn ảnh — hỏng phải hỏng nhẹ nhất. */
+@supports (background-image: image-set(url('img/nen-hoc-tap.webp') type('image/webp'))) {
+  .hero .anh {
+    background-image: var(--anh-truong, none),
+      image-set(url('img/nen-hoc-tap.webp') type('image/webp'),
+                url('img/nen-hoc-tap.png') type('image/png'));
+  }
 }
+/* Điện thoại: ảnh minh hoạ chen với chữ thì rối, hạ độ mờ cho chữ nổi lên. */
+@media (max-width: 760px) {
+  .hero .anh { opacity: .5; }
+}
+/* Lớp phủ navy: đặc ở bên trái cho chữ đọc rõ, TAN HẲN về bên phải để ảnh
+   minh hoạ hiện nguyên màu. Bản trước dừng ở .12 nên mép phải vẫn còn một
+   lớp mờ phủ lên ảnh, nhìn như ảnh bị ám xanh. Nay về 0 hẳn.
+   Mốc 46% là chỗ chữ dài nhất (dòng SỨ MỆNH) kết thúc trên màn rộng. */
 .hero .phu {
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, var(--dam) 0%, var(--dam) 34%, rgba(20, 48, 107, .88) 48%, rgba(20, 48, 107, .42) 68%, rgba(20, 48, 107, .12) 100%);
+  background: linear-gradient(100deg,
+    var(--dam) 0%, var(--dam) 34%,
+    rgba(20, 48, 107, .92) 46%,
+    rgba(20, 48, 107, .55) 58%,
+    rgba(20, 48, 107, .18) 72%,
+    rgba(20, 48, 107, 0) 88%);
 }
 .hero .khung { position: relative; max-width: var(--rong-khung); margin: 0 auto; padding: 40px 16px 28px; }
 .hieu-bai {
