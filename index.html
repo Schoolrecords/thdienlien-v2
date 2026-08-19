@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hồ sơ số — Trường Tiểu học Diễn Liên</title>
-  <meta name="description" content="Hệ thống Hồ sơ số Trường Tiểu học Diễn Liên — Quản lý Hồ sơ · Trường chuẩn Quốc gia (TT57/2026) · Đảm bảo Chất lượng">
+  <!-- ⚠️ TIÊU ĐỀ VÀ MÔ TẢ Ở ĐÂY PHẢI TRUNG TÍNH — xem khối ═══ ngay dưới. -->
+  <title>Hệ thống Quản trị số Trường học</title>
+  <meta name="description" content="Hệ thống Quản trị số Trường học — quản lý hồ sơ, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục. Mỗi trường một cơ sở dữ liệu riêng.">
   <!-- Biểu tượng thẻ để TRUNG TÍNH; js/app.js đổi sang logo của trường ngay khi
        biết người vào thuộc trường nào. Trước đây đặt cứng img/logo.png — mà tệp
        đó là con dấu Trường Tiểu học Diễn Liên, nên thẻ trình duyệt ở địa chỉ
@@ -13,36 +14,48 @@
   <link rel="apple-touch-icon" href="img/he-thong.svg">
   <meta name="theme-color" content="#14306b">
 
-  <!-- ═══ Thẻ chia sẻ: Zalo, Facebook, Messenger, Google ═══
-       Zalo và Facebook đọc các thẻ og:* để dựng khung xem trước khi dán đường
-       dẫn. Ảnh BẮT BUỘC là địa chỉ đầy đủ https://… — để đường dẫn tương đối
-       (img/logo.png) thì hai bên đều không tải được và khung xem trước trắng trơn.
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       THẺ CHIA SẺ (Zalo · Facebook · Messenger · Google)
 
-       ⚠️ ĐA TRƯỜNG: app dùng chung một index.html cho nhiều trường, tên trường
-       do JS điền lúc chạy (datNhanDienTruong trong js/app.js). Nhưng bọ đọc thẻ
-       của Zalo/Facebook KHÔNG chạy JS — nên khung xem trước khi chia sẻ link
-       LUÔN hiện trường đặt sẵn dưới đây. Trường khác muốn khung xem trước mang
-       tên mình thì phải có tên miền riêng + một trang giới thiệu riêng; đừng
-       nhân bản cả index.html này ra, sẽ lệch bản mỗi lần thêm màn hình. -->
+       🔴 MỌI THỨ Ở ĐÂY PHẢI TRUNG TÍNH — KHÔNG MANG TÊN TRƯỜNG NÀO.
+
+       Bọ đọc thẻ của Zalo và Facebook KHÔNG chạy JavaScript. Chúng chỉ đọc
+       đúng mấy dòng viết cứng dưới đây. Mà MỘT index.html này phục vụ CẢ NĂM
+       địa chỉ (cổng chung + tên miền riêng từng trường) — nên đặt tên một
+       trường vào đây là mọi đường dẫn chia sẻ đều đội tên trường đó.
+
+       Đã xảy ra thật (19/8/2026): thầy Chung dán
+       chaudinh.quantrisotruonghoc.com vào Zalo để gửi cho Trường Châu Đình,
+       khung xem trước hiện "Hệ thống Hồ sơ số — Trường Tiểu học Diễn Liên"
+       kèm CON DẤU của Diễn Liên. Suýt gửi đi.
+
+       ⚠️ og:image BẮT BUỘC là địa chỉ đầy đủ https://… (đường dẫn tương đối
+          thì Zalo/Facebook không tải được, khung xem trước trắng trơn) và
+          BẮT BUỘC là PNG/JPG — phần lớn bọ đọc thẻ KHÔNG dựng được SVG.
+       ⚠️ KHÔNG khai og:url: trang này phục vụ nhiều địa chỉ, ghim vào một
+          địa chỉ là mọi link chia sẻ đều bị quy về đúng địa chỉ đó.
+
+       Trình duyệt thì vẫn thấy đúng tên trường: js/app.js (datNhanDienTruong)
+       ghi đè các thẻ này lúc chạy. Chỉ bọ đọc thẻ mới thấy bản trung tính.
+       ═══════════════════════════════════════════════════════════════════════ -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Trường Tiểu học Diễn Liên">
+  <meta property="og:site_name" content="Hệ thống Quản trị số Trường học">
   <meta property="og:locale" content="vi_VN">
-  <meta property="og:url" content="https://tieuhocdienlien.com/">
-  <meta property="og:title" content="Hệ thống Hồ sơ số — Trường Tiểu học Diễn Liên">
-  <meta property="og:description" content="Quản lý hồ sơ số, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục. Xã Quảng Châu, tỉnh Nghệ An.">
-  <meta property="og:image" content="https://tieuhocdienlien.com/img/logo.png">
-  <meta property="og:image:width" content="256">
-  <meta property="og:image:height" content="256">
-  <meta property="og:image:alt" content="Logo Trường Tiểu học Diễn Liên">
+  <meta property="og:title" content="Hệ thống Quản trị số Trường học">
+  <meta property="og:description" content="Quản lý hồ sơ số, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục. Mỗi trường một cơ sở dữ liệu riêng.">
+  <meta property="og:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Hệ thống Quản trị số Trường học">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Hệ thống Hồ sơ số — Trường Tiểu học Diễn Liên">
+  <meta name="twitter:title" content="Hệ thống Quản trị số Trường học">
   <meta name="twitter:description" content="Quản lý hồ sơ số, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục.">
-  <meta name="twitter:image" content="https://tieuhocdienlien.com/img/logo.png">
+  <meta name="twitter:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png">
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608197">
-  <link rel="stylesheet" href="style.css?v=202608197">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608198">
+  <link rel="stylesheet" href="style.css?v=202608198">
 </head>
 <body class="dang-khoa">
 
@@ -410,34 +423,34 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025
 </footer>
 
-<script src="js/cauhinh.js?v=202608197"></script>
+<script src="js/cauhinh.js?v=202608198"></script>
 <!-- Cổng chung nhiều trường. PHẢI đứng ngay sau cauhinh.js và TRƯỚC mọi tệp
      khác: nó dựng lại CAU_HINH cho chế độ xem thử, và giữ trang ở trạng thái
      khóa khi chưa biết người vào thuộc trường nào. -->
-<script src="js/cong-truong.js?v=202608197"></script>
+<script src="js/cong-truong.js?v=202608198"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608197"></script>
-<script src="js/du-lieu-sql.js?v=202608197"></script>
-<script src="js/quan-tri.js?v=202608197"></script>
+<script src="js/du-lieu-demo.js?v=202608198"></script>
+<script src="js/du-lieu-sql.js?v=202608198"></script>
+<script src="js/quan-tri.js?v=202608198"></script>
 <!-- Nạp NGAY SAU quan-tri.js để ba thẻ Cài đặt · Thông tin trường · Danh sách
      mời đứng đầu hàng thẻ — trường mới mở Quản trị là thấy việc phải làm. -->
-<script src="js/thiet-lap.js?v=202608197"></script>
-<script src="js/supabase-ket-noi.js?v=202608197"></script>
-<script src="js/app.js?v=202608197"></script>
-<script src="js/hoso-sua.js?v=202608197"></script>
-<script src="js/xuat-word.js?v=202608197"></script>
-<script src="js/tcqg.js?v=202608197"></script>
-<script src="js/tcqg-hoidong.js?v=202608197"></script>
-<script src="js/tcqg-word.js?v=202608197"></script>
-<script src="js/bach-lieu-shim.js?v=202608197"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608197"></script>
-<script src="js/co-so.js?v=202608197"></script>
-<script src="js/len-lop.js?v=202608197"></script>
-<script src="js/dbcl.js?v=202608197"></script>
-<script src="js/link-cbgv.js?v=202608197"></script>
-<script src="js/hocsinh.js?v=202608197"></script>
-<script src="js/dieu-hanh.js?v=202608197"></script>
-<script src="js/lich-tuan.js?v=202608197"></script>
+<script src="js/thiet-lap.js?v=202608198"></script>
+<script src="js/supabase-ket-noi.js?v=202608198"></script>
+<script src="js/app.js?v=202608198"></script>
+<script src="js/hoso-sua.js?v=202608198"></script>
+<script src="js/xuat-word.js?v=202608198"></script>
+<script src="js/tcqg.js?v=202608198"></script>
+<script src="js/tcqg-hoidong.js?v=202608198"></script>
+<script src="js/tcqg-word.js?v=202608198"></script>
+<script src="js/bach-lieu-shim.js?v=202608198"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608198"></script>
+<script src="js/co-so.js?v=202608198"></script>
+<script src="js/len-lop.js?v=202608198"></script>
+<script src="js/dbcl.js?v=202608198"></script>
+<script src="js/link-cbgv.js?v=202608198"></script>
+<script src="js/hocsinh.js?v=202608198"></script>
+<script src="js/dieu-hanh.js?v=202608198"></script>
+<script src="js/lich-tuan.js?v=202608198"></script>
 <!-- SheetJS đọc tệp Excel thời khóa biểu. Bản CHO TRÌNH DUYỆT: chỉ có
      XLSX.read(mảng byte), KHÔNG có readFile. Nạp trước thoi-khoa-bieu.js. -->
 <!-- ⚠️ MODULE THỜI KHÓA BIỂU ĐÃ GỠ (15/8/2026) — thầy Chung chốt.
@@ -455,6 +468,6 @@
        lib/xlsx.min.js       · thư viện đọc Excel, 930 KB
 -->
 
-<script src="js/du-gio.js?v=202608197"></script>
+<script src="js/du-gio.js?v=202608198"></script>
 </body>
 </html>

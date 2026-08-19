@@ -7,8 +7,10 @@ Cần hai tệp, đặt đúng tên dưới đây (chưa có thì app tự dùng
               logo màn đăng nhập, ảnh xem trước khi chia sẻ link Zalo/Facebook.
 
   truong.jpg  Ảnh chụp toàn cảnh trường, ngang, rộng >= 1600px.
-              Dùng làm: ảnh nền dải đầu trang chủ. Chưa có thì dải đó chỉ
-              còn nền màu xanh — vẫn dùng bình thường, không vỡ giao diện.
+              Dùng làm: ảnh nền dải đầu trang chủ. Chưa có thì trang tự dùng
+              HÌNH VẼ NGÔI TRƯỜNG dùng chung (img/nen-truong-hoc.svg) —
+              vẫn đẹp, vẫn dùng bình thường. Gửi ảnh thật thì đẹp hơn vì
+              thầy cô nhìn ra trường mình.
 
 KHÔNG đặt con dấu, chữ ký ảnh của Hiệu trưởng vào đây.
 Đây là repo CÔNG KHAI trên GitHub, ai cũng tải về được.

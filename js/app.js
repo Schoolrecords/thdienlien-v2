@@ -452,10 +452,12 @@
       if (l) l.href = anh;
     });
 
-    // Ảnh nền dải đầu trang chủ. Thiếu tệp thì dải chỉ còn nền màu — không vỡ.
-    // Cổng chung và bản xem thử để 'none': img/truong.jpg ở gốc là ảnh SÂN
-    // TRƯỜNG DIỄN LIÊN thật, lấy làm nền cho "Trường Tiểu học Minh Họa" thì
-    // hóa ra vừa bịa số liệu vừa mượn ảnh trường có thật.
+    // Ảnh nền dải đầu trang chủ — LỚP TRÊN của hai lớp nền (xem .hero .anh
+    // trong style.css). Đặt 'none' thì lộ ra lớp dưới là hình vẽ dùng chung
+    // img/nen-truong-hoc.svg, chứ không còn trơ một mảng xanh.
+    // Cổng chung và bản xem thử luôn để 'none': img/truong.jpg ở thư mục gốc
+    // là ảnh SÂN TRƯỜNG DIỄN LIÊN thật — lấy làm nền cho "Trường Tiểu học
+    // Minh Họa" thì hóa ra vừa bịa số liệu vừa mượn ảnh của trường có thật.
     document.documentElement.style.setProperty('--anh-truong',
       laTrungTinh ? 'none' : 'url("' + (C.THU_MUC_ANH || 'img/') + 'truong.jpg")');
 

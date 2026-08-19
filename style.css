@@ -211,11 +211,21 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
     linear-gradient(135deg, var(--dam-2) 0%, var(--dam) 55%, #0f2450 100%);
 }
 /* Ảnh nền theo TỪNG TRƯỜNG: js/app.js đặt biến --anh-truong lúc chạy
-   (datNhanDienTruong). Trường chưa gửi ảnh thì biến trỏ vào tệp không có —
-   dải này chỉ còn nền màu var(--dam), vẫn dùng bình thường. */
+   (datNhanDienTruong).
+
+   🔑 HAI LỚP NỀN chồng lên nhau, lớp ĐẦU nằm TRÊN:
+       lớp 1  ảnh thật của trường  (img/<mã>/truong.jpg)
+       lớp 2  hình vẽ dùng chung   (img/nen-truong-hoc.svg)
+   Trường đã gửi ảnh thì lớp 1 phủ kín, không thấy lớp 2. Trường CHƯA gửi thì
+   lớp 1 tải hỏng (404) và lớp 2 lộ ra — trình duyệt tự lo, không cần một dòng
+   JS nào. Trước đây chỉ có một lớp nên trường chưa gửi ảnh thì dải đầu trang
+   là một mảng xanh trơn, trông như trang chưa dựng xong. */
 .hero .anh {
   position: absolute; inset: 0;
-  background: var(--anh-truong, url('img/truong.jpg')) right center / cover no-repeat;
+  background-image: var(--anh-truong, none), url('img/nen-truong-hoc.svg');
+  background-position: right center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 .hero .phu {
   position: absolute; inset: 0;

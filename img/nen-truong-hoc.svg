@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" preserveAspectRatio="xMaxYMid slice" role="img" aria-label="Hình vẽ ngôi trường">
+  <!-- ═══════════════════════════════════════════════════════════════════
+       ẢNH NỀN DẢI ĐẦU TRANG CHỦ — DÙNG CHUNG CHO TRƯỜNG CHƯA GỬI ẢNH
+
+       Trường nào đã gửi img/<mã>/truong.jpg thì ảnh thật phủ ĐÈ lên hình này
+       (style.css xếp hai lớp nền, ảnh thật nằm trên). Chưa gửi thì hiện hình
+       vẽ này — trông ra dáng có chủ ý, thay vì một mảng xanh trơn như trang
+       chưa dựng xong.
+
+       CỐ Ý VẼ, KHÔNG DÙNG ẢNH CHỤP: ảnh chụp một ngôi trường có thật đặt lên
+       trang của trường khác là mượn hình của người ta. Hình vẽ thì không thuộc
+       về trường nào cả.
+
+       Vẽ nghiêng về BÊN PHẢI vì lớp phủ .hero .phu tô navy đặc từ trái rồi
+       nhạt dần sang phải — chữ nằm bên trái, hình đọc được ở bên phải.
+       ═══════════════════════════════════════════════════════════════════ -->
+  <defs>
+    <linearGradient id="troi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e4593"/>
+      <stop offset="1" stop-color="#14306b"/>
+    </linearGradient>
+    <radialGradient id="quang" cx="0.78" cy="0.22" r="0.42">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="600" fill="url(#troi)"/>
+  <rect width="1600" height="600" fill="url(#quang)"/>
+
+  <!-- Đồi xa, hai lớp cho có chiều sâu -->
+  <path d="M0 470 C 260 420, 520 452, 780 438 C 1060 422, 1340 452, 1600 428 L1600 600 L0 600Z" fill="#173a80" opacity=".55"/>
+  <path d="M0 508 C 300 470, 600 500, 900 486 C 1200 472, 1400 500, 1600 482 L1600 600 L0 600Z" fill="#122a5e" opacity=".8"/>
+
+  <!-- ── NGÔI TRƯỜNG ── -->
+  <g transform="translate(980 210)">
+    <!-- Cột cờ -->
+    <rect x="336" y="-96" width="5" height="386" fill="#0d2049"/>
+    <path d="M341 -92 h86 l-19 25 19 25 h-86 Z" fill="#c8352f"/>
+    <path d="M377 -78 l4.6 10.4 11.4 1.1 -8.6 7.6 2.5 11.2 -9.9 -6 -9.9 6 2.5 -11.2 -8.6 -7.6 11.4 -1.1Z" fill="#e5b13a"/>
+
+    <!-- Thân trường: khối chính hai tầng -->
+    <rect x="60" y="40" width="300" height="250" fill="#0f2450"/>
+    <!-- Mái -->
+    <path d="M40 44 L210 -14 L380 44 Z" fill="#c8963e"/>
+    <rect x="52" y="40" width="316" height="12" rx="4" fill="#e5b13a"/>
+
+    <!-- Cửa sổ sáng đèn, hai tầng -->
+    <g fill="#e5b13a" opacity=".9">
+      <rect x="86"  y="66" width="34" height="30" rx="4"/>
+      <rect x="140" y="66" width="34" height="30" rx="4"/>
+      <rect x="246" y="66" width="34" height="30" rx="4"/>
+      <rect x="300" y="66" width="34" height="30" rx="4"/>
+      <rect x="86"  y="126" width="34" height="30" rx="4"/>
+      <rect x="140" y="126" width="34" height="30" rx="4"/>
+      <rect x="246" y="126" width="34" height="30" rx="4"/>
+      <rect x="300" y="126" width="34" height="30" rx="4"/>
+    </g>
+    <!-- Cửa chính -->
+    <path d="M192 290 v-64 a18 18 0 0 1 36 0 v64 Z" fill="#e5b13a" opacity=".75"/>
+
+    <!-- Hai dãy nhà thấp hai bên -->
+    <rect x="-88" y="98" width="148" height="192" fill="#0d2049"/>
+    <path d="M-100 100 L-14 62 L72 100 Z" fill="#a87c33"/>
+    <g fill="#e5b13a" opacity=".7">
+      <rect x="-64" y="124" width="28" height="26" rx="4"/>
+      <rect x="-16" y="124" width="28" height="26" rx="4"/>
+      <rect x="32"  y="124" width="28" height="26" rx="4"/>
+    </g>
+    <rect x="360" y="112" width="132" height="178" fill="#0d2049"/>
+    <path d="M348 114 L426 78 L504 114 Z" fill="#a87c33"/>
+    <g fill="#e5b13a" opacity=".7">
+      <rect x="382" y="136" width="26" height="24" rx="4"/>
+      <rect x="428" y="136" width="26" height="24" rx="4"/>
+    </g>
+  </g>
+
+  <!-- ── CÂY ── -->
+  <g>
+    <g transform="translate(880 386)">
+      <rect x="-5" y="60" width="10" height="54" fill="#0b1c40"/>
+      <circle cx="0" cy="34" r="46" fill="#14356f"/>
+      <circle cx="-28" cy="52" r="32" fill="#102c5e"/>
+      <circle cx="28" cy="52" r="32" fill="#102c5e"/>
+    </g>
+    <g transform="translate(1536 400)">
+      <rect x="-5" y="54" width="10" height="48" fill="#0b1c40"/>
+      <circle cx="0" cy="30" r="40" fill="#14356f"/>
+      <circle cx="-24" cy="46" r="28" fill="#102c5e"/>
+      <circle cx="24" cy="46" r="28" fill="#102c5e"/>
+    </g>
+  </g>
+
+  <!-- Sân trường -->
+  <rect y="514" width="1600" height="86" fill="#0b1c40"/>
+</svg>
