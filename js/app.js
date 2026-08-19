@@ -450,6 +450,20 @@
   window.datNhanDienTruong = datNhanDienTruong;
 
   // ── Khởi động ──
+  // Cấu hình trường nay tải bất đồng bộ (cau-hinh/…), thường về SAU nhịp này —
+  // nên phải vẽ lại nhận diện trường khi nó tới. Đây là lần vẽ thứ hai trong ba:
+  // (1) lúc này, cấu hình trung tính · (2) khi tải xong tệp cấu hình trường ·
+  // (3) sau khi đọc bảng cau_hinh trên CSDL (js/du-lieu-sql.js) — nguồn chuẩn.
+  function veLaiTheoCauHinh() {
+    datNhanDienTruong();
+    var o;
+    if ((o = $('#dien-slogan'))) o.textContent = window.CAU_HINH.SLOGAN || '';
+    if ((o = $('#dien-nam-hoc'))) o.textContent = window.CAU_HINH.NAM_HOC || '';
+    if ((o = $('#dien-muc-tieu'))) o.textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
+    if (window.DA_NOI && (o = $('#bang-xem-thu'))) o.style.display = 'none';
+  }
+  if (window.CAU_HINH_SAN_SANG) window.CAU_HINH_SAN_SANG.then(veLaiTheoCauHinh, veLaiTheoCauHinh);
+
   document.addEventListener('DOMContentLoaded', function () {
     datNhanDienTruong();
     $('#dien-slogan').textContent = window.CAU_HINH.SLOGAN;
@@ -469,8 +483,9 @@
     //    Đúng thứ nguyên tắc "mỗi trường thấy một mình mình" cấm.
     //    Đổi trường nay đi bằng ?truong=<mã> hoặc màn khai mã ở cổng chung —
     //    cả hai đều đòi người dùng BIẾT TRƯỚC mã, không bày sẵn danh sách.
-    //    Hai hàm dsTruongDeChon() / htmlChonTruong() giữ lại trong cauhinh.js
-    //    phòng khi cần cho màn quản trị nội bộ; hiện KHÔNG nơi nào gọi.
+    //    Hai hàm dsTruongDeChon() / htmlChonTruong() cũng đã bỏ hẳn khỏi
+    //    cauhinh.js — muốn liệt kê được thì phải có danh sách trường trong mã
+    //    nguồn, mà đó đúng là thứ vừa gỡ đi.
 
     $$('nav.menu button').forEach(function (b) {
       b.addEventListener('click', function () { chuyenManHinh(b.getAttribute('data-di')); });

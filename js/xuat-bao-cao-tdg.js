@@ -41,7 +41,10 @@
 (function () {
   'use strict';
 
-  if (typeof CAU_HINH === 'undefined' || !CAU_HINH.DA_NOI) return;
+  // ⚠️ ĐỪNG trả về ở đây. Cấu hình trường nay tải bất đồng bộ (cau-hinh/…),
+  //    nên lúc tệp này chạy thì CAU_HINH.DA_NOI CHƯA có nghĩa — kiểm ở đây là
+  //    cả module thoát sạch và nút Xuất báo cáo không bao giờ được gắn.
+  //    Chốt đã dời xuống cuối tệp, chờ cấu hình xong mới xét.
 
   const TR = "font-family:'Times New Roman',serif;";
   const O = TR + 'border:1px solid #000;padding:5pt 7pt;font-size:12pt;vertical-align:top;';
@@ -774,9 +777,14 @@
       }
     }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ganNut);
-  } else {
+  // Chờ CẢ cấu hình trường LẪN cây HTML. Chỉ gắn nút khi đã nối CSDL thật —
+  // bản xem thử không có dữ liệu để kết xuất, bày nút ra chỉ tổ bấm vào rồi lỗi.
+  function batDau() {
+    if (typeof CAU_HINH === 'undefined' || !CAU_HINH.DA_NOI) return;
     ganNut();
   }
+  Promise.resolve(window.CAU_HINH_SAN_SANG).then(function () {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', batDau);
+    else batDau();
+  });
 })();

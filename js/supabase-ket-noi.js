@@ -15,23 +15,10 @@
   //    bên dưới. Cờ vắng mặt không có nghĩa là "trường chưa nối CSDL", nó cũng
   //    có thể nghĩa là "tệp cấu hình chưa chạy" — và lúc đó ta chưa biết gì cả,
   //    phải đóng. Xem khối chú thích cuối js/cauhinh.js.
-  //    Hỏng ở đây thì trang treo mãi ở màn "Đang kiểm tra phiên đăng nhập…" —
-  //    đó là hỏng ĐÚNG hướng: thà không vào được còn hơn mở toang.
+  //    Hỏng ở đây thì trang treo mãi ở màn "Đang tải…" — đó là hỏng ĐÚNG hướng:
+  //    thà không vào được còn hơn mở toang.
   if (window.CAU_HINH_XONG !== true) return;
-
-  // ⛔ HÀNG RÀO 2 — đang ở cổng chung mà CHƯA khai mã trường → js/cong-truong.js
-  //    đang giữ màn hình, tệp này không có việc gì. Phải return TRƯỚC nhánh dưới:
-  //    nhánh dưới gỡ 'dang-khoa', mà lúc này chưa biết người vào là ai.
-  if (window.CHUA_CHON_TRUONG) return;
-
-  // Chưa cấu hình CSDL → chạy chế độ xem thử, phải MỞ khóa vì trang khóa sẵn
-  // từ HTML. Không có dòng này thì bản demo sẽ trắng màn.
-  if (!window.DA_NOI) {
-    document.body.classList.remove('dang-khoa');
-    var congDemo = document.getElementById('cong-vao');
-    if (congDemo) congDemo.classList.add('an');
-    return;
-  }
+  if (!window.CAU_HINH_SAN_SANG) return;
 
   var may = null;
   window.NGUOI_DUNG = null;
@@ -50,7 +37,9 @@
   function dauCong() {
     var C = window.CAU_HINH || {};
     return '<img class="logo dien-logo" src="' + thoat((C.THU_MUC_ANH || 'img/') + 'logo.png') +
-      '" alt="" onerror="this.onerror=null;this.src=\'img/logo.png\'">' +
+      // Trường chưa gửi logo riêng → quay về biểu trưng TRUNG TÍNH.
+      // img/logo.png là con dấu của MỘT trường cụ thể, đừng lấy làm ảnh chung.
+      '" alt="" onerror="this.onerror=null;this.src=\'img/he-thong.svg\'">' +
       '<h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">' +
       thoat(C.TEN_TRUONG) + '</span></h1>';
   }
@@ -61,10 +50,11 @@
     //    phải biết trường Châu Đình cũng dùng app này, và ngược lại.
     //    Phân biệt trường bằng ĐỊA CHỈ (tên miền riêng, hoặc ?truong=<mã> mà
     //    nhà trường cấp cho thầy cô), không bằng ô chọn. Xem §12.6 bản kế hoạch.
-    //    Riêng trên CỔNG CHUNG thì phải có đường lùi: người gõ nhầm mã trường
-    //    đã được máy nhớ, không có nút này là kẹt vĩnh viễn ở cổng trường lạ.
-    //    Đây là một ĐƯỜNG DẪN, không phải danh sách — vẫn không lộ tên trường nào.
-    var lui = window.O_CONG_CHUNG
+    //    Riêng khi trường KHÔNG được nhận ra từ tên miền — tức người dùng đang ở
+    //    một địa chỉ dùng chung và đã tự khai mã — thì phải có ĐƯỜNG LÙI: gõ
+    //    nhầm mã một lần là máy nhớ, không có nút này thì kẹt vĩnh viễn ở cổng
+    //    trường lạ. Đây là một ĐƯỜNG DẪN, không phải danh sách — không lộ tên ai.
+    var lui = (window.THEO_TEN_MIEN !== true)
       ? '<div class="cong-lui"><a href="' + thoat(location.pathname) + '?doitruong=1">' +
         '↩ Không phải trường của thầy cô? Nhập lại mã trường</a></div>'
       : '';
@@ -105,13 +95,12 @@
         : 'Thầy cô đã đăng nhập thành công, nhưng địa chỉ Gmail này chưa có trong ' +
           'danh sách của nhà trường nên cần Ban giám hiệu duyệt. Nếu thầy cô dùng ' +
           'Gmail khác với địa chỉ đã đăng ký, hãy đăng xuất rồi đăng nhập lại đúng địa chỉ đó.' +
-          // Nhiều trường dùng chung mã nguồn này, mỗi trường một hệ thống riêng.
-          // Người vào nhầm địa chỉ trường khác sẽ dừng đúng ở đây — nhắc một câu
-          // để họ tìm đường về, nhưng KHÔNG nêu tên trường nào cả.
-          (window.DS_TRUONG && Object.keys(window.DS_TRUONG).length > 1
-            ? '<br><br>Nếu thầy cô công tác ở trường khác: mỗi trường có một hệ thống ' +
-              'và một đường dẫn riêng — thầy cô mở đúng đường dẫn nhà trường mình đã cấp.'
-            : '')) +
+          // Người vào nhầm địa chỉ trường khác dừng đúng ở đây — nhắc một câu để
+          // họ tìm đường về, nhưng KHÔNG nêu tên trường nào cả.
+          // Trước câu này chỉ hiện khi đếm được ≥2 trường trong window.DS_TRUONG;
+          // mảng đó nay đã bỏ nên đếm mãi ra 0 và câu nhắc không bao giờ hiện.
+          '<br><br>Nếu thầy cô công tác ở trường khác: mỗi trường có một hệ thống ' +
+          'và một đường dẫn riêng — thầy cô mở đúng đường dẫn nhà trường mình đã cấp.') +
       '</div>' +
       '<button class="nut-phu" id="nut-thoat-cong">↩ Đăng xuất</button>' +
       '<div id="khu-admin-dau"></div>' +
@@ -289,7 +278,34 @@
   }
 
   // ── Khởi động ──
-  document.addEventListener('DOMContentLoaded', function () {
+  // Chờ CẢ HAI: cây HTML dựng xong, và cauhinh.js tra xong địa chỉ này thuộc
+  // trường nào. Cấu hình nay nằm ở tệp riêng (cau-hinh/…) nên phải tải về —
+  // các cờ CHUA_CHON_TRUONG / DA_NOI chỉ có nghĩa SAU khi tải xong.
+  function khiDomXong(viec) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', viec);
+    else viec();
+  }
+
+  Promise.all([
+    window.CAU_HINH_SAN_SANG,
+    new Promise(function (ok) { khiDomXong(ok); })
+  ]).then(function (kq) {
+    var trangThai = kq[0];
+
+    // ⛔ HÀNG RÀO 2 — chưa biết người vào thuộc trường nào (màn khai mã), hoặc
+    //    không tải được cấu hình. Cả hai trường hợp js/cong-truong.js đang giữ
+    //    màn hình; tệp này không có việc gì và TUYỆT ĐỐI không được gỡ khóa.
+    if (trangThai === 'chua-biet' || trangThai === 'loi') return;
+
+    // Chưa cấu hình CSDL (đang xem thử, hoặc trường chưa dựng Supabase) → phải
+    // MỞ khóa vì trang khóa sẵn từ HTML. Không có nhánh này thì bản mẫu trắng màn.
+    if (!window.DA_NOI) {
+      document.body.classList.remove('dang-khoa');
+      var congDemo = document.getElementById('cong-vao');
+      if (congDemo) congDemo.classList.add('an');
+      return;
+    }
+
     if (!window.supabase || !window.supabase.createClient) {
       veCongLoi('Không tải được thư viện kết nối tới máy chủ. Thầy cô kiểm tra ' +
         'đường mạng rồi tải lại trang.');

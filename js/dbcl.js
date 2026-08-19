@@ -51,7 +51,11 @@
     { bi: '🤝', tu: 'Giáo viên chủ nhiệm', den: 'Ban đại diện CMHS lớp',
       mo: 'Cam kết chỉ tiêu chất lượng lớp tại buổi họp phụ huynh đầu năm.',
       pl: 'chưa có mẫu — cần bổ sung', mau: '#1e7a55' },
-    { bi: '📋', tu: 'Hiệu trưởng', den: (window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản',
+    // 'den' để là HÀM, không phải giá trị. Mảng này dựng lúc tệp nạp, mà lúc
+    // đó cấu hình trường chưa tải xong (và sau đăng nhập còn bị bảng cau_hinh
+    // ghi đè lần nữa) — chụp giá trị ngay là ô này mãi mãi hiện "đơn vị chủ quản".
+    { bi: '📋', tu: 'Hiệu trưởng',
+      den: function () { return (window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản'; },
       mo: 'Cam kết chỉ tiêu chất lượng toàn trường với cơ quan quản lý: kết quả học tập, đội ngũ, cơ sở vật chất, khen thưởng.',
       pl: 'Phụ lục 16', mau: '#c26a1f' },
     { bi: '🏫', tu: 'Nhà trường', den: 'Ban đại diện CMHS trường',
@@ -157,7 +161,10 @@
       CAM_KET.map(function (c) {
         return '<div class="the-module" style="background:#fff;cursor:default">' +
           '<div class="bi" style="background:' + c.mau + '18;color:' + c.mau + ';font-size:24px">' + c.bi + '</div>' +
-          '<h3 style="font-size:16px;color:' + c.mau + '">' + thoat(c.tu) + ' → ' + thoat(c.den) + '</h3>' +
+          // c.den có thể là HÀM (đọc muộn từ cấu hình) hoặc chuỗi cố định —
+          // gọi nếu là hàm, kẻo in ra nguyên đoạn mã của hàm lên màn hình.
+          '<h3 style="font-size:16px;color:' + c.mau + '">' + thoat(c.tu) + ' → ' +
+          thoat(typeof c.den === 'function' ? c.den() : c.den) + '</h3>' +
           '<p style="font-size:13.5px">' + thoat(c.mo) + '</p>' +
           '<div class="chip-hang" style="margin-top:12px"><span class="chip">' + thoat(c.pl) + '</span>' +
           '<span class="chip" style="color:var(--chu-mo)">chưa ký</span></div>' +

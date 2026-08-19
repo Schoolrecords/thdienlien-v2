@@ -5,10 +5,12 @@
 //
 // Tệp này phải nạp NGAY SAU cauhinh.js và TRƯỚC supabase-ket-noi.js.
 //
-// Ba màn:
-//   1. Khai mã trường  — gõ mã Sở (11819) / mã CSDL ngành / mã ngắn
+// Bốn màn:
+//   1. Khai mã trường  — gõ mã Sở / mã CSDL ngành / mã ngắn
 //   2. Xem thử         — khung app đầy đủ với DỮ LIỆU MẪU, không cần đăng nhập
 //   3. Đăng ký sử dụng — trường mới điền thông tin, gửi cho người quản trị
+//   4. Lỗi tải cấu hình — mất mạng. PHẢI tách khỏi màn 1: đá thầy cô đang dùng
+//      thật ra màn khai mã chỉ vì mạng chớp một nhịp là họ tưởng mất tài khoản.
 //
 // 🔑 GIỮ NGUYÊN NGUYÊN TẮC "hỏng thì hỏng theo hướng ĐÓNG": trang khóa sẵn
 //    bằng CSS từ HTML (body class="dang-khoa"), tệp này chỉ MỞ khóa khi đã
@@ -22,10 +24,6 @@
 (function () {
   'use strict';
 
-  // Ngoài tên miền cổng chung thì tệp này không có việc gì để làm: trường có
-  // tên miền riêng vào thẳng như xưa, không ai phải gõ mã.
-  if (!window.O_CONG_CHUNG) return;
-
   function thoat(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -33,75 +31,6 @@
   }
 
   var C = window.CHUNG || {};
-
-  // Các thẻ script nằm CUỐI <body>, nên lúc tệp này chạy thì #cong-hop và
-  // #bang-xem-thu đã có sẵn — vẽ được NGAY, không phải chờ DOMContentLoaded.
-  // Chờ mới là hại: HTML ghi cứng tên "Trường Tiểu học Diễn Liên" trong hộp
-  // cổng làm chỗ dựa lúc chưa có JS, chờ một nhịp là người lạ vào cổng chung
-  // thấy loé tên một trường cụ thể rồi mới đổi. Vẫn giữ nhánh chờ phòng khi
-  // sau này ai đó chuyển thẻ script lên <head>.
-  function veKhiCoDom(viec) {
-    if (document.getElementById('cong-hop')) viec();
-    else document.addEventListener('DOMContentLoaded', viec);
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // CHẾ ĐỘ XEM THỬ — ?xemthu=1
-  // Chạy đồng bộ NGAY LÚC NÀY, trước khi các tệp khác đọc CAU_HINH.
-  //
-  // Tên trường mẫu cố tình đặt là "Minh Họa" — đối chiếu bảng 513 trường tiểu
-  // học của Sở, không trường nào trùng tên. Đặt tên một trường có thật vào bản
-  // mẫu là có ngày số liệu giả bị chụp màn hình rồi lan đi như số liệu thật.
-  // ══════════════════════════════════════════════════════════
-  //
-  // 🔴 CHỈ chạy khi CHƯA xác định được trường. Bản đầu quên chốt này nên
-  //    `?cong=1&xemthu=1` lật được trang thật của nhà trường sang bản mẫu:
-  //    gửi cho thầy cô đường dẫn tieuhocdienlien.com kèm hai tham số đó là họ
-  //    thấy đúng tên miền quen thuộc mà nội dung là "Trường Tiểu học Minh Họa"
-  //    với số liệu bịa. Không rò dữ liệu thật, nhưng phá nguyên tắc "trên tên
-  //    miền riêng, hành vi phải y hệt như cũ" — và phá chính lời hứa ghi trong
-  //    chú thích ?cong=1 ở cauhinh.js. Nay tên miền riêng luôn thắng.
-  var LA_XEM_THU = /[?&]xemthu=1/.test(location.search) && window.CHUA_CHON_TRUONG;
-
-  if (LA_XEM_THU) {
-    var k;
-    var mau = {
-      MA: '', MA_SO: '', MA_MOET: '', TEN_MIEN: [],
-      DIA_CHI: '', KHOA_CONG_KHAI: '',        // để trống → DA_NOI = false → dùng dữ liệu mẫu
-      TEN_TRUONG: 'Trường Tiểu học Minh Họa',
-      DIA_CHI_TRUONG: 'Bản xem thử — không phải trường có thật',
-      DIA_DANH: '', DON_VI_CHU_QUAN: '', CO_QUAN_QUAN_LY: '',
-      CHU_QUAN_THUONG: '', CO_QUAN_THUONG: '',
-      HIEU_TRUONG: '', PHO_HIEU_TRUONG: '', DIEN_THOAI: '', EMAIL_TRUONG: '',
-      SLOGAN: 'Bản xem thử của hệ thống Quản trị số Trường học',
-      MUC_TIEU_CHUAN_QG: '', MUC_CHUAN_QG: '',
-      THU_MUC_ANH: 'img/', SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0
-    };
-    for (k in C) if (Object.prototype.hasOwnProperty.call(C, k) && !(k in mau)) mau[k] = C[k];
-    window.CAU_HINH = mau;
-    window.CAU_HINH.NAM_HOC = window.tinhNamHoc(mau.MOC_DOI_NAM_HOC);
-    window.DA_NOI = false;
-    window.CHUA_CHON_TRUONG = false;
-    window.MA_TRUONG = '';
-    window.LA_XEM_THU = true;
-
-    // Thêm đường về cổng vào băng xem thử. Không có nó thì người xem thử mắc
-    // kẹt trong bản mẫu, phải tự sửa địa chỉ mới ra được.
-    veKhiCoDom(function () {
-      var b = document.getElementById('bang-xem-thu');
-      if (b) b.innerHTML += ' · <a href="' + thoat(location.pathname) + '">↩ Về cổng đăng nhập</a>';
-    });
-    return;
-  }
-
-  // Đã xác định được trường (tên miền con, ?truong=, hoặc lần trước đã gõ mã)
-  // → nhường việc cho supabase-ket-noi.js, cổng đăng nhập hiện như thường.
-  if (!window.CHUA_CHON_TRUONG) return;
-
-  // ══════════════════════════════════════════════════════════
-  // TỪ ĐÂY: chưa biết người vào thuộc trường nào → vẽ màn khai mã trường.
-  // Trang vẫn KHÓA. Tuyệt đối không gọi remove('dang-khoa') ở nhánh này.
-  // ══════════════════════════════════════════════════════════
 
   function hop() { return document.getElementById('cong-hop'); }
 
@@ -128,11 +57,10 @@
       '<div class="cong-nhom">' +
       '<label class="cong-nhan" for="o-ma-truong">Mã trường</label>' +
       // KHÔNG đặt inputmode="numeric": trên iPhone nó bật bàn phím CHỈ CÓ SỐ,
-      // mà timTruongTheoMa còn nhận cả mã dạng chữ (mã ngắn, và mã cũ trong
-      // MA_KHAC sau này). Bàn phím không gõ được chữ là chặn cứng.
-      // Mã ví dụ để 12345 — mã không có thật. Trước đây ghi 11819 là mã Diễn
-      // Liên: đây là màn dùng chung cho MỌI trường, và sau sáp nhập 11819 chỉ
-      // còn là mã một phân hiệu.
+      // mà mã trường còn có dạng chữ (mã ngắn, và mã cũ sau khi trường đổi mã).
+      // Bàn phím không gõ được chữ là chặn cứng.
+      // Mã ví dụ để 12345 — mã không có thật. Ghi mã của một trường đang dùng
+      // app vào đây là tự quảng bá trường đó trên màn hình dùng chung.
       '<input class="cong-o" id="o-ma-truong" type="text" autocomplete="off" ' +
       'spellcheck="false" placeholder="Ví dụ: 12345" value="' + thoat(maCu) + '">' +
       '<div class="cong-mach">Mã trường do Sở Giáo dục và Đào tạo cấp (5 chữ số). ' +
@@ -146,25 +74,33 @@
       chanCong();
 
     var o = document.getElementById('o-ma-truong');
+    var nut = document.getElementById('nut-vao');
+
+    // MỘT câu trả lời duy nhất cho mọi trường hợp không vào được. Không được
+    // tách thành "mã không tồn tại" / "mã chưa được cấp quyền": tách ra là
+    // người ngoài dò được mã nào đang có trong hệ thống.
+    var LOI_MA = 'Mã trường không đúng hoặc chưa được cấp quyền sử dụng. ' +
+      'Thầy cô kiểm tra lại mã; nếu nhà trường chưa có tài khoản thì bấm ' +
+      '“Đăng ký sử dụng”.';
 
     function vao() {
-      var ma = window.timTruongTheoMa(o.value);
-      if (!ma) {
-        // MỘT câu trả lời duy nhất cho mọi trường hợp sai. Không được tách
-        // thành "mã không tồn tại" / "mã chưa được cấp quyền": tách ra là
-        // người ngoài dò được mã nào đang có trong hệ thống.
-        veManKhaiMa('Mã trường không đúng hoặc chưa được cấp quyền sử dụng. ' +
-          'Thầy cô kiểm tra lại mã; nếu nhà trường chưa có tài khoản thì bấm ' +
-          '“Đăng ký sử dụng”.', o.value);
-        return;
-      }
-      try { localStorage.setItem('ma_truong', ma); } catch (e) { /* bỏ qua */ }
-      // Đi kèm ?truong= để địa chỉ nói rõ đang ở trường nào — không phụ thuộc
-      // vào việc trình duyệt có cho ghi nhớ hay không.
-      location.href = location.pathname + '?truong=' + encodeURIComponent(ma);
+      var ma = String(o.value || '').trim();
+      if (!ma) { veManKhaiMa(LOI_MA, ''); return; }
+      nut.disabled = true;
+      nut.textContent = 'Đang kiểm tra…';
+      window.napCauHinhTheoMa(ma).then(function (duoc) {
+        if (!duoc) { veManKhaiMa(LOI_MA, ma); return; }
+        // Nạp lại kèm ?truong= để cả app khởi động lại với đúng cấu hình
+        // trường, thay vì chạy tiếp trên một nửa cấu hình. Địa chỉ cũng nói rõ
+        // đang ở trường nào, gửi cho nhau thì người nhận vào đúng chỗ.
+        location.href = location.pathname + '?truong=' + encodeURIComponent(ma);
+      }, function () {
+        veManKhaiMa('Không kết nối được để kiểm tra mã trường. Thầy cô xem lại ' +
+          'đường mạng rồi thử lại.', ma);
+      });
     }
 
-    document.getElementById('nut-vao').addEventListener('click', vao);
+    nut.addEventListener('click', vao);
     o.addEventListener('keydown', function (e) { if (e.key === 'Enter') vao(); });
     document.getElementById('nut-xem-thu').addEventListener('click', function () {
       location.href = location.pathname + '?xemthu=1';
@@ -175,7 +111,28 @@
     o.focus();
   }
 
-  // ── MÀN 2: đăng ký sử dụng ─────────────────────────────────
+  // ── MÀN 4: không tải được cấu hình ─────────────────────────
+  // Tách hẳn khỏi màn khai mã. Người dùng ở đây là thầy cô ĐANG DÙNG THẬT, chỉ
+  // là mạng chớp một nhịp — bắt họ gõ lại mã trường là làm họ tưởng mất tài khoản.
+  function veManLoiTai() {
+    var h = hop(); if (!h) return;
+    h.innerHTML = dauCong('Không tải được thông tin nhà trường.') +
+      '<div class="hop-loi khoa">Máy chưa lấy được tệp cấu hình của nhà trường. ' +
+      'Thường là do đường mạng chập chờn. Thầy cô kiểm tra mạng rồi bấm Tải lại; ' +
+      'nếu vẫn không được thì báo quản trị viên.</div>' +
+      '<button class="nut-google cong-chinh" id="nut-tai-lai-ch">↻ Tải lại trang</button>' +
+      '<div class="cong-ngan"><span>hoặc</span></div>' +
+      '<button class="nut-phu" id="nut-khai-ma">Nhập mã trường</button>' +
+      chanCong();
+    document.getElementById('nut-tai-lai-ch').addEventListener('click', function () {
+      location.reload();
+    });
+    document.getElementById('nut-khai-ma').addEventListener('click', function () {
+      veManKhaiMa();
+    });
+  }
+
+  // ── MÀN 3: đăng ký sử dụng ─────────────────────────────────
   // Không có máy chủ nhận biểu mẫu, và cố ý KHÔNG dựng thêm một máy chủ nữa
   // chỉ để hứng vài chục dòng đăng ký mỗi năm. Người dùng bấm một nút là toàn
   // bộ nội dung nằm sẵn trong bộ nhớ tạm, dán vào Zalo hay thư điện tử đều được.
@@ -284,6 +241,19 @@
     return '<div class="cong-lienhe">Gửi về: ' + d.join(' · ') + '</div>';
   }
 
-  // ── Khởi động ──
-  veKhiCoDom(function () { veManKhaiMa(); });
+  // ── Khởi động ──────────────────────────────────────────────
+  // Chờ cauhinh.js tra xong địa chỉ này thuộc trường nào. Trong lúc chờ, trang
+  // vẫn KHÓA và hộp cổng hiện "Đang tải…" (viết sẵn trong index.html).
+  if (!window.CAU_HINH_SAN_SANG) return;
+  window.CAU_HINH_SAN_SANG.then(function (trangThai) {
+    if (trangThai === 'chua-biet') { veManKhaiMa(); return; }
+    if (trangThai === 'loi') { veManLoiTai(); return; }
+    if (trangThai === 'xem-thu') {
+      // Thêm đường về cổng vào băng xem thử. Không có nó thì người xem thử mắc
+      // kẹt trong bản mẫu, phải tự sửa địa chỉ mới ra được.
+      var b = document.getElementById('bang-xem-thu');
+      if (b) b.innerHTML += ' · <a href="' + thoat(location.pathname) + '?doitruong=1">↩ Về cổng đăng nhập</a>';
+    }
+    // 'da-biet' và 'xem-thu' → nhường việc cho supabase-ket-noi.js
+  });
 })();
