@@ -200,7 +200,16 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
 }
 
 /* ═══ Hero trang chủ ═══ */
-.hero { position: relative; color: #fff; overflow: hidden; background: var(--dam); }
+/* Nền dải đầu trang. KHÔNG để trơ một màu phẳng: trường chưa gửi ảnh (ảnh nền
+   404) thì lớp .anh không vẽ gì, và cả dải thành một mảng xanh trơn trông như
+   trang chưa dựng xong. Hoa văn chấm + chuyển sắc chéo làm nó ra dáng có chủ ý.
+   Trường đã gửi ảnh thì .anh phủ đè lên, không thấy lớp này. */
+.hero {
+  position: relative; color: #fff; overflow: hidden;
+  background:
+    var(--cham-navy) 0 0 / 22px 22px,
+    linear-gradient(135deg, var(--dam-2) 0%, var(--dam) 55%, #0f2450 100%);
+}
 /* Ảnh nền theo TỪNG TRƯỜNG: js/app.js đặt biến --anh-truong lúc chạy
    (datNhanDienTruong). Trường chưa gửi ảnh thì biến trỏ vào tệp không có —
    dải này chỉ còn nền màu var(--dam), vẫn dùng bình thường. */

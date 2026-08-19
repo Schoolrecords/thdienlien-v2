@@ -84,13 +84,17 @@
     // Đếm thật từ dữ liệu, KHÔNG viết số cứng vào HTML — thêm/bớt một đầu hồ sơ
     // là chữ trên trang chủ tự đúng theo.
     $('#chip-ho-so').textContent = (window.BO_PHAN || []).length + ' bộ phận · ' + d.tong + ' danh mục';
-    $('#chip-so-lop').textContent = window.CAU_HINH.SO_LOP + ' lớp';
-    $('#tk-lop').textContent = window.CAU_HINH.SO_LOP;
+    // Trường chưa khai quy mô thì để dấu gạch, ĐỪNG in số 0. "0 lớp · 0 học
+    // sinh" đọc ra như trường không có học sinh nào, trong khi sự thật chỉ là
+    // chưa ai điền. Dấu gạch nói đúng: chưa có số.
+    $('#chip-so-lop').textContent = window.CAU_HINH.SO_LOP
+      ? window.CAU_HINH.SO_LOP + ' lớp' : 'chưa khai quy mô';
+    $('#tk-lop').textContent = window.CAU_HINH.SO_LOP || '–';
     // Vẽ lại hai dòng chữ này sau khi nạp cấu hình từ CSDL — chúng được đặt
     // lần đầu lúc DOMContentLoaded, tức là TRƯỚC khi đọc bảng cau_hinh.
-    $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
     $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
-    $('#tk-hoc-sinh').textContent = Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN');
+    $('#tk-hoc-sinh').textContent = window.CAU_HINH.SO_HOC_SINH
+      ? Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN') : '–';
     $('#hs-tong').textContent = d.tong;
     $('#hs-co').textContent = d.co;
     // Chắn phép chia cho 0: kho hồ sơ rỗng (hoặc đọc lỗi) thì d.tong = 0 →
@@ -404,6 +408,30 @@
     $$('.dien-chu-quan').forEach(function (e) { e.textContent = C.DON_VI_CHU_QUAN || ''; });
     var oMuc = document.getElementById('tk-muc-cqg');
     if (oMuc) oMuc.textContent = C.MUC_CHUAN_QG || '–';
+    // Nhãn dưới ô mức chuẩn quốc gia. Câu "phấn đấu giữ vững và phát triển" chỉ
+    // đúng với trường ĐÃ đạt chuẩn; trường chưa khai mà để câu đó thì thành
+    // phần mềm nói hộ một cam kết nhà trường chưa hề đưa ra.
+    var oMucNhan = document.getElementById('tk-muc-cqg-nhan');
+    if (oMucNhan) {
+      oMucNhan.textContent = C.MUC_CHUAN_QG
+        ? 'phấn đấu giữ vững và phát triển' : 'mức chuẩn quốc gia';
+    }
+
+    // Khẩu hiệu: dựng cả dòng ở đây. Trống thì ẩn hẳn, đừng để trơ hai bông lúa.
+    var oKh = document.getElementById('dien-khau-hieu');
+    if (oKh) {
+      oKh.innerHTML = C.SLOGAN ? '🌾 <span id="dien-slogan"></span> 🌾' : '';
+      if (C.SLOGAN) oKh.querySelector('#dien-slogan').textContent = C.SLOGAN;
+      oKh.style.display = C.SLOGAN ? '' : 'none';
+    }
+
+    // Mục tiêu trong câu SỨ MỆNH/MỤC TIÊU: dấu chấm phẩy đi kèm phần chữ, nên
+    // trường chưa khai thì câu vẫn liền mạch chứ không cụt.
+    var oMt2 = document.getElementById('dien-muc-tieu');
+    if (oMt2) {
+      oMt2.textContent = C.MUC_TIEU_CHUAN_QG
+        ? '; ' + String(C.MUC_TIEU_CHUAN_QG).toLowerCase() : '';
+    }
 
     // Dòng mục tiêu chuẩn quốc gia ở đầu màn Trường chuẩn Quốc gia. Chưa khai
     // mục tiêu thì ẨN HẲN dòng — thà không có còn hơn bịa mục tiêu cho trường.
@@ -457,18 +485,16 @@
   function veLaiTheoCauHinh() {
     datNhanDienTruong();
     var o;
-    if ((o = $('#dien-slogan'))) o.textContent = window.CAU_HINH.SLOGAN || '';
+    // Khẩu hiệu và mục tiêu nay do datNhanDienTruong() lo trọn (cả phần ẩn khi
+    // trống), đừng ghi đè lại ở đây kẻo mất phần xử lý ô rỗng.
     if ((o = $('#dien-nam-hoc'))) o.textContent = window.CAU_HINH.NAM_HOC || '';
-    if ((o = $('#dien-muc-tieu'))) o.textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
     if (window.DA_NOI && (o = $('#bang-xem-thu'))) o.style.display = 'none';
   }
   if (window.CAU_HINH_SAN_SANG) window.CAU_HINH_SAN_SANG.then(veLaiTheoCauHinh, veLaiTheoCauHinh);
 
   document.addEventListener('DOMContentLoaded', function () {
     datNhanDienTruong();
-    $('#dien-slogan').textContent = window.CAU_HINH.SLOGAN;
     $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
-    $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
     if (window.DA_NOI) {
       $('#bang-xem-thu').style.display = 'none';
     }
