@@ -45,9 +45,9 @@
   }
 
   function chanCong() {
-    return '<div class="chan">Hệ thống dùng chung cho nhiều trường, <b>mỗi trường một cơ sở ' +
-      'dữ liệu riêng biệt</b>. Việc xác thực do Google thực hiện, nhà trường không lưu giữ ' +
-      'mật khẩu. Dữ liệu cá nhân được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
+    return '<div class="chan"><b>Hệ thống quản trị Trường tiểu học trong giai đoạn mới.</b> ' +
+      'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
+      'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
   }
 
   // ── MÀN 1: khai mã trường ──────────────────────────────────
@@ -63,8 +63,7 @@
       // app vào đây là tự quảng bá trường đó trên màn hình dùng chung.
       '<input class="cong-o" id="o-ma-truong" type="text" autocomplete="off" ' +
       'spellcheck="false" placeholder="Ví dụ: 12345" value="' + thoat(maCu) + '">' +
-      '<div class="cong-mach">Mã trường do Sở Giáo dục và Đào tạo cấp (5 chữ số). ' +
-      'Dùng mã trong CSDL ngành cũng được.</div>' +
+      '<div class="cong-mach">Mã trường là mã CSDL ngành được nhập khi đăng ký với Admin.</div>' +
       '</div>' +
       (loi ? '<div class="hop-loi khoa">' + thoat(loi) + '</div>' : '') +
       '<button class="nut-google cong-chinh" id="nut-vao">Vào hệ thống</button>' +
@@ -146,7 +145,9 @@
   // bộ nội dung nằm sẵn trong bộ nhớ tạm, dán vào Zalo hay thư điện tử đều được.
   var O_DK = [
     { ma: 'ten', nhan: 'Tên trường', bat: true, goi: 'Trường Tiểu học …' },
-    { ma: 'maso', nhan: 'Mã trường (Sở GD&ĐT cấp)', bat: false, goi: '5 chữ số' },
+    // Nhãn KHÔNG có ngoặc đơn — soanNoiDung() cắt bỏ phần trong ngoặc khi
+    // soạn nội dung gửi đi, để ngoặc thì bản đăng ký mất luôn chữ giải thích.
+    { ma: 'maso', nhan: 'Mã trường ghi đúng trên CSDL ngành', bat: false, goi: 'mã trên truong.csdl.moet.gov.vn' },
     { ma: 'xa', nhan: 'Xã / phường', bat: true, goi: '' },
     { ma: 'tinh', nhan: 'Tỉnh / thành phố', bat: true, goi: '' },
     { ma: 'nguoi', nhan: 'Họ tên người liên hệ', bat: true, goi: '' },
