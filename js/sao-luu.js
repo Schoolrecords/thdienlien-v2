@@ -90,19 +90,41 @@
 
   function ve(hop) {
     var c = window.CAU_HINH || {};
+    // Lời văn ở màn này KHÔNG nói gì về cơ chế máy chủ. Bản đầu có giải thích
+    // "gói miễn phí không sao lưu tự động, xoá dự án là mất vĩnh viễn" —
+    // thầy Chung phản hồi: nhà trường không nắm cơ chế nên đọc xong chỉ thấy
+    // hoang mang. Việc của họ chỉ là MỖI THÁNG BẤM MỘT LẦN và giữ tệp cho đúng.
     hop.innerHTML =
       '<div class="the-thong-bao" style="margin-bottom:14px">' +
-      '<b>Vì sao cần bản sao lưu:</b> cơ sở dữ liệu của nhà trường chạy trên gói miễn phí, ' +
-      '<b>không có sao lưu tự động</b>. Xoá nhầm dự án hoặc để dự án ngủ quá lâu là mất vĩnh viễn, ' +
-      'không ai lấy lại được. Mỗi tháng bấm nút dưới đây một lần, cất tệp vào Google Drive của trường.' +
+      '<b>📅 Mỗi tháng tải một lần.</b> Đây là việc định kỳ như sao lưu sổ sách của nhà trường: ' +
+      'bấm nút dưới đây, máy sẽ gói toàn bộ dữ liệu của trường thành một tệp và tải về. ' +
+      'Dữ liệu trên hệ thống vẫn nguyên vẹn — tệp tải về là <b>bản dự phòng</b> của nhà trường.' +
+      '<div style="margin-top:8px;font-size:13.6px;color:var(--chu-mo)">Nên làm vào cuối tháng, ' +
+      'và làm thêm một lần sau mỗi đợt nhập nhiều dữ liệu: xét cuối học kỳ, cuối năm học, ' +
+      'sau khi hoàn thiện hồ sơ minh chứng.</div>' +
       '</div>' +
+
+      '<div class="the-thong-bao" style="margin-bottom:14px">' +
+      '<b>Giữ tệp sao lưu thế nào cho đúng</b>' +
+      '<ul style="margin:9px 0 0 20px;font-size:14px;line-height:1.85">' +
+      '<li>Cất vào <b>Google Drive của trường</b>, thư mục riêng đặt tên “Sao lưu hệ thống”. ' +
+      'Đừng chỉ để trong máy tính của một người.</li>' +
+      '<li>Giữ <b>ít nhất ba bản gần nhất</b>. Bản mới nhất có thể đã lẫn sai sót mà chưa ai phát hiện, ' +
+      'lúc đó còn bản tháng trước mà dùng.</li>' +
+      '<li>Chỉ <b>Ban giám hiệu và người phụ trách hệ thống</b> được giữ. Đây là hồ sơ của nhà trường, ' +
+      'không gửi vào nhóm Zalo, không để trong máy dùng chung.</li>' +
+      '<li><b>Không mở ra sửa.</b> Tệp này chỉ để phục hồi khi cần; sửa tay là hỏng, đến lúc cần lại ' +
+      'không dùng được.</li>' +
+      '<li>Khi cần phục hồi dữ liệu, <b>báo người phụ trách hệ thống</b> kèm tệp — đừng tự thao tác.</li>' +
+      '</ul></div>' +
+
       '<div class="the-thong-bao" style="margin-bottom:14px">' +
       '<label style="display:flex;gap:9px;align-items:flex-start;cursor:pointer">' +
       '<input type="checkbox" id="sl-nhay-cam" style="margin-top:4px">' +
       '<span><b>Kèm số định danh cá nhân của học sinh</b><br>' +
-      '<span style="font-size:13px;color:var(--chu-mo)">Mặc định KHÔNG kèm. Tích ô này thì tệp tải về ' +
-      'chứa dữ liệu cá nhân được Luật Bảo vệ dữ liệu cá nhân năm 2025 bảo vệ — phải giữ như hồ sơ mật, ' +
-      'không gửi qua Zalo, không để trong máy dùng chung.</span></span></label>' +
+      '<span style="font-size:13px;color:var(--chu-mo)">Mặc định KHÔNG kèm, và bình thường thì không cần. ' +
+      'Chỉ tích khi làm bản lưu đầy đủ để bàn giao — khi đó tệp chứa dữ liệu cá nhân được ' +
+      'Luật Bảo vệ dữ liệu cá nhân năm 2025 bảo vệ, phải giữ như hồ sơ mật.</span></span></label>' +
       '</div>' +
       '<button class="nut-kiem-tra" id="sl-nut">💾 Tải bản sao lưu</button>' +
       '<div id="sl-tien-trinh" style="margin-top:14px"></div>';
@@ -113,8 +135,9 @@
         bieuTuong: '💾',
         tieuDe: 'Tải bản sao lưu toàn bộ dữ liệu?',
         moTa2: c.TEN_TRUONG || '',
-        noiDung: 'Máy sẽ đọc lần lượt hơn 60 bảng dữ liệu — mất khoảng nửa phút. ' +
-          (kemNhayCam ? 'Tệp tải về CÓ kèm số định danh cá nhân của học sinh.' : 'Không kèm số định danh cá nhân.'),
+        noiDung: 'Máy gói toàn bộ dữ liệu của trường thành một tệp rồi tải về — mất khoảng nửa phút. ' +
+          (kemNhayCam ? 'Tệp này CÓ kèm số định danh cá nhân của học sinh, phải giữ như hồ sơ mật.'
+                      : 'Không kèm số định danh cá nhân của học sinh.'),
         nutOK: 'Tải bản sao lưu'
       }).then(function (dongY) {
         if (dongY) chay(kemNhayCam);
@@ -125,7 +148,7 @@
   function chay(kemNhayCam) {
     var nut = $('#sl-nut'), tt = $('#sl-tien-trinh');
     nut.disabled = true;
-    nut.textContent = 'Đang đọc dữ liệu…';
+    nut.textContent = 'Đang gói dữ liệu…';
 
     var ds = BANG.concat(kemNhayCam ? BANG_NHAY_CAM : []);
     var c = window.CAU_HINH || {};
@@ -145,8 +168,12 @@
     function tiep() {
       if (i >= ds.length) return xong();
       var ten = ds[i];
-      tt.innerHTML = '<div class="the-thong-bao">Đang đọc <b>' + ten + '</b> … (' +
-        (i + 1) + '/' + ds.length + ')</div>';
+      // Chỉ hiện SỐ, không hiện tên bảng: 'nl_pc_tieu_chi' chạy qua màn hình
+      // chẳng nói lên điều gì với thầy cô, lại giống như máy đang báo lỗi.
+      var phanTram = Math.round((i / ds.length) * 100);
+      tt.innerHTML = '<div class="the-thong-bao">Đang gói dữ liệu… <b>' + phanTram + '%</b>' +
+        '<div style="margin-top:6px;font-size:13.2px;color:var(--chu-mo)">Thầy cô chờ một chút, ' +
+        'đừng đóng trang.</div></div>';
       return taiHet(ten).then(function (d) {
         goi.bang[ten] = d;
         tongDong += d.length;
@@ -162,15 +189,17 @@
       taiVeMay(JSON.stringify(goi, null, 1), tenTep('json'));
       nut.disabled = false;
       nut.textContent = '💾 Tải bản sao lưu';
+      // Phần "thiếu" chỉ hiện cho người biết việc, và nói rõ là KHÔNG SAO —
+      // không thì thầy cô thấy danh sách tên bảng lạ hoắc lại tưởng hỏng.
       var canhBaoThieu = goi.thieu.length
-        ? '<div style="margin-top:8px;font-size:13.4px">' + goi.thieu.length +
-          ' bảng không đọc được (thường là bảng thầy cô không có quyền xem — không sao): ' +
-          goi.thieu.map(function (x) { return x.bang; }).join(', ') + '</div>'
+        ? '<div style="margin-top:8px;font-size:13.2px;color:var(--chu-mo)">Có ' + goi.thieu.length +
+          ' mục nhà trường chưa dùng tới nên không có dữ liệu — điều này bình thường, bản sao lưu vẫn đủ dùng.</div>'
         : '';
-      tt.innerHTML = '<div class="the-thong-bao">✅ <b>Đã tải xong.</b> ' + tongDong.toLocaleString('vi-VN') +
-        ' dòng dữ liệu trong ' + Object.keys(goi.bang).length + ' bảng.' + canhBaoThieu +
-        '<div style="margin-top:8px;font-size:13.4px">Cất tệp vào Google Drive của trường. ' +
-        'Giữ lại ít nhất <b>ba bản gần nhất</b> — bản mới nhất có thể đã dính lỗi mà chưa ai phát hiện.</div></div>';
+      tt.innerHTML = '<div class="the-thong-bao">✅ <b>Đã tải xong bản sao lưu tháng này.</b> ' +
+        tongDong.toLocaleString('vi-VN') + ' dòng dữ liệu.' + canhBaoThieu +
+        '<div style="margin-top:8px;font-size:13.8px">Việc tiếp theo: mở thư mục Tải xuống, ' +
+        'chuyển tệp vừa tải vào <b>Google Drive của trường</b> (thư mục “Sao lưu hệ thống”), ' +
+        'rồi xoá bản cũ hơn một năm.</div></div>';
       if (window.notify) window.notify('💾 Đã tải bản sao lưu.');
     }
 
