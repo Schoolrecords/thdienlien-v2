@@ -31,22 +31,55 @@
 
   var NAM_NGUON = '', NAM_DICH = '';
 
+  // ── Đọc hết bảng lớn theo trang 1000 dòng (mẫu chung của dự án) ──
+  // BẮT BUỘC có .order(): PostgREST không hứa thứ tự nào nếu không sắp xếp,
+  // phân trang bằng .range() có thể lấy lặp dòng trang trước và bỏ sót dòng
+  // khác. 863 em × 2 năm học đã vượt trần 1000 dòng của Supabase — không
+  // phân trang thì DANH SÁCH NĂM BỊ THIẾU, màn này chọn sai năm nguồn.
+  function taiHet(bang, cot, loc) {
+    var ket = [], tu = 0, buoc = 1000;
+    function trang() {
+      var q = window.MAY_CHU.from(bang).select(cot).order('id').range(tu, tu + buoc - 1);
+      (loc || []).forEach(function (l) { q = q.eq(l[0], l[1]); });
+      return q.then(function (r) {
+        if (r.error) throw r.error;
+        var d = r.data || [];
+        ket = ket.concat(d);
+        if (d.length < buoc) return ket;
+        tu += buoc;
+        return trang();
+      });
+    }
+    return trang();
+  }
+
+  // Canh năm đích. Gõ nhầm ở ô này là đổ TOÀN BỘ học sinh lên lớp vào chính
+  // năm đang chạy, mà màn này KHÔNG có đường lùi — nên chặn ngay từ đầu vào.
+  // Trả về chuỗi lỗi, rỗng nghĩa là hợp lệ.
+  function loiNamDich(nguon, dich) {
+    if (!/^\d{4}-\d{4}$/.test(dich)) return 'Năm học mới phải viết dạng 2026-2027.';
+    var a = dich.split('-'), d1 = parseInt(a[0], 10), d2 = parseInt(a[1], 10);
+    if (d2 !== d1 + 1) return 'Năm học mới phải là hai năm liền nhau, ví dụ 2026-2027 — ' +
+      'thầy cô đang gõ "' + dich + '".';
+    if (dich === nguon) return 'Năm học mới TRÙNG năm học nguồn (' + nguon + ').\n\n' +
+      'Chạy như vậy là đổ học sinh lên lớp vào chính năm đang học, và màn này ' +
+      'KHÔNG có đường lùi. Hãy sửa ô năm học mới.';
+    var n = /^(\d{4})-\d{4}$/.exec(String(nguon || ''));
+    if (n && d1 <= parseInt(n[1], 10)) return 'Năm học mới (' + dich + ') phải SAU ' +
+      'năm học nguồn (' + nguon + ').';
+    return '';
+  }
+
   function veTabLL(hop) {
-    var may = window.MAY_CHU;
     hop.innerHTML = '<div class="the-thong-bao">Đang tải…</div>';
 
     // Năm nguồn mặc định = năm CÓ DỮ LIỆU mới nhất, KHÔNG phải năm hệ thống
     // đang chạy. Sau 30/8 hệ thống nhảy sang 2026-2027 mà dữ liệu vẫn nằm ở
     // 2025-2026 — lấy năm hệ thống thì màn này mở ra trống trơn đúng lúc cần
     // nó nhất. (Cùng bài học đã ghi ở hocsinh.js.)
-    may.from('hoc_sinh_lop').select('nam_hoc').then(function (r) {
-      if (r.error) {
-        hop.innerHTML = '<div class="the-thong-bao">Không đọc được dữ liệu học sinh: ' +
-          thoat(r.error.message) + '</div>';
-        return;
-      }
+    taiHet('hoc_sinh_lop', 'id, nam_hoc').then(function (ds) {
       var dsNam = [];
-      (r.data || []).forEach(function (d) {
+      (ds || []).forEach(function (d) {
         if (d.nam_hoc && dsNam.indexOf(d.nam_hoc) < 0) dsNam.push(d.nam_hoc);
       });
       dsNam.sort();
@@ -58,7 +91,16 @@
       NAM_NGUON = NAM_NGUON || dsNam[dsNam.length - 1];
       NAM_DICH = NAM_DICH || namKeTiep(NAM_NGUON);
       veBang(hop, dsNam);
-    });
+    })
+      // Không có nhánh này thì mất mạng là kẹt "Đang tải…" vĩnh viễn,
+      // không một lời nào cho thầy cô biết vì sao.
+      .catch(function (e) {
+        hop.innerHTML = '<div class="the-thong-bao">Không đọc được dữ liệu học sinh: ' +
+          thoat((e && e.message) || e) +
+          '<br><br><button class="nut-phu nut-ll-tai-lai">Thử lại</button></div>';
+        var n = hop.querySelector('.nut-ll-tai-lai');
+        if (n) n.addEventListener('click', function () { veTabLL(hop); });
+      });
   }
 
   function veBang(hop, dsNam) {
@@ -68,7 +110,10 @@
         if (r.error) {
           hop.innerHTML = '<div class="the-thong-bao">Không xem trước được: ' +
             thoat(r.error.message) +
-            '<br><br>Nếu báo không tìm thấy hàm thì chạy <b>sql/35-len-lop.sql</b> trên Supabase.</div>';
+            '<br><br>Nếu báo không tìm thấy hàm thì chạy <b>sql/35-len-lop.sql</b> trên Supabase.' +
+            '<br><br><button class="nut-phu nut-ll-tai-lai">Thử lại</button></div>';
+          var n0 = hop.querySelector('.nut-ll-tai-lai');
+          if (n0) n0.addEventListener('click', function () { veTabLL(hop); });
           return;
         }
         var ds = r.data || [];
@@ -89,6 +134,13 @@
           daiChanTrang();
 
         noiSuKien(hop, dsNam, ds, tong);
+      })
+      .catch(function (e) {
+        hop.innerHTML = '<div class="the-thong-bao">Không xem trước được: ' +
+          thoat((e && e.message) || e) +
+          '<br><br><button class="nut-phu nut-ll-tai-lai">Thử lại</button></div>';
+        var n = hop.querySelector('.nut-ll-tai-lai');
+        if (n) n.addEventListener('click', function () { veTabLL(hop); });
       });
   }
 
@@ -175,11 +227,11 @@
     var may = window.MAY_CHU;
 
     hop.querySelector('.nut-doi-nam').addEventListener('click', function () {
-      NAM_NGUON = hop.querySelector('.ll-nam-nguon').value;
-      NAM_DICH = hop.querySelector('.ll-nam-dich').value.trim();
-      if (!/^\d{4}-\d{4}$/.test(NAM_DICH)) {
-        window.notify('Năm học mới phải viết dạng 2026-2027.'); return;
-      }
+      var nguon = hop.querySelector('.ll-nam-nguon').value;
+      var dich = hop.querySelector('.ll-nam-dich').value.trim();
+      var loi = loiNamDich(nguon, dich);
+      if (loi) { window.alert(loi); return; }
+      NAM_NGUON = nguon; NAM_DICH = dich;
       veTabLL(hop);
     });
 
@@ -211,6 +263,22 @@
     // Thực hiện lên lớp
     hop.querySelector('.nut-lam-len-lop').addEventListener('click', function () {
       var nut = this;
+
+      // Hàng rào cuối. Bảng đang hiện được vẽ theo NAM_NGUON/NAM_DICH lúc nạp;
+      // thầy cô sửa ô năm rồi bấm thẳng nút này (không bấm "Xem lại") thì con
+      // số trong bảng là của cặp năm CŨ mà lệnh lại chạy cho cặp năm nào?
+      // Chặn hẳn, bắt xem lại — chứ không đoán ý.
+      var oNguon = hop.querySelector('.ll-nam-nguon').value;
+      var oDich = hop.querySelector('.ll-nam-dich').value.trim();
+      if (oNguon !== NAM_NGUON || oDich !== NAM_DICH) {
+        window.alert('Thầy cô vừa sửa ô năm học nhưng chưa bấm "Xem lại".\n\n' +
+          'Bảng bên dưới vẫn là số của ' + NAM_NGUON + ' → ' + NAM_DICH + '. ' +
+          'Bấm "Xem lại" để máy đếm lại theo năm học mới gõ, rồi hãy thực hiện.');
+        return;
+      }
+      var loiNam = loiNamDich(NAM_NGUON, NAM_DICH);
+      if (loiNam) { window.alert(loiNam); return; }
+
       var anhXa = {}, trung = {}, loi = '';
       Array.prototype.slice.call(hop.querySelectorAll('#ll-bang tbody tr')).forEach(function (tr) {
         var o = tr.querySelector('.ll-lop-moi');

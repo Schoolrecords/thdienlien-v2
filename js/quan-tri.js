@@ -99,16 +99,39 @@
           nut.addEventListener('click', function () {
             var dong = nut.closest('tr');
             var id = dong.getAttribute('data-id');
-            nut.textContent = '…';
+            var email = dong.getAttribute('data-email') || 'tài khoản này';
+            nut.textContent = '…'; nut.disabled = true;
+
+            // Đây là màn CẤP QUYỀN. Hỏng ở đây mà chỉ nháy chữ "Lỗi!" rồi tự
+            // xoá sau 2,5 giây thì admin quay đi là mất dấu — tưởng đã mở quyền
+            // cho thầy cô, hôm sau người ta gọi điện hỏi vì sao vẫn không vào
+            // được. Hỏng thì phải NÓI RA bằng hộp thoại, và nói rõ hỏng vì gì.
+            function hong(chu) {
+              nut.disabled = false; nut.textContent = 'Lỗi!';
+              window.alert('CHƯA lưu được vai trò / trạng thái của ' + email + '.\n\n' + chu +
+                '\n\nDòng trên màn hình đang hiện giá trị vừa chọn, nhưng máy chủ vẫn giữ ' +
+                'giá trị cũ. Tải lại trang để thấy đúng thực tế.');
+              setTimeout(function () { nut.textContent = 'Lưu'; }, 2500);
+            }
+
             window.MAY_CHU.from('nguoi_dung').update({
               vai_tro: dong.querySelector('select[data-cot="vai_tro"]').value,
               trang_thai: dong.querySelector('select[data-cot="trang_thai"]').value
             }).eq('id', id).select()
               .then(function (r) {
-                var ok = !r.error && r.data && r.data.length;
-                nut.textContent = ok ? 'Đã lưu ✓' : 'Lỗi!';
-                if (ok) dong.classList.remove('dong-cho');
+                if (r.error) { hong('Máy chủ báo lỗi: ' + (r.error.message || 'không rõ.')); return; }
+                // RLS chặn ghi thì không có error, chỉ 0 dòng trả về.
+                if (!r.data || !r.data.length) {
+                  hong('Máy chủ nhận lệnh nhưng KHÔNG dòng nào được ghi — thường là ' +
+                    'tài khoản đang dùng không đủ quyền sửa người dùng khác.');
+                  return;
+                }
+                nut.disabled = false; nut.textContent = 'Đã lưu ✓';
+                dong.classList.remove('dong-cho');
                 setTimeout(function () { nut.textContent = 'Lưu'; }, 2500);
+              })
+              .catch(function (e) {
+                hong('Không gọi được máy chủ: ' + ((e && e.message) || e));
               });
           });
         });
@@ -152,6 +175,13 @@
               });
           });
         });
+      })
+      .catch(function (e) {
+        hop.innerHTML = '<div class="hd-kiem do"><b>Không đọc được danh sách người dùng.</b><br>' +
+          thoat((e && e.message) || e) +
+          '<br><br><button class="nut-phu nut-tk-tai-lai">Thử lại</button></div>';
+        var n = hop.querySelector('.nut-tk-tai-lai');
+        if (n) n.addEventListener('click', function () { veTaiKhoan(hop); });
       });
   }
 
@@ -161,6 +191,10 @@
       .select('email,hanh_dong,bang,ban_ghi,thoi_gian')
       .order('thoi_gian', { ascending: false }).limit(60)
       .then(function (kq) {
+        // Không xét kq.error thì lỗi máy chủ (hoặc RLS chặn đọc nhật ký) hiện
+        // ra thành câu "Chưa có thao tác nào được ghi" — một sổ nhật ký trống
+        // trơn là điều rất khác với một sổ không đọc được.
+        if (kq.error) { hongNhatKy(hop, kq.error.message); return; }
         var ds = kq.data || [];
         hop.innerHTML = '<div class="nhan-nho" style="margin:14px 0 10px">60 thao tác gần nhất — nhật ký do máy chủ tự ghi, ' +
           'không ai sửa/xóa được kể cả quản trị (Luật Bảo vệ dữ liệu cá nhân năm 2025).</div>' +
@@ -173,6 +207,17 @@
                   '<td>' + thoat((n.bang || '') + (n.ban_ghi ? ' · ' + n.ban_ghi : '')) + '</td></tr>';
               }).join('') + '</tbody></table></div>'
             : '<div class="the-thong-bao">Chưa có thao tác nào được ghi.</div>');
-      });
+      })
+      .catch(function (e) { hongNhatKy(hop, (e && e.message) || e); });
+  }
+
+  function hongNhatKy(hop, chu) {
+    hop.innerHTML = '<div class="hd-kiem do"><b>Không đọc được sổ nhật ký.</b><br>' +
+      thoat(chu || 'Lỗi không rõ.') +
+      '<br><br>Đây KHÔNG phải là "sổ trống" — nhật ký có thể vẫn đầy đủ trên máy chủ, ' +
+      'chỉ là lần này không lấy về được.</div>' +
+      '<div style="margin-top:12px"><button class="nut-phu nut-nk-tai-lai">Thử lại</button></div>';
+    var n = hop.querySelector('.nut-nk-tai-lai');
+    if (n) n.addEventListener('click', function () { veNhatKy(hop); });
   }
 })();

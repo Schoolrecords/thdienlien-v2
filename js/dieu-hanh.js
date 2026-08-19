@@ -356,7 +356,7 @@
         // Dọn nốt trạng thái XEM của bản mẫu: bản mẫu có 3 cơ sở, trường thật
         // có thể chỉ 1 — giữ LOC_CS='CS02' là màn Tổng quan trắng không lối ra.
         LOC_CS = 'all'; BUOI_XEM = null; BC_CS = ''; KT_CS = ''; CONG_CHOT = [];
-        BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+        BC_CSVC = { dien: '', nuoc: '', csvc: '' }; BC_SUA = false; BC_DU_DA_BAM = false;
         if (window.LT && window.LT.datLai) window.LT.datLai();
         if (window.DG && window.DG.datLai) window.DG.datLai();
         veDieuHanh();
@@ -1117,16 +1117,22 @@
     var nhieuCS = DL.coSo.length > 1;
     var hang = (DL.gvDs || []).map(function (g) {
       var v = vang[khoaGV(g.email, g.ten)];
-      // "Chưa điểm danh" chỉ đúng khi cơ sở đó CHƯA gửi báo cáo đầu buổi VÀ
-      // cũng chưa ai khai vắng cho nó. Từ 15/8/2026 hai việc này tách hai
-      // màn, nên nếu chỉ nhìn báo cáo đầu buổi thì cô phụ trách vừa khai hai
-      // người nghỉ ốm xong mà cả bảng vẫn ghi "Chưa điểm danh" — vô lý.
-      var coKhaiVang = gvVangBuoi(b).some(function (x) { return x.coSo === g.coSo; });
-      var chuaBC = !(DL.baoCao[g.coSo] || {})[b] && !coKhaiVang;
+      // 🔴 19/8/2026 — BỎ HẲN việc nhìn `bao_cao_dau_buoi` ở bảng nhân sự.
+      //
+      // Mã cũ: chưa gửi báo cáo đầu buổi thì cả cơ sở là "Chưa điểm danh",
+      // gửi xong là CẢ CƠ SỞ nhảy sang pill xanh "Có mặt". Nhưng từ 15/8/2026
+      // báo cáo đầu buổi chỉ còn nói về AN TOÀN và CƠ SỞ VẬT CHẤT — nó không
+      // biết một chữ nào về nhân sự. Lấy nó làm bằng chứng "cả trường có mặt"
+      // là bịa: cô phụ trách bấm 🟢 An toàn lúc 7h là 20 người thành "Có mặt",
+      // kể cả người đang nằm viện chưa ai kịp khai.
+      //
+      // Nguồn sự thật DUY NHẤT về công là bảng gv_vang, và bảng công cuối
+      // tháng cũng tính đúng từ đó: ai không có tên trong sổ vắng thì đủ công.
+      // Nên pill nói đúng cái nó biết — "Không báo vắng" — chứ không quả quyết
+      // đã trông thấy người ta ở trường.
       var pill, chu;
       if (v) { pill = PILL_VANG[v.lyDo] || 'vang'; chu = v.lyDo; }
-      else if (chuaBC) { pill = 'xam'; chu = 'Chưa điểm danh'; }
-      else { pill = 'xanh'; chu = 'Có mặt'; }
+      else { pill = 'xanh'; chu = 'Không báo vắng'; }
       return '<tr><td class="cot-dinh"><b>' + thoat(g.ten) + '</b>' +
         (g.chucVu ? '<br><small>' + thoat(g.chucVu) + '</small>' : '') + '</td>' +
         (nhieuCS ? '<td>' + thoat(tenCoSo(g.coSo)) + '</td>' : '') +
@@ -1149,8 +1155,10 @@
     // ngay đó có đường đi tiếp, không phải nhớ rồi đi tìm.
     return daiDayThay() +
       '<div class="dh-tieu-de" style="margin-top:22px">🧑‍🏫 Trạng thái CBGV-NV · ' + tenBuoi(b) + '</div>' +
-      '<div class="dh-ghi-chu-nho" style="margin-top:0">Bảng này <b>dẫn xuất</b> từ sổ vắng — người phụ trách chỉ báo ' +
-      'NGƯỜI VẮNG trong báo cáo đầu buổi, còn lại mặc định có mặt. Không ai phải điểm danh từng người.</div>' +
+      '<div class="dh-ghi-chu-nho" style="margin-top:0">Bảng này <b>dẫn xuất từ sổ vắng</b>: người phụ trách ' +
+      'chỉ khai NGƯỜI VẮNG, không ai phải điểm danh từng người. Vì thế <b>"Không báo vắng" nghĩa là ' +
+      'chưa có ai khai người này vắng</b> — bảng công sẽ tính đủ công — chứ không phải đã có người ' +
+      'xác nhận trông thấy đủ mặt.</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho bang-cong"><thead><tr>' +
       '<th class="cot-dinh" style="text-align:left">CBGV-NV</th>' +
       (nhieuCS ? '<th>Điểm trường</th>' : '') +
@@ -1170,8 +1178,15 @@
   var BC_ANTOAN = null;
   var BC_GV_VANG = {};     // email/tên -> lý do
   var BC_MO_CHON_GV = false;
+  // true = thầy cô đã TỰ BẤM nút "không ai vắng" trong phiên này. Chỉ để nút
+  // sáng đúng lúc — không ghi cơ sở dữ liệu, vì không ai vắng thì không có
+  // dòng nào để ghi.
+  var BC_DU_DA_BAM = false;
   // Ba mục cơ sở vật chất của màn 3c: '' = chưa chọn, 'on' | 'loi'
   var BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+  // true = đang MỞ LẠI biểu mẫu để sửa một báo cáo đã gửi (nút ✏ Sửa báo cáo).
+  // Bản cũ vẫn nằm nguyên trong cơ sở dữ liệu cho tới khi bấm XÁC NHẬN.
+  var BC_SUA = false;
   var TEN_CSVC = { dien: 'Điện', nuoc: 'Nước', csvc: 'Phòng học – thiết bị' };
 
   // (Hàm veBaoCao() gộp ba khối đã bỏ ngày 15/8/2026 — ba khối đó nay chia về
@@ -1245,7 +1260,7 @@
         }).join('') + '</div>'
       : '';
 
-    if (daGui) {
+    if (daGui && !BC_SUA) {
       return chonCS + '<div class="the-thong-bao"><p style="font-size:15px">' +
         (daGui.anToan === 'xanh' ? '🟢' : daGui.anToan === 'vang' ? '🟡' : '🔴') +
         ' <b>' + thoat(tenCoSo(BC_CS)) + ' đã báo cáo ' + tenBuoi(b) + ' lúc ' + daGui.luc + '.</b></p>' +
@@ -1291,17 +1306,28 @@
     // không có chỗ, và đổi Vàng→Xanh là chữ đã gõ bay mất vì ô biến khỏi DOM.
     // Đánh số 3 chứ không phải 4 — mục "cán bộ, giáo viên" cũ đã sang màn khác
     var oGhiChu = '<div class="dh-tieu-de">3 · Ghi chú <small>(không bắt buộc)</small></div>' +
-      '<textarea id="dh-bc-ghichu" class="dh-o-nhap" rows="2" placeholder="VD: cành cây gãy sát sân sau, đã rào tạm…"></textarea>';
+      '<textarea id="dh-bc-ghichu" class="dh-o-nhap" rows="2" placeholder="VD: cành cây gãy sát sân sau, đã rào tạm…">' +
+      // Đang sửa thì điền sẵn chữ cũ. Mở form trống rồi bắt người ta nhớ lại
+      // mình đã ghi gì là cách chắc chắn làm mất một câu ghi chú.
+      (BC_SUA && daGui ? thoat(daGui.ghiChu || '') : '') + '</textarea>';
     var oChieu = b === 'sang'
-      ? '<label class="dh-tick"><input type="checkbox" id="dh-bc-1buoi"> Chiều nay điểm trường <b>không học</b> (dashboard sẽ không chờ báo cáo chiều)</label>'
+      ? '<label class="dh-tick"><input type="checkbox" id="dh-bc-1buoi"' +
+        (BC_SUA && daGui && daGui.chieuKhongHoc ? ' checked' : '') +
+        '> Chiều nay điểm trường <b>không học</b> (dashboard sẽ không chờ báo cáo chiều)</label>'
       : '';
 
     // Mục 3 (ai vắng) đã chuyển sang màn Điểm danh & Chấm công — xem
     // veKhaiVang() ngay dưới đây.
     return chonCS +
-      '<div class="hd-kiem xanh" style="margin-top:0">Đang báo cáo <b>' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</b> cho <b>' + thoat(tenCoSo(BC_CS)) + '</b>.</div>' +
+      (BC_SUA && daGui
+        ? '<div class="hd-kiem vang" style="margin-top:0">✏ <b>Đang sửa báo cáo ' + tenBuoi(b) +
+          ' đã gửi lúc ' + thoat(daGui.luc) + '.</b> Nội dung cũ đã điền sẵn bên dưới. ' +
+          'Bản cũ <b>vẫn còn nguyên</b> — chỉ khi bấm XÁC NHẬN mới ghi đè. ' +
+          '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.bcHuySua()">Thôi, giữ bản cũ</button></div>'
+        : '<div class="hd-kiem xanh" style="margin-top:0">Đang báo cáo <b>' + tenBuoi(b) + ' ' + ngayVN(homNayISO()) + '</b> cho <b>' + thoat(tenCoSo(BC_CS)) + '</b>.</div>') +
       oAT + oCSVC + oGhiChu + oChieu +
-      '<button class="dh-nut-gui' + (BC_ANTOAN ? '' : ' mo') + '" onclick="DH.bcGui()">XÁC NHẬN ĐẦU BUỔI</button>' +
+      '<button class="dh-nut-gui' + (BC_ANTOAN ? '' : ' mo') + '" onclick="DH.bcGui()">' +
+      (BC_SUA ? 'XÁC NHẬN BẢN SỬA' : 'XÁC NHẬN ĐẦU BUỔI') + '</button>' +
       // Căn TRÁI cho thẳng mép nút — nút nay rộng vừa nội dung chứ không trải
       // hết hàng nữa, để căn giữa thì chữ lệch hẳn sang phải so với nút.
       '<div class="dh-ghi-chu-nho">Sau khi xác nhận, bảng điều hành của Ban giám hiệu cập nhật ngay.</div>';
@@ -1353,11 +1379,23 @@
         'cho từng người, rồi mới khai vắng và tính bảng công cho điểm này được.</div>';
     }
 
+    // 🔴 Nút "Đủ" KHÔNG được tự sáng lúc mới mở màn.
+    // Mã cũ cho nó `on` khi chưa chọn gì (!soVang && !BC_MO_CHON_GV) — mở màn
+    // ra là đã thấy "✓ Đủ 20/20" sáng xanh, trông y như vừa có người điểm danh
+    // xong, trong khi chưa ai làm gì cả. Nay chỉ sáng khi thầy cô TỰ BẤM.
+    // Bấm nó cũng không ghi gì vào cơ sở dữ liệu — không ai vắng thì không có
+    // gì để ghi — nên nhãn nói thẳng ra thế, kèm một dòng xác nhận bên dưới.
     return dau +
       '<div class="dh-chon-hang">' +
-      '<button class="dh-nut-lon' + (!soVang && !BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvDu()">✓ Đủ ' + gvCS.length + '/' + gvCS.length + '</button>' +
+      '<button class="dh-nut-lon' + (BC_DU_DA_BAM && !soVang && !BC_MO_CHON_GV ? ' on' : '') +
+      '" onclick="DH.bcGvDu()">✓ Hôm nay không ai vắng</button>' +
       '<button class="dh-nut-lon' + (soVang || BC_MO_CHON_GV ? ' on' : '') + '" onclick="DH.bcGvVang()">Có người vắng</button>' +
       '</div>' +
+      (BC_DU_DA_BAM && !soVang && !BC_MO_CHON_GV
+        ? '<div class="hd-kiem xanh">Đã ghi nhận: <b>' + thoat(tenCoSo(BC_CS)) + ' không có ai vắng ' +
+          tenBuoi(b) + ' nay.</b> Không phải lưu gì thêm — không có tên trong sổ vắng thì bảng ' +
+          'công tự tính đủ công. Có người vắng thì bấm nút bên cạnh để khai.</div>'
+        : '') +
       (BC_MO_CHON_GV
         ? '<div class="dh-hop-chon">' + gvCS.map(function (g) {
             // người chưa có email (nhân viên hợp đồng) khóa theo tên — kẻo
@@ -2275,7 +2313,9 @@
       // đã có ở dải số liệu ngay dưới.
       bang = '';
     } else if (LOI_SQL) {
-      bang = '<div class="hd-kiem do">⚠ ' + thoat(LOI_SQL) + '</div>';
+      bang = '<div class="hd-kiem do">⚠ ' + thoat(LOI_SQL) +
+        '<br><b>Mọi nút ghi đang khoá</b> — số hiện trên màn là số MẪU, bấm gì cũng không ' +
+        'vào sổ nhà trường. Tải lại trang (F5) sau khi mạng ổn.</div>';
     } else {
       bang = '<div class="hd-kiem vang">🧪 <b>BẢN XEM THỬ — toàn bộ số liệu, tên người, tên lớp là DỮ LIỆU MẪU.</b> ' +
         'Đăng nhập để chạy với dữ liệu thật của nhà trường.</div>';
@@ -2565,7 +2605,7 @@
     // biết trước chiều nghỉ thì gửi báo cáo chiều ngay từ sáng được.
     buoi: function (b) {
       BUOI_XEM = (b === 'sang' || b === 'chieu') ? b : null;
-      BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+      BC_ANTOAN = null; BC_SUA = false; BC_DU_DA_BAM = false; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
       veGiu();
     },
 
@@ -2637,9 +2677,9 @@
     },
 
     // ── Báo cáo đầu buổi ──
-    bcChonCS: function (ma) { BC_CS = ma; BC_ANTOAN = null; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' }; veGiu(); },
-    bcGvDu: function () { BC_GV_VANG = {}; BC_MO_CHON_GV = false; veGiu(); },
-    bcGvVang: function () { BC_MO_CHON_GV = true; veGiu(); },
+    bcChonCS: function (ma) { BC_CS = ma; BC_ANTOAN = null; BC_SUA = false; BC_DU_DA_BAM = false; BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' }; veGiu(); },
+    bcGvDu: function () { BC_GV_VANG = {}; BC_MO_CHON_GV = false; BC_DU_DA_BAM = true; veGiu(); },
+    bcGvVang: function () { BC_MO_CHON_GV = true; BC_DU_DA_BAM = false; veGiu(); },
     bcTickGv: function (nut) {
       var em = nut.getAttribute('data-email');
       if (BC_GV_VANG[em] !== undefined) delete BC_GV_VANG[em];
@@ -2654,27 +2694,31 @@
     bcAnToan: function (ma) { BC_ANTOAN = ma; veGiu(); },
     bcCsvc: function (m, gia) { BC_CSVC[m] = (BC_CSVC[m] === gia ? '' : gia); veGiu(); },
     bcSua: function () {
-      // Mở lại biểu mẫu báo cáo đầu buổi: xóa dòng báo cáo BUỔI NÀY, bản mới
-      // sẽ ghi đè.
+      // Mở lại biểu mẫu báo cáo đầu buổi với NỘI DUNG CŨ ĐIỀN SẴN.
       //
-      // ⚠️ TỪ 15/8/2026 KHÔNG ĐỤNG SỔ VẮNG NỮA. Trước đây hàm này xoá luôn
-      // người vắng do báo cáo cùng buổi ghi ra, vì hai thứ đi chung một nút
-      // gửi — sửa báo cáo mà không xoá thì tick lại là nhân đôi. Nay người
-      // vắng khai ở màn Điểm danh & Chấm công bằng nút riêng, nên sửa lời
-      // báo an toàn KHÔNG được phép động tới bảng lương của ai. Muốn sửa
-      // người vắng thì sửa ngay tại màn đó.
-      var b = buoiXem();
-      if (!THAT) {
-        delete (DL.baoCao[BC_CS] || {})[b];
-        veDieuHanh(); return;
-      }
-      window.MAY_CHU.from('bao_cao_dau_buoi').delete()
-        .eq('ngay', homNayISO()).eq('buoi', b).eq('co_so_ma', BC_CS)
-        .then(function (r) {
-          if (r.error) throw r.error;
-          return taiLai();
-        })
-        .catch(baoLoi);
+      // ⚠️ TUYỆT ĐỐI KHÔNG XOÁ BẢN GHI Ở ĐÂY. Trước 19/8/2026 hàm này gọi
+      // thẳng delete: bấm nhầm nút "✏ Sửa" là báo cáo bay mất, không hỏi lại
+      // một câu, biểu mẫu mở ra thì TRỐNG TRƠN nên cũng không còn gì để xem
+      // lại mà gõ y như cũ. Ai bấm rồi bỏ đi giữa chừng là điểm trường đó
+      // thành "chưa báo cáo" trên bảng của Ban giám hiệu.
+      // Nay chỉ mở form; bấm XÁC NHẬN thì upsert (onConflict ngay,buoi,co_so_ma)
+      // ghi đè bản cũ, còn bỏ dở thì bản cũ vẫn nguyên vẹn.
+      //
+      // ⚠️ TỪ 15/8/2026 KHÔNG ĐỤNG SỔ VẮNG NỮA: người vắng khai ở màn Điểm
+      // danh & Chấm công bằng nút riêng, sửa lời báo an toàn KHÔNG được phép
+      // động tới bảng lương của ai.
+      var cu = (DL.baoCao[BC_CS] || {})[buoiXem()];
+      if (!cu) return;
+      BC_SUA = true;
+      BC_ANTOAN = cu.anToan || null;
+      BC_CSVC = { dien: cu.dien || '', nuoc: cu.nuoc || '', csvc: cu.csvc || '' };
+      // Ghi chú và ô "chiều không học" nằm trong DOM, veBaoCaoChinh() điền sẵn
+      // từ chính bản cũ — xem BC_SUA ở đó.
+      veDieuHanh();
+    },
+    bcHuySua: function () {
+      BC_SUA = false; BC_ANTOAN = null; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+      veDieuHanh();
     },
     // Xác nhận đầu buổi — nay CHỈ ghi an toàn + cơ sở vật chất + ghi chú.
     // Người vắng tách sang guiVang() ở màn Điểm danh & Chấm công (15/8/2026).
@@ -2688,7 +2732,7 @@
         if (!DL.baoCao[BC_CS]) DL.baoCao[BC_CS] = {};
         DL.baoCao[BC_CS][b] = { anToan: BC_ANTOAN, ghiChu: ghiChu, luc: gioPhut(), chieuKhongHoc: khongHocChieu,
           dien: BC_CSVC.dien, nuoc: BC_CSVC.nuoc, csvc: BC_CSVC.csvc };
-        BC_ANTOAN = null; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+        BC_ANTOAN = null; BC_SUA = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
         TAB = 'tongquan'; veDieuHanh();
         window.notify('Đã xác nhận (bản mẫu — chưa ghi cơ sở dữ liệu).');
         return;
@@ -2700,9 +2744,12 @@
       }, { onConflict: 'ngay,buoi,co_so_ma' })
         .then(function (r) {
           if (r.error) throw r.error;
-          BC_ANTOAN = null; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
+          var laSua = BC_SUA;
+          BC_ANTOAN = null; BC_SUA = false; BC_CSVC = { dien: '', nuoc: '', csvc: '' };
           TAB = 'tongquan';
-          window.notify('✅ Đã xác nhận đầu buổi — bảng điều hành đã cập nhật.');
+          window.notify(laSua
+            ? '✅ Đã ghi đè báo cáo — bản sửa đã thay bản cũ.'
+            : '✅ Đã xác nhận đầu buổi — bảng điều hành đã cập nhật.');
           return taiLai();
         })
         .catch(baoLoi);
@@ -3359,6 +3406,41 @@
         'bang-cong-' + CONG_THANG + '.doc');
     }
   };
+
+  // ══════════════════════════════════════════════════════════════
+  // KHOÁ MỌI NÚT GHI KHI DỮ LIỆU THẬT ĐỌC HỎNG
+  // ══════════════════════════════════════════════════════════════
+  // Mỗi hàm ghi ở trên đều có một nhánh `if (!THAT)` sửa dữ liệu trong bộ nhớ
+  // rồi báo "đã lưu". Nhánh đó chỉ đúng cho KHÁCH XEM THỬ (chưa đăng nhập).
+  //
+  // Người ĐÃ ĐĂNG NHẬP mà DL vẫn là bản mẫu nghĩa là lần nạp dữ liệu thật đã
+  // hỏng — mất mạng, RLS chặn, hoặc chưa chạy sql/20. Lúc ấy nhánh bản mẫu
+  // biến thành mất dữ liệu im lặng: thầy cô báo cáo đầu buổi, app khoe "✅ đã
+  // xác nhận", mà cơ sở dữ liệu không có một dòng nào. Sáng hôm sau Ban giám
+  // hiệu nhìn bảng điều hành thấy điểm trường đó chưa báo cáo.
+  //
+  // Bọc một lần ở đây thay vì chèn câu kiểm vào 27 hàm — chèn tay thì sót,
+  // mà sót chỗ nào là chỗ ấy lại ghi ra số giả.
+  var HAM_GHI = ['svTuCsvc', 'nhacBaoCao', 'bcGui', 'xoaVang', 'guiVang',
+    'ddDu', 'ddLuu', 'ddSua', 'vDoi', 'vTienDo', 'vGiao', 'bvGui',
+    'svTiepNhan', 'svXuLy', 'dxGui', 'dxDuyet', 'dxRut', 'tbGui', 'tbXacNhan',
+    'vmThem', 'vmBat', 'vmXoa', 'ktLuu', 'nghiThem', 'nghiXoa',
+    'congChot', 'congMoChot'];
+  HAM_GHI.forEach(function (ten) {
+    var goc = window.DH[ten];
+    if (typeof goc !== 'function') return;   // đổi tên hàm thì bỏ qua, đừng vỡ app
+    window.DH[ten] = function () {
+      if (!THAT && window.NGUOI_DUNG) {
+        window.alert('CHƯA ghi được gì cả.\n\n' +
+          'App đang hiển thị BẢN MẪU vì lần nạp dữ liệu thật vừa rồi không thành công' +
+          (LOI_SQL ? ':\n\n' + LOI_SQL : '.') + '\n\n' +
+          'Mọi nút ghi tạm khoá để không có số giả lọt vào sổ của nhà trường. ' +
+          'Kiểm tra đường mạng rồi tải lại trang (F5) và làm lại.');
+        return;
+      }
+      return goc.apply(this, arguments);
+    };
+  });
 
   // ── Khởi động: vẽ bản mẫu ngay; đăng nhập xong thì nạp dữ liệu thật ──
   document.addEventListener('DOMContentLoaded', veDieuHanh);

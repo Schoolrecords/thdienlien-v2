@@ -113,7 +113,15 @@
           .then(function (r) {
             nut.disabled = false;
             if (r.error) { o.textContent = '❌ ' + r.error.message; return; }
-            o.textContent = '✓ Đã lưu ' + (r.data || []).length + ' mục — tải lại trang để thấy đổi khắp nơi';
+            // RLS chặn ghi thì Supabase KHÔNG trả error, chỉ trả data rỗng.
+            // Không có hàng rào này thì màn hình khoe "✓ Đã lưu 0 mục" —
+            // dấu ✓ trước con số 0, thầy cô yên tâm bỏ đi mà chẳng lưu được gì.
+            if (!r.data || !r.data.length) {
+              o.textContent = '❌ Máy chủ nhận lệnh nhưng KHÔNG lưu được mục nào — ' +
+                'tài khoản đang dùng có thể không đủ quyền sửa cấu hình. Chưa có gì thay đổi.';
+              return;
+            }
+            o.textContent = '✓ Đã lưu ' + r.data.length + ' mục — tải lại trang để thấy đổi khắp nơi';
             // Cập nhật luôn trong bộ nhớ để đầu trang đổi ngay, đỡ phải chờ F5
             var C = window.CAU_HINH;
             ban.forEach(function (b) {
@@ -249,7 +257,12 @@
         .then(function (r) {
           nut.disabled = false;
           if (r.error) { o.textContent = '❌ ' + r.error.message; return; }
-          bao('Đã nạp ' + (r.data || []).length + ' người vào danh sách mời.' +
+          if (!r.data || !r.data.length) {
+            o.textContent = '❌ Máy chủ nhận lệnh nhưng KHÔNG nạp được dòng nào — ' +
+              'thường là do tài khoản không đủ quyền sửa danh sách mời. Danh sách chưa đổi.';
+            return;
+          }
+          bao('Đã nạp ' + r.data.length + ' người vào danh sách mời.' +
             (hong.length ? '\n\nBỏ qua ' + hong.length + ' dòng không có email hợp lệ:\n' + hong.join('\n') : ''));
           veDanhSachMoi(document.getElementById('qt-than'));
         })
@@ -274,6 +287,15 @@
       lenh.then(function (r) {
         luu.disabled = false;
         if (r.error) { luu.textContent = 'Lỗi!'; bao('Không lưu được: ' + r.error.message); setTimeout(function () { luu.textContent = 'Lưu'; }, 2500); return; }
+        // RLS chặn ghi → không có error, chỉ data rỗng. Không bắt thì nút hiện
+        // "Đã lưu ✓" trong khi cơ sở dữ liệu không có gì đổi.
+        if (!r.data || !r.data.length) {
+          luu.textContent = 'Lỗi!';
+          bao('Máy chủ nhận lệnh nhưng KHÔNG dòng nào được ghi — tài khoản đang dùng ' +
+            'có thể không đủ quyền sửa danh sách mời. Dòng này CHƯA được lưu.');
+          setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
+          return;
+        }
         luu.textContent = 'Đã lưu ✓';
         if (!id && r.data && r.data[0]) tr.setAttribute('data-id', r.data[0].id);
         setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
@@ -290,9 +312,17 @@
         'Tài khoản đã tạo KHÔNG bị xoá — người này vẫn đăng nhập được như cũ. ' +
         'Chỉ là từ nay ai đăng nhập bằng email này lần đầu sẽ phải chờ duyệt.')) return;
       xoa.disabled = true;
-      may().from('moi_tai_khoan').delete().eq('id', tr.getAttribute('data-id'))
+      may().from('moi_tai_khoan').delete().eq('id', tr.getAttribute('data-id')).select()
         .then(function (r) {
           if (r.error) { xoa.disabled = false; bao('Không xoá được: ' + r.error.message); return; }
+          // .select() ở trên là để bắt đúng cảnh RLS chặn: không error, 0 dòng.
+          // Thiếu nó thì dòng biến mất khỏi màn hình còn CSDL vẫn nguyên.
+          if (!r.data || !r.data.length) {
+            xoa.disabled = false;
+            bao('Máy chủ nhận lệnh nhưng KHÔNG xoá dòng nào — tài khoản đang dùng ' +
+              'có thể không đủ quyền. Người này VẪN còn trong danh sách mời.');
+            return;
+          }
           tr.parentNode.removeChild(tr);
         })
         .catch(function (e) { xoa.disabled = false; bao('Không gọi được máy chủ: ' + ((e && e.message) || e)); });

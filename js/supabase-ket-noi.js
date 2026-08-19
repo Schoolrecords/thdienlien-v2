@@ -231,9 +231,17 @@
     // ⚠️ Bên Supabase (Authentication → URL Configuration → Redirect URLs) phải
     //    có mẫu bao được chuỗi truy vấn, ví dụ https://<tên miền>/** — nếu chỉ
     //    khai đúng địa chỉ trần thì Google trả về sẽ bị từ chối.
+    // prompt: 'select_account' — BẮT Google hỏi chọn tài khoản mỗi lần. Không có
+    // nó thì máy nào đang đăng nhập sẵn một tài khoản Google là Google lẳng lặng
+    // dùng luôn tài khoản ấy. Thầy cô có cả Gmail riêng lẫn mail nhà trường trên
+    // cùng một điện thoại sẽ KHÔNG có đường đổi sang tài khoản kia — vào nhầm
+    // rồi chỉ còn cách đăng xuất khỏi Google, việc mà ít người nghĩ ra.
     may.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: location.origin + location.pathname + (location.search || '') }
+      options: {
+        redirectTo: location.origin + location.pathname + (location.search || ''),
+        queryParams: { prompt: 'select_account' }
+      }
     });
   }
 
