@@ -13,7 +13,19 @@
   'use strict';
 
   function thoat(s) { return window.thoatHTML ? window.thoatHTML(s) : String(s || ''); }
-  function batLoi(e) { window.notify('Không lưu được: ' + ((e && e.message) || e)); }
+  function batLoi(e) {
+    var chu = (e && e.message) || String(e || '');
+    // Chỉ mục ux_co_so_ma_so / ux_ttt_ma_so (sql/38) chặn hai cơ sở cùng một
+    // mã Sở. Lỗi gốc của PostgreSQL là "duplicate key value violates unique
+    // constraint …" — thầy cô đọc câu đó không hiểu gì và cũng không biết phải
+    // sửa ở đâu. Dịch sang một câu nói rõ việc.
+    if (/ux_co_so_ma_so|ux_ttt_ma_so/.test(chu)) {
+      window.notify('Mã Sở này đã gán cho một cơ sở (hoặc trường tiền thân) khác. ' +
+        'Mỗi trường một mã riêng — thầy cô kiểm lại giúp.');
+      return;
+    }
+    window.notify('Không lưu được: ' + chu);
+  }
   function ngayVN(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
 
   var TEN_LOAI = { chinh: 'Cơ sở chính', phan_hieu: 'Phân hiệu', diem_truong: 'Điểm trường' };
@@ -126,6 +138,11 @@
     // Cột phu_trach_email do sql/20 thêm — CSDL chưa chạy sql/20 thì ẨN cột
     // này đi, kẻo lệnh Lưu gửi cột không tồn tại làm hỏng cả việc sửa tên/địa chỉ
     var coCotPT = !(dsCoSo || []).length || ('phu_trach_email' in dsCoSo[0]);
+    // Cot ma_so do sql/38 them - CSDL chua chay sql/38 thi AN cot nay di.
+    // Bat buoc phai co hang rao: gomO() gom MOI o data-c trong dong roi gui
+    // thang len may chu, nen mot cot khong ton tai lam ca lenh Luu hong -
+    // sua ten hay dia chi cung khong luu duoc, ma chang ai doan ra vi sao.
+    var coCotMS = !(dsCoSo || []).length || ('ma_so' in dsCoSo[0]);
     var chonTruong = [{ ma: '', ten: '—' }].concat((dsTruong || []).map(function (t) {
       return { ma: t.ma, ten: t.ten };
     }));
@@ -144,7 +161,8 @@
       '<b>Người phụ trách</b> là người báo cáo đầu buổi + An toàn xanh của điểm trường đó ' +
       'trên màn Điều hành (Ban giám hiệu luôn báo được mọi điểm).</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-      '<th>Mã</th><th>Tên cơ sở</th><th>Loại</th><th>Địa chỉ</th><th>Trường tiền thân</th>' +
+      '<th>Mã</th><th>Tên cơ sở</th>' + (coCotMS ? '<th>Mã Sở</th>' : '') +
+      '<th>Loại</th><th>Địa chỉ</th><th>Trường tiền thân</th>' +
       (coCotPT ? '<th>Người phụ trách</th>' : '') +
       '<th>Lớp</th><th>HS</th><th>CBGV</th><th>Đang dùng</th><th></th></tr></thead><tbody>' +
       (dsCoSo || []).map(function (c) {
@@ -158,6 +176,7 @@
         return '<tr data-ma="' + thoat(c.ma) + '">' +
           '<td><b>' + thoat(c.ma) + '</b></td>' +
           '<td>' + o('ten', c.ten, 'text', 170) + '</td>' +
+          (coCotMS ? '<td>' + o('ma_so', c.ma_so, 'text', 90) + '</td>' : '') +
           '<td>' + chon('loai', c.loai, [
             { ma: 'chinh', ten: TEN_LOAI.chinh },
             { ma: 'phan_hieu', ten: TEN_LOAI.phan_hieu },
@@ -178,6 +197,10 @@
 
   // ══════════ 4. BẢNG TRƯỜNG TIỀN THÂN ══════════
   function daiTruong(dsTruong) {
+    // Cột ma_so do sql/38 thêm. Bảng này trước nay chưa có hàng rào cột nào —
+    // phải dựng, vì gomO() gửi mọi ô data-c lên máy chủ: CSDL chưa chạy sql/38
+    // mà mã nguồn đã có ô thì bấm Lưu là hỏng cả dòng, không riêng gì ô mới.
+    var coCotMsTT = !(dsTruong || []).length || ('ma_so' in dsTruong[0]);
     return '<div class="dau-muc" style="text-align:left;margin:22px 0 10px">' +
       '<div class="nhan-nho">Trường tiền thân &amp; bằng chuẩn quốc gia trước sáp nhập</div></div>' +
       '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:8px">' +
@@ -186,12 +209,14 @@
       'Trường ở trạng thái <b>Dự kiến sáp nhập</b> chưa có quyết định nên KHÔNG bị tính vào mức ' +
       'hiện tại của trường mình — khai sẵn chỉ để gom trước số liệu 3 năm của họ.</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-      '<th>Mã</th><th>Tên trường</th><th>Trạng thái</th><th>Mã CSDL ngành</th><th>Mức CQG</th>' +
+      '<th>Mã</th><th>Tên trường</th>' + (coCotMsTT ? '<th>Mã Sở</th>' : '') +
+      '<th>Trạng thái</th><th>Mã CSDL ngành</th><th>Mức CQG</th>' +
       '<th>Số QĐ</th><th>Ngày ký</th><th>Hết hạn</th><th></th></tr></thead><tbody>' +
       (dsTruong || []).map(function (t) {
         return '<tr data-ma="' + thoat(t.ma) + '">' +
           '<td><b>' + thoat(t.ma) + '</b></td>' +
           '<td>' + o('ten', t.ten, 'text', 190) + '</td>' +
+          (coCotMsTT ? '<td>' + o('ma_so', t.ma_so, 'text', 90) + '</td>' : '') +
           '<td>' + chon('trang_thai', t.trang_thai, TRANG_THAI_TTT) + '</td>' +
           '<td>' + o('ma_truong_moet', t.ma_truong_moet, 'text', 100) + '</td>' +
           '<td>' + chon('cnqg_muc_do', t.cnqg_muc_do == null ? '' : String(t.cnqg_muc_do), [

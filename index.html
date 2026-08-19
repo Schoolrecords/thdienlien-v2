@@ -5,8 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hồ sơ số — Trường Tiểu học Diễn Liên</title>
   <meta name="description" content="Hệ thống Hồ sơ số Trường Tiểu học Diễn Liên — Quản lý Hồ sơ · Trường chuẩn Quốc gia (TT57/2026) · Đảm bảo Chất lượng">
-  <link rel="icon" href="img/logo.png">
-  <link rel="apple-touch-icon" href="img/logo.png">
+  <!-- Biểu tượng thẻ để TRUNG TÍNH; js/app.js đổi sang logo của trường ngay khi
+       biết người vào thuộc trường nào. Trước đây đặt cứng img/logo.png — mà tệp
+       đó là con dấu Trường Tiểu học Diễn Liên, nên thẻ trình duyệt ở địa chỉ
+       giới thiệu chung cũng đội dấu của một trường cụ thể. -->
+  <link rel="icon" href="img/he-thong.svg">
+  <link rel="apple-touch-icon" href="img/he-thong.svg">
   <meta name="theme-color" content="#14306b">
 
   <!-- ═══ Thẻ chia sẻ: Zalo, Facebook, Messenger, Google ═══
@@ -37,17 +41,23 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608191">
-  <link rel="stylesheet" href="style.css?v=202608191">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608192">
+  <link rel="stylesheet" href="style.css?v=202608192">
 </head>
 <body class="dang-khoa">
 
 <!-- Cổng vào: khóa sẵn từ HTML, js/supabase-ket-noi.js mở khóa sau khi xác thực -->
 <div class="cong-vao" id="cong-vao">
   <div class="cong-hop" id="cong-hop">
-    <img class="logo dien-logo" src="img/logo.png" alt="">
-    <h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">Trường Tiểu học Diễn Liên</span></h1>
-    <div class="dang-cho">Đang kiểm tra phiên đăng nhập…</div>
+    <!-- ⚠️ KHÔNG viết tên một trường cụ thể vào đây. Hộp này là thứ trình duyệt
+         vẽ TRƯỚC khi hai tệp cauhinh.js + cong-truong.js (cuối <body>) tải xong.
+         Trên mạng chậm, người lạ mở địa chỉ giới thiệu chung sẽ thấy tên trường
+         đó loé lên rồi mới đổi; nếu cong-truong.js lỗi 404 thì nó đứng NGUYÊN
+         trên màn hình. js/supabase-ket-noi.js tự điền tên trường thật vào đây
+         ngay khi biết là trường nào, nên để trung tính không mất gì. -->
+    <img class="logo dien-logo" src="img/he-thong.svg" alt="">
+    <h1>Hệ thống Quản trị số Trường học</h1>
+    <div class="dang-cho">Đang tải…</div>
   </div>
 </div>
 
@@ -254,7 +264,11 @@
         <p>Theo Thông tư 57/2026/TT-BGDĐT — 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức 1 và Mức 2.</p>
       </div>
       <div class="kd-dau-phai">
-        <span class="kd-muctieu">🎖 Mục tiêu: giữ vững Mức 1 — phấn đấu Mức 2</span>
+        <!-- Điền từ CAU_HINH.MUC_TIEU_CHUAN_QG (js/app.js). Trước đây câu này
+             ghi cứng "giữ vững Mức 1 — phấn đấu Mức 2" và KHÔNG tệp JS nào
+             điền lại: sai với chính Diễn Liên (đã đạt Mức 2 từ 2022) và bịa
+             mục tiêu cho mọi trường khác. Trống thì js ẩn cả dòng. -->
+        <span class="kd-muctieu" id="dien-muc-tieu-cqg"></span>
         <button class="nut-vien" onclick="moCanCu()">📘 Căn cứ &amp; hướng dẫn</button>
       </div>
     </div>
@@ -388,34 +402,34 @@
   Hệ thống Hồ sơ số v2 · dữ liệu cá nhân được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025
 </footer>
 
-<script src="js/cauhinh.js?v=202608191"></script>
+<script src="js/cauhinh.js?v=202608192"></script>
 <!-- Cổng chung nhiều trường. PHẢI đứng ngay sau cauhinh.js và TRƯỚC mọi tệp
      khác: nó dựng lại CAU_HINH cho chế độ xem thử, và giữ trang ở trạng thái
      khóa khi chưa biết người vào thuộc trường nào. -->
-<script src="js/cong-truong.js?v=202608191"></script>
+<script src="js/cong-truong.js?v=202608192"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608191"></script>
-<script src="js/du-lieu-sql.js?v=202608191"></script>
-<script src="js/quan-tri.js?v=202608191"></script>
+<script src="js/du-lieu-demo.js?v=202608192"></script>
+<script src="js/du-lieu-sql.js?v=202608192"></script>
+<script src="js/quan-tri.js?v=202608192"></script>
 <!-- Nạp NGAY SAU quan-tri.js để ba thẻ Cài đặt · Thông tin trường · Danh sách
      mời đứng đầu hàng thẻ — trường mới mở Quản trị là thấy việc phải làm. -->
-<script src="js/thiet-lap.js?v=202608191"></script>
-<script src="js/supabase-ket-noi.js?v=202608191"></script>
-<script src="js/app.js?v=202608191"></script>
-<script src="js/hoso-sua.js?v=202608191"></script>
-<script src="js/xuat-word.js?v=202608191"></script>
-<script src="js/tcqg.js?v=202608191"></script>
-<script src="js/tcqg-hoidong.js?v=202608191"></script>
-<script src="js/tcqg-word.js?v=202608191"></script>
-<script src="js/bach-lieu-shim.js?v=202608191"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608191"></script>
-<script src="js/co-so.js?v=202608191"></script>
-<script src="js/len-lop.js?v=202608191"></script>
-<script src="js/dbcl.js?v=202608191"></script>
-<script src="js/link-cbgv.js?v=202608191"></script>
-<script src="js/hocsinh.js?v=202608191"></script>
-<script src="js/dieu-hanh.js?v=202608191"></script>
-<script src="js/lich-tuan.js?v=202608191"></script>
+<script src="js/thiet-lap.js?v=202608192"></script>
+<script src="js/supabase-ket-noi.js?v=202608192"></script>
+<script src="js/app.js?v=202608192"></script>
+<script src="js/hoso-sua.js?v=202608192"></script>
+<script src="js/xuat-word.js?v=202608192"></script>
+<script src="js/tcqg.js?v=202608192"></script>
+<script src="js/tcqg-hoidong.js?v=202608192"></script>
+<script src="js/tcqg-word.js?v=202608192"></script>
+<script src="js/bach-lieu-shim.js?v=202608192"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608192"></script>
+<script src="js/co-so.js?v=202608192"></script>
+<script src="js/len-lop.js?v=202608192"></script>
+<script src="js/dbcl.js?v=202608192"></script>
+<script src="js/link-cbgv.js?v=202608192"></script>
+<script src="js/hocsinh.js?v=202608192"></script>
+<script src="js/dieu-hanh.js?v=202608192"></script>
+<script src="js/lich-tuan.js?v=202608192"></script>
 <!-- SheetJS đọc tệp Excel thời khóa biểu. Bản CHO TRÌNH DUYỆT: chỉ có
      XLSX.read(mảng byte), KHÔNG có readFile. Nạp trước thoi-khoa-bieu.js. -->
 <!-- ⚠️ MODULE THỜI KHÓA BIỂU ĐÃ GỠ (15/8/2026) — thầy Chung chốt.
@@ -433,6 +447,6 @@
        lib/xlsx.min.js       · thư viện đọc Excel, 930 KB
 -->
 
-<script src="js/du-gio.js?v=202608191"></script>
+<script src="js/du-gio.js?v=202608192"></script>
 </body>
 </html>

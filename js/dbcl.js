@@ -199,7 +199,11 @@
       '<div class="dau-muc" style="text-align:left;margin:6px 0 4px">' +
       '<div class="nhan-nho">Mốc đối sánh trong năm học</div></div>' +
       '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:2px">' +
-      'Ba mốc 30/9 · 30/01 · 30/7 theo khung Nghệ An, cộng mốc 15/6 là hạn phê duyệt tự đánh giá ' +
+      // Không nêu đích danh một tỉnh: trường tỉnh khác sẽ đọc thấy khung của
+      // tỉnh không phải của mình. Đọc cơ quan quản lý ngành từ cấu hình.
+      'Ba mốc 30/9 · 30/01 · 30/7 theo khung của ' +
+      ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành') +
+      ', cộng mốc 15/6 là hạn phê duyệt tự đánh giá ' +
       'của Thông tư 57. Các mốc này để ở phần cấu hình — Sở ban hành văn bản mới thì sửa cấu hình, ' +
       'không phải sửa chương trình.</div>' +
       chipHang(MOC, MOC_CHON, 'moc') +
@@ -238,9 +242,12 @@
   function veDieuKien() {
     var oSo =
       '<div class="luoi-thong-ke">' +
-      '<div class="o-so"><div class="so vang">' + (window.CAU_HINH.SO_CBGV || 37) + '</div>' +
+      // Chưa khai thì để '—' như hai ô bên cạnh vốn đã làm đúng. Dự phòng bằng
+      // 37 / 25 là số THẬT của Diễn Liên: `0 || 37` ra 37, nên trường chưa khai
+      // và cả bản xem thử đều hiện đúng quy mô của Diễn Liên.
+      '<div class="o-so"><div class="so vang">' + (window.CAU_HINH.SO_CBGV || '—') + '</div>' +
       '<div class="nhan">cán bộ, giáo viên, nhân viên</div></div>' +
-      '<div class="o-so"><div class="so trang">' + (window.CAU_HINH.SO_LOP || 25) + '</div>' +
+      '<div class="o-so"><div class="so trang">' + (window.CAU_HINH.SO_LOP || '—') + '</div>' +
       '<div class="nhan">lớp học</div></div>' +
       '<div class="o-so"><div class="so xanh">—</div>' +
       '<div class="nhan">phòng học kiên cố</div></div>' +

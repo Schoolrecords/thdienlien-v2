@@ -53,7 +53,15 @@
   // học của Sở, không trường nào trùng tên. Đặt tên một trường có thật vào bản
   // mẫu là có ngày số liệu giả bị chụp màn hình rồi lan đi như số liệu thật.
   // ══════════════════════════════════════════════════════════
-  var LA_XEM_THU = /[?&]xemthu=1/.test(location.search);
+  //
+  // 🔴 CHỈ chạy khi CHƯA xác định được trường. Bản đầu quên chốt này nên
+  //    `?cong=1&xemthu=1` lật được trang thật của nhà trường sang bản mẫu:
+  //    gửi cho thầy cô đường dẫn tieuhocdienlien.com kèm hai tham số đó là họ
+  //    thấy đúng tên miền quen thuộc mà nội dung là "Trường Tiểu học Minh Họa"
+  //    với số liệu bịa. Không rò dữ liệu thật, nhưng phá nguyên tắc "trên tên
+  //    miền riêng, hành vi phải y hệt như cũ" — và phá chính lời hứa ghi trong
+  //    chú thích ?cong=1 ở cauhinh.js. Nay tên miền riêng luôn thắng.
+  var LA_XEM_THU = /[?&]xemthu=1/.test(location.search) && window.CHUA_CHON_TRUONG;
 
   if (LA_XEM_THU) {
     var k;
@@ -98,7 +106,11 @@
   function hop() { return document.getElementById('cong-hop'); }
 
   function dauCong(phu) {
-    return '<img class="logo" src="img/logo.png" alt="">' +
+    // img/he-thong.svg — biểu trưng TRUNG TÍNH. Trước đây dùng img/logo.png,
+    // mà tệp đó chính là con dấu Trường Tiểu học Diễn Liên (có in tên trường
+    // và tên xã trên hình): khách lạ mở địa chỉ giới thiệu lại thấy con dấu
+    // một trường cụ thể to 64px ngay giữa màn hình.
+    return '<img class="logo" src="img/he-thong.svg" alt="">' +
       '<h1>' + thoat(C.TEN_HE_THONG || 'Hệ thống Quản trị số Trường học') + '</h1>' +
       '<div class="loi-moi">' + thoat(phu) + '</div>';
   }
@@ -115,8 +127,14 @@
     h.innerHTML = dauCong('Thầy cô nhập mã trường để vào hệ thống của nhà trường mình.') +
       '<div class="cong-nhom">' +
       '<label class="cong-nhan" for="o-ma-truong">Mã trường</label>' +
-      '<input class="cong-o" id="o-ma-truong" type="text" inputmode="numeric" autocomplete="off" ' +
-      'spellcheck="false" placeholder="Ví dụ: 11819" value="' + thoat(maCu) + '">' +
+      // KHÔNG đặt inputmode="numeric": trên iPhone nó bật bàn phím CHỈ CÓ SỐ,
+      // mà timTruongTheoMa còn nhận cả mã dạng chữ (mã ngắn, và mã cũ trong
+      // MA_KHAC sau này). Bàn phím không gõ được chữ là chặn cứng.
+      // Mã ví dụ để 12345 — mã không có thật. Trước đây ghi 11819 là mã Diễn
+      // Liên: đây là màn dùng chung cho MỌI trường, và sau sáp nhập 11819 chỉ
+      // còn là mã một phân hiệu.
+      '<input class="cong-o" id="o-ma-truong" type="text" autocomplete="off" ' +
+      'spellcheck="false" placeholder="Ví dụ: 12345" value="' + thoat(maCu) + '">' +
       '<div class="cong-mach">Mã trường do Sở Giáo dục và Đào tạo cấp (5 chữ số). ' +
       'Dùng mã trong CSDL ngành cũng được.</div>' +
       '</div>' +
@@ -199,6 +217,12 @@
       var thieu = O_DK.filter(function (t) { return t.bat && !du[t.ma]; });
       if (thieu.length) {
         veManDangKy('Thầy cô điền giúp: ' + thieu.map(function (t) { return t.nhan; }).join(' · '), du);
+        // PHẢI cuộn tới chỗ báo lỗi. Vẽ lại innerHTML làm khung cuộn nhảy về
+        // đầu, mà câu báo thiếu nằm dưới cả 9 ô — cách đó gần 1000px. Không
+        // cuộn thì cô giáo bấm nút xong thấy màn hình giật lên đầu, không có gì
+        // thay đổi, bấm lại vẫn thế, rồi kết luận "nút hỏng".
+        var oLoi = document.querySelector('#cong-hop .hop-loi');
+        if (oLoi && oLoi.scrollIntoView) oLoi.scrollIntoView({ block: 'center' });
         return;
       }
       chepVaBao(soanNoiDung(du));

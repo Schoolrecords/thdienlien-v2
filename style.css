@@ -2484,9 +2484,18 @@ nav.menu::-webkit-scrollbar { display: none; }
 .cong-hop .cong-o {
   width: 100%; font: inherit; font-size: 16px;   /* 16px: dưới mức này iPhone tự phóng to trang */
   color: var(--chu); background: #fff;
-  border: 1.5px solid var(--vien-dam); border-radius: 11px; padding: 11px 13px;
+  /* Viền #a8b8d4 chứ KHÔNG dùng var(--vien-dam) #cdd8ea: màu kia chỉ đạt
+     1,44:1 trên nền trắng, trong khi WCAG 1.4.11 đòi 3:1 cho ranh giới ô nhập.
+     Ngoài nắng hoặc khi hạ độ sáng màn hình, 9 ô của màn đăng ký tan vào nền
+     trắng — chỉ còn thấy 9 dòng nhãn, không rõ chỗ nào bấm được. */
+  border: 1.5px solid #a8b8d4; border-radius: 11px; padding: 11px 13px;
   transition: border-color .15s, box-shadow .15s;
 }
+/* Chữ gợi ý trong ô là NƠI DUY NHẤT chứa mấy thông tin quan trọng ("5 chữ số",
+   "dùng để đăng nhập hệ thống"), không lặp lại ở đâu. Để trình duyệt tự chọn
+   màu thì phần lớn ra xám nhạt dưới 4,5:1 — thầy cô không đọc được dòng nhắc
+   dùng Gmail nào, điền nhầm là cấp xong tài khoản lại không đăng nhập được. */
+.cong-hop .cong-o::placeholder { color: #6b7a99; opacity: 1; }
 .cong-hop .cong-o:focus {
   outline: none; border-color: var(--chinh);
   box-shadow: 0 0 0 3px rgba(42, 92, 184, .13);
@@ -2518,6 +2527,9 @@ nav.menu::-webkit-scrollbar { display: none; }
 .cong-hop .cong-form { margin-bottom: 4px; }
 .cong-hop .cong-lienhe {
   margin-top: 12px; font-size: 13px; color: var(--chu-mo); line-height: 1.6;
+  /* Địa chỉ thư điện tử không có dấu cách để xuống dòng — địa chỉ dài thò ra
+     khỏi hộp trên màn hình 320px. */
+  overflow-wrap: anywhere;
 }
 .cong-hop .cong-chep {
   width: 100%; margin-top: 9px; font-family: inherit; font-size: 13px;

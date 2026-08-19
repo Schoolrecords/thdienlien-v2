@@ -192,9 +192,16 @@
       o.innerHTML = '<div class="hs-trong"><b>Chưa có dữ liệu học sinh cho năm học ' + thoat(NAM) + '</b>' +
         'Danh sách học sinh nhập ở <b>Quản trị → Danh sách học sinh</b>, hoặc chuyển sang năm học khác ' +
         'nếu dữ liệu đã nạp cho năm trước.<br><br>' +
-        'Nhà trường có <b>' + (window.CAU_HINH.SO_LOP || 25) + ' lớp</b> và <b>' +
-        (window.CAU_HINH.SO_HOC_SINH || 863) + ' học sinh</b> — hai số này lấy từ cấu hình trường, ' +
-        'chưa phải số đếm từ danh sách thật.</div>';
+        // ⚠️ Đừng dự phòng bằng số của Diễn Liên. `0 || 25` trong JavaScript ra
+        //    25, mà trường chưa khai quy mô thì để 0 — nên câu này từng khẳng
+        //    định chắc nịch "25 lớp / 863 học sinh" với MỌI trường chưa khai,
+        //    kể cả bản xem thử. Chưa có số thì im lặng, đừng nói bừa.
+        (window.CAU_HINH.SO_LOP && window.CAU_HINH.SO_HOC_SINH
+          ? 'Nhà trường có <b>' + window.CAU_HINH.SO_LOP + ' lớp</b> và <b>' +
+            window.CAU_HINH.SO_HOC_SINH + ' học sinh</b> — hai số này lấy từ cấu hình trường, ' +
+            'chưa phải số đếm từ danh sách thật.'
+          : 'Nhà trường chưa khai quy mô (số lớp, số học sinh) trong phần cấu hình.') +
+        '</div>';
       $('#hs-lop').innerHTML = '';
       return;
     }

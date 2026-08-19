@@ -525,8 +525,11 @@
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 3pt">4. Đề xuất, kiến nghị</p>'
       + '<p style="' + AB + '">a) Với ' + chan(CAU_HINH.CO_QUAN_THUONG || '') + '</p>'
       + oNhap(bc.kn_so, 'nhà trường bổ sung')
-      + '<p style="' + AB + '">b) Với Uỷ ban nhân dân xã '
-        + chan(CAU_HINH.DIA_DANH || '') + '</p>'
+      /* Đọc thẳng CHU_QUAN_THUONG, ĐỪNG tự ghép "Uỷ ban nhân dân xã " + địa danh.
+         Ghép tay thì trường thuộc PHƯỜNG hay ĐẶC KHU bị gọi sai cấp chính quyền
+         ngay trong văn bản gửi Sở, mà địa danh trống thì ra câu cụt "Với Uỷ ban
+         nhân dân xã ". Màn nhập liệu (js/tcqg.js:46) vốn đã hỏi đúng khoá này. */
+      + '<p style="' + AB + '">b) Với ' + chan(CAU_HINH.CHU_QUAN_THUONG || '') + '</p>'
       + oNhap(bc.kn_ubnd, 'nhà trường bổ sung')
       /* Mục c) Biểu 1 ghi rõ "(nếu có)" nên không có thì bỏ hẳn mục, đừng in một
          dòng ba dấu chấm — văn bản gửi Sở không nên có chỗ trống vô cớ. */
@@ -658,7 +661,12 @@
     const bia = ''
       + '<table style="width:100%;border-collapse:collapse"><tr>'
       + '<td style="' + TR + 'width:42%;text-align:center;font-size:13pt;vertical-align:top">'
-      +   chan(CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH')
+      // ⚠️ TRỐNG là đúng. Trước đây dự phòng bằng 'UBND XÃ YÊN THÀNH' — di sản
+      //    app THCS Bạch Liêu, không phải xã của trường nào ở đây. Đây là ô CHỦ
+      //    QUẢN trên BÌA Báo cáo tự đánh giá nộp Sở, văn bản có chữ ký và dấu:
+      //    in nhầm tên xã lên đó thì không sửa được nữa.
+      //    Nguyên tắc dự án: thà để TRỐNG cho thấy ngay mà điền, còn hơn ĐOÁN.
+      +   chan(CAU_HINH.DON_VI_CHU_QUAN || '')
       +   '<br><b>' + chan(tenTruong()).toUpperCase() + '</b>'
       +   '<div style="border-top:1px solid #000;width:58%;margin:2pt auto 0"></div></td>'
       + '<td style="' + TR + 'text-align:center;font-size:13pt;vertical-align:top">'
@@ -678,7 +686,9 @@
        lý và tên trường, rồi tên báo cáo, không có Quốc hiệu. */
     const biaTrong = ''
       + '<p style="' + TR + 'text-align:center;font-size:13pt;margin:24pt 0 2pt">'
-      + chan(CAU_HINH.CO_QUAN_QUAN_LY || 'SỞ GIÁO DỤC VÀ ĐÀO TẠO NGHỆ AN').toUpperCase() + '</p>'
+      // Cũng để trống: hai trường hiện tại đều Nghệ An nên chưa lộ, nhưng
+      // trường tỉnh khác sẽ in sai tên Sở lên văn bản đã đóng dấu.
+      + chan(CAU_HINH.CO_QUAN_QUAN_LY || '').toUpperCase() + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-weight:bold;margin:0 0 60pt">'
       + chan(tenTruong()).toUpperCase() + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:17pt;font-weight:bold;margin:0 0 6pt">BÁO CÁO TỰ ĐÁNH GIÁ</p>'

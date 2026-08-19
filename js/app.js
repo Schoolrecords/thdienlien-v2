@@ -389,7 +389,14 @@
   // bảng cau_hinh trên CSDL ghi đè CAU_HINH (CSDL mới là nguồn chuẩn).
   function datNhanDienTruong() {
     var C = window.CAU_HINH || {};
-    var anh = (C.THU_MUC_ANH || 'img/') + 'logo.png';
+    // Biểu trưng trung tính cho cổng chung và bản xem thử. Nhận ra bằng chính
+    // C.MA rỗng — hai chỗ đó cố ý không mang mã trường nào.
+    // ⚠️ img/logo.png và img/truong.jpg ở thư mục gốc LÀ CỦA DIỄN LIÊN (con dấu
+    //    có in tên trường, ảnh sân trường thật). Đừng bao giờ lấy chúng làm ảnh
+    //    dự phòng chung — trường khác sẽ đội dấu của Diễn Liên.
+    var LOGO_CHUNG = 'img/he-thong.svg';
+    var laTrungTinh = !C.MA;
+    var anh = laTrungTinh ? LOGO_CHUNG : (C.THU_MUC_ANH || 'img/') + 'logo.png';
 
     document.title = 'Hồ sơ số — ' + (C.TEN_TRUONG || '');
     $$('.dien-ten-truong').forEach(function (e) { e.textContent = C.TEN_TRUONG || ''; });
@@ -398,10 +405,18 @@
     var oMuc = document.getElementById('tk-muc-cqg');
     if (oMuc) oMuc.textContent = C.MUC_CHUAN_QG || '–';
 
+    // Dòng mục tiêu chuẩn quốc gia ở đầu màn Trường chuẩn Quốc gia. Chưa khai
+    // mục tiêu thì ẨN HẲN dòng — thà không có còn hơn bịa mục tiêu cho trường.
+    var oMt = document.getElementById('dien-muc-tieu-cqg');
+    if (oMt) {
+      oMt.textContent = C.MUC_TIEU_CHUAN_QG ? '🎖 Mục tiêu: ' + C.MUC_TIEU_CHUAN_QG : '';
+      oMt.style.display = C.MUC_TIEU_CHUAN_QG ? '' : 'none';
+    }
+
     // Trường chưa gửi logo riêng → thư mục của trường còn trống, ảnh sẽ hỏng.
     // Bắt sự kiện lỗi để quay về logo chung, đừng để vỡ ảnh trên đầu trang.
     $$('.dien-logo').forEach(function (e) {
-      e.onerror = function () { this.onerror = null; this.src = 'img/logo.png'; };
+      e.onerror = function () { this.onerror = null; this.src = LOGO_CHUNG; };
       e.src = anh;
     });
     ['icon', 'apple-touch-icon'].forEach(function (r) {
@@ -410,8 +425,11 @@
     });
 
     // Ảnh nền dải đầu trang chủ. Thiếu tệp thì dải chỉ còn nền màu — không vỡ.
-    document.documentElement.style.setProperty(
-      '--anh-truong', 'url("' + (C.THU_MUC_ANH || 'img/') + 'truong.jpg")');
+    // Cổng chung và bản xem thử để 'none': img/truong.jpg ở gốc là ảnh SÂN
+    // TRƯỜNG DIỄN LIÊN thật, lấy làm nền cho "Trường Tiểu học Minh Họa" thì
+    // hóa ra vừa bịa số liệu vừa mượn ảnh trường có thật.
+    document.documentElement.style.setProperty('--anh-truong',
+      laTrungTinh ? 'none' : 'url("' + (C.THU_MUC_ANH || 'img/') + 'truong.jpg")');
 
     // Các thẻ og:*/twitter:* — xem chú thích trong index.html: bọ đọc thẻ của
     // Zalo/Facebook không chạy JS nên phần này chỉ có tác dụng với trình duyệt.
@@ -439,14 +457,20 @@
     $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
     if (window.DA_NOI) {
       $('#bang-xem-thu').style.display = 'none';
-    } else if (window.htmlChonTruong && !window.O_CONG_CHUNG) {
-      // Chế độ xem thử không có màn đăng nhập, nên ô đổi trường đặt luôn ở đây.
-      // ⛔ NHƯNG không bao giờ trên cổng chung: ô này liệt kê TÊN MỌI TRƯỜNG,
-      //    mà cổng chung là nơi người lạ vào xem thử. Bày ra là ai cũng đọc
-      //    được danh sách trường đang dùng app (§12.6). Trên tên miền riêng
-      //    thì vẫn giữ — đó là đường thầy Chung mở bản xem thử để chào hàng.
-      $('#bang-xem-thu').innerHTML += ' ' + window.htmlChonTruong('· Xem trường:');
     }
+    // ⛔ ĐÃ GỠ Ô CHỌN TRƯỜNG khỏi băng xem thử (19/8/2026).
+    //    Ô đó là một <select> liệt kê TÊN MỌI TRƯỜNG đang dùng app. Chốt cũ
+    //    chỉ giấu nó trên cổng chung, tưởng thế là đủ — không đủ:
+    //    mở https://tieuhocdienlien.com/?truong=11217 là trang tự mở khóa
+    //    (trường đó chưa nối CSDL nên DA_NOI=false) và bày ra ô chọn có đủ
+    //    "Trường Tiểu học Diễn Liên" và "Trường Tiểu học Châu Đình". Ai cũng
+    //    làm được, không cần biết gì trước; mã trường của Sở là 5 chữ số và
+    //    bảng 513 trường thì công khai, nên dò ra hết trường nào đang dùng app.
+    //    Đúng thứ nguyên tắc "mỗi trường thấy một mình mình" cấm.
+    //    Đổi trường nay đi bằng ?truong=<mã> hoặc màn khai mã ở cổng chung —
+    //    cả hai đều đòi người dùng BIẾT TRƯỚC mã, không bày sẵn danh sách.
+    //    Hai hàm dsTruongDeChon() / htmlChonTruong() giữ lại trong cauhinh.js
+    //    phòng khi cần cho màn quản trị nội bộ; hiện KHÔNG nơi nào gọi.
 
     $$('nav.menu button').forEach(function (b) {
       b.addEventListener('click', function () { chuyenManHinh(b.getAttribute('data-di')); });

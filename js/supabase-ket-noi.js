@@ -11,10 +11,17 @@
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // ⛔ Đang ở cổng chung mà CHƯA khai mã trường → js/cong-truong.js đang giữ
-  //    màn hình, tệp này không có việc gì. Phải return TRƯỚC nhánh dưới:
-  //    nhánh dưới gỡ 'dang-khoa', mà lúc này chưa biết người vào là ai —
-  //    gỡ khóa là mở toang trang cho người lạ. Hỏng phải hỏng theo hướng ĐÓNG.
+  // ⛔ HÀNG RÀO 1 — js/cauhinh.js phải chạy TRỌN VẸN thì mới tin được các cờ
+  //    bên dưới. Cờ vắng mặt không có nghĩa là "trường chưa nối CSDL", nó cũng
+  //    có thể nghĩa là "tệp cấu hình chưa chạy" — và lúc đó ta chưa biết gì cả,
+  //    phải đóng. Xem khối chú thích cuối js/cauhinh.js.
+  //    Hỏng ở đây thì trang treo mãi ở màn "Đang kiểm tra phiên đăng nhập…" —
+  //    đó là hỏng ĐÚNG hướng: thà không vào được còn hơn mở toang.
+  if (window.CAU_HINH_XONG !== true) return;
+
+  // ⛔ HÀNG RÀO 2 — đang ở cổng chung mà CHƯA khai mã trường → js/cong-truong.js
+  //    đang giữ màn hình, tệp này không có việc gì. Phải return TRƯỚC nhánh dưới:
+  //    nhánh dưới gỡ 'dang-khoa', mà lúc này chưa biết người vào là ai.
   if (window.CHUA_CHON_TRUONG) return;
 
   // Chưa cấu hình CSDL → chạy chế độ xem thử, phải MỞ khóa vì trang khóa sẵn

@@ -55,14 +55,31 @@ window.DS_TRUONG = {
 
   dienlien: {
     MA: 'dienlien',
-    // ── HAI MÃ TRƯỜNG, cổng chung nhận CẢ HAI ──
-    // MA_SO là mã CHÍNH, in ra màn hình: bảng mã trường tiểu học do Sở GD&ĐT
-    // Nghệ An thống nhất (513 trường, 5 chữ số, không mã nào trùng — bảng gốc
-    // MatruongTH.xlsx thầy Chung cấp 19/8/2026, bản tách lưu ở repo tài liệu).
-    // MA_MOET là mã CSDL ngành (truong.csdl.moet.gov.vn) — vẫn nhận, vì nhiều
-    // thầy cô quen mã đó hơn. Gõ mã nào cũng vào đúng trường, không ai gõ sai.
+    // ══════════════════════════════════════════════════════════
+    // MÃ TRƯỜNG — cổng chung nhận HẾT các mã dưới đây
+    //
+    // MA_SO   mã CHÍNH, in ra màn hình. Bảng mã trường tiểu học do Sở GD&ĐT
+    //         Nghệ An thống nhất (513 trường, 5 chữ số, không mã nào trùng —
+    //         MatruongTH.xlsx thầy Chung cấp 19/8/2026).
+    // MA_MOET mã CSDL ngành (truong.csdl.moet.gov.vn). Nhiều thầy cô quen mã
+    //         này hơn; còn dùng lại khi làm chức năng xuất Excel MOET.
+    // MA_KHAC mọi mã CŨ vẫn phải nhận. Xem khối 🔴 ngay dưới đây.
+    //
+    // 🔴 MÃ HIỆN TẠI LÀ TẠM — thầy Chung xác nhận 19/8/2026.
+    //    Sáp nhập xong, ba trường gộp thành MỘT trường mang mã MỚI (chưa biết),
+    //    còn 11819 · 11827 · 11806 tụt xuống thành mã của ba PHÂN HIỆU.
+    //    Đến lúc đó phải làm ĐÚNG HAI việc, đừng làm hơn:
+    //      1. MA_SO = mã mới của trường sáp nhập
+    //      2. dồn '11819' vào MA_KHAC  ← ĐỪNG QUÊN BƯỚC NÀY
+    //    Quên bước 2 là 37 thầy cô gõ mã quen thuộc rồi nhận "mã không đúng".
+    //    Đổi mã đăng nhập của cả trường trong một đêm là chuyện không nên làm
+    //    với người dùng, mà lại chẳng được lợi gì.
+    //    Mã của từng PHÂN HIỆU thì ở CSDL (`co_so.ma_so`, sql/38), KHÔNG ghi
+    //    vào đây — phân hiệu là dữ liệu của trường, không phải cấu hình app.
+    // ══════════════════════════════════════════════════════════
     MA_SO: '11819',
     MA_MOET: '40425419',
+    MA_KHAC: [],
     TEN_MIEN: ['tieuhocdienlien.com'],
     // --- Supabase (dự án th-dien-lien, dựng 10/8/2026) ---
     DIA_CHI: 'https://qbfyolhehltfrefudexz.supabase.co',
@@ -108,8 +125,9 @@ window.DS_TRUONG = {
   // ══════════════════════════════════════════════════════════
   chaudinh: {
     MA: 'chaudinh',
-    MA_SO: '11217',                    // bảng mã Sở GD&ĐT Nghệ An
+    MA_SO: '11217',                    // bảng mã Sở GD&ĐT Nghệ An — TẠM, xem khối 🔴 ở trên
     MA_MOET: '',                       // chưa xin được — hỏi trường (§C0 bản thi công)
+    MA_KHAC: [],
     TEN_MIEN: [],
     DIA_CHI: '',
     KHOA_CONG_KHAI: '',
@@ -137,12 +155,17 @@ window.DS_TRUONG = {
 
 // ============================================================
 // TRA TRƯỜNG THEO MÃ — dùng ở cổng chung khi người vào tự gõ mã trường mình.
-// Nhận BA dạng, gõ dạng nào cũng đúng:
+// Nhận MỌI dạng mã của trường, gõ dạng nào cũng đúng:
 //   · mã Sở GD&ĐT   — 11819      (mã chính, in trên màn hình)
 //   · mã CSDL ngành — 40425419   (nhiều thầy cô quen mã này hơn)
 //   · mã ngắn       — dienlien   (dùng trong ?truong= và địa chỉ)
+//   · MA_KHAC       — mọi mã CŨ sau khi trường đổi mã (sáp nhập)
 // Trả về mã ngắn, hoặc '' nếu không có trường nào khớp.
 // Bỏ khoảng trắng giữa chuỗi: người gõ trên điện thoại hay lỡ chạm dấu cách.
+//
+// ⚠️ Ô nào TRỐNG thì phải bỏ qua, không được đem ra so. Châu Đình chưa xin
+//    được mã CSDL ngành nên MA_MOET = '' — so cả ô rỗng thì người gõ trống
+//    lại khớp bừa vào Châu Đình. Bài thử có mục canh đúng cái bẫy này.
 // ============================================================
 window.timTruongTheoMa = function (chuoi) {
   var s = String(chuoi || '').replace(/\s+/g, '').toLowerCase();
@@ -151,9 +174,10 @@ window.timTruongTheoMa = function (chuoi) {
   Object.keys(ds).forEach(function (k) {
     if (kq) return;
     var t = ds[k];
-    if (k.toLowerCase() === s) kq = k;
-    else if (t.MA_SO && String(t.MA_SO).toLowerCase() === s) kq = k;
-    else if (t.MA_MOET && String(t.MA_MOET).toLowerCase() === s) kq = k;
+    var moiMa = [k, t.MA_SO, t.MA_MOET].concat(t.MA_KHAC || []);
+    moiMa.forEach(function (m) {
+      if (!kq && m && String(m).toLowerCase() === s) kq = k;
+    });
   });
   return kq;
 };
@@ -185,6 +209,16 @@ window.timTruongTheoMa = function (chuoi) {
   var ma = '';
   var host = String(location.hostname || '').replace(/^www\./, '').toLowerCase();
 
+  // Có đúng trường mang mã này KHÔNG — hỏi bằng hasOwnProperty, đừng hỏi bằng
+  // ds[k] cho tiện. Mọi đối tượng đều thừa kế 'constructor', 'toString',
+  // 'valueOf', '__proto__'… nên ds['constructor'] là TRUTHY dù chẳng có trường
+  // nào tên vậy. Hậu quả thật: ai đặt được localStorage.ma_truong='constructor'
+  // thì ở bước 4 app tưởng đã biết trường, bỏ qua màn khai mã, rồi
+  // supabase-ket-noi.js thấy DA_NOI=false liền GỠ KHÓA cả trang.
+  function coTruong(k) {
+    return !!k && Object.prototype.hasOwnProperty.call(ds, k);
+  }
+
   // Đang đứng ở tên miền cổng chung? So cả tên miền con: chaudinh.quantriso…
   // cũng phải tính là cổng chung, vì tên miền con là cách cấp địa chỉ riêng
   // cho từng trường mà không phải mua thêm tên miền.
@@ -192,6 +226,23 @@ window.timTruongTheoMa = function (chuoi) {
     var g = String(t).replace(/^www\./, '').toLowerCase();
     return host === g || (host.length > g.length && host.slice(-(g.length + 1)) === '.' + g);
   });
+
+  // ?cong=1 — ÉP vào chế độ cổng chung ở bất cứ đâu, kể cả mở tệp bằng file://.
+  // Có nó thì xem và soát được màn cổng NGAY, không phải chờ trỏ xong tên miền.
+  //
+  // Vì sao đây KHÔNG phải cửa hậu: nó chỉ làm app CHẶT thêm một bước (bắt khai
+  // mã trường trước khi tới cổng đăng nhập), không mở thêm bất cứ quyền gì.
+  // Kẻ xấu bật cờ này lên thì chỉ tự đẩy mình ra xa hơn. Cửa hậu là thứ cho
+  // vào dễ hơn — cái này ngược lại.
+  //
+  // ⚠️ Nói cho đúng phạm vi: cờ này chỉ đổi bước 4, ba bước trên vẫn chạy trước.
+  //    · mở tệp bằng file:// hoặc localhost → ra màn cổng  ← cách xem thử
+  //    · trên tieuhocdienlien.com → VẪN vào Diễn Liên, vì bước 2 khớp tên miền
+  //      trước. Cố ý để vậy: không ai đổi được vẻ ngoài trang thật của nhà
+  //      trường chỉ bằng cách thêm chữ vào địa chỉ rồi gửi cho người khác.
+  //    · đã khai mã trường rồi thì cũng không bị đuổi ra (bước 3 khớp trước).
+  //      Muốn quay lại màn cổng thì dùng ?doitruong=1.
+  if (/[?&]cong=1/.test(location.search)) window.O_CONG_CHUNG = true;
 
   // 1. Theo ?truong=<mã> — ĐỨNG TRƯỚC tên miền, cố ý.
   //    Người gõ hẳn ra ?truong= là đang chỉ định rõ, phải nghe theo. Nhờ vậy
@@ -223,18 +274,21 @@ window.timTruongTheoMa = function (chuoi) {
   //    vì bước 3 cứ đọc lại đúng cái mã sai đó.
   //    Chỉ có tác dụng khi KHÔNG kèm ?truong= — người gõ rõ ?truong= là đang
   //    chỉ định trường, đừng vừa nghe vừa không nghe.
-  var doiTruong = /[?&]doitruong=1/.test(location.search) && !ma;
+  //    ?xemthu=1 cũng bỏ qua cái nhớ: người bấm "Xem thử" là muốn xem bản mẫu
+  //    ngay, mà lần trước họ đã gõ mã một trường thì cái nhớ sẽ kéo họ về cổng
+  //    đăng nhập của trường đó — bấm nút xong không thấy gì xảy ra.
+  var doiTruong = !ma && /[?&](doitruong=1|xemthu=1)/.test(location.search);
   try {
-    if (doiTruong) localStorage.removeItem('ma_truong');
-    if (!ma) {
+    if (/[?&]doitruong=1/.test(location.search) && !ma) localStorage.removeItem('ma_truong');
+    if (!ma && !doiTruong) {
       var cu = localStorage.getItem('ma_truong');
-      if (cu && ds[cu]) ma = cu;
+      if (coTruong(cu)) ma = cu;
     }
     if (ma) localStorage.setItem('ma_truong', ma);
   } catch (e) { /* trình duyệt chặn localStorage thì bỏ qua, vẫn chạy được */ }
 
   // 4. Chưa xác định được → rẽ đôi theo địa chỉ (xem khối chú thích trên).
-  if (!ds[ma]) {
+  if (!coTruong(ma)) {
     if (window.O_CONG_CHUNG) {
       window.CHUA_CHON_TRUONG = true;
       window.MA_TRUONG = '';
@@ -242,7 +296,8 @@ window.timTruongTheoMa = function (chuoi) {
       // lúc nạp. Đặt tên hệ thống trung tính, KHÔNG mang tên trường nào —
       // để lỡ lọt ra màn hình thì cũng không in nhầm tên trường khác.
       window.CAU_HINH = gop(window.CHUNG, {
-        MA: '', MA_SO: '', MA_MOET: '', TEN_MIEN: [], DIA_CHI: '', KHOA_CONG_KHAI: '',
+        MA: '', MA_SO: '', MA_MOET: '', MA_KHAC: [], TEN_MIEN: [],
+        DIA_CHI: '', KHOA_CONG_KHAI: '',
         TEN_TRUONG: window.CHUNG.TEN_HE_THONG, DIA_CHI_TRUONG: '', DIA_DANH: '',
         DON_VI_CHU_QUAN: '', CO_QUAN_QUAN_LY: '', CHU_QUAN_THUONG: '', CO_QUAN_THUONG: '',
         HIEU_TRUONG: '', PHO_HIEU_TRUONG: '', DIEN_THOAI: '', EMAIL_TRUONG: '',
@@ -320,3 +375,21 @@ window.CAU_HINH.NAM_HOC = window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
 
 // Cờ suy ra, các file khác đọc cờ này — không tự kiểm tra chuỗi rỗng
 window.DA_NOI = !!(window.CAU_HINH.DIA_CHI && window.CAU_HINH.KHOA_CONG_KHAI);
+
+// ============================================================
+// 🔴 CỜ KHẲNG ĐỊNH TỆP NÀY ĐÃ CHẠY TRỌN VẸN — PHẢI Ở DÒNG CUỐI CÙNG
+//
+// supabase-ket-noi.js quyết định mở khóa trang dựa trên các cờ khai ở đây.
+// Trước đây nó xét sự VẮNG MẶT của cờ (`if (!window.DA_NOI)`), mà cờ vắng mặt
+// có HAI nghĩa hoàn toàn khác nhau:
+//   · "trường này chưa nối CSDL"  → cho vào xem bản mẫu, đúng
+//   · "tệp cauhinh.js chưa chạy"  → CHƯA BIẾT GÌ CẢ, phải đóng
+// Không phân biệt được hai nghĩa đó thì một dấu phẩy thiếu trong khối cấu hình
+// một trường mới — thứ sẽ sửa mỗi lần thêm trường — làm tệp này ném lỗi giữa
+// chừng, và cả hệ thống MỞ TOANG cho người lạ. Đúng kiểu hỏng nguy hiểm nhất:
+// im lặng, không báo gì, chỉ mất hàng rào.
+//
+// Nay đòi một khẳng định DƯƠNG: chỉ khi dòng dưới đây chạy được thì mới tin.
+// ⚠️ Thêm mã mới thì thêm PHÍA TRÊN dòng này, đừng thêm dưới.
+// ============================================================
+window.CAU_HINH_XONG = true;

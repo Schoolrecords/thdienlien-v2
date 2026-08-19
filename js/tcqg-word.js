@@ -176,7 +176,10 @@
         chan(W().cauHinh('CO_QUAN_QUAN_LY').toUpperCase()) + '<br>' +
         '<b>' + chan(W().cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
         W().gachTenTruong(W().cauHinh('TEN_TRUONG')) +
-        '<p style="margin:8pt 0 0;font-size:12pt">Số: ' + chan(tt.so_ke_hoach || '……/KH-THDL') + '</p></td>' +
+        // 'THDL' = Tiểu Học Diễn Liên — chữ tắt của MỘT trường, không được làm
+        // giá trị dự phòng cho mọi trường. Dòng 63 cùng tệp vốn đã làm đúng
+        // bằng '……/QĐ-…'; theo đúng mẫu đó.
+        '<p style="margin:8pt 0 0;font-size:12pt">Số: ' + chan(tt.so_ke_hoach || '……/KH-…') + '</p></td>' +
         '<td style="border:none;padding:0;width:' + W().O_PHAI + '%;text-align:center;vertical-align:top;font-size:12pt">' +
         '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b><br>' +
         '<b style="font-size:13pt">Độc lập - Tự do - Hạnh phúc</b>' +

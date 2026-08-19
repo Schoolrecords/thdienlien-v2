@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Quản trị số Trường học">
+  <!-- Biểu trưng TRUNG TÍNH của hệ thống — KHÔNG mang tên, dấu hay ảnh của
+       trường nào. Dùng ở cổng chung, ở bản xem thử, và làm ảnh dự phòng khi
+       một trường chưa gửi logo riêng.
+       Trước đây ba chỗ đó đều rơi về img/logo.png — mà tệp ấy chính là con dấu
+       Trường Tiểu học Diễn Liên, có in tên trường và tên xã trên hình. Nghĩa là
+       khách lạ mở địa chỉ giới thiệu lại thấy con dấu một trường cụ thể.
+       Vẽ bằng SVG nên nét sắc ở mọi cỡ và in ra giấy không mờ — cùng lý do dự
+       án đã bỏ emoji làm biểu tượng. -->
+  <defs>
+    <linearGradient id="nen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e4593"/>
+      <stop offset="1" stop-color="#14306b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="56" fill="url(#nen)"/>
+
+  <!-- Mái trường -->
+  <path d="M128 56 216 104 216 120 128 76 40 120 40 104Z" fill="#e5b13a"/>
+
+  <!-- Thân nhà -->
+  <path d="M62 128h132v72a8 8 0 0 1-8 8H70a8 8 0 0 1-8-8Z"
+        fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Trang hồ sơ bên trong: ba dòng chữ tượng trưng -->
+  <g stroke="#ffffff" stroke-width="11" stroke-linecap="round" opacity=".9">
+    <path d="M92 152h72"/>
+    <path d="M92 178h72"/>
+  </g>
+</svg>

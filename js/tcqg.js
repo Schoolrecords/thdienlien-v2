@@ -80,7 +80,8 @@
 
   // ══════════════════ TẢI DỮ LIỆU ══════════════════
   window.khoiDongTCQG = function () {
-    NAM = NAM || (window.CAU_HINH.NAM_HOC || '2026-2027');
+    // Không ghi cứng năm học — xem chú thích cùng việc ở js/tcqg-hoidong.js.
+    NAM = NAM || window.CAU_HINH.NAM_HOC || window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
     taiTCQG();
   };
 
@@ -214,7 +215,8 @@
 
   function veThanh() {
     var thanh = $('#kd-thanh');
-    var namNay = parseInt((window.CAU_HINH.NAM_HOC || '2026').split('-')[0], 10);
+    var namNay = parseInt((window.CAU_HINH.NAM_HOC ||
+      window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC)).split('-')[0], 10);
     var nams = [];
     for (var i = 1; i >= -3; i--) nams.push((namNay + i) + '-' + (namNay + i + 1));
     thanh.innerHTML =

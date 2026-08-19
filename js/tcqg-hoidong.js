@@ -18,7 +18,10 @@
     var u = window.NGUOI_DUNG;
     return !!u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu');
   }
-  function nam() { return window.CAU_HINH.NAM_HOC || '2026-2027'; }
+  // Ghi cứng năm học làm giá trị dự phòng là cái bẫy đã trả giá một lần (mục
+  // 20 sổ dự án): đến hè năm sau không ai nhớ sửa, hệ thống ghi dữ liệu sai
+  // năm mà không ai biết. Tính lại theo ngày, đúng một quy tắc dùng chung.
+  function nam() { return window.CAU_HINH.NAM_HOC || window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC); }
   function ngayVN(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : ''; }
 
   // Ghi + đếm dòng thật (chống RLS lưu giả)
@@ -137,7 +140,7 @@
           '<div class="nhan-nho" style="margin:14px 0 8px">Hội đồng tự đánh giá — Năm học ' + thoat(namHoc) + ' (Điều 9 TT57)</div>' +
           daiKiem(d.kiem) +
           '<div class="hd-form">' +
-          '<div class="hs-o"><label>Số quyết định thành lập</label><input id="hd-so-qd" placeholder="…/QĐ-THDL" value="' + thoat(hd ? hd.so_quyet_dinh : '') + '"></div>' +
+          '<div class="hs-o"><label>Số quyết định thành lập</label><input id="hd-so-qd" placeholder="…/QĐ-…" value="' + thoat(hd ? hd.so_quyet_dinh : '') + '"></div>' +
           '<div class="hs-o"><label>Ngày quyết định</label><input type="date" id="hd-ngay-qd" value="' + (hd && hd.ngay_quyet_dinh || '') + '"></div>' +
           '<div class="hs-o"><label>Ngày phê duyệt báo cáo (hạn: trước 15/6)</label><input type="date" id="hd-ngay-pd" value="' + (hd && hd.ngay_phe_duyet_bao_cao || '') + '"></div>' +
           '<div class="hs-o"><label>Ghi chú</label><input id="hd-ghi-chu" value="' + thoat(hd ? hd.ghi_chu : '') + '"></div>' +
