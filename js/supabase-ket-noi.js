@@ -216,9 +216,24 @@
   }
 
   function dangNhap() {
+    // 🔴 PHẢI GIỮ LẠI ?truong=<mã> khi Google trả về.
+    //
+    // Bản cũ chỉ gửi origin + pathname, tức là RƠI MẤT phần sau dấu hỏi. Trường
+    // nào vào bằng ?truong=<mã> trên tên miền của một trường khác (cách chào
+    // hàng khi họ chưa có tên miền riêng) mà bấm đăng nhập, thì lúc Google trả
+    // về địa chỉ chỉ còn trơ tên miền → app nhận diện theo TÊN MIỀN → họ rơi
+    // vào CƠ SỞ DỮ LIỆU CỦA TRƯỜNG CHỦ TÊN MIỀN. Đăng nhập xong lại thành
+    // "tài khoản chờ duyệt" ở một trường hoàn toàn xa lạ.
+    //
+    // Giữ nguyên cả chuỗi truy vấn là xong. Địa chỉ TRẦN thì chuỗi này rỗng nên
+    // hành vi không đổi một chút nào — không đụng gì tới thầy cô đang dùng thật.
+    //
+    // ⚠️ Bên Supabase (Authentication → URL Configuration → Redirect URLs) phải
+    //    có mẫu bao được chuỗi truy vấn, ví dụ https://<tên miền>/** — nếu chỉ
+    //    khai đúng địa chỉ trần thì Google trả về sẽ bị từ chối.
     may.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: location.origin + location.pathname }
+      options: { redirectTo: location.origin + location.pathname + (location.search || '') }
     });
   }
 
