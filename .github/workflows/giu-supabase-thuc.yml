@@ -1,0 +1,60 @@
+# ============================================================
+# Giữ cho cơ sở dữ liệu các trường khỏi NGỦ
+#
+# Supabase gói miễn phí cho dự án ngủ sau 7 ngày không có request. Robot này
+# chạy 3 ngày một lần, gửi tới mỗi trường một truy vấn nhẹ.
+#
+# 🔑 GitHub TỰ TẮT lịch chạy nếu kho mã 60 ngày không có gì mới. Nghỉ hè không
+#    ai commit là đúng lúc cần robot nhất thì nó lại vừa bị tắt. Vì vậy mỗi
+#    THÁNG robot ghi một dòng mốc rồi commit — kho mã luôn có hoạt động.
+#    (Ghi mỗi lần chạy thì lịch sử đầy commit rác, nên chỉ ghi khi sang tháng.)
+#
+# Chạy tay bất cứ lúc nào: tab Actions → chọn workflow này → Run workflow.
+# ============================================================
+name: Giữ Supabase các trường khỏi ngủ
+
+on:
+  schedule:
+    # 3 ngày một lần, 03:11 UTC = 10:11 giờ Việt Nam. Giờ lẻ cho khỏi rơi đúng
+    # lúc GitHub đông việc — cron của GitHub hay bị đẩy trễ vào phút tròn.
+    - cron: '11 3 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write        # để ghi tệp mốc mỗi tháng
+
+concurrency:
+  group: giu-supabase
+  cancel-in-progress: false
+
+jobs:
+  giu-thuc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gửi truy vấn tới từng trường
+        run: node .github/scripts/giu-supabase-thuc.js
+
+      # Chống việc GitHub tắt lịch chạy sau 60 ngày kho mã im lặng.
+      # always() để bước này vẫn chạy khi có trường không gọi được — lúc đó
+      # càng cần giữ robot sống để lần sau còn thử lại.
+      - name: Ghi mốc tháng (giữ cho lịch chạy khỏi bị tắt)
+        if: always()
+        run: |
+          thang=$(date -u +%Y-%m)
+          moc=.github/moc-giu-song.txt
+          if [ "$(cat $moc 2>/dev/null)" = "$thang" ]; then
+            echo "Đã có mốc tháng $thang — không cần ghi lại."
+            exit 0
+          fi
+          echo "$thang" > $moc
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $moc
+          git commit -m "chore: moc giu lich chay thang $thang"
+          git push
