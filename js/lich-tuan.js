@@ -561,32 +561,52 @@
         window.notify('Lịch đã ban hành — bấm "↩ Thu về nháp" trước rồi mới xoá được.');
         return;
       }
-      if (!window.confirm('Xoá cả lịch tuần ' + TUAN.tuanSo + '? Toàn bộ đầu việc và phân trực của tuần này mất theo.')) return;
-      if (!THAT()) { TUAN_MAU[TU_NGAY] = null; lamMoi(); return; }
-      window.MAY_CHU.from('lich_tuan').delete().eq('id', TUAN.id).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Không xoá được — lịch đã ban hành hoặc thầy cô không có quyền.'); return; }
-          window.notify('🗑 Đã xoá lịch tuần.');
-          lamMoi();
-        });
+      window.hopHoi({
+        tieuDe: 'Xoá cả lịch tuần ' + TUAN.tuanSo + '?',
+        moTa2: ngayVN(TU_NGAY) + ' – ' + ngayVN(congNgay(TU_NGAY, 6)),
+        noiDung: 'Toàn bộ đầu việc và phân trực của tuần này mất theo. Không lấy lại được.',
+        nutOK: 'Xoá lịch tuần', nguyHiem: true
+      }).then(function (dong_y) {
+        if (!dong_y) return;
+        if (!THAT()) { TUAN_MAU[TU_NGAY] = null; lamMoi(); return; }
+        window.MAY_CHU.from('lich_tuan').delete().eq('id', TUAN.id).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Không xoá được — lịch đã ban hành hoặc thầy cô không có quyền.'); return; }
+            window.notify('🗑 Đã xoá lịch tuần.');
+            lamMoi();
+          });
+      });
     },
 
     // Số tuần chỉ là nhãn in ra, mỗi trường đếm một kiểu — cho sửa tay
     suaSoTuan: function () {
       if (!TUAN) return;
-      var moi = window.prompt('Số tuần in trên tờ lịch (' + ngayVN(TU_NGAY) + ' – ' +
-        ngayVN(congNgay(TU_NGAY, 6)) + '):', TUAN.tuanSo);
-      if (moi === null) return;
-      var so = parseInt(moi, 10);
-      if (isNaN(so) || so < 1 || so > 60) { window.notify('Số tuần nhận từ 1 đến 60.'); return; }
-      if (!THAT()) { TUAN.tuanSo = so; K().veLai(); return; }
-      window.MAY_CHU.from('lich_tuan').update({ tuan_so: so }).eq('id', TUAN.id).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
-          lamMoi();
-        });
+      window.hopNhap({
+        bieuTuong: '🔢',
+        tieuDe: 'Số tuần in trên tờ lịch',
+        moTa: ngayVN(TU_NGAY) + ' – ' + ngayVN(congNgay(TU_NGAY, 6)),
+        nhan: 'Số tuần',
+        kieu: 'so', nhoNhat: 1, lonNhat: 60,
+        giaTri: TUAN.tuanSo,
+        chuThich: 'Nhận từ 1 đến 60. Chỉ đổi nhãn in ra, không dời tuần trên lịch.',
+        batBuoc: true,
+        kiemTra: function (v) {
+          var s = parseInt(v, 10);
+          return (isNaN(s) || s < 1 || s > 60) ? 'Số tuần nhận từ 1 đến 60.' : null;
+        },
+        nutLuu: 'Lưu số tuần'
+      }).then(function (moi) {
+        if (moi === null) return;
+        var so = parseInt(moi, 10);
+        if (!THAT()) { TUAN.tuanSo = so; K().veLai(); return; }
+        window.MAY_CHU.from('lich_tuan').update({ tuan_so: so }).eq('id', TUAN.id).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
+            lamMoi();
+          });
+      });
     },
     mo: function (gi) { MO = (MO === gi ? '' : gi); K().veLai(); },
     dong: function () { MO = ''; K().veLai(); },
@@ -653,17 +673,27 @@
       });
     },
     viecXoa: function (id) {
-      if (!window.confirm('Xóa việc này khỏi lịch tuần?')) return;
-      if (!THAT()) {
-        TUAN.muc = TUAN.muc.filter(function (m) { return m.id !== id; });
-        K().veLai(); return;
-      }
-      window.MAY_CHU.from('lich_tuan_muc').delete().eq('id', id).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
-          lamMoi();
-        });
+      // Nhắc lại chính nội dung việc sắp xoá — hộp hỏi trống trơn thì bấm
+      // nhầm dấu ✕ của việc bên cạnh cũng không ai nhận ra
+      var v = (TUAN && TUAN.muc || []).filter(function (m) { return m.id === id; })[0];
+      window.hopHoi({
+        tieuDe: 'Xoá việc này khỏi lịch tuần?',
+        moTa2: v ? TEN_THU[v.thu] + (v.gio ? ' · ' + v.gio : '') : '',
+        noiDung: v ? v.noiDung : 'Việc này sẽ bị xoá khỏi tờ lịch.',
+        nutOK: 'Xoá việc', nguyHiem: true
+      }).then(function (dong_y) {
+        if (!dong_y) return;
+        if (!THAT()) {
+          TUAN.muc = TUAN.muc.filter(function (m) { return m.id !== id; });
+          K().veLai(); return;
+        }
+        window.MAY_CHU.from('lich_tuan_muc').delete().eq('id', id).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
+            lamMoi();
+          });
+      });
     },
 
     trucThem: function () {
@@ -693,78 +723,129 @@
     trucXoa: function (id) {
       // Hỏi lại như viecXoa — hai dấu ✕ trông giống hệt nhau, một cái hỏi
       // một cái không thì sớm muộn cũng bấm nhầm
-      if (!window.confirm('Bỏ phân công trực này?')) return;
-      if (!THAT()) {
-        TUAN.truc = TUAN.truc.filter(function (t) { return t.id !== id; });
-        K().veLai(); return;
-      }
-      window.MAY_CHU.from('truc_tuan').delete().eq('id', id).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được phân trực.'); return; }
-          lamMoi();
-        });
+      var t0 = (TUAN && TUAN.truc || []).filter(function (t) { return t.id === id; })[0];
+      window.hopHoi({
+        tieuDe: 'Bỏ phân công trực này?',
+        moTa2: t0 ? TEN_THU[t0.thu] : '',
+        noiDung: t0 ? (t0.nguoiTen || 'Người trực') + ' sẽ không còn trong bảng phân trực của tuần.'
+                    : 'Phân công trực này sẽ bị bỏ.',
+        nutOK: 'Bỏ phân trực', nguyHiem: true
+      }).then(function (dong_y) {
+        if (!dong_y) return;
+        if (!THAT()) {
+          TUAN.truc = TUAN.truc.filter(function (t) { return t.id !== id; });
+          K().veLai(); return;
+        }
+        window.MAY_CHU.from('truc_tuan').delete().eq('id', id).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được phân trực.'); return; }
+            lamMoi();
+          });
+      });
     },
 
+    // Trọng tâm tuần thường là 2-4 ý, viết cả câu — ô một dòng của prompt()
+    // trình duyệt không đủ nhìn, nên dùng hộp thoại riêng (js/hop-thoai.js).
     suaTrongTam: function () {
       if (!TUAN) return;
-      var moi = window.prompt('Trọng tâm tuần ' + TUAN.tuanSo + ':', TUAN.trongTam || '');
-      if (moi === null) return;
-      moi = String(moi).trim();
-      if (!THAT()) { TUAN.trongTam = moi; K().veLai(); return; }
-      window.MAY_CHU.from('lich_tuan').update({ trong_tam: moi || null }).eq('id', TUAN.id).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
-          lamMoi();
-        });
+      window.hopNhap({
+        bieuTuong: '🎯',
+        tieuDe: 'Trọng tâm tuần ' + TUAN.tuanSo,
+        moTa: ngayVN(TU_NGAY) + ' – ' + ngayVN(congNgay(TU_NGAY, 6)),
+        nhan: 'Nội dung trọng tâm',
+        giaTri: TUAN.trongTam || '',
+        goiY: 'Ví dụ: Ổn định nền nếp đầu năm học; hoàn thiện hồ sơ đầu năm; kiểm tra an toàn trường học tại các điểm trường.',
+        chuThich: 'Mỗi ý ngăn bằng dấu chấm phẩy. Dòng này in ngay dưới đầu tờ lịch và trong bản Word. Để trống rồi Lưu là bỏ trọng tâm tuần.',
+        toiDa: 500,
+        nutLuu: 'Lưu trọng tâm'
+      }).then(function (moi) {
+        if (moi === null) return;
+        if (!THAT()) { TUAN.trongTam = moi; K().veLai(); return; }
+        window.MAY_CHU.from('lich_tuan').update({ trong_tam: moi || null }).eq('id', TUAN.id).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới sửa được lịch tuần.'); return; }
+            lamMoi();
+          });
+      });
     },
 
     // Số tuần đếm từ đây. Trường tính tuần 1 từ tuần tựu trường, trường khác
     // tính từ tuần khai giảng — không đoán thay được, để Ban giám hiệu chốt.
     suaMoc: function () {
       var cu = thuHaiCua(mocTuan1());
-      var moi = window.prompt(
-        'Ngày Thứ Hai của TUẦN 1 năm học ' + namHoc() + ' (dạng yyyy-mm-dd).\n' +
-        'Số tuần của các lịch ĐÃ TẠO giữ nguyên, chỉ lịch tạo sau mới đếm theo mốc mới.', cu);
-      if (moi === null) return;
-      moi = String(moi).trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(moi)) { window.notify('Ngày phải viết dạng 2026-09-07.'); return; }
-      var chuan = thuHaiCua(moi);       // lỡ chọn giữa tuần thì tự lùi về Thứ Hai
-      if (!THAT()) { MOC_TUAN1 = chuan; TUAN_MAU = {}; lamMoi(); return; }
-      // upsert chứ không update: dòng cấu hình lỡ bị xoá thì update trả 0
-      // dòng và app báo "Chỉ Ban giám hiệu mới đổi được" ngay với hiệu trưởng
-      window.MAY_CHU.from('cau_hinh')
-        .upsert({ khoa: 'tuan_1_bat_dau', gia_tri: chuan }, { onConflict: 'khoa' }).select()
-        .then(function (r) {
-          if (r.error) { K().baoLoi(r.error); return; }
-          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới đổi được mốc tuần 1.'); return; }
-          MOC_TUAN1 = chuan;
-          window.notify('✅ Mốc tuần 1 nay là Thứ Hai ' + ngayVN(chuan) + '.');
-          lamMoi();
-        });
+      window.hopNhap({
+        bieuTuong: '📌',
+        tieuDe: 'Mốc TUẦN 1 năm học ' + namHoc(),
+        moTa: 'Ngày Thứ Hai mở đầu tuần 1',
+        nhan: 'Ngày bắt đầu tuần 1',
+        kieu: 'ngay',
+        giaTri: cu,
+        chuThich: 'Chọn giữa tuần thì app tự lùi về Thứ Hai của tuần đó. Số tuần của các lịch ĐÃ TẠO giữ nguyên, chỉ lịch tạo sau mới đếm theo mốc mới.',
+        batBuoc: true,
+        kiemTra: function (v) {
+          return /^\d{4}-\d{2}-\d{2}$/.test(v) ? null : 'Ngày phải viết dạng 2026-09-07.';
+        },
+        nutLuu: 'Lưu mốc tuần 1'
+      }).then(function (moi) {
+        if (moi === null) return;
+        var chuan = thuHaiCua(moi);       // lỡ chọn giữa tuần thì tự lùi về Thứ Hai
+        if (!THAT()) { MOC_TUAN1 = chuan; TUAN_MAU = {}; lamMoi(); return; }
+        // upsert chứ không update: dòng cấu hình lỡ bị xoá thì update trả 0
+        // dòng và app báo "Chỉ Ban giám hiệu mới đổi được" ngay với hiệu trưởng
+        window.MAY_CHU.from('cau_hinh')
+          .upsert({ khoa: 'tuan_1_bat_dau', gia_tri: chuan }, { onConflict: 'khoa' }).select()
+          .then(function (r) {
+            if (r.error) { K().baoLoi(r.error); return; }
+            if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới đổi được mốc tuần 1.'); return; }
+            MOC_TUAN1 = chuan;
+            window.notify('✅ Mốc tuần 1 nay là Thứ Hai ' + ngayVN(chuan) + '.');
+            lamMoi();
+          });
+      });
     },
 
     banHanh: function (bat) {
       if (!TUAN) return;
-      if (bat && !TUAN.muc.length &&
-          !window.confirm('Lịch tuần này chưa có đầu việc nào. Vẫn ban hành?')) return;
-      if (!bat && !window.confirm('Thu lịch về dạng nháp? Giáo viên sẽ không xem được nữa cho tới khi ban hành lại.')) return;
-      if (!THAT()) {
-        TUAN.trangThai = bat ? 'ban_hanh' : 'nhap';
-        TUAN.nguoiBH = bat ? 'BGH (mẫu)' : '';
-        K().veLai(); return;
+      // Ban hành tờ lịch còn trống, hoặc thu tờ đang treo về nháp — hai nước
+      // đi cả trường nhìn thấy, nên hỏi lại; ban hành tờ đã có việc thì không.
+      var hoi = null;
+      if (bat && !TUAN.muc.length) {
+        hoi = {
+          bieuTuong: '📢',
+          tieuDe: 'Lịch tuần này chưa có đầu việc nào',
+          moTa2: 'Tuần ' + TUAN.tuanSo + ' · ' + ngayVN(TU_NGAY) + ' – ' + ngayVN(congNgay(TU_NGAY, 6)),
+          noiDung: 'Ban hành lúc này thì toàn trường thấy một tờ lịch trống. Vẫn ban hành?',
+          nutOK: 'Vẫn ban hành'
+        };
+      } else if (!bat) {
+        hoi = {
+          bieuTuong: '↩',
+          tieuDe: 'Thu lịch về dạng nháp?',
+          moTa2: 'Tuần ' + TUAN.tuanSo + ' · ' + ngayVN(TU_NGAY) + ' – ' + ngayVN(congNgay(TU_NGAY, 6)),
+          noiDung: 'Giáo viên sẽ không xem được nữa cho tới khi ban hành lại.',
+          nutOK: 'Thu về nháp'
+        };
       }
-      // Chỉ gửi trang_thai. Chữ ký (nguoi_bh_ten, ban_hanh_luc) do trigger
-      // lt_chot_ban_hanh điền từ auth.uid() — không tin chữ client gửi lên,
-      // kẻo ký được tờ lịch đứng tên Hiệu trưởng và đề ngày lùi lại.
-      window.MAY_CHU.from('lich_tuan')
-        .update({ trang_thai: bat ? 'ban_hanh' : 'nhap' })
-        .eq('id', TUAN.id).select().then(function (r) {
-        if (r.error) { K().baoLoi(r.error); return; }
-        if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới ban hành được lịch tuần.'); return; }
-        window.notify(bat ? '📢 Đã ban hành — toàn trường xem được ngay.' : '↩ Đã thu về nháp.');
-        lamMoi();
+      (hoi ? window.hopHoi(hoi) : Promise.resolve(true)).then(function (dong_y) {
+        if (!dong_y) return;
+        if (!THAT()) {
+          TUAN.trangThai = bat ? 'ban_hanh' : 'nhap';
+          TUAN.nguoiBH = bat ? 'BGH (mẫu)' : '';
+          K().veLai(); return;
+        }
+        // Chỉ gửi trang_thai. Chữ ký (nguoi_bh_ten, ban_hanh_luc) do trigger
+        // lt_chot_ban_hanh điền từ auth.uid() — không tin chữ client gửi lên,
+        // kẻo ký được tờ lịch đứng tên Hiệu trưởng và đề ngày lùi lại.
+        window.MAY_CHU.from('lich_tuan')
+          .update({ trang_thai: bat ? 'ban_hanh' : 'nhap' })
+          .eq('id', TUAN.id).select().then(function (r) {
+          if (r.error) { K().baoLoi(r.error); return; }
+          if (!r.data || !r.data.length) { window.notify('Chỉ Ban giám hiệu mới ban hành được lịch tuần.'); return; }
+          window.notify(bat ? '📢 Đã ban hành — toàn trường xem được ngay.' : '↩ Đã thu về nháp.');
+          lamMoi();
+        });
       });
     },
 

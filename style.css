@@ -2625,3 +2625,117 @@ nav.menu::-webkit-scrollbar { display: none; }
   .chip-chua-mo b { font-size: 11.5px; }
   .chip-chua-mo small { font-size: 10px; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   HỘP THOẠI DÙNG CHUNG (js/hop-thoai.js) — thay prompt/confirm
+   Hộp của trình duyệt đề tên miền "quantrisotruonghoc.com cho biết",
+   ô nhập một dòng hẹp, không nhãn, không xuống dòng được. Hộp này giữ
+   đúng tông app: đầu navy có hoa văn chấm, thân trắng, nút navy đặc.
+   Trên điện thoại tự trượt lên từ đáy như tấm sheet quen tay.
+   ══════════════════════════════════════════════════════════ */
+.ht-phu {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(10, 20, 42, .58); backdrop-filter: blur(3px);
+  animation: htHien .16s ease-out;
+}
+.ht-phu.dong { animation: htTat .14s ease-in forwards; }
+@keyframes htHien { from { opacity: 0; } to { opacity: 1; } }
+@keyframes htTat  { to { opacity: 0; } }
+
+.ht-hop {
+  width: 100%; max-width: 660px; background: #fff; border-radius: 18px;
+  overflow: hidden; box-shadow: 0 26px 70px rgba(10, 20, 42, .38);
+  animation: htLen .2s cubic-bezier(.2, .9, .3, 1);
+  display: flex; flex-direction: column; max-height: calc(100vh - 40px);
+}
+@keyframes htLen { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.ht-hop.lac { animation: htLac .32s; }
+@keyframes htLac {
+  20% { transform: translateX(-7px); }
+  45% { transform: translateX(6px); }
+  70% { transform: translateX(-3px); }
+  100% { transform: none; }
+}
+
+.ht-dau {
+  display: flex; align-items: flex-start; gap: 13px; padding: 16px 18px;
+  background: linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
+  background-size: 20px 20px, auto; color: #fff; flex: none;
+}
+.ht-dau .ht-ic {
+  width: 42px; height: 42px; border-radius: 12px; flex: none;
+  display: grid; place-items: center; font-size: 21px;
+  background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .2);
+}
+.ht-dau .ht-tt { flex: 1; min-width: 0; padding-top: 1px; }
+.ht-dau h4 { font-size: 17.5px; font-weight: 800; letter-spacing: .2px; line-height: 1.35; }
+.ht-dau p { font-size: 12.6px; color: #c6d4f0; margin-top: 2px; line-height: 1.45; }
+.ht-x {
+  width: 34px; height: 34px; border-radius: 50%; flex: none; cursor: pointer;
+  display: grid; place-items: center; font-size: 15px; font-family: inherit;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); color: #fff;
+  transition: background .15s;
+}
+.ht-x:hover { background: rgba(255, 255, 255, .24); }
+
+.ht-than { padding: 18px; overflow-y: auto; flex: 1; }
+.ht-nhan {
+  display: block; font-size: 11.8px; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; color: var(--chu-nhat); margin-bottom: 8px;
+}
+.ht-o {
+  width: 100%; font: inherit; font-size: 15.5px; line-height: 1.6; color: var(--chu);
+  background: #fcfdff; border: 1px solid var(--vien-dam); border-radius: 12px;
+  padding: 12px 14px; resize: vertical; transition: border-color .15s, box-shadow .15s;
+}
+textarea.ht-o { min-height: 116px; display: block; }
+.ht-o.hep { max-width: 240px; }
+.ht-o:focus {
+  outline: none; background: #fff; border-color: var(--chinh);
+  box-shadow: 0 0 0 3px rgba(42, 92, 184, .16);
+}
+.ht-o.sai { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192, 57, 43, .13); }
+.ht-o::placeholder { color: #9aa8c2; }
+
+.ht-hang { display: flex; align-items: flex-start; gap: 12px; margin-top: 8px; }
+.ht-chu-thich { flex: 1; font-size: 12.4px; color: var(--chu-mo); line-height: 1.5; }
+.ht-dem { font-size: 12px; font-weight: 700; color: var(--chu-nhat); white-space: nowrap; padding-top: 1px; }
+.ht-loi {
+  margin-top: 10px; font-size: 13.2px; font-weight: 700; color: #a5321f;
+  background: #fdf0ee; border: 1px solid #f3cdc6; border-radius: 10px; padding: 9px 12px;
+}
+.ht-loi-nhac { font-size: 15.2px; line-height: 1.65; color: var(--chu); }
+
+.ht-chan {
+  display: flex; justify-content: flex-end; gap: 10px; flex: none;
+  padding: 14px 18px; background: #f7f9fd; border-top: 1px solid var(--vien);
+}
+.ht-nut {
+  font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer;
+  border-radius: 11px; padding: 11px 20px; transition: .15s; border: 1px solid transparent;
+}
+.ht-huy { background: #fff; border-color: var(--vien-dam); color: var(--chu-mo); }
+.ht-huy:hover { background: #eef2f8; color: var(--chu); }
+.ht-ok { background: var(--dam); color: #fff; box-shadow: 0 4px 12px rgba(20, 48, 107, .22); }
+.ht-ok:hover { background: var(--dam-2); }
+.ht-ok.nguy { background: #b3372a; box-shadow: 0 4px 12px rgba(179, 55, 42, .24); }
+.ht-ok.nguy:hover { background: #972c20; }
+
+/* Điện thoại: dán xuống đáy màn cho ngón cái với tới hai nút */
+@media (max-width: 560px) {
+  .ht-phu { align-items: flex-end; padding: 0; }
+  .ht-hop {
+    max-width: none; border-radius: 18px 18px 0 0; max-height: 94vh;
+    animation: htTruot .22s cubic-bezier(.2, .9, .3, 1);
+  }
+  @keyframes htTruot { from { transform: translateY(100%); } to { transform: none; } }
+  .ht-dau { padding: 14px 15px; }
+  .ht-dau h4 { font-size: 16.5px; }
+  .ht-than { padding: 15px; }
+  .ht-o { font-size: 16px; }          /* ≥16px thì iOS không tự phóng to trang */
+  .ht-o.hep { max-width: none; }
+  .ht-chan { padding: 12px 15px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .ht-nut { flex: 1; padding: 13px 16px; }
+}
