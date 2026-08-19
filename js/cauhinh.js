@@ -160,12 +160,28 @@ window.CAU_HINH.DA_NOI = false;
       if (r.status === 404) return 'khong-co';
       if (!r.ok) return null;
       return r.json().then(function (o) {
-        if (!o || typeof o !== 'object') return null;
+        // Máy chủ trả lời được nhưng nội dung không phải một đối tượng cấu hình
+        // → coi như KHÔNG CÓ tệp, đừng coi là lỗi. Xem khối 🔴 ngay dưới.
+        if (!o || typeof o !== 'object') return 'khong-co';
         if (tenNho) ghiNho(tenNho, o);
         return o;
-      }, function () { return null; });
-    }, function () { return null; });   // mất mạng
+      }, function () { return 'khong-co'; });
+    }, function () { return null; });   // mất mạng — CHỈ ở đây mới là lỗi thật
   }
+  // 🔴 VÌ SAO "đọc được nhưng không phải JSON" = KHÔNG CÓ, chứ không phải LỖI
+  //
+  // Hai nơi đăng trang trả lời KHÁC NHAU khi tệp không tồn tại:
+  //     GitHub Pages      → 404, đúng chuẩn
+  //     Cloudflare Pages  → 200 kèm NGUYÊN index.html
+  // Bản đầu chỉ xét status 404, nên trên Cloudflare Pages thì tra tệp cấu hình
+  // không có sẽ nhận 200 + HTML, r.json() vỡ, và app tưởng MẤT MẠNG — hiện màn
+  // "Không tải được thông tin nhà trường" thay vì màn khai mã trường. Nghĩa là
+  // cổng chung không vào được, mà chẳng có lỗi nào để lần ra.
+  //
+  // Cách phân biệt đúng và bền, không phụ thuộc nơi đăng trang:
+  //     · fetch NÉM LỖI            → mất mạng thật      → 'loi'
+  //     · trả lời được, không JSON → tệp không tồn tại   → 'khong-co'
+  // Máy chủ đã nói chuyện được thì đường mạng không hỏng; nó chỉ đưa nhầm thứ.
 
   // Tải theo mã, tự đi tiếp MỘT nấc bí danh ({ "xem": "<mã chính>" }).
   // Chỉ một nấc: bí danh trỏ vào bí danh là lỗi khai báo, đừng đuổi vòng quanh.
