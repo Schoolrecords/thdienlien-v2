@@ -215,17 +215,26 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
 
    🔑 HAI LỚP NỀN chồng lên nhau, lớp ĐẦU nằm TRÊN:
        lớp 1  ảnh thật của trường  (img/<mã>/truong.jpg)
-       lớp 2  hình vẽ dùng chung   (img/nen-truong-hoc.svg)
+       lớp 2  ảnh dùng chung       (img/nen-hoc-tap.jpg)
    Trường đã gửi ảnh thì lớp 1 phủ kín, không thấy lớp 2. Trường CHƯA gửi thì
    lớp 1 tải hỏng (404) và lớp 2 lộ ra — trình duyệt tự lo, không cần một dòng
    JS nào. Trước đây chỉ có một lớp nên trường chưa gửi ảnh thì dải đầu trang
-   là một mảng xanh trơn, trông như trang chưa dựng xong. */
+   là một mảng xanh trơn, trông như trang chưa dựng xong.
+
+   Ảnh dùng chung do thầy Chung chọn (19/8/2026). Gốc 2048×768 nặng 1,8 MB —
+   đã thu về 1600×600 và nén JPEG còn 111 KB. Ảnh nền nặng vài MB là thứ giết
+   trang ở nơi mạng chập chờn, mà đây đúng là hoàn cảnh của phần lớn trường. */
 .hero .anh {
   position: absolute; inset: 0;
-  background-image: var(--anh-truong, none), url('img/nen-truong-hoc.svg');
+  background-image: var(--anh-truong, none), url('img/nen-hoc-tap.jpg');
   background-position: right center;
   background-size: cover;
   background-repeat: no-repeat;
+}
+/* Điện thoại: đổi sang bản 900px, 41 KB. Màn hẹp không nhìn ra khác biệt, mà
+   tiết kiệm được hai phần ba dung lượng. */
+@media (max-width: 760px) {
+  .hero .anh { background-image: var(--anh-truong, none), url('img/nen-hoc-tap-nho.jpg'); }
 }
 .hero .phu {
   position: absolute; inset: 0;
