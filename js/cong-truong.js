@@ -172,26 +172,103 @@
       '</div>' +
       (loi ? '<div class="hop-loi khoa">' + thoat(loi) + '</div>' : '') +
       '<div id="dk-ket-qua"></div>' +
-      '<button class="nut-google cong-chinh" id="nut-sao-chep">📋 Sao chép nội dung đăng ký</button>' +
+      (coForm()
+        ? '<button class="nut-google cong-chinh" id="nut-gui">📨 Gửi đăng ký</button>' +
+          '<button class="nut-phu" id="nut-sao-chep">📋 Chỉ sao chép nội dung</button>'
+        : '<button class="nut-google cong-chinh" id="nut-sao-chep">📋 Sao chép nội dung đăng ký</button>') +
       lienHe() +
       '<button class="nut-phu" id="nut-quay-lai">↩ Quay lại</button>' +
       chanCong();
 
     document.getElementById('nut-quay-lai').addEventListener('click', function () { veManKhaiMa(); });
-    document.getElementById('nut-sao-chep').addEventListener('click', function () {
+
+    // Trả về dữ liệu đã điền, hoặc null nếu còn thiếu ô bắt buộc (đã vẽ lại màn
+    // kèm câu nhắc). Hai nút dùng chung một hàng rào này.
+    function duLieuDaDu() {
       var du = thuThap();
       var thieu = O_DK.filter(function (t) { return t.bat && !du[t.ma]; });
-      if (thieu.length) {
-        veManDangKy('Thầy cô điền giúp: ' + thieu.map(function (t) { return t.nhan; }).join(' · '), du);
-        // PHẢI cuộn tới chỗ báo lỗi. Vẽ lại innerHTML làm khung cuộn nhảy về
-        // đầu, mà câu báo thiếu nằm dưới cả 9 ô — cách đó gần 1000px. Không
-        // cuộn thì cô giáo bấm nút xong thấy màn hình giật lên đầu, không có gì
-        // thay đổi, bấm lại vẫn thế, rồi kết luận "nút hỏng".
-        var oLoi = document.querySelector('#cong-hop .hop-loi');
-        if (oLoi && oLoi.scrollIntoView) oLoi.scrollIntoView({ block: 'center' });
-        return;
+      if (!thieu.length) return du;
+      veManDangKy('Thầy cô điền giúp: ' + thieu.map(function (t) { return t.nhan; }).join(' · '), du);
+      // PHẢI cuộn tới chỗ báo lỗi. Vẽ lại innerHTML làm khung cuộn nhảy về
+      // đầu, mà câu báo thiếu nằm dưới cả 9 ô — cách đó gần 1000px. Không
+      // cuộn thì cô giáo bấm nút xong thấy màn hình giật lên đầu, không có gì
+      // thay đổi, bấm lại vẫn thế, rồi kết luận "nút hỏng".
+      var oLoi = document.querySelector('#cong-hop .hop-loi');
+      if (oLoi && oLoi.scrollIntoView) oLoi.scrollIntoView({ block: 'center' });
+      return null;
+    }
+
+    document.getElementById('nut-sao-chep').addEventListener('click', function () {
+      var du = duLieuDaDu();
+      if (du) chepVaBao(soanNoiDung(du));
+    });
+
+    var nutGui = document.getElementById('nut-gui');
+    if (nutGui) nutGui.addEventListener('click', function () {
+      var du = duLieuDaDu();
+      if (!du) return;
+      nutGui.disabled = true;
+      nutGui.textContent = 'Đang gửi…';
+      // Chép sẵn vào bộ nhớ tạm ngay, KHÔNG chờ kết quả gửi: đường mạng có
+      // hỏng thì thầy cô vẫn dán được vào Zalo mà không phải điền lại 9 ô.
+      var chu = soanNoiDung(du);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(chu).then(null, function () {});
       }
-      chepVaBao(soanNoiDung(du));
+      guiFormDangKy(du).then(function () {
+        nutGui.textContent = '✅ Đã gửi';
+        baoKetQua('<div class="hop-loi xong">✅ <b>Đã gửi đăng ký.</b> Người phụ trách hệ thống ' +
+          'nhận được ngay và sẽ liên hệ lại theo số điện thoại hoặc Gmail thầy cô vừa ghi. ' +
+          'Nội dung đăng ký cũng đã chép vào bộ nhớ tạm, thầy cô có thể dán vào Zalo gửi ' +
+          'thêm cho chắc.</div>');
+      }, function () {
+        // Gửi hỏng thì PHẢI mở ra đường thứ hai ngay tại chỗ, kèm nguyên văn nội
+        // dung — bắt thầy cô "thử lại sau" là mất luôn người đăng ký.
+        nutGui.disabled = false;
+        nutGui.textContent = '📨 Gửi lại';
+        baoKetQua('<div class="hop-loi cho"><b>Chưa gửi được</b> — thường là do đường mạng. ' +
+          'Thầy cô bấm “Gửi lại”, hoặc chép nội dung dưới đây gửi qua Zalo / thư điện tử ' +
+          'cho người phụ trách hệ thống:<textarea class="cong-chep" readonly rows="10">' +
+          thoat(chu) + '</textarea></div>');
+      });
+    });
+  }
+
+  function baoKetQua(html) {
+    var o = document.getElementById('dk-ket-qua');
+    if (!o) return;
+    o.innerHTML = html;
+    if (o.scrollIntoView) o.scrollIntoView({ block: 'nearest' });
+  }
+
+  // ── Gửi đăng ký thẳng vào Google Form của người phụ trách ──
+  // Không có máy chủ riêng, và cũng KHÔNG cần: Google Form nhận được biểu mẫu
+  // gửi bằng POST thường, ghi vào Google Sheet và tự báo thư. Chi phí 0 đồng.
+  //
+  // 🔑 mode:'no-cors' là BẮT BUỘC — Google không đặt nhãn CORS cho địa chỉ này,
+  //    gửi kiểu thường thì trình duyệt chặn. Đổi lại, ta KHÔNG đọc được lời đáp:
+  //    fetch chỉ báo "đã gửi đi", không nói Google có nhận không. Vì thế đường
+  //    chép tay phải giữ nguyên, đừng bỏ đi cho gọn.
+  function coForm() {
+    var f = C.FORM_DANG_KY;
+    // KHÔNG xét navigator.onLine ở đây: cờ đó chớp tắt theo mạng, mà nút thì đã
+    // vẽ ra rồi. Mất mạng thì fetch tự hỏng và màn hình mở đường chép tay —
+    // một lối xử lý, không phải hai.
+    return !!(f && f.ID && f.O && typeof fetch === 'function' &&
+      typeof URLSearchParams === 'function');
+  }
+
+  function guiFormDangKy(du) {
+    var f = C.FORM_DANG_KY;
+    if (!coForm()) return Promise.reject(new Error('chua khai form'));
+    var b = new URLSearchParams(), co = false, k;
+    for (k in f.O) {
+      if (!Object.prototype.hasOwnProperty.call(f.O, k)) continue;
+      if (du[k]) { b.append(f.O[k], du[k]); co = true; }
+    }
+    if (!co) return Promise.reject(new Error('khong co gi de gui'));
+    return fetch('https://docs.google.com/forms/d/e/' + f.ID + '/formResponse', {
+      method: 'POST', mode: 'no-cors', body: b
     });
   }
 

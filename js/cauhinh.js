@@ -42,6 +42,31 @@ window.CHUNG = {
   // Tên hệ thống dùng khi chưa biết người vào thuộc trường nào.
   TEN_HE_THONG: 'Hệ thống Quản trị số Trường học',
 
+  // ── Nơi nhận ĐĂNG KÝ SỬ DỤNG ──────────────────────────────────────────────
+  // Google Form của người phụ trách hệ thống (thầy Chung lập 20/8/2026). Trường
+  // mới bấm "Gửi đăng ký" là nội dung chạy thẳng vào Form → Google Sheet, và
+  // Form bật thông báo thư nên người phụ trách biết ngay, không phải chờ trường
+  // chủ động nhắn Zalo.
+  //   · ID  : mã form, nằm trong địa chỉ .../forms/d/e/<ID>/viewform
+  //   · O   : mã từng ô. KHÔNG gõ tay — lấy từ chính trang form
+  //           (biến FB_PUBLIC_LOAD_DATA_ trong mã nguồn trang).
+  // Sửa câu hỏi trong Form thì mã ô GIỮ NGUYÊN; chỉ khi XOÁ rồi thêm câu hỏi
+  // mới mã mới đổi — lúc đó phải lấy lại, không thì đăng ký rơi vào ô trống.
+  FORM_DANG_KY: {
+    ID: '1FAIpQLSeLWXLSeJp5KYW1XU8O_pj3h0kIzMfXA0wtBFN5Apm14XWcfw',
+    O: {
+      ten:     'entry.1445456973',
+      maso:    'entry.300178935',
+      xa:      'entry.1698181416',
+      tinh:    'entry.1238655743',
+      nguoi:   'entry.314915178',
+      chucvu:  'entry.2048514167',
+      dt:      'entry.836614730',
+      email:   'entry.1903822448',
+      ghichu:  'entry.2022667342'
+    }
+  },
+
   // ── Liên hệ in trên màn Đăng ký sử dụng ──
   // ĐỂ TRỐNG có chủ ý: kho mã này CÔNG KHAI, điền vào là cả mạng đọc được và
   // máy quét thư rác lấy được. Thầy Chung chốt số/địa chỉ muốn công khai rồi
