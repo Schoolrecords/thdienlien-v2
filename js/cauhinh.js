@@ -216,13 +216,23 @@ window.CAU_HINH.DA_NOI = false;
   }
 
   // Cho màn khai mã trường gọi khi người dùng gõ mã và bấm Vào hệ thống.
+  // Trả về:  'ok'  vào được   ·  'khong-co'  không có trường nào mang mã đó
+  //          'loi' MẤT MẠNG — KHÁC HẲN "mã sai", phải báo khác hẳn
+  //
+  // 🔴 Bản đầu gộp cả hai thành `false`, nên mạng chớp một nhịp là màn hình
+  //    khẳng định "Mã trường không đúng hoặc chưa được cấp quyền sử dụng".
+  //    Cô giáo trường mới gõ đúng mã, bị từ chối ba lần, rồi gọi điện báo là
+  //    trường mình chưa được cấp quyền. Hàng rào phân biệt hai thứ này đã dựng
+  //    kỹ ở hàm tai() phía trên — nhưng lúc đó chỉ dựng cho đường nạp đầu
+  //    trang, quên đúng đường người dùng TỰ GÕ MÃ.
   window.napCauHinhTheoMa = function (ma) {
     return taiTheoMa(ma).then(function (o) {
-      if (!o || o === 'khong-co') return false;
+      if (o === null) return 'loi';          // fetch ném lỗi = mất mạng thật
+      if (!o || o === 'khong-co') return 'khong-co';
       window.apDungCauHinh(o);
       try { localStorage.setItem('ma_truong', saChMa(ma)); } catch (e) { /* bỏ qua */ }
-      return true;
-    });
+      return 'ok';
+    }, function () { return 'loi'; });
   };
 
   // ── Hồ sơ trường MẪU cho chế độ xem thử ────────────────────────────────

@@ -318,6 +318,21 @@
       document.body.classList.remove('dang-khoa');
       var congDemo = document.getElementById('cong-vao');
       if (congDemo) congDemo.classList.add('an');
+
+      // 🔴 PHẢI NÓI RÕ TÌNH TRẠNG. Nhánh này trước đây return thẳng, mà
+      //    veKhuTaiKhoan() nằm mãi phía dưới nên KHÔNG BAO GIỜ chạy → góc tài
+      //    khoản là một ô rỗng, không tệp nào khác điền vào.
+      //    Hậu quả thật: thầy admin trường mới gõ đúng mã, app mở ra mang đúng
+      //    tên trường mình, đủ hồ sơ và thống kê — rồi thầy đi tìm nút đăng
+      //    nhập để nhận quyền quản trị và KHÔNG THẤY Ở ĐÂU CẢ.
+      //    Ở đây thật sự chưa có gì để đăng nhập (trường chưa dựng cơ sở dữ
+      //    liệu), nên không dựng nút giả — nhưng phải nói cho người ta biết.
+      var khuChua = document.getElementById('khu-tai-khoan');
+      if (khuChua && window.CAU_HINH && window.CAU_HINH.MA) {
+        khuChua.innerHTML =
+          '<div class="chip-chua-mo" title="Trường chưa dựng cơ sở dữ liệu riêng">' +
+          '<b>Chưa mở đăng nhập</b><small>Trường đang trong quá trình cài đặt</small></div>';
+      }
       return;
     }
 

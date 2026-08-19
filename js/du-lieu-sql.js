@@ -37,8 +37,24 @@
       var loi = kq.filter(function (r) { return r.error; });
       if (loi.length) {
         console.error('Lỗi nạp dữ liệu:', loi[0].error);
-        window.baoTrangThai && window.baoTrangThai('loi', '⚠️ Không đọc được dữ liệu từ máy chủ: ' + loi[0].error.message);
+        window.baoTrangThai && window.baoTrangThai('loi',
+          '⚠️ KHÔNG ĐỌC ĐƯỢC DỮ LIỆU CỦA NHÀ TRƯỜNG: ' + loi[0].error.message +
+          ' — <b>những con số đang hiện KHÔNG phải của trường</b>. Thầy cô tải lại trang.');
         daNap = false;
+
+        // 🔴 PHẢI DỌN SẠCH DỮ LIỆU MẪU. Trước đây chỉ hiện băng đỏ rồi return —
+        //    nhưng app.js đã vẽ 94 hồ sơ MẪU từ lúc mở trang, và vì DA_NOI=true
+        //    nên băng vàng "CHẾ ĐỘ XEM THỬ" cũng bị ẩn đi. Kết quả: đọc lỗi mà
+        //    màn hình hiện một trang đầy đủ, đẹp đẽ, thống kê "Đã có 62%" —
+        //    toàn bộ là số của một trường KHÔNG CÓ THẬT.
+        //    Hiệu trưởng chụp màn hình đó gửi nhóm báo cáo tiến độ là xong.
+        //    Trống thì nguy hiểm, nhưng GIẢ MÀ TRÔNG THẬT thì nguy hiểm hơn.
+        //    Kiểu dữ liệu phải giữ ĐÚNG như lúc app.js đang dùng: BO_PHAN/HO_SO/
+        //    TIEU_CHI/DS_TAI_KHOAN là MẢNG, HOP/HS_BAN_GHI là ĐỐI TƯỢNG.
+        //    Đặt sai kiểu là veTatCa() ném lỗi, băng đỏ còn nhưng số mẫu vẫn nằm đó.
+        window.BO_PHAN = []; window.HO_SO = []; window.TIEU_CHI = [];
+        window.DS_TAI_KHOAN = []; window.HOP = {}; window.HS_BAN_GHI = {};
+        try { window.veTatCa && window.veTatCa(); } catch (e) { /* vẽ lỗi thì thôi, băng đỏ vẫn còn */ }
         return;
       }
       var cauHinh = kq[0].data, boPhan = kq[1].data, nhomCon = kq[2].data,

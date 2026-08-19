@@ -170,6 +170,36 @@
   function xepMuc() {
     var bb = TC.filter(function (t) { return t.batBuoc; });
     var cl = TC.filter(function (t) { return !t.batBuoc; });
+
+    // 🔴 HAI CHỐT AN TOÀN — đặt TRƯỚC mọi phép so sánh.
+    //
+    // ① Chưa có bộ tiêu chí thì KHÔNG KẾT LUẬN GÌ.
+    //    Nếu bảng tieu_chi bị đọc rỗng (RLS chặn, mạng lỗi, CSDL mới chưa gieo)
+    //    thì bb.length = 0, và vế `bbM2 === bb.length` thành ĐÚNG VÔ ĐIỀU KIỆN
+    //    — chỉ cần 5 tiêu chí bất kỳ đạt Mức 2 là máy kết luận "Đạt Mức 2".
+    //    Sai theo hướng CÓ LỢI cho trường, in vào Biểu 1 nộp Sở. Loại sai nguy
+    //    hiểm nhất, vì không ai đi soi lại một kết luận đẹp.
+    if (!TC.length || !bb.length || TC.length < 15) {
+      return {
+        ketLuan: 'Chưa tính được',
+        vi: 'Bộ tiêu chí đọc về chưa đủ (' + TC.length + '/15 tiêu chí, ' +
+            bb.length + ' tiêu chí bắt buộc). Chưa đủ căn cứ để xếp mức — ' +
+            'thầy cô tải lại trang; nếu vẫn vậy thì báo quản trị viên.',
+        bbM1: 0, bbM2: 0, clM1: 0, clM2: 0, bbTong: bb.length
+      };
+    }
+    // ② Chưa chấm tiêu chí nào thì là CHƯA ĐÁNH GIÁ, không phải KHÔNG ĐẠT.
+    //    Trường mới mở màn này lần đầu từng thấy thẻ navy to nhất ghi
+    //    "Không đạt Mức 1" — trong khi trường đang giữ Bằng Mức độ 2.
+    if (!TC.some(function (t) { return t.self > 0; })) {
+      return {
+        ketLuan: 'Chưa đánh giá',
+        vi: 'Nhà trường chưa chấm tiêu chí nào cho năm học này. Xếp mức chỉ có ' +
+            'nghĩa sau khi đã tự đánh giá — đây KHÔNG phải kết luận "không đạt".',
+        bbM1: 0, bbM2: 0, clM1: 0, clM2: 0, bbTong: bb.length
+      };
+    }
+
     var bbM1 = bb.filter(function (t) { return t.self >= 1; }).length;
     var bbM2 = bb.filter(function (t) { return t.self >= 2; }).length;
     var clM1 = cl.filter(function (t) { return t.self >= 1; }).length;

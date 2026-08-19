@@ -88,8 +88,16 @@
       if (!ma) { veManKhaiMa(LOI_MA, ''); return; }
       nut.disabled = true;
       nut.textContent = 'Đang kiểm tra…';
-      window.napCauHinhTheoMa(ma).then(function (duoc) {
-        if (!duoc) { veManKhaiMa(LOI_MA, ma); return; }
+      window.napCauHinhTheoMa(ma).then(function (kq) {
+        // MẤT MẠNG phải nói là mất mạng. Gộp chung với "mã sai" là đổ lỗi cho
+        // người dùng về một việc họ làm đúng — họ sẽ gõ lại mãi rồi bỏ cuộc.
+        if (kq === 'loi') {
+          veManKhaiMa('Không kết nối được để kiểm tra mã trường. Mã thầy cô gõ ' +
+            'có thể vẫn đúng — đây là lỗi đường mạng. Thầy cô kiểm tra mạng rồi ' +
+            'bấm lại “Vào hệ thống”.', ma);
+          return;
+        }
+        if (kq !== 'ok') { veManKhaiMa(LOI_MA, ma); return; }
         // Nạp lại kèm ?truong= để cả app khởi động lại với đúng cấu hình
         // trường, thay vì chạy tiếp trên một nửa cấu hình. Địa chỉ cũng nói rõ
         // đang ở trường nào, gửi cho nhau thì người nhận vào đúng chỗ.
