@@ -28,6 +28,26 @@ window.CHUNG = {
   // Mốc đổi năm học mặc định. Trường nào khác thì đặt đè trong mục của trường,
   // hoặc sửa khóa 'moc_doi_nam_hoc' trong bảng cau_hinh của trường đó.
   MOC_DOI_NAM_HOC: '30/08',
+
+  // Tên hệ thống dùng ở CỔNG CHUNG, khi chưa biết người vào thuộc trường nào.
+  TEN_HE_THONG: 'Hệ thống Quản trị số Trường học',
+
+  // ── TÊN MIỀN CỔNG CHUNG — cách làm của CSDL ngành ──
+  // Mọi trường vào CÙNG một địa chỉ rồi KHAI MÃ TRƯỜNG, giống
+  // truong.csdl.moet.gov.vn. Mở địa chỉ trong danh sách này thì app KHÔNG mặc
+  // định vào trường nào cả — nó dừng ở màn khai mã (js/cong-truong.js).
+  // ⚠️ Tên miền RIÊNG của từng trường (TEN_MIEN bên dưới) KHÔNG được có mặt ở
+  //    đây: thầy cô Diễn Liên mở tieuhocdienlien.com phải vào thẳng như xưa,
+  //    không đời nào phải gõ mã.
+  TEN_MIEN_CONG: ['quantrisotruonghoc.com'],
+
+  // ── Liên hệ in trên màn Đăng ký sử dụng ──
+  // ĐỂ TRỐNG có chủ ý: kho mã này CÔNG KHAI, điền vào là cả mạng đọc được và
+  // máy quét thư rác lấy được. Thầy Chung chốt số/địa chỉ muốn công khai rồi
+  // mới điền. Trống thì màn đăng ký tự ẩn phần liên hệ, không hiện ô rỗng.
+  LIEN_HE_TEN: '',
+  LIEN_HE_DIEN_THOAI: '',
+  LIEN_HE_EMAIL: '',
 };
 
 // --- Từng trường ---
@@ -35,6 +55,14 @@ window.DS_TRUONG = {
 
   dienlien: {
     MA: 'dienlien',
+    // ── HAI MÃ TRƯỜNG, cổng chung nhận CẢ HAI ──
+    // MA_SO là mã CHÍNH, in ra màn hình: bảng mã trường tiểu học do Sở GD&ĐT
+    // Nghệ An thống nhất (513 trường, 5 chữ số, không mã nào trùng — bảng gốc
+    // MatruongTH.xlsx thầy Chung cấp 19/8/2026, bản tách lưu ở repo tài liệu).
+    // MA_MOET là mã CSDL ngành (truong.csdl.moet.gov.vn) — vẫn nhận, vì nhiều
+    // thầy cô quen mã đó hơn. Gõ mã nào cũng vào đúng trường, không ai gõ sai.
+    MA_SO: '11819',
+    MA_MOET: '40425419',
     TEN_MIEN: ['tieuhocdienlien.com'],
     // --- Supabase (dự án th-dien-lien, dựng 10/8/2026) ---
     DIA_CHI: 'https://qbfyolhehltfrefudexz.supabase.co',
@@ -74,12 +102,14 @@ window.DS_TRUONG = {
   //    Điền hai chuỗi này (Supabase → Settings → API) sau khi dựng xong CSDL.
   // ⚠️ Ô nào để trống là CHƯA XIN ĐƯỢC thông tin, KHÔNG phải quên.
   //    Thà để trống còn hơn in nhầm tên trường khác vào văn bản đã đóng dấu.
-  // ⚠️ DIA_CHI_TRUONG / DON_VI_CHU_QUAN: Quỳ Hợp trước đây là HUYỆN. Tên xã
-  //    dưới đây CHƯA đối chiếu văn bản hiện hành — phải xác nhận trước khi
-  //    trường xuất bản Word đầu tiên.
+  // ✅ DIA_CHI_TRUONG / DON_VI_CHU_QUAN: Quỳ Hợp trước đây là HUYỆN, nay ĐÃ
+  //    ĐỐI CHIẾU (19/8/2026) — bảng mã trường tiểu học của Sở GD&ĐT Nghệ An
+  //    ghi Tiểu học Châu Đình (11217) thuộc **xã Quỳ Hợp**. Tên xã dưới đây đúng.
   // ══════════════════════════════════════════════════════════
   chaudinh: {
     MA: 'chaudinh',
+    MA_SO: '11217',                    // bảng mã Sở GD&ĐT Nghệ An
+    MA_MOET: '',                       // chưa xin được — hỏi trường (§C0 bản thi công)
     TEN_MIEN: [],
     DIA_CHI: '',
     KHOA_CONG_KHAI: '',
@@ -106,10 +136,42 @@ window.DS_TRUONG = {
 };
 
 // ============================================================
-// CHỌN TRƯỜNG: ?truong=<mã> → tên miền → lựa chọn đã nhớ → mặc định
+// TRA TRƯỜNG THEO MÃ — dùng ở cổng chung khi người vào tự gõ mã trường mình.
+// Nhận BA dạng, gõ dạng nào cũng đúng:
+//   · mã Sở GD&ĐT   — 11819      (mã chính, in trên màn hình)
+//   · mã CSDL ngành — 40425419   (nhiều thầy cô quen mã này hơn)
+//   · mã ngắn       — dienlien   (dùng trong ?truong= và địa chỉ)
+// Trả về mã ngắn, hoặc '' nếu không có trường nào khớp.
+// Bỏ khoảng trắng giữa chuỗi: người gõ trên điện thoại hay lỡ chạm dấu cách.
+// ============================================================
+window.timTruongTheoMa = function (chuoi) {
+  var s = String(chuoi || '').replace(/\s+/g, '').toLowerCase();
+  if (!s) return '';
+  var ds = window.DS_TRUONG, kq = '';
+  Object.keys(ds).forEach(function (k) {
+    if (kq) return;
+    var t = ds[k];
+    if (k.toLowerCase() === s) kq = k;
+    else if (t.MA_SO && String(t.MA_SO).toLowerCase() === s) kq = k;
+    else if (t.MA_MOET && String(t.MA_MOET).toLowerCase() === s) kq = k;
+  });
+  return kq;
+};
+
+// ============================================================
+// CHỌN TRƯỜNG: ?truong=<mã> → tên miền riêng → lựa chọn đã nhớ → mặc định
 // (Thứ tự này khớp §2 bản kế hoạch nhân bản. Trước đây dòng chú thích ghi
 //  ngược "tên miền → ?truong=" trong khi mã làm đúng — đọc chú thích mà sửa
 //  theo là hỏng cách chào hàng nêu ở bước 1 bên dưới.)
+//
+// 🔑 Bước 4 rẽ đôi theo địa chỉ đang đứng:
+//    · Tên miền RIÊNG của một trường (hoặc mở tệp từ ổ đĩa) → mặc định
+//      'dienlien' y như trước. Mọi đường dẫn đã phát cho 37 thầy cô giữ nguyên
+//      hành vi, không ai phải học lại thao tác nào.
+//    · Tên miền CỔNG CHUNG → KHÔNG mặc định vào trường nào. Để trống và bật cờ
+//      CHUA_CHON_TRUONG; js/cong-truong.js sẽ hiện màn khai mã trường.
+//      Mặc định về Diễn Liên ở đây là hỏng nặng: khách lạ vào địa chỉ giới
+//      thiệu lại rơi thẳng vào cổng đăng nhập của một trường cụ thể.
 // ============================================================
 (function () {
   // Gộp hai đối tượng — viết tay theo lối ES5 cho đồng nhất với cả dự án.
@@ -121,28 +183,49 @@ window.DS_TRUONG = {
   }
   var ds = window.DS_TRUONG;
   var ma = '';
-  var host = String(location.hostname || '').replace(/^www\./, '');
+  var host = String(location.hostname || '').replace(/^www\./, '').toLowerCase();
+
+  // Đang đứng ở tên miền cổng chung? So cả tên miền con: chaudinh.quantriso…
+  // cũng phải tính là cổng chung, vì tên miền con là cách cấp địa chỉ riêng
+  // cho từng trường mà không phải mua thêm tên miền.
+  window.O_CONG_CHUNG = (window.CHUNG.TEN_MIEN_CONG || []).some(function (t) {
+    var g = String(t).replace(/^www\./, '').toLowerCase();
+    return host === g || (host.length > g.length && host.slice(-(g.length + 1)) === '.' + g);
+  });
 
   // 1. Theo ?truong=<mã> — ĐỨNG TRƯỚC tên miền, cố ý.
   //    Người gõ hẳn ra ?truong= là đang chỉ định rõ, phải nghe theo. Nhờ vậy
   //    trên chính địa chỉ của Diễn Liên vẫn mở được bản xem thử của trường
   //    khác để cho họ xem — đây là cách chào hàng, đừng đảo lại thứ tự này.
+  //    Nhận cả mã CSDL ngành: ?truong=40425419 cũng vào đúng Diễn Liên.
   var q = /[?&]truong=([a-z0-9_-]+)/i.exec(location.search);
-  if (q && ds[q[1].toLowerCase()]) ma = q[1].toLowerCase();
+  if (q) ma = window.timTruongTheoMa(q[1]);
 
-  // 2. Theo tên miền — cách nhận diện chính khi mỗi trường có tên miền riêng
+  // 2. Theo tên miền RIÊNG — cách nhận diện chính khi trường có tên miền riêng.
+  //    Cả tên miền con của cổng chung: dienlien.quantrisotruonghoc.com. Khai
+  //    tên miền con vào TEN_MIEN của trường là trường đó có địa chỉ riêng ngay,
+  //    không tốn thêm đồng nào và người dùng khỏi gõ mã.
   if (!ma) {
     Object.keys(ds).forEach(function (k) {
       (ds[k].TEN_MIEN || []).forEach(function (t) {
-        if (String(t).replace(/^www\./, '').toLowerCase() === host.toLowerCase()) ma = k;
+        if (String(t).replace(/^www\./, '').toLowerCase() === host) ma = k;
       });
     });
   }
 
-  // 3. Nhớ lựa chọn để thầy cô không phải gõ lại ?truong= trên điện thoại.
+  // 3. Nhớ lựa chọn để thầy cô không phải gõ lại mã trên điện thoại — đúng
+  //    cách CSDL ngành nhớ đơn vị đã chọn lần trước.
   //    An toàn: nhớ nhầm trường thì cùng lắm là KHÔNG đăng nhập được (mỗi
   //    trường một CSDL riêng), không đời nào nhìn thấy dữ liệu trường khác.
+  //    Màn cổng luôn có nút "Đổi trường" để gỡ cái nhớ này.
+  //    ?doitruong=1 là đường THOÁT: xóa cái nhớ rồi quay về màn khai mã. Không
+  //    có nó thì ai gõ nhầm mã một lần là kẹt vĩnh viễn ở cổng của trường lạ,
+  //    vì bước 3 cứ đọc lại đúng cái mã sai đó.
+  //    Chỉ có tác dụng khi KHÔNG kèm ?truong= — người gõ rõ ?truong= là đang
+  //    chỉ định trường, đừng vừa nghe vừa không nghe.
+  var doiTruong = /[?&]doitruong=1/.test(location.search) && !ma;
   try {
+    if (doiTruong) localStorage.removeItem('ma_truong');
     if (!ma) {
       var cu = localStorage.getItem('ma_truong');
       if (cu && ds[cu]) ma = cu;
@@ -150,9 +233,29 @@ window.DS_TRUONG = {
     if (ma) localStorage.setItem('ma_truong', ma);
   } catch (e) { /* trình duyệt chặn localStorage thì bỏ qua, vẫn chạy được */ }
 
-  // 4. Mặc định — giữ nguyên hành vi cũ cho mọi đường dẫn Diễn Liên đã phát ra
-  if (!ds[ma]) ma = 'dienlien';
+  // 4. Chưa xác định được → rẽ đôi theo địa chỉ (xem khối chú thích trên).
+  if (!ds[ma]) {
+    if (window.O_CONG_CHUNG) {
+      window.CHUA_CHON_TRUONG = true;
+      window.MA_TRUONG = '';
+      // CAU_HINH vẫn phải là một đối tượng dùng được: nhiều tệp đọc nó ngay
+      // lúc nạp. Đặt tên hệ thống trung tính, KHÔNG mang tên trường nào —
+      // để lỡ lọt ra màn hình thì cũng không in nhầm tên trường khác.
+      window.CAU_HINH = gop(window.CHUNG, {
+        MA: '', MA_SO: '', MA_MOET: '', TEN_MIEN: [], DIA_CHI: '', KHOA_CONG_KHAI: '',
+        TEN_TRUONG: window.CHUNG.TEN_HE_THONG, DIA_CHI_TRUONG: '', DIA_DANH: '',
+        DON_VI_CHU_QUAN: '', CO_QUAN_QUAN_LY: '', CHU_QUAN_THUONG: '', CO_QUAN_THUONG: '',
+        HIEU_TRUONG: '', PHO_HIEU_TRUONG: '', DIEN_THOAI: '', EMAIL_TRUONG: '',
+        SLOGAN: '', MUC_TIEU_CHUAN_QG: '', MUC_CHUAN_QG: '', THU_MUC_ANH: 'img/',
+        SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0
+      });
+      window.CAU_HINH.NAM_HOC = '';
+      return;
+    }
+    ma = 'dienlien';   // giữ nguyên hành vi cũ cho mọi đường dẫn đã phát ra
+  }
 
+  window.CHUA_CHON_TRUONG = false;
   window.MA_TRUONG = ma;
   window.CAU_HINH = gop(window.CHUNG, ds[ma]);
 })();

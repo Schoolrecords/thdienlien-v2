@@ -11,6 +11,12 @@
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // ⛔ Đang ở cổng chung mà CHƯA khai mã trường → js/cong-truong.js đang giữ
+  //    màn hình, tệp này không có việc gì. Phải return TRƯỚC nhánh dưới:
+  //    nhánh dưới gỡ 'dang-khoa', mà lúc này chưa biết người vào là ai —
+  //    gỡ khóa là mở toang trang cho người lạ. Hỏng phải hỏng theo hướng ĐÓNG.
+  if (window.CHUA_CHON_TRUONG) return;
+
   // Chưa cấu hình CSDL → chạy chế độ xem thử, phải MỞ khóa vì trang khóa sẵn
   // từ HTML. Không có dòng này thì bản demo sẽ trắng màn.
   if (!window.DA_NOI) {
@@ -48,7 +54,14 @@
     //    phải biết trường Châu Đình cũng dùng app này, và ngược lại.
     //    Phân biệt trường bằng ĐỊA CHỈ (tên miền riêng, hoặc ?truong=<mã> mà
     //    nhà trường cấp cho thầy cô), không bằng ô chọn. Xem §12.6 bản kế hoạch.
-    return '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
+    //    Riêng trên CỔNG CHUNG thì phải có đường lùi: người gõ nhầm mã trường
+    //    đã được máy nhớ, không có nút này là kẹt vĩnh viễn ở cổng trường lạ.
+    //    Đây là một ĐƯỜNG DẪN, không phải danh sách — vẫn không lộ tên trường nào.
+    var lui = window.O_CONG_CHUNG
+      ? '<div class="cong-lui"><a href="' + thoat(location.pathname) + '?doitruong=1">' +
+        '↩ Không phải trường của thầy cô? Nhập lại mã trường</a></div>'
+      : '';
+    return lui + '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +
       'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
       'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
   }

@@ -439,8 +439,12 @@
     $('#dien-muc-tieu').textContent = (window.CAU_HINH.MUC_TIEU_CHUAN_QG || '').toLowerCase();
     if (window.DA_NOI) {
       $('#bang-xem-thu').style.display = 'none';
-    } else if (window.htmlChonTruong) {
+    } else if (window.htmlChonTruong && !window.O_CONG_CHUNG) {
       // Chế độ xem thử không có màn đăng nhập, nên ô đổi trường đặt luôn ở đây.
+      // ⛔ NHƯNG không bao giờ trên cổng chung: ô này liệt kê TÊN MỌI TRƯỜNG,
+      //    mà cổng chung là nơi người lạ vào xem thử. Bày ra là ai cũng đọc
+      //    được danh sách trường đang dùng app (§12.6). Trên tên miền riêng
+      //    thì vẫn giữ — đó là đường thầy Chung mở bản xem thử để chào hàng.
       $('#bang-xem-thu').innerHTML += ' ' + window.htmlChonTruong('· Xem trường:');
     }
 
