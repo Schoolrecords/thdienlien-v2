@@ -68,7 +68,7 @@
       cauHinh.forEach(function (d) { ch[d.khoa] = d.gia_tri; });
       if (ch.ten_truong) window.CAU_HINH.TEN_TRUONG = ch.ten_truong;
       if (ch.slogan) window.CAU_HINH.SLOGAN = ch.slogan;
-      // Năm học: mặc định TỰ TÍNH theo mốc trong CSDL (30/08).
+      // Năm học: mặc định TỰ TÍNH theo mốc trong CSDL (01/08).
       // Chỉ khi quản trị đặt nam_hoc_tu_dong = 'khong' thì mới lấy giá trị
       // ghi cứng ở cột nam_hoc — để phòng trường hợp Sở lùi/đẩy năm học.
       if (ch.moc_doi_nam_hoc) window.CAU_HINH.MOC_DOI_NAM_HOC = ch.moc_doi_nam_hoc;

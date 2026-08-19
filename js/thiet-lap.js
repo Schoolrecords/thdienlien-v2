@@ -59,7 +59,7 @@
       ['muc_tieu_chuan_qg', 'Câu mục tiêu', 'vd: Giữ vững và phát triển chuẩn quốc gia Mức độ 2']
     ] },
     { ten: '📅 Năm học', o: [
-      ['moc_doi_nam_hoc', 'Mốc đổi năm học', 'Dạng ngày/tháng. Để trống = 30/08'],
+      ['moc_doi_nam_hoc', 'Mốc đổi năm học', 'Dạng ngày/tháng. Để trống = 01/08'],
       ['nam_hoc_tu_dong', 'Tự tính năm học?', 'Để trống = máy tự tính theo mốc trên. Chỉ gõ "khong" khi Sở lùi/đẩy năm học'],
       ['nam_hoc', 'Năm học ghi cứng', 'CHỈ dùng khi ô trên là "khong". vd: 2026-2027']
     ] },

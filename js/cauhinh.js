@@ -35,7 +35,9 @@ window.CHUNG = {
 
   // Mốc đổi năm học mặc định. Trường nào khác thì đặt đè trong tệp cấu hình
   // của trường, hoặc sửa khóa 'moc_doi_nam_hoc' trong bảng cau_hinh.
-  MOC_DOI_NAM_HOC: '30/08',
+  // 19/8/2026 đổi 30/08 → 01/08: tháng 8 các trường đã tựu trường, họp hội
+  // đồng, lên kế hoạch năm học MỚI, mà app vẫn đề năm học cũ suốt cả tháng.
+  MOC_DOI_NAM_HOC: '01/08',
 
   // Tên hệ thống dùng khi chưa biết người vào thuộc trường nào.
   TEN_HE_THONG: 'Hệ thống Quản trị số Trường học',
@@ -72,9 +74,9 @@ window.CAU_HINH = (function () {
 
 // ============================================================
 // NĂM HỌC HIỆN HÀNH — TỰ TÍNH THEO NGÀY, KHÔNG GHI CỨNG
-// Mốc mặc định 30/08: từ ngày này trở đi là năm học mới.
-//   · 11/8/2026  → 2025-2026   (chưa qua mốc)
-//   · 30/8/2026  → 2026-2027   (đúng ngày mốc là đổi)
+// Mốc mặc định 01/08: từ ngày này trở đi là năm học mới.
+//   · 31/7/2026  → 2025-2026   (chưa qua mốc)
+//   · 01/8/2026  → 2026-2027   (đúng ngày mốc là đổi)
 //   · 20/5/2027  → 2026-2027
 // Ghi cứng năm học là cái bẫy: đến hè năm sau không ai nhớ vào sửa, cả hệ
 // thống ghi dữ liệu sai năm mà không ai biết.
@@ -83,8 +85,8 @@ window.CAU_HINH = (function () {
 // ============================================================
 window.tinhNamHoc = function (moc, ngay) {
   var d = ngay || new Date();
-  var m = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(String(moc || '30/08'));
-  var ngayMoc = m ? +m[1] : 30;
+  var m = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(String(moc || '01/08'));
+  var ngayMoc = m ? +m[1] : 1;
   var thangMoc = m ? +m[2] : 8;
   var thang = d.getMonth() + 1;
   var quaMoc = thang > thangMoc || (thang === thangMoc && d.getDate() >= ngayMoc);
