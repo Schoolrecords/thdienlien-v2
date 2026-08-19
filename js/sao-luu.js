@@ -44,6 +44,7 @@
   var TRANG = 1000;   // Supabase trả tối đa 1000 dòng một lần
 
   function $(s) { return document.querySelector(s); }
+  function thoat(s) { return window.thoatHTML ? window.thoatHTML(s) : String(s == null ? '' : s); }
 
   // Đọc hết một bảng, phân trang. Không phải bảng nào cũng có cột id
   // (cau_hinh khoá là 'khoa'), nên thử sắp theo id trước, hỏng thì đọc chay.
@@ -211,6 +212,175 @@
     });
   }
 
+  // ══════════════════════════════════════════════════════════
+  // PHỤC HỒI — đổi tệp sao lưu thành lệnh SQL
+  //
+  // 🔑 VÌ SAO KHÔNG CÓ NÚT "NẠP THẲNG VÀO HỆ THỐNG":
+  //    Gần hết các bảng khai khoá chính là `generated always as identity`.
+  //    Postgres CẤM ghi số thứ tự cũ vào cột đó trừ khi câu lệnh nói rõ
+  //    `overriding system value` — mà đường ghi của app (PostgREST) không
+  //    nói được câu đó. Nạp bừa thì mỗi dòng nhận một số mới, toàn bộ liên
+  //    kết giữa các bảng (lớp ↔ học sinh, hộp ↔ hồ sơ) đứt hết mà không ai
+  //    thấy ngay. Nên ở đây chỉ SINH RA lệnh SQL đúng chuẩn, việc chạy để
+  //    người phụ trách làm trong SQL Editor — chậm hơn một bước, đổi lại
+  //    không hỏng âm thầm.
+  //
+  //    Lệnh sinh ra dùng `on conflict do nothing`: chỉ CHÈN LẠI cái đã mất,
+  //    KHÔNG đụng tới dòng đang có. Chạy lại nhiều lần vẫn an toàn.
+  // ══════════════════════════════════════════════════════════
+
+  // Bảng cha phải có trước bảng con, nếu không khoá ngoại chặn. Danh sách này
+  // xếp tay theo thứ tự phụ thuộc; bảng nào không nằm đây thì chèn sau cùng.
+  var THU_TU_CHA_TRUOC = [
+    'cau_hinh', 'co_so', 'truong_tien_than', 'sap_nhap', 'nguoi_dung',
+    'nhom_ho_so', 'nhom_con', 'ho_so', 'ho_so_luu_tru',
+    'tieu_chuan', 'tieu_chi', 'noi_ham', 'mon_hoc', 'nl_pc_tieu_chi',
+    'lop_hoc', 'hoc_sinh', 'hoc_sinh_lop', 'mon_hoc_khoi',
+    'lich_tuan', 'ktnb_dot', 'hoi_dong_tdg', 'khct_thong_tin', 'cnqg_bang'
+  ];
+
+  function sqlGiaTri(v) {
+    if (v === null || v === undefined) return 'null';
+    if (typeof v === 'number') return isFinite(v) ? String(v) : 'null';
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (Array.isArray(v)) {
+      // Mảng Postgres viết {a,b} chứ không phải [a,b] như JSON
+      var trong = JSON.stringify(v).slice(1, -1);
+      return "'{" + trong.replace(/'/g, "''") + "}'";
+    }
+    if (typeof v === 'object') return "'" + JSON.stringify(v).replace(/'/g, "''") + "'::jsonb";
+    return "'" + String(v).replace(/'/g, "''") + "'";
+  }
+
+  function sinhSQL(goi) {
+    var tenBang = Object.keys(goi.bang || {});
+    var xepTruoc = THU_TU_CHA_TRUOC.filter(function (t) { return tenBang.indexOf(t) >= 0; });
+    var conLai = tenBang.filter(function (t) { return xepTruoc.indexOf(t) < 0; }).sort();
+    var thuTu = xepTruoc.concat(conLai);
+
+    var ra = [
+      '-- ============================================================',
+      '-- LỆNH PHỤC HỒI DỮ LIỆU — sinh từ tệp sao lưu',
+      '-- Trường   : ' + ((goi.truong || {}).ten || '') + ' (' + ((goi.truong || {}).ma || '') + ')',
+      '-- Sao lưu  : ' + (goi.tao_luc || ''),
+      '-- Tổng dòng: ' + (goi.tong_dong || 0),
+      '--',
+      '-- CÁCH CHẠY: Supabase → SQL Editor → dán toàn bộ → Run.',
+      '--',
+      '-- An toàn: mọi lệnh đều "on conflict do nothing" — CHỈ chèn lại dòng đã',
+      '-- mất, KHÔNG sửa và KHÔNG xoá dòng đang có. Chạy lại nhiều lần vô hại.',
+      '--',
+      '-- Gặp lỗi khoá ngoại ở vài dòng: chạy lại tệp này LẦN THỨ HAI — lần đầu',
+      '-- đã chèn xong bảng cha nên lần sau các dòng đó vào được.',
+      '-- ============================================================',
+      ''
+    ];
+
+    thuTu.forEach(function (ten) {
+      var dong = goi.bang[ten] || [];
+      if (!dong.length) return;
+      ra.push('-- ── ' + ten + ' (' + dong.length + ' dòng) ──');
+      var cot = Object.keys(dong[0]);
+      // `overriding system value` chỉ hợp lệ với bảng có cột tự tăng. Bảng khoá
+      // chữ (cau_hinh khoá 'khoa') mà thêm câu đó vào là Postgres báo lỗi.
+      var deLen = cot.indexOf('id') >= 0 && typeof dong[0].id === 'number';
+      dong.forEach(function (d) {
+        var gt = cot.map(function (c) { return sqlGiaTri(d[c]); });
+        ra.push('insert into ' + ten + ' (' + cot.join(', ') + ')' +
+          (deLen ? ' overriding system value' : '') +
+          ' values (' + gt.join(', ') + ') on conflict do nothing;');
+      });
+      if (deLen) {
+        // Chèn số thứ tự cũ xong mà không kéo bộ đếm lên thì dòng thêm MỚI sau
+        // này nhận lại số đã dùng → lỗi trùng khoá ngay lần ghi đầu tiên.
+        ra.push("select setval(pg_get_serial_sequence('" + ten + "', 'id'), " +
+          "coalesce((select max(id) from " + ten + "), 1));");
+      }
+      ra.push('');
+    });
+
+    return ra.join('\n');
+  }
+
+  function veKhuPhucHoi(hop) {
+    var khu = document.createElement('div');
+    khu.style.marginTop = '26px';
+    khu.innerHTML =
+      '<h4 style="font-size:16px;color:var(--dam);margin-bottom:10px">🔧 Phục hồi từ tệp sao lưu</h4>' +
+      '<div class="the-thong-bao">' +
+      '<b>Phần này dành cho người phụ trách hệ thống.</b> Nhà trường không cần dùng tới, ' +
+      'trừ khi mất dữ liệu và được hướng dẫn.' +
+      '<div style="margin-top:9px;font-size:13.8px;color:var(--chu-mo)">Chọn tệp sao lưu (.json) đã tải về, ' +
+      'máy sẽ soạn ra tệp lệnh phục hồi. Tệp lệnh đó <b>chỉ chèn lại dữ liệu đã mất</b>, ' +
+      'không sửa và không xoá dữ liệu đang có.</div>' +
+      '<div style="margin-top:12px">' +
+      '<input type="file" id="ph-tep" accept=".json,application/json">' +
+      '</div>' +
+      '<div id="ph-ket-qua" style="margin-top:12px"></div>' +
+      '</div>';
+    hop.appendChild(khu);
+
+    document.getElementById('ph-tep').addEventListener('change', function (e) {
+      var tep = e.target.files && e.target.files[0];
+      if (!tep) return;
+      var oKq = document.getElementById('ph-ket-qua');
+      oKq.innerHTML = 'Đang đọc tệp…';
+      var doc = new FileReader();
+      doc.onload = function () {
+        var goi;
+        try { goi = JSON.parse(doc.result); } catch (err) {
+          oKq.innerHTML = '<b style="color:#a5321f">Tệp này không phải bản sao lưu của hệ thống.</b>';
+          return;
+        }
+        if (!goi || !goi.bang || typeof goi.bang !== 'object') {
+          oKq.innerHTML = '<b style="color:#a5321f">Tệp đọc được nhưng không đúng dạng bản sao lưu.</b>';
+          return;
+        }
+        var c = window.CAU_HINH || {};
+        var maTep = (goi.truong || {}).ma || '';
+        // Nạp bản sao lưu của TRƯỜNG KHÁC vào đây là trộn dữ liệu hai trường —
+        // hỏng kiểu không gỡ ra được. Cảnh báo thật to, nhưng vẫn cho đi tiếp
+        // vì có trường đổi mã giữa chừng.
+        var canhBao = (maTep && c.MA && maTep !== c.MA)
+          ? '<div class="hop-loi khoa" style="margin-bottom:10px">⚠️ Tệp này là bản sao lưu của trường ' +
+            '<b>' + thoat((goi.truong || {}).ten || maTep) + '</b>, không phải trường đang mở ' +
+            '(<b>' + thoat(c.TEN_TRUONG || c.MA) + '</b>). Kiểm lại cho chắc trước khi chạy.</div>'
+          : '';
+        var soDong = Object.keys(goi.bang).reduce(function (t, k) { return t + (goi.bang[k] || []).length; }, 0);
+        oKq.innerHTML = canhBao +
+          '<div><b>' + thoat((goi.truong || {}).ten || '(không rõ trường)') + '</b><br>' +
+          'Sao lưu lúc: ' + thoat(String(goi.tao_luc || '').replace('T', ' ').slice(0, 16)) + '<br>' +
+          'Có ' + soDong.toLocaleString('vi-VN') + ' dòng trong ' + Object.keys(goi.bang).length + ' bảng' +
+          (goi.kem_dinh_danh ? ' · <b>có kèm số định danh cá nhân</b>' : '') + '</div>' +
+          '<button class="nut-kiem-tra" id="ph-nut" style="margin-top:12px">📄 Tạo tệp lệnh phục hồi (.sql)</button>';
+
+        document.getElementById('ph-nut').addEventListener('click', function () {
+          var sql = sinhSQL(goi);
+          var b = new Blob([sql], { type: 'text/plain;charset=utf-8' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(b);
+          a.download = 'phuc-hoi-' + (maTep || 'truong') + '-' +
+            String(goi.tao_luc || '').slice(0, 10).replace(/-/g, '') + '.sql';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 30000);
+          oKq.insertAdjacentHTML('beforeend',
+            '<div class="the-thong-bao" style="margin-top:12px">✅ Đã tải tệp lệnh. ' +
+            'Mở Supabase → SQL Editor → dán toàn bộ nội dung → Run.' +
+            '<div style="margin-top:6px;font-size:13.2px;color:var(--chu-mo)">Nếu báo lỗi khoá ngoại ở ' +
+            'vài dòng thì chạy lại tệp đó lần thứ hai — lần đầu đã chèn xong bảng cha.</div></div>');
+        });
+      };
+      doc.onerror = function () { oKq.innerHTML = '<b style="color:#a5321f">Không đọc được tệp.</b>'; };
+      doc.readAsText(tep, 'utf-8');
+    });
+  }
+
+  // Cho phép kiểm thử phần sinh SQL ngoài trình duyệt (node)
+  window.SAO_LUU_TIEN_ICH = { sinhSQL: sinhSQL, sqlGiaTri: sqlGiaTri };
+
   window.qtTabPhu = window.qtTabPhu || [];
-  window.qtTabPhu.push({ ma: 'sl', ten: '💾 Sao lưu', ve: ve });
+  window.qtTabPhu.push({
+    ma: 'sl', ten: '💾 Sao lưu',
+    ve: function (hop) { ve(hop); veKhuPhucHoi(hop); }
+  });
 })();
