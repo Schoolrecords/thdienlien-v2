@@ -2746,3 +2746,60 @@ textarea.ht-o { min-height: 116px; display: block; }
   .ht-chan { padding: 12px 15px calc(12px + env(safe-area-inset-bottom, 0px)); }
   .ht-nut { flex: 1; padding: 13px 16px; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   SỔ PHÂN CÔNG – ỦY QUYỀN (js/phan-cong.js, thêm 20/8/2026)
+   Biểu mẫu nhiều ô. MỘT CỘT trên điện thoại, hai cột từ 640px —
+   thầy Chung làm việc chủ yếu bằng điện thoại nên một cột là mặc
+   định, hai cột mới là ngoại lệ.
+   ════════════════════════════════════════════════════════════ */
+.pc-luoi { display: grid; grid-template-columns: 1fr; gap: 11px 14px; }
+.pc-o { display: flex; flex-direction: column; gap: 5px; }
+.pc-o > span { font-size: 13px; font-weight: 700; color: var(--chu-mo); }
+.pc-o input, .pc-o select, .pc-o textarea {
+  font: inherit; font-size: 16px;      /* ≥16px thì iOS không tự phóng to trang */
+  width: 100%; box-sizing: border-box;
+  padding: 9px 11px; border: 1.5px solid var(--vien-dam);
+  border-radius: 10px; background: var(--the); color: inherit;
+}
+.pc-o textarea { resize: vertical; line-height: 1.5; }
+.pc-o input:focus, .pc-o select:focus, .pc-o textarea:focus {
+  outline: none; border-color: var(--chinh);
+}
+@media (min-width: 640px) {
+  .pc-luoi { grid-template-columns: 1fr 1fr; }
+  .pc-o.pc-rong { grid-column: 1 / -1; }
+  .pc-o input, .pc-o select, .pc-o textarea { font-size: 14.5px; }
+}
+
+/* Danh sách văn bản trong sổ — THẺ chứ không phải bảng. Bảy cột trong đó có
+   hai cột văn xuôi dài, trên màn 430px cột nội dung bị bóp còn một chữ mỗi
+   dòng. Thẻ đọc được thẳng trên điện thoại, màn rộng xếp hai cột. */
+.pc-ds { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.pc-the {
+  background: var(--the); border: 1px solid var(--vien);
+  border-left: 4px solid var(--chinh);
+  border-radius: 12px; padding: 13px 15px;
+}
+.pc-the.uy-quyen { border-left-color: #c26a1f; }
+.pc-dau { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.pc-dau b { font-size: 15.5px; }
+.pc-tt { font-size: 12.5px; font-weight: 800; white-space: nowrap; }
+.pc-nho { font-size: 13px; color: var(--chu-mo); line-height: 1.5; margin: 3px 0 0; }
+.pc-hieu { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0 8px; }
+.pc-nhan {
+  font-size: 12.5px; font-weight: 700; color: var(--chinh);
+  background: #eef2fb; border-radius: 999px; padding: 3px 10px;
+}
+.pc-nhan.cam { color: #c26a1f; background: #fbf1e4; }
+.pc-noi-dung { font-size: 14.2px; line-height: 1.6; margin: 0 0 4px; }
+.pc-chan {
+  display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 9px;
+  padding-top: 9px; border-top: 1px dashed var(--vien-dam);
+  font-size: 13px; color: var(--chu-mo);
+}
+.pc-thieu-vb { color: var(--thieu); font-weight: 700; }
+.pc-nut { margin-top: 10px; display: flex; gap: 8px; }
+@media (min-width: 900px) {
+  .pc-ds { grid-template-columns: 1fr 1fr; }
+}

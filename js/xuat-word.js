@@ -23,7 +23,14 @@
       ' tháng ' + (thang < 3 ? '0' + thang : thang) + ' năm ' + t.getFullYear();
   }
   // Địa danh = tên xã, không kèm chữ "Xã", không kèm tỉnh
+  // Địa danh đứng trước ngày tháng: "Quảng Châu, ngày … tháng …".
+  // ƯU TIÊN khoá DIA_DANH do trường tự khai (sql/36 lập ra đúng cho việc này,
+  // js/thiet-lap.js cho admin nhập). Chỉ khi trường chưa khai mới suy từ địa
+  // chỉ — mà suy thì hay trượt: địa chỉ ghi "Xóm 5, Quảng Châu, Nghệ An"
+  // không có chữ "xã" nào, lấy phần trước dấu phẩy ra "Xóm 5".
   function diaDanh() {
+    var tuKhai = cauHinh('DIA_DANH');
+    if (tuKhai) return tuKhai;
     var dc = cauHinh('DIA_CHI_TRUONG');
     var m = dc.match(/[Xx]ã\s+([^,]+)/);
     return m ? m[1].trim() : (dc.split(',')[0] || '').trim();
