@@ -39,7 +39,8 @@
   var NGUONG = 10;          // điểm phần trăm — dưới mặt bằng bao nhiêu thì gọi là chênh lệch
   var MON = [];             // kết quả từng môn theo địa điểm
   var TONG = [];            // tổng quan theo địa điểm
-  var LECH = [];            // chênh lệch
+  var LECH = [];            // chênh lệch giữa các địa điểm
+  var CAM_KET = [];         // đối chiếu chỉ tiêu đầu năm ↔ kết quả thật (sql/43)
   var DANG_TAI = false;
   var LOI = null;
   // 🔴 Cờ RIÊNG, không suy từ việc có dữ liệu hay không. Suy từ dữ liệu thì
@@ -56,15 +57,20 @@
     Promise.all([
       may().rpc('chat_luong_mon_theo_co_so', { p_nam_hoc: N, p_ky: KY_CHON }),
       may().rpc('tong_quan_theo_co_so', { p_nam_hoc: N }),
-      may().rpc('chat_luong_chenh_lech', { p_nam_hoc: N, p_ky: KY_CHON, p_nguong: NGUONG })
+      may().rpc('chat_luong_chenh_lech', { p_nam_hoc: N, p_ky: KY_CHON, p_nguong: NGUONG }),
+      // Đối chiếu với chỉ tiêu nhà trường đặt đầu năm (sql/43). Trường chưa
+      // chạy sql/43 hoặc chưa đặt chỉ tiêu thì phần này rỗng và bảng "Đã cam
+      // kết" không hiện — phần so sánh giữa các địa điểm vẫn chạy đủ.
+      may().rpc('doi_chieu_chi_tieu', { p_nam_hoc: N, p_ky: KY_CHON })
     ]).then(function (r) {
       DANG_TAI = false;
-      // Chỉ hàm thứ nhất là bắt buộc; hai hàm kia hỏng thì bớt phần đó chứ
+      // Chỉ hàm thứ nhất là bắt buộc; các hàm kia hỏng thì bớt phần đó chứ
       // không bỏ cả màn.
       if (r[0].error) { LOI = r[0].error.message; veLai(); return; }
       MON  = r[0].data || [];
       TONG = (r[1] && !r[1].error && r[1].data) ? r[1].data : [];
       LECH = (r[2] && !r[2].error && r[2].data) ? r[2].data : [];
+      CAM_KET = (r[3] && !r[3].error && r[3].data) ? r[3].data : [];
       veLai();
     }).catch(function (e) {
       DANG_TAI = false; LOI = e.message || String(e); veLai();
@@ -195,6 +201,62 @@
       }).join('') + '</tbody></table></div>';
   }
 
+  // ══════════ ĐÃ CAM KẾT ↔ KẾT QUẢ THẬT ══════════
+  // Cột này từng bị gỡ ở sql/42 vì chưa có bảng nào giữ chỉ tiêu — bày số bịa
+  // cạnh số thật là để nhà trường tin nhầm. Nay chỉ tiêu có nguồn thật
+  // (sql/43) nên dựng lại được.
+  function veCamKet() {
+    if (!CAM_KET.length) return '';
+    var hut = CAM_KET.filter(function (c) { return c.dat_cam_ket === false; });
+
+    return '<div class="dau-muc" style="text-align:left;margin:22px 0 6px">' +
+      '<div class="nhan-nho">Đã cam kết ↔ Kết quả thật — ' + thoat(tenKy()) + '</div></div>' +
+      (hut.length
+        ? '<div class="hd-kiem vang" style="margin-bottom:10px">⚠ <b>' + hut.length +
+          ' môn chưa đạt chỉ tiêu đã đặt.</b> Những môn này nên thành một dòng trong ' +
+          '<b>Kế hoạch cải tiến (Biểu 2)</b> của Trường chuẩn Quốc gia — làm một lần, dùng cho ' +
+          'cả hai việc.</div>'
+        : '<div class="hd-kiem" style="margin-bottom:10px;background:var(--ok-nen);border-color:var(--ok)">' +
+          '✔ <b>Mọi môn có chỉ tiêu đều đạt.</b></div>') +
+
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
+      '<th>Môn học</th><th>Đã cam kết</th><th>Kết quả thật</th><th>Chênh lệch</th><th>Kết luận</th>' +
+      '</tr></thead><tbody>' +
+      CAM_KET.map(function (c) {
+        var dat = c.dat_cam_ket !== false;
+        // Một môn có thể ĐẠT chỉ tiêu Hoàn thành tốt mà VẪN hụt cam kết, do
+        // vượt ngưỡng Chưa hoàn thành. Không nói rõ thì bảng hiện "+2,1" ngay
+        // cạnh chữ "Hụt", người đọc không hiểu vì sao — đã gặp đúng cảnh này
+        // lúc dựng thử.
+        var hutVuot = !dat && c.chi_tieu_chua != null &&
+          c.thuc_te_chua != null && (+c.thuc_te_chua) > (+c.chi_tieu_chua);
+        var mau = dat ? 'var(--ok)' : 'var(--thieu)';
+        // Cột chênh lệch tô theo CHÍNH nó, không tô theo kết luận chung: chỉ
+        // tiêu Hoàn thành tốt đạt thì con số đó là số dương thật.
+        var mauChenh = (c.chenh_tot != null && c.chenh_tot >= 0) ? 'var(--ok)' : 'var(--thieu)';
+        return '<tr><td><b>' + thoat(c.mon_ten) + '</b></td>' +
+          '<td style="text-align:center">' +
+          (c.chi_tieu_tot == null ? '—' : '≥ ' + c.chi_tieu_tot + '%') +
+          (c.chi_tieu_chua != null
+            ? '<br><small style="color:var(--chu-mo)">chưa HT ≤ ' + c.chi_tieu_chua + '%</small>'
+            : '') + '</td>' +
+          '<td style="text-align:center">' + c.thuc_te_tot + '%' +
+          (c.thuc_te_chua != null
+            ? '<br><small style="color:' + (hutVuot ? 'var(--thieu)' : 'var(--chu-mo)') + '">chưa HT ' +
+              c.thuc_te_chua + '%</small>'
+            : '<br><small style="color:var(--chu-mo)">' + c.si_so + ' em</small>') + '</td>' +
+          '<td style="text-align:center;color:' + mauChenh + ';font-weight:800">' +
+          (c.chenh_tot == null ? '—' : (c.chenh_tot > 0 ? '+' : '') + c.chenh_tot) + '</td>' +
+          '<td style="color:' + mau + ';font-weight:700">' +
+          (dat ? '✔ Đạt cam kết'
+               : '✘ Hụt — đưa vào Biểu 2' +
+                 (hutVuot
+                   ? '<br><small style="font-weight:400">vì tỉ lệ chưa hoàn thành vượt ngưỡng</small>'
+                   : '')) +
+          '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
   function veTrong() {
     return '<div class="the-thong-bao" style="text-align:center;padding:26px">' +
       '<div style="font-size:34px">📊</div>' +
@@ -232,7 +294,7 @@
     }
     if (!MON.length && !TONG.length) return dau + veTrong();
 
-    return dau + veTongQuan() + veCanhBao() + veBangMon();
+    return dau + veTongQuan() + veCamKet() + veCanhBao() + veBangMon();
   }
 
   function noiSuKien(goc, veLai) {

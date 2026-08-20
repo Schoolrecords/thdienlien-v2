@@ -171,17 +171,17 @@
           '</div>';
       }).join('') + '</div>';
 
-    return bangMau('Số liệu dưới đây là ví dụ về bố cục, KHÔNG phải chỉ tiêu của trường.') +
+    // Bảng chỉ tiêu nay lấy từ CSDL (js/dbcl-chi-tieu.js + sql/43). Bản số mẫu
+    // MON_MAU / NL_PC_MAU giữ lại làm đường lui cho bản xem thử — tệp mới chưa
+    // nạp thì vẫn có cái để xem bố cục, kèm băng cảnh báo vàng như trước.
+    var coThat = !!window.DBCL_CHI_TIEU;
 
-      '<div class="dau-muc" style="text-align:left;margin:6px 0 4px">' +
-      '<div class="nhan-nho">Chuẩn đầu ra theo Thông tư 27/2020</div></div>' +
-      '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:6px">' +
-      'Chỉ tiêu đặt bằng <b>tỉ lệ mức đạt</b> (Hoàn thành tốt / Hoàn thành / Chưa hoàn thành), ' +
-      'không đặt bằng điểm trung bình — Điều 7 Thông tư 27/2020 quy định điểm kiểm tra định kỳ ' +
-      '<b>chỉ để tham khảo, không dùng xếp loại</b>. Cột điểm bên phải giữ lại vì nhà trường có ' +
-      'cam kết điểm với UBND xã; đó là số tham khảo đặt cạnh, không phải căn cứ đánh giá.</div>' +
-      chipHang(chipKhoi, String(KHOI), 'khoi') +
-      bangMon +
+    return (coThat
+        ? window.DBCL_CHI_TIEU.ve(window.veDBCL)
+        : bangMau('Số liệu dưới đây là ví dụ về bố cục, KHÔNG phải chỉ tiêu của trường.') +
+          '<div class="dau-muc" style="text-align:left;margin:6px 0 4px">' +
+          '<div class="nhan-nho">Chuẩn đầu ra theo Thông tư 27/2020</div></div>' +
+          chipHang(chipKhoi, String(KHOI), 'khoi') + bangMon) +
 
       '<div class="dau-muc" style="text-align:left;margin:24px 0 4px">' +
       '<div class="nhan-nho">Bốn cấp cam kết chất lượng</div></div>' +
@@ -348,6 +348,13 @@
     if (TAB === 'ds' && window.DBCL_DOI_SANH) {
       window.DBCL_DOI_SANH.noiSuKien(than, window.veDBCL);
       if (!window.DBCL_DOI_SANH.daTai()) window.DBCL_DOI_SANH.nap(window.veDBCL);
+    }
+    // Bảng chỉ tiêu: cùng lối. Cờ daTai() là cờ RIÊNG, không suy từ việc có
+    // dữ liệu hay không — trường chưa đặt chỉ tiêu nào mà suy từ dữ liệu thì
+    // rơi vào vòng lặp nạp vô hạn (mục 30.3 sổ dự án).
+    if (TAB === 'cdr' && window.DBCL_CHI_TIEU) {
+      window.DBCL_CHI_TIEU.noiSuKien(than, window.veDBCL);
+      if (!window.DBCL_CHI_TIEU.daTai()) window.DBCL_CHI_TIEU.nap(window.veDBCL);
     }
   };
 

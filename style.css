@@ -1388,7 +1388,16 @@ td.tdst { white-space: nowrap; text-align: right; }
   padding: 7px 15px; border-radius: 8px; border: 1px solid #cfd8e6; background: #fff;
   font-size: 13px; font-weight: 600; color: var(--chu-mo); min-height: 40px; cursor: pointer; font-family: inherit;
 }
-.pick.on, .pick.dat.on, .pick.khong.on { background: var(--dam); border-color: var(--dam); color: #fff; }
+/* 🔴 ĐẠT và CHƯA ĐẠT phải NHÌN RA KHÁC NHAU (sửa 20/8/2026).
+   Dòng này trước đây gộp `.pick.on, .pick.dat.on, .pick.khong.on` vào cùng
+   một màu navy — nghĩa là chấm "Đạt" hay "Chưa đạt" đều ra y hệt nhau, người
+   chấm chỉ phân biệt được bằng cách đọc chữ trên nút. Cả màn chấm tiêu chí
+   Trường chuẩn Quốc gia đã chạy như vậy một thời gian.
+   Đã rà: KHÔNG có nút nào chỉ mang `pick on` mà thiếu `dat`/`khong` (4 chỗ
+   dùng, ở tcqg.js và tcqg-co-so.js), nên bỏ `.pick.on` khỏi đây không làm
+   mất trạng thái sáng của nút nào. */
+.pick.dat.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+.pick.khong.on { background: var(--thieu); border-color: var(--thieu); color: #fff; }
 .lv-pick.khoa { opacity: .75; font-style: italic; font-weight: 400; }
 
 /* Ô thực trạng (bản gốc) */
@@ -2838,16 +2847,10 @@ textarea.ht-o { min-height: 116px; display: block; }
   .cs-o { font-size: 14px; }
 }
 
-/* 🔴 Nút Đạt / Chưa đạt phải NHÌN RA KHÁC NHAU.
-   style.css đang có HAI bản khai .pick (dòng ~1155 bản đầu, ~1391 bản gốc
-   Bạch Liêu). Bản sau thắng và đặt `.pick.on, .pick.dat.on, .pick.khong.on`
-   cùng một màu navy — nghĩa là chấm "Đạt" hay "Chưa đạt" đều ra y hệt nhau,
-   người chấm chỉ phân biệt được bằng cách đọc chữ trên nút.
-   Đây là nợ kỹ thuật cũ của cả màn Trường chuẩn Quốc gia (xem cảnh báo "62 bộ
-   chọn khai ≥2 lần" của quet-app.js). Chưa sửa quy tắc chung vì đụng vào màn
-   đang chạy thật; ở đây giới hạn trong .cs-muc nên không ảnh hưởng chỗ khác. */
-.cs-muc .pick.dat.on { background: var(--ok); border-color: var(--ok); color: #fff; }
-.cs-muc .pick.khong.on { background: var(--thieu); border-color: var(--thieu); color: #fff; }
+/* Màu nút Đạt / Chưa đạt nay khai một lần ở bản .pick chính (dòng ~1399) và
+   áp cho CẢ màn chấm tiêu chí lẫn thẻ Địa điểm. Bản riêng cho .cs-muc từng
+   đặt ở đây đã gỡ 20/8/2026 — hai nơi cùng khai một màu là sớm muộn sửa một
+   nơi quên nơi kia. */
 
 /* Đối sánh chất lượng giữa các địa điểm (js/dbcl-doi-sanh.js, 20/8/2026) */
 .ds-ds { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -2858,3 +2861,21 @@ textarea.ht-o { min-height: 116px; display: block; }
 .ds-so b { color: var(--dam); font-size: 15px; }
 .ds-ht { margin-top: 7px; font-size: 13.6px; padding-top: 7px; border-top: 1px dashed var(--vien-dam); }
 @media (min-width: 760px) { .ds-ds { grid-template-columns: 1fr 1fr; } }
+
+/* Bảng chỉ tiêu chất lượng (js/dbcl-chi-tieu.js, 20/8/2026) */
+.ct-cot { text-align: center; white-space: nowrap; }
+.ct-o {
+  width: 74px; font: inherit; font-size: 16px; text-align: center;
+  padding: 6px 4px; border: 1.5px solid var(--vien-dam); border-radius: 8px;
+}
+.ct-o:focus { outline: none; border-color: var(--chinh); }
+/* Ẩn nút tăng giảm của ô số — bấm nhầm một cái là đổi chỉ tiêu mà không ai để ý */
+.ct-o::-webkit-outer-spin-button, .ct-o::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+.ct-o { -moz-appearance: textfield; appearance: textfield; }
+.ct-xem { font-weight: 700; }
+/* Cột tên môn: không có min-width thì trên màn 430px bảng dồn hết chỗ cho
+   5 cột số, "Tự nhiên và Xã hội" bị bóp xuống bốn dòng. */
+.ct-ten { min-width: 108px; }
+@media (min-width: 760px) { .ct-o { font-size: 14px; width: 68px; } }

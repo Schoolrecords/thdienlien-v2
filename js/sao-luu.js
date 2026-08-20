@@ -20,7 +20,7 @@
   // Bảng nào người đang đăng nhập không có quyền đọc thì RLS trả mảng rỗng —
   // ghi vào phần "thieu" của tệp chứ KHÔNG dừng cả bản sao lưu.
   var BANG = [
-    'bao_cao_dau_buoi', 'bao_cao_tdg', 'cau_hinh', 'cnqg_bang', 'cnqg_tu_danh_gia',
+    'bao_cao_dau_buoi', 'bao_cao_tdg', 'cau_hinh', 'chi_tieu_chat_luong', 'cnqg_bang', 'cnqg_tu_danh_gia',
     'co_so', 'cong_thang_chot', 'cong_viec', 'cong_viec_mau', 'danh_gia_tieu_chuan',
     'de_xuat', 'diem_danh_lop', 'du_gio', 'du_gio_tieu_chi', 'gv_vang',
     'ho_so', 'ho_so_luu_tru', 'hoc_sinh', 'hoc_sinh_lop', 'hoi_dong_tdg',
