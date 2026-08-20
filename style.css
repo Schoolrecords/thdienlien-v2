@@ -67,9 +67,12 @@ body.dang-khoa > footer { display: none !important; }
   padding: 34px 30px 26px; width: 100%; max-width: 430px; text-align: center;
   box-shadow: 0 18px 50px rgba(20, 48, 107, .14);
 }
+/* Logo đã tự có nền navy và bo góc riêng (bán kính = 0,157 cạnh) nên KHÔNG
+   bọc thêm nền và padding nữa — bọc vào là hiện một vòng navy thừa quanh
+   góc bo. Bán kính dưới đây bằng đúng bán kính vẽ trong ảnh. */
 .cong-hop .logo {
-  width: 64px; height: 64px; border-radius: 16px; object-fit: contain;
-  background: var(--dam); padding: 8px; margin: 0 auto 16px; display: block;
+  width: 64px; height: 64px; border-radius: 10px; object-fit: contain;
+  margin: 0 auto 16px; display: block;
 }
 .cong-hop h1 { font-size: 19px; font-weight: 800; color: var(--dam); line-height: 1.35; }
 .cong-hop .loi-moi { font-size: 14px; color: var(--chu-mo); margin: 10px 0 22px; }
@@ -161,8 +164,12 @@ header.dau-trang {
     position: static; margin-top: 8px; min-width: 0; box-shadow: none;
   }
 }
+/* Bo GÓC chứ không cắt tròn. Trước 20/8/2026 logo là con dấu tròn của trường
+   nên border-radius:50% vừa khít; logo Quản trị số là hình vuông bo góc, cắt
+   tròn thì xén mất bốn góc và một đoạn đầu ba thanh. Nền trắng + padding giữ
+   lại để logo nổi trên dải đầu trang màu navy. */
 .logo-truong {
-  width: 46px; height: 46px; border-radius: 50%; background: #fff;
+  width: 46px; height: 46px; border-radius: 10px; background: #fff;
   object-fit: contain; padding: 2px; flex: 0 0 auto;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .35);
 }

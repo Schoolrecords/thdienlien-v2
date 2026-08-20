@@ -395,9 +395,10 @@
     var C = window.CAU_HINH || {};
     // Biểu trưng trung tính cho cổng chung và bản xem thử. Nhận ra bằng chính
     // C.MA rỗng — hai chỗ đó cố ý không mang mã trường nào.
-    // ⚠️ img/logo.png và img/truong.jpg ở thư mục gốc LÀ CỦA DIỄN LIÊN (con dấu
-    //    có in tên trường, ảnh sân trường thật). Đừng bao giờ lấy chúng làm ảnh
-    //    dự phòng chung — trường khác sẽ đội dấu của Diễn Liên.
+    // ⚠️ img/truong.jpg ở thư mục gốc LÀ ẢNH SÂN TRƯỜNG THẬT CỦA DIỄN LIÊN —
+    //    đừng lấy làm ảnh nền dự phòng chung. Riêng img/logo.png thì từ
+    //    20/8/2026 đã là logo Quản trị số dùng chung (trước đó là con dấu
+    //    Diễn Liên có in tên trường), nên nay rơi vào đó không còn sai nữa.
     var LOGO_CHUNG = 'img/he-thong.svg';
     var laTrungTinh = !C.MA;
     var anh = laTrungTinh ? LOGO_CHUNG : (C.THU_MUC_ANH || 'img/') + 'logo.png';

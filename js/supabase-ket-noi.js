@@ -38,7 +38,9 @@
     var C = window.CAU_HINH || {};
     return '<img class="logo dien-logo" src="' + thoat((C.THU_MUC_ANH || 'img/') + 'logo.png') +
       // Trường chưa gửi logo riêng → quay về biểu trưng TRUNG TÍNH.
-      // img/logo.png là con dấu của MỘT trường cụ thể, đừng lấy làm ảnh chung.
+      // Từ 20/8/2026 img/logo.png cũng chính là logo Quản trị số nên hai đường
+      // ra cùng một hình; vẫn giữ đường dự phòng để trường nào thả logo riêng
+      // vào img/<mã>/logo.png là dùng được ngay, thiếu tệp cũng không vỡ giao diện.
       '" alt="" onerror="this.onerror=null;this.src=\'img/he-thong.svg\'">' +
       '<h1>Hệ thống Quản trị số<br><span class="dien-ten-truong">' +
       thoat(C.TEN_TRUONG) + '</span></h1>';

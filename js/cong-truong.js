@@ -35,10 +35,12 @@
   function hop() { return document.getElementById('cong-hop'); }
 
   function dauCong(phu) {
-    // img/he-thong.svg — biểu trưng TRUNG TÍNH. Trước đây dùng img/logo.png,
-    // mà tệp đó chính là con dấu Trường Tiểu học Diễn Liên (có in tên trường
-    // và tên xã trên hình): khách lạ mở địa chỉ giới thiệu lại thấy con dấu
-    // một trường cụ thể to 64px ngay giữa màn hình.
+    // img/he-thong.svg — biểu trưng TRUNG TÍNH, vẽ theo logo Quản trị số. Trước
+    // đây dùng img/logo.png, mà tệp đó khi ấy chính là con dấu Trường Tiểu học
+    // Diễn Liên (có in tên trường và tên xã trên hình): khách lạ mở địa chỉ
+    // giới thiệu lại thấy con dấu một trường cụ thể to 64px giữa màn hình.
+    // Dùng SVG chứ không dùng bản ảnh có chữ: cạnh nó đã có sẵn dòng tên hệ
+    // thống, thêm chữ trong logo nữa là đọc hai lần một câu.
     return '<img class="logo" src="img/he-thong.svg" alt="">' +
       '<h1>' + thoat(C.TEN_HE_THONG || 'Hệ thống Quản trị số Trường học') + '</h1>' +
       '<div class="loi-moi">' + thoat(phu) + '</div>';
