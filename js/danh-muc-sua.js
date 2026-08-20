@@ -41,11 +41,13 @@
 
   var DS = [];        // danh mục hiện có
   var HOP = [];       // nhom_con
+  var BO_PHAN = [];   // nhom_ho_so
   var LOC_HOP = '';   // '' = mọi hộp
   var DANG_TAI = false;
   var LOI = null;
   var DA_NAP = false;   // cờ RIÊNG — bài học mục 30.3
   var DANG_THEM = false;
+  var MUC = 'hs';       // 'hs' = đầu hồ sơ · 'cau-truc' = hộp và bộ phận
 
   // ══════════ ĐỌC ══════════
   function nap(veLai) {
@@ -55,13 +57,15 @@
     Promise.all([
       may().from('ho_so').select('ma, ten, nhom_con_id, trang_thai, link_drive, tieu_chi, ' +
                                  'tang, can_cu, ap_dung, nguoi_phu_trach, so_tt').order('ma'),
-      may().from('nhom_con').select('id, ma, ten, so_tt').order('so_tt')
+      may().from('nhom_con').select('id, ma, ten, so_tt, nhom_id').order('so_tt'),
+      may().from('nhom_ho_so').select('id, so_tt, ten, mo_ta, bieu_tuong').order('so_tt')
     ]).then(function (r) {
       DANG_TAI = false;
       if (r[0].error) throw r[0].error;
       if (r[1].error) throw r[1].error;
       DS = r[0].data || [];
       HOP = r[1].data || [];
+      BO_PHAN = (r[2] && !r[2].error && r[2].data) ? r[2].data : [];
       veLai();
     }).catch(function (e) {
       DANG_TAI = false; LOI = e.message || String(e); veLai();
@@ -104,9 +108,16 @@
         return '<b style="color:' + TANG[k].mau + '">' + k + '</b> ' + demTang[k];
       }).join(' · ') + '.</p></div>' +
 
-      thanhCongCu(loc.length) +
-      (DANG_THEM ? oThem() : '') +
-      bangDanhMuc(loc);
+      '<div class="chip-hang" style="margin:0 0 14px">' +
+      [{ ma: 'hs', ten: '📄 Đầu hồ sơ (' + DS.length + ')' },
+       { ma: 'cau-truc', ten: '🗂 Hộp và bộ phận (' + HOP.length + ' hộp)' }].map(function (m) {
+        return '<button class="chip-loc' + (MUC === m.ma ? ' on' : '') +
+          '" data-dm-muc="' + m.ma + '">' + m.ten + '</button>';
+      }).join('') + '</div>' +
+
+      (MUC === 'cau-truc'
+        ? veCauTruc()
+        : thanhCongCu(loc.length) + (DANG_THEM ? oThem() : '') + bangDanhMuc(loc));
 
     noiSuKien(hop);
   }
@@ -201,6 +212,88 @@
       'màn <b>Quản lý Hồ sơ</b> — nơi người được giao cũng tự cập nhật được.</div>';
   }
 
+  // ══════════ VẼ — HỘP VÀ BỘ PHẬN ══════════
+  function demHoSoTrongHop(id) {
+    return DS.filter(function (h) { return h.nhom_con_id === id; }).length;
+  }
+
+  function veCauTruc() {
+    var sua = laQT();
+
+    var bangHop = '<div class="dau-muc" style="text-align:left;margin:6px 0 8px">' +
+      '<div class="nhan-nho">Hộp hồ sơ · ' + HOP.length + '</div></div>' +
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
+      '<th style="width:64px">Mã</th><th>Tên hộp</th><th>Thuộc bộ phận</th>' +
+      '<th style="text-align:center">Số hồ sơ</th>' + (sua ? '<th></th>' : '') +
+      '</tr></thead><tbody>' +
+      HOP.map(function (h) {
+        var n = demHoSoTrongHop(h.id);
+        return '<tr><td class="code">' + thoat(h.ma) + '</td>' +
+          '<td>' + (sua
+            ? '<input class="dm-o" value="' + thoat(h.ten) + '" data-hop-ten="' + thoat(h.ma) +
+              '" style="width:100%;min-width:200px">'
+            : '<b>' + thoat(h.ten) + '</b>') + '</td>' +
+          '<td>' + (sua
+            ? '<select class="dm-o" data-hop-bp="' + thoat(h.ma) + '">' +
+              BO_PHAN.map(function (b) {
+                return '<option value="' + b.id + '"' + (b.id === h.nhom_id ? ' selected' : '') + '>' +
+                  thoat(b.bieu_tuong || '') + ' ' + thoat(b.ten) + '</option>';
+              }).join('') + '</select>'
+            : thoat((BO_PHAN.filter(function (b) { return b.id === h.nhom_id; })[0] || {}).ten || '—')) + '</td>' +
+          '<td style="text-align:center">' + (n
+            ? '<b>' + n + '</b>'
+            : '<span style="color:var(--chu-mo)">rỗng</span>') + '</td>' +
+          (sua
+            ? '<td style="text-align:center">' + (n
+                ? '<span style="color:var(--chu-mo);font-size:12.6px" title="Chuyển hồ sơ đi nơi khác trước">còn hồ sơ</span>'
+                : '<button class="nut-xoa-nd" data-hop-xoa="' + thoat(h.ma) + '">Xoá</button>') + '</td>'
+            : '') +
+          '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      (sua ? '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+        '<input id="hop-ten-moi" placeholder="Tên hộp mới — ví dụ: Bán trú" style="min-width:220px">' +
+        '<select id="hop-bp-moi">' + BO_PHAN.map(function (b) {
+          return '<option value="' + b.id + '">' + thoat(b.bieu_tuong || '') + ' ' + thoat(b.ten) + '</option>';
+        }).join('') + '</select>' +
+        '<button class="nut-luu-nd" id="hop-them">+ Thêm hộp</button>' +
+        '<span style="font-size:13.2px;color:var(--chu-mo)">Mã hộp do máy đặt.</span></div>' : '');
+
+    var bangBP = '<div class="dau-muc" style="text-align:left;margin:24px 0 8px">' +
+      '<div class="nhan-nho">Bộ phận · ' + BO_PHAN.length + '</div></div>' +
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
+      '<th style="width:56px">TT</th><th style="width:64px">Biểu tượng</th><th>Tên bộ phận</th>' +
+      '<th style="text-align:center">Số hộp</th>' + (sua ? '<th></th>' : '') +
+      '</tr></thead><tbody>' +
+      BO_PHAN.map(function (b) {
+        var soHop = HOP.filter(function (h) { return h.nhom_id === b.id; }).length;
+        return '<tr><td style="text-align:center">' + b.so_tt + '</td>' +
+          '<td style="text-align:center;font-size:20px">' + (sua
+            ? '<input class="dm-o" value="' + thoat(b.bieu_tuong || '') + '" data-bp-icon="' + b.so_tt +
+              '" style="width:52px;text-align:center;font-size:18px" maxlength="4">'
+            : thoat(b.bieu_tuong || '')) + '</td>' +
+          '<td>' + (sua
+            ? '<input class="dm-o" value="' + thoat(b.ten) + '" data-bp-ten="' + b.so_tt +
+              '" style="width:100%;min-width:200px">'
+            : '<b>' + thoat(b.ten) + '</b>') + '</td>' +
+          '<td style="text-align:center">' + (soHop
+            ? '<b>' + soHop + '</b>'
+            : '<span style="color:var(--chu-mo)">rỗng</span>') + '</td>' +
+          (sua
+            ? '<td style="text-align:center">' + (soHop
+                ? '<span style="color:var(--chu-mo);font-size:12.6px">còn hộp</span>'
+                : '<button class="nut-xoa-nd" data-bp-xoa="' + b.so_tt + '">Xoá</button>') + '</td>'
+            : '') +
+          '</tr>';
+      }).join('') + '</tbody></table></div>';
+
+    return bangHop + bangBP +
+      '<div class="hd-kiem vang" style="margin-top:16px">' +
+      '⚠ <b>Xoá hộp hay bộ phận chỉ làm được khi bên trong đã rỗng.</b> ' +
+      'Trong cơ sở dữ liệu, hồ sơ gắn vào hộp và hộp gắn vào bộ phận theo kiểu xoá cha là mất con — ' +
+      'xoá một hộp còn hồ sơ sẽ mất luôn cả hồ sơ, kể cả những hồ sơ đang giữ link Drive. ' +
+      'Máy chủ chặn việc đó, không phải chỉ ẩn nút trên màn hình.</div>';
+  }
+
   // ══════════ SỰ KIỆN ══════════
   function veLai() {
     var than = document.getElementById('qt-than');
@@ -210,6 +303,14 @@
   function bao(e) { window.hopHoi('Không lưu được: ' + ((e && e.message) || e)); }
 
   function noiSuKien(goc) {
+    Array.prototype.slice.call(goc.querySelectorAll('[data-dm-muc]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        MUC = b.getAttribute('data-dm-muc'); DANG_THEM = false; veLai();
+      });
+    });
+
+    if (MUC === 'cau-truc') { noiCauTruc(goc); return; }
+
     var loc = goc.querySelector('#dm-loc-hop');
     if (loc) loc.addEventListener('change', function () { LOC_HOP = loc.value; veLai(); });
 
@@ -311,6 +412,126 @@
           nap(veLai);
         })
         .catch(function (e) { nut.disabled = false; bao(e); });
+    });
+  }
+
+  // ══════════ SỰ KIỆN — HỘP VÀ BỘ PHẬN ══════════
+  function noiCauTruc(goc) {
+    function luuHop(ma, thay, oNhap, giaTriCu) {
+      may().from('nhom_con').update(thay).eq('ma', ma).then(function (r) {
+        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu; return; }
+        nap(veLai);
+      });
+    }
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-ten]')).forEach(function (o) {
+      o.addEventListener('blur', function () {
+        var ma = o.getAttribute('data-hop-ten');
+        var cu = (HOP.filter(function (x) { return x.ma === ma; })[0] || {}).ten;
+        var moi = o.value.trim();
+        if (!moi) { o.value = cu; return; }
+        if (moi === cu) return;
+        luuHop(ma, { ten: moi }, o, cu);
+      });
+    });
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-bp]')).forEach(function (s) {
+      s.addEventListener('change', function () {
+        luuHop(s.getAttribute('data-hop-bp'), { nhom_id: +s.value });
+      });
+    });
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-xoa]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var ma = b.getAttribute('data-hop-xoa');
+        var h = HOP.filter(function (x) { return x.ma === ma; })[0] || {};
+        window.hopHoi({
+          tieuDe: 'Xoá hộp ' + ma + '?',
+          noiDung: h.ten + '\n\nHộp này đang rỗng nên xoá được. Máy chủ sẽ kiểm lại một lần nữa ' +
+            'lúc xoá — nếu vừa có ai thêm hồ sơ vào thì việc xoá sẽ dừng lại.',
+          nutOK: 'Xoá hộp', nguyHiem: true
+        }).then(function (dongY) {
+          if (!dongY) return;
+          b.disabled = true;
+          may().rpc('xoa_hop_an_toan', { p_ma: ma }).then(function (r) {
+            b.disabled = false;
+            if (r.error) { bao(r.error); return; }
+            window.hopHoi(r.data || 'Đã xoá.');
+            nap(veLai);
+          }).catch(function (e) { b.disabled = false; bao(e); });
+        });
+      });
+    });
+
+    var themHop = goc.querySelector('#hop-them');
+    if (themHop) themHop.addEventListener('click', function () {
+      var ten = goc.querySelector('#hop-ten-moi').value.trim();
+      if (!ten) { window.hopHoi('Chưa đặt tên cho hộp.'); return; }
+      var bpId = +goc.querySelector('#hop-bp-moi').value;
+      themHop.disabled = true;
+      may().rpc('ma_hop_tiep_theo')
+        .then(function (r) {
+          if (r.error) throw r.error;
+          return may().from('nhom_con').insert({
+            ma: r.data, ten: ten, nhom_id: bpId, so_tt: HOP.length + 1
+          }).select().maybeSingle();
+        })
+        .then(function (r) {
+          themHop.disabled = false;
+          if (r.error) throw r.error;
+          window.hopHoi('Đã thêm hộp ' + ((r.data || {}).ma || '') + ' — ' + ten + '.');
+          nap(veLai);
+        })
+        .catch(function (e) { themHop.disabled = false; bao(e); });
+    });
+
+    function luuBP(soTT, thay, oNhap, giaTriCu) {
+      may().from('nhom_ho_so').update(thay).eq('so_tt', soTT).then(function (r) {
+        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu; return; }
+        nap(veLai);
+      });
+    }
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-bp-ten]')).forEach(function (o) {
+      o.addEventListener('blur', function () {
+        var tt = +o.getAttribute('data-bp-ten');
+        var cu = (BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {}).ten;
+        var moi = o.value.trim();
+        if (!moi) { o.value = cu; return; }
+        if (moi === cu) return;
+        luuBP(tt, { ten: moi }, o, cu);
+      });
+    });
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-bp-icon]')).forEach(function (o) {
+      o.addEventListener('blur', function () {
+        var tt = +o.getAttribute('data-bp-icon');
+        var cu = (BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {}).bieu_tuong || '';
+        var moi = o.value.trim();
+        if (moi === cu) return;
+        luuBP(tt, { bieu_tuong: moi || null }, o, cu);
+      });
+    });
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-bp-xoa]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var tt = +b.getAttribute('data-bp-xoa');
+        var bp = BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {};
+        window.hopHoi({
+          tieuDe: 'Xoá bộ phận này?',
+          noiDung: bp.ten + '\n\nBộ phận này không còn hộp nào nên xoá được.',
+          nutOK: 'Xoá bộ phận', nguyHiem: true
+        }).then(function (dongY) {
+          if (!dongY) return;
+          b.disabled = true;
+          may().rpc('xoa_bo_phan_an_toan', { p_so_tt: tt }).then(function (r) {
+            b.disabled = false;
+            if (r.error) { bao(r.error); return; }
+            window.hopHoi(r.data || 'Đã xoá.');
+            nap(veLai);
+          }).catch(function (e) { b.disabled = false; bao(e); });
+        });
+      });
     });
   }
 
