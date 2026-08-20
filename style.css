@@ -2722,7 +2722,11 @@ textarea.ht-o { min-height: 116px; display: block; }
   margin-top: 10px; font-size: 13.2px; font-weight: 700; color: #a5321f;
   background: #fdf0ee; border: 1px solid #f3cdc6; border-radius: 10px; padding: 9px 12px;
 }
-.ht-loi-nhac { font-size: 15.2px; line-height: 1.65; color: var(--chu); }
+/* white-space: pre-line — hộp thoại đặt nội dung bằng textContent, nên mọi
+   dấu xuống dòng trong lời nhắn bị nuốt sạch. Chín tệp đang viết lời cảnh báo
+   nhiều đoạn (cảnh báo gỡ hồ sơ tầng A, nhắc chép số liệu năm trước…) và tất
+   cả hiện ra thành một khối chữ liền, khó đọc đúng lúc cần đọc kỹ nhất. */
+.ht-loi-nhac { font-size: 15.2px; line-height: 1.65; color: var(--chu); white-space: pre-line; }
 
 .ht-chan {
   display: flex; justify-content: flex-end; gap: 10px; flex: none;

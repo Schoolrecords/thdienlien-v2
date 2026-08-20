@@ -419,9 +419,16 @@
       });
     });
 
-    if (CS_CHON === null) return;   // bảng tổng hợp không có ô nhập nào
-
     function bao(e) { window.hopHoi('Không lưu được: ' + ((e && e.message) || e)); }
+
+    // 🔴 NÚT CHÉP PHẢI NỐI TRƯỚC CHỖ THOÁT SỚM. Bản đầu đặt nó ở cuối hàm,
+    //    sau dòng `if (CS_CHON === null) return`, mà nút thì vẫn LUÔN được vẽ.
+    //    Trường nhiều địa điểm mở màn ra là đang ở bảng tổng hợp
+    //    (CS_CHON = null), nên nút hiện lên mà bấm không có gì xảy ra, cũng
+    //    không báo lỗi gì — đúng thao tác đầu tiên của mỗi đầu năm học.
+    noiNutChep(goc, veLai, bao);
+
+    if (CS_CHON === null) return;   // bảng tổng hợp không có ô nhập nào
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-csvc-so]')).forEach(function (t) {
       t.addEventListener('change', function () {
@@ -454,8 +461,14 @@
       });
     });
 
+  }
+
+  // Tách riêng để nối được TRƯỚC chỗ thoát sớm của noiSuKien.
+  function noiNutChep(goc, veLai, bao) {
     var chep = goc.querySelector('#csvc-chep');
-    if (chep) chep.addEventListener('click', function () {
+    if (!chep) return;
+
+    chep.addEventListener('click', function () {
       // Năm học ghi kiểu '2026-2027' → năm trước là '2025-2026'.
       var N = nam();
       var dau = parseInt(String(N).slice(0, 4), 10);
@@ -474,8 +487,12 @@
           .then(function (r) {
             chep.disabled = false;
             if (r.error) { bao(r.error); return; }
+            // r.data = 0 có HAI nghĩa: năm trước trống, hoặc năm nay đã khai
+            // đủ nên không còn ô nào để chèn (hàm dùng on conflict do nothing).
+            // Nói cả hai, đừng đoán hộ.
             if (!r.data) {
-              window.hopHoi('Năm học ' + truoc + ' không có số liệu nào để chép.');
+              window.hopHoi('Không chép được dòng nào. Hoặc năm học ' + truoc +
+                ' chưa có số liệu, hoặc năm nay đã khai hết các hạng mục rồi.');
               return;
             }
             window.hopHoi('Đã chép ' + r.data + ' dòng từ năm học ' + truoc + '.');

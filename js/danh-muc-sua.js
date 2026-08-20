@@ -60,9 +60,18 @@
   var COT_DAY_DU = COT_CO_BAN + ', tang, can_cu, ap_dung';
   var CO_COT_MOI = true;
 
-  function nap(veLai) {
+  // 🔴 CHỈ HIỆN "Đang tải…" Ở LẦN NẠP ĐẦU.
+  //    Bản đầu đặt DANG_TAI = true rồi vẽ ngay ở MỌI lần nạp, kể cả lần nạp
+  //    lại sau khi lưu — cả bảng bị thay bằng chữ "Đang tải danh mục…".
+  //    Người dùng sửa tên dòng 1, nhấn Tab sang dòng 2 gõ tiếp; lệnh lưu dòng
+  //    1 xong sau chừng nửa giây là ô dòng 2 biến mất cùng chữ vừa gõ. Trên
+  //    bảng trăm dòng thì gặp liên tục. Lần nạp lại giữ nguyên bảng cũ trên
+  //    màn, thay xong mới vẽ.
+  function nap(veLai, lanDau) {
     if (!may()) { LOI = 'chua_ket_noi'; DA_NAP = true; veLai(); return; }
-    DANG_TAI = true; DA_NAP = true; LOI = null; veLai();
+    LOI = null;
+    if (lanDau) { DANG_TAI = true; DA_NAP = true; veLai(); }
+    else { DA_NAP = true; }
 
     may().from('ho_so').select(COT_DAY_DU).order('ma')
       .then(function (r) {
@@ -85,7 +94,11 @@
         DANG_TAI = false;
         if (r[0].error) throw r[0].error;
         HOP = r[0].data || [];
-        BO_PHAN = (r[1] && !r[1].error && r[1].data) ? r[1].data : [];
+        // Bản đầu nuốt lỗi bảng này. Nuốt xong thì thẻ Hộp và bộ phận hiện
+        // "Bộ phận · 0", mọi ô chọn bộ phận rỗng — màn hình nói dối là trường
+        // không có bộ phận nào, trong khi thật ra chỉ là đọc không được.
+        if (r[1].error) throw r[1].error;
+        BO_PHAN = r[1].data || [];
         veLai();
       })
       .catch(function (e) {
@@ -100,7 +113,7 @@
 
   // ══════════ VẼ ══════════
   function ve(hop) {
-    if (!DA_NAP) { nap(function () { ve(hop); }); return; }
+    if (!DA_NAP) { nap(function () { ve(hop); }, true); return; }
     if (DANG_TAI) { hop.innerHTML = '<div class="the-thong-bao">Đang tải danh mục…</div>'; return; }
 
     if (LOI === 'chua_ket_noi') {
@@ -319,7 +332,15 @@
                 : '<button class="nut-xoa-nd" data-bp-xoa="' + b.so_tt + '">Xoá</button>') + '</td>'
             : '') +
           '</tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + '</tbody></table></div>' +
+      // Không có nút này thì trường lỡ xoá hết bộ phận là kẹt luôn: không thêm
+      // lại được bộ phận, mà cũng không thêm được hộp nữa vì ô chọn bộ phận
+      // rỗng. Hàm so_tt_bo_phan_tiep_theo() đã có sẵn ở sql/50.
+      (sua ? '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+        '<input id="bp-icon-moi" placeholder="🗂" maxlength="4" style="width:56px;text-align:center;font-size:18px">' +
+        '<input id="bp-ten-moi" placeholder="Tên bộ phận mới — ví dụ: Bộ phận Bán trú" style="min-width:240px">' +
+        '<button class="nut-luu-nd" id="bp-them">+ Thêm bộ phận</button>' +
+        '<span style="font-size:13.2px;color:var(--chu-mo)">Số thứ tự do máy đặt.</span></div>' : '');
 
     return bangHop + bangBP +
       '<div class="hd-kiem vang" style="margin-top:16px">' +
@@ -330,9 +351,20 @@
   }
 
   // ══════════ SỰ KIỆN ══════════
+  // 🔴 CHỈ VẼ KHI THẺ NÀY ĐANG MỞ.
+  //    #qt-than là thân dùng chung của MỌI thẻ trong màn Quản trị, còn biến
+  //    TAB nằm riêng trong quan-tri.js. Bản đầu ghi thẳng vào đó: sửa một ô
+  //    rồi bấm sang thẻ "👥 Tài khoản", chưa đầy nửa giây sau lệnh lưu xong và
+  //    bảng danh mục ĐÈ LÊN danh sách tài khoản, trong khi thanh thẻ vẫn sáng
+  //    ở "Tài khoản". Hỏi thanh thẻ xem ai đang mở thay vì đoán.
+  function dangMoTheNay() {
+    var nut = document.querySelector('[data-qt="dm"]');
+    return !!nut && nut.className.indexOf('on') >= 0;
+  }
+
   function veLai() {
     var than = document.getElementById('qt-than');
-    if (than) ve(than);
+    if (than && dangMoTheNay()) ve(than);
   }
 
   function bao(e) { window.hopHoi('Không lưu được: ' + ((e && e.message) || e)); }
@@ -366,9 +398,9 @@
         if (!moi) { o.value = cu; return; }
         if (moi === cu) return;
         may().from('ho_so').update({ ten: moi }).eq('ma', ma).then(function (r) {
-          if (r.error) { bao(r.error); o.value = cu; return; }
+          if (r.error) { bao(r.error); o.value = cu || ''; return; }
           nap(veLai);
-        });
+        }).catch(function (e) { bao(e); o.value = cu || ''; });
       });
     });
 
@@ -378,7 +410,7 @@
         may().from('ho_so').update({ tang: s.value }).eq('ma', ma).then(function (r) {
           if (r.error) { bao(r.error); return; }
           nap(veLai);
-        });
+        }).catch(bao);
       });
     });
 
@@ -390,7 +422,14 @@
   function themHoSo(goc, nut) {
     var ten = goc.querySelector('#dm-ten').value.trim();
     if (!ten) { window.hopHoi('Chưa đặt tên cho hồ sơ.'); return; }
-    var hopId = +goc.querySelector('#dm-hop').value;
+    // Kho chưa có hộp nào thì select rỗng, +'' ra 0 — số hợp lệ về cú pháp nên
+    // lọt xuống insert và chết ở khoá ngoại, mà lúc đó MÃ ĐÃ CẤP XONG rồi.
+    var oHop = goc.querySelector('#dm-hop');
+    if (!oHop || !oHop.value) {
+      window.hopHoi('Chưa có hộp nào để xếp hồ sơ vào. Vào mục 🗂 Hộp và bộ phận thêm một hộp trước.');
+      return;
+    }
+    var hopId = +oHop.value;
     var tc = goc.querySelector('#dm-tc').value;
     // Hai ô này chỉ dựng khi trường đã có ba cột mới — querySelector trả null
     // ở trường còn danh mục cũ, đọc .value thẳng là vỡ ngay tại đây.
@@ -464,9 +503,9 @@
   function noiCauTruc(goc) {
     function luuHop(ma, thay, oNhap, giaTriCu) {
       may().from('nhom_con').update(thay).eq('ma', ma).then(function (r) {
-        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu; return; }
+        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu || ''; return; }
         nap(veLai);
-      });
+      }).catch(function (e) { bao(e); if (oNhap) oNhap.value = giaTriCu || ''; });
     }
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-hop-ten]')).forEach(function (o) {
@@ -508,11 +547,43 @@
       });
     });
 
+    var themBP = goc.querySelector('#bp-them');
+    if (themBP) themBP.addEventListener('click', function () {
+      var oTen = goc.querySelector('#bp-ten-moi');
+      var oIcon = goc.querySelector('#bp-icon-moi');
+      var ten = oTen ? oTen.value.trim() : '';
+      if (!ten) { window.hopHoi('Chưa đặt tên cho bộ phận.'); return; }
+      themBP.disabled = true;
+      may().rpc('so_tt_bo_phan_tiep_theo')
+        .then(function (r) {
+          if (r.error) throw r.error;
+          return may().from('nhom_ho_so').insert({
+            so_tt: r.data, ten: ten,
+            bieu_tuong: (oIcon && oIcon.value.trim()) || '🗂',
+            mo_ta: null
+          }).select().maybeSingle();
+        })
+        .then(function (r) {
+          themBP.disabled = false;
+          if (r.error) throw r.error;
+          window.hopHoi('Đã thêm bộ phận ' + ten + '.');
+          nap(veLai);
+        })
+        .catch(function (e) { themBP.disabled = false; bao(e); });
+    });
+
     var themHop = goc.querySelector('#hop-them');
     if (themHop) themHop.addEventListener('click', function () {
       var ten = goc.querySelector('#hop-ten-moi').value.trim();
       if (!ten) { window.hopHoi('Chưa đặt tên cho hộp.'); return; }
-      var bpId = +goc.querySelector('#hop-bp-moi').value;
+      // Chưa có bộ phận nào thì ô chọn rỗng, +'' ra 0 — một số hợp lệ về cú
+      // pháp nên lọt xuống insert rồi chết ở khoá ngoại. Chặn sớm cho rõ.
+      var oBp = goc.querySelector('#hop-bp-moi');
+      if (!oBp || !oBp.value) {
+        window.hopHoi('Chưa có bộ phận nào để xếp hộp vào. Thêm một bộ phận trước đã.');
+        return;
+      }
+      var bpId = +oBp.value;
       themHop.disabled = true;
       may().rpc('ma_hop_tiep_theo')
         .then(function (r) {
@@ -532,9 +603,9 @@
 
     function luuBP(soTT, thay, oNhap, giaTriCu) {
       may().from('nhom_ho_so').update(thay).eq('so_tt', soTT).then(function (r) {
-        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu; return; }
+        if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu || ''; return; }
         nap(veLai);
-      });
+      }).catch(function (e) { bao(e); if (oNhap) oNhap.value = giaTriCu || ''; });
     }
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-bp-ten]')).forEach(function (o) {
