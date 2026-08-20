@@ -31,7 +31,7 @@
     'nguoi_dung', 'nhat_ky', 'nhip_tim', 'nhom_con', 'nhom_ho_so',
     'nl_pc_tieu_chi', 'noi_ham', 'phan_cong_day', 'phan_cong_quan_ly',
     'sap_nhap', 'so_lieu_bao_cao',
-    'so_lieu_tien_than', 'su_viec', 'tdg_noi_ham', 'thanh_vien_hoi_dong',
+    'so_lieu_tien_than', 'su_viec', 'tdg_co_so', 'tdg_noi_ham', 'thanh_vien_hoi_dong',
     'thong_bao', 'thong_bao_nhan', 'tieu_chi', 'tieu_chuan', 'truc_tuan',
     'truong_tien_than', 'tu_danh_gia'
   ];

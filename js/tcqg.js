@@ -113,6 +113,10 @@
         return {
           ma: t.ma, ten: t.ten, tieuChuan: t.tieu_chuan, batBuoc: t.bat_buoc,
           m1: t.muc_1, m2: t.muc_2,
+          // Cột của sql/41: tiêu chí có điều kiện khác nhau giữa các địa điểm
+          // thì phải soi riêng từng nơi (CV 5555 PL II V.2.b). Trường chưa
+          // chạy sql/41 thì cột chưa có → undefined → thẻ Địa điểm không hiện.
+          theoDiaDiem: !!t.theo_dia_diem,
           self: r.muc_dat || 0, datM1: !!r.dat_m1, datM2: !!r.dat_m2,
           htM1: r.hien_trang_m1 || '', htM2: r.hien_trang_m2 || '',
           ghiChu: r.ghi_chu || '', capNhatLuc: r.cap_nhat_luc || null
@@ -131,7 +135,15 @@
       BC = kq[5].data || null;
       if (!TC_CHON && TC.length) TC_CHON = TC[0].ma;
       window.TCQG_SAN_SANG = true;
+
+      // Lớp soi từng địa điểm (js/tcqg-co-so.js). Nạp SAU khi màn đã dựng
+      // xong: hỏng hay thiếu sql/41 thì màn Trường chuẩn Quốc gia vẫn chạy
+      // đầy đủ như cũ, chỉ không có thẻ Địa điểm. Hàm nap() không bao giờ
+      // trả về lỗi — xem chú thích trong tệp đó.
       veManTCQG();
+      if (window.TCQG_CO_SO) {
+        window.TCQG_CO_SO.nap(NAM).then(function (duoc) { if (duoc) veManTCQG(); });
+      }
     });
   }
 
@@ -295,7 +307,13 @@
       '<span class="so">' + kq.bbTong + '</span><span class="nhan">Tiêu chí bắt buộc</span>' +
       '<span class="them">' + kq.bbM2 + '/' + kq.bbTong + ' đạt Mức 2</span></span></div>' +
       '<div class="the la" id="kd-the-tien-do">' + theTienDoHTML(nh, pt) + '</div>';
-    $('#kd-giai-thich').innerHTML = '<b>Vì sao xếp mức này:</b> ' + thoat(kq.vi);
+    // Băng cảnh báo chênh lệch giữa các địa điểm đặt NGAY TRÊN câu giải thích
+    // xếp mức: mức của toàn trường chỉ có nghĩa khi không bỏ sót địa điểm nào
+    // (CV 5555 PL II V.2.b). Trường một địa điểm hoặc chưa chạy sql/41 thì
+    // canhBao() trả chuỗi rỗng, giao diện y như cũ.
+    $('#kd-giai-thich').innerHTML =
+      (window.TCQG_CO_SO ? window.TCQG_CO_SO.canhBao() : '') +
+      '<b>Vì sao xếp mức này:</b> ' + thoat(kq.vi);
   }
 
   function theTienDoHTML(nh, pt) {
@@ -385,7 +403,14 @@
   function veChiTiet() {
     var c = tcHienTai();
     if (!c) { $('#kd-chi-tiet').innerHTML = ''; return; }
-    var than = TAB_CT === 'mc' ? oMinhChung(c) : TAB_CT === 'kl' ? oKetLuan(c) : oNoiDung(c);
+    // Thẻ Địa điểm chỉ có với tiêu chí đã đánh dấu theo_dia_diem VÀ trường
+    // thực sự có từ hai địa điểm trở lên.
+    var coDD = !!(c.theoDiaDiem && window.TCQG_CO_SO && window.TCQG_CO_SO.dung());
+    if (TAB_CT === 'dd' && !coDD) TAB_CT = 'nd';   // đổi sang tiêu chí không soi địa điểm
+    var than = TAB_CT === 'mc' ? oMinhChung(c)
+      : TAB_CT === 'kl' ? oKetLuan(c)
+      : TAB_CT === 'dd' ? window.TCQG_CO_SO.ve(c)
+      : oNoiDung(c);
     var ds = dsDangLoc();
     var viTri = ds.map(function (t) { return t.ma; }).indexOf(c.ma);
     var keTiep = viTri >= 0 && viTri < ds.length - 1 ? ds[viTri + 1].ma : null;
@@ -395,7 +420,9 @@
       '<div class="ct-dau"><span class="tc-ma">' + c.ma + '</span><b>' + thoat(c.ten) + '</b>' +
       (c.batBuoc ? '<span class="tc-bb">BẮT BUỘC</span>' : '') + '</div>' +
       '<div class="ct-tab">' +
-      ['nd|Nội dung', 'mc|Minh chứng', 'kl|Kết luận & Ghi chú'].map(function (x) {
+      ['nd|Nội dung', 'mc|Minh chứng']
+        .concat(coDD ? ['dd|📍 Địa điểm'] : [])
+        .concat(['kl|Kết luận & Ghi chú']).map(function (x) {
         var p = x.split('|');
         return '<button class="' + (TAB_CT === p[0] ? 'on' : '') + '" data-tab="' + p[0] + '">' + p[1] + '</button>';
       }).join('') + '<span class="sp"></span>' + huyHieu(c.self) + '</div>' +
@@ -415,6 +442,11 @@
     Array.prototype.slice.call($('#kd-chi-tiet').querySelectorAll('[data-tab]')).forEach(function (b) {
       b.addEventListener('click', function () { TAB_CT = b.getAttribute('data-tab'); veChiTiet(); });
     });
+    // Nút và ô nhập của thẻ Địa điểm do js/tcqg-co-so.js tự nối — khối này
+    // được dựng lại mỗi lần vẽ nên phải nối lại, không giữ được xử lý cũ.
+    if (TAB_CT === 'dd' && window.TCQG_CO_SO) {
+      window.TCQG_CO_SO.noiSuKien($('#kd-chi-tiet'), veChiTiet);
+    }
     var nutKl = $('#kd-chi-tiet').querySelector('[data-tab-di]');
     if (nutKl) nutKl.addEventListener('click', function () { TAB_CT = 'kl'; veChiTiet(); });
     var nutDi = $('#kd-chi-tiet').querySelector('[data-di-tc]');

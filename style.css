@@ -2803,3 +2803,48 @@ textarea.ht-o { min-height: 116px; display: block; }
 @media (min-width: 900px) {
   .pc-ds { grid-template-columns: 1fr 1fr; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   TỰ ĐÁNH GIÁ SOI TỪNG ĐỊA ĐIỂM (js/tcqg-co-so.js, 20/8/2026)
+   Dùng lại .pick / .chu-dat / .chu-khong của khối tiêu chí để
+   nút chấm ở đây giống hệt nút chấm toàn trường — cùng thao tác
+   thì phải cùng hình dáng.
+   ════════════════════════════════════════════════════════════ */
+.cs-ds { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+.cs-the {
+  border: 1px solid var(--vien); border-left: 4px solid var(--chinh);
+  border-radius: 11px; padding: 11px 13px; background: var(--the);
+}
+.cs-the.lech { border-left-color: var(--thieu); background: var(--thieu-nen); }
+.cs-dau { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cs-dau b { font-size: 14.5px; }
+.cs-loai {
+  font-size: 11.5px; font-weight: 700; color: var(--chu-mo);
+  background: #eef2fb; border-radius: 999px; padding: 2px 9px;
+}
+.cs-muc { margin-top: 8px; font-size: 13.5px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.cs-o {
+  width: 100%; box-sizing: border-box; margin-top: 8px; font: inherit; font-size: 16px;
+  padding: 8px 10px; border: 1.5px solid var(--vien-dam); border-radius: 9px;
+  resize: vertical; line-height: 1.5;
+}
+.cs-o:focus { outline: none; border-color: var(--chinh); }
+.cs-chu { font-size: 13.4px; line-height: 1.6; margin: 7px 0 0; }
+.cs-chu.thieu { color: var(--thieu); }
+.cs-nhac { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--chu-mo); }
+.cs-nhac.lech { color: var(--thieu); }
+@media (min-width: 760px) {
+  .cs-ds { grid-template-columns: 1fr 1fr; }
+  .cs-o { font-size: 14px; }
+}
+
+/* 🔴 Nút Đạt / Chưa đạt phải NHÌN RA KHÁC NHAU.
+   style.css đang có HAI bản khai .pick (dòng ~1155 bản đầu, ~1391 bản gốc
+   Bạch Liêu). Bản sau thắng và đặt `.pick.on, .pick.dat.on, .pick.khong.on`
+   cùng một màu navy — nghĩa là chấm "Đạt" hay "Chưa đạt" đều ra y hệt nhau,
+   người chấm chỉ phân biệt được bằng cách đọc chữ trên nút.
+   Đây là nợ kỹ thuật cũ của cả màn Trường chuẩn Quốc gia (xem cảnh báo "62 bộ
+   chọn khai ≥2 lần" của quet-app.js). Chưa sửa quy tắc chung vì đụng vào màn
+   đang chạy thật; ở đây giới hạn trong .cs-muc nên không ảnh hưởng chỗ khác. */
+.cs-muc .pick.dat.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+.cs-muc .pick.khong.on { background: var(--thieu); border-color: var(--thieu); color: #fff; }
