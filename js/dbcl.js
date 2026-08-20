@@ -4,13 +4,14 @@
 // Bốn màn theo đúng bốn trọng tâm bảo đảm chất lượng của TT57:
 //   1. Chuẩn đầu ra & Cam kết   → js/dbcl-chi-tieu.js  · sql/43  ✅ DỮ LIỆU THẬT
 //   2. Đối sánh chất lượng      → js/dbcl-doi-sanh.js  · sql/42  ✅ DỮ LIỆU THẬT
-//   3. Điều kiện bảo đảm        → ⚠️ CÒN LÀ GIAO DIỆN MẪU (cần bảng cơ sở vật chất)
+//   3. Điều kiện bảo đảm        → js/csvc.js           · sql/45  ✅ DỮ LIỆU THẬT
 //   4. Tổ ĐBCL & Hồ sơ          → js/dbcl-to.js        · sql/44  ✅ DỮ LIỆU THẬT
 //
-// ⚠️ SỐ MẪU CHỈ CÒN Ở MÀN 3 và ở các mảng dự phòng dưới đây (MON_MAU,
-//    NL_PC_MAU, TO_DBCL) — chúng là ĐƯỜNG LUI cho bản xem thử khi tệp dữ liệu
-//    thật chưa nạp. Nguyên tắc của dự án: KHÔNG được để người dùng nhầm số mẫu
-//    là số thật → chỗ nào còn số mẫu đều có băng cảnh báo vàng ngay trên đầu.
+// ✅ CẢ BỐN MÀN ĐÃ DÙNG DỮ LIỆU THẬT (20/8/2026). Các mảng số mẫu còn lại
+//    trong tệp này (MON_MAU, NL_PC_MAU, TO_DBCL, và phần bốn trọng tâm của
+//    màn 3) là ĐƯỜNG LUI cho bản xem thử khi tệp dữ liệu thật chưa nạp.
+//    Nguyên tắc của dự án: KHÔNG được để người dùng nhầm số mẫu là số thật →
+//    chỗ nào còn số mẫu đều có băng cảnh báo vàng ngay trên đầu.
 //
 // ⚠️ KHÔNG ghi tên thật cán bộ giáo viên vào đây — repo là kho công khai.
 //    Bảng Tổ ĐBCL dự phòng chỉ ghi CHỨC VỤ; tên thật nằm trong cơ sở dữ liệu.
@@ -209,7 +210,17 @@
   }
 
   // ══════════ MÀN 3 · ĐIỀU KIỆN BẢO ĐẢM ══════════
+  // ĐÃ NỐI DỮ LIỆU THẬT (20/8/2026) — mã ở js/csvc.js, bảng ở sql/45. Phần
+  // dưới đây là bản mẫu giữ lại cho bản xem thử và cho trường chưa chạy sql/45.
   function veDieuKien() {
+    // ⚠️ CỐ Ý KHÁC ba màn kia: ở đây còn xét thêm window.MAY_CHU. Ba màn kia
+    // chưa đăng nhập thì hiện câu "bản xem thử chưa nối cơ sở dữ liệu" — chấp
+    // nhận được vì chúng vốn là danh sách người và số liệu riêng. Nhưng thẻ
+    // Điều kiện bảo đảm là thứ khách vào xem thử hay mở nhất, mà bản mẫu bốn
+    // trọng tâm dưới đây giới thiệu được đúng phạm vi của module. Bỏ nó đi để
+    // lấy một câu thông báo trống là bước lùi cho mặt tiền của app.
+    if (window.CSVC && window.MAY_CHU) return window.CSVC.ve(window.veDBCL);
+
     var oSo =
       '<div class="luoi-thong-ke">' +
       // Chưa khai thì để '—' như hai ô bên cạnh vốn đã làm đúng. Dự phòng bằng
@@ -363,6 +374,12 @@
     if (TAB === 'to' && window.DBCL_TO) {
       window.DBCL_TO.noiSuKien(than, window.veDBCL);
       if (!window.DBCL_TO.daTai()) window.DBCL_TO.nap(window.veDBCL);
+    }
+    // Cùng điều kiện với veDieuKien(): chưa đăng nhập thì thân màn là bản mẫu,
+    // nối sự kiện vào đó chỉ tổ gọi nap() để nhận về đúng một lỗi chua_ket_noi.
+    if (TAB === 'dk' && window.CSVC && window.MAY_CHU) {
+      window.CSVC.noiSuKien(than, window.veDBCL);
+      if (!window.CSVC.daTai()) window.CSVC.nap(window.veDBCL);
     }
   };
 

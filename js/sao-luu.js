@@ -21,7 +21,7 @@
   // ghi vào phần "thieu" của tệp chứ KHÔNG dừng cả bản sao lưu.
   var BANG = [
     'bao_cao_dau_buoi', 'bao_cao_tdg', 'cau_hinh', 'chi_tieu_chat_luong', 'cnqg_bang', 'cnqg_tu_danh_gia',
-    'co_so', 'cong_thang_chot', 'cong_viec', 'cong_viec_mau', 'danh_gia_tieu_chuan',
+    'co_so', 'cong_thang_chot', 'cong_viec', 'cong_viec_mau', 'csvc_kiem_ke', 'danh_gia_tieu_chuan',
     'de_xuat', 'diem_danh_lop', 'du_gio', 'du_gio_tieu_chi', 'gv_vang',
     'ho_so', 'ho_so_luu_tru', 'hoc_sinh', 'hoc_sinh_lop', 'hoi_dong_tdg',
     'hs_ket_qua', 'hs_nl_pc', 'hs_tong_hop', 'hs_vang', 'ke_hoach_cai_tien',
