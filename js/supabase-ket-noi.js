@@ -56,8 +56,10 @@
     //    một địa chỉ dùng chung và đã tự khai mã — thì phải có ĐƯỜNG LÙI: gõ
     //    nhầm mã một lần là máy nhớ, không có nút này thì kẹt vĩnh viễn ở cổng
     //    trường lạ. Đây là một ĐƯỜNG DẪN, không phải danh sách — không lộ tên ai.
+    // href tương đối chỉ-truy-vấn — không ghép location.pathname (pathname dạng
+    // //evil.com/ ghép vào là thành địa chỉ tuyệt đối sang tên miền khác).
     var lui = (window.THEO_TEN_MIEN !== true)
-      ? '<div class="cong-lui"><a href="' + thoat(location.pathname) + '?doitruong=1">' +
+      ? '<div class="cong-lui"><a href="?doitruong=1">' +
         '↩ Không phải trường của thầy cô? Nhập lại mã trường</a></div>'
       : '';
     return lui + '<div class="chan">Nhà trường <b>không lưu giữ mật khẩu</b> Gmail của thầy cô. ' +

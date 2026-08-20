@@ -55,6 +55,16 @@
   // ── MÀN 1: khai mã trường ──────────────────────────────────
   function veManKhaiMa(loi, maCu) {
     var h = hop(); if (!h) return;
+    // ── Lối tắt "Trường vừa dùng" ──────────────────────────────────────────
+    // Cổng chung KHÔNG tự vào trường theo mã đã nhớ nữa (xem cauhinh.js, ngõ
+    // cụt Hưng Đông 21/8/2026) — nhưng thầy cô hay vào một trường thì không
+    // phải gõ lại mã: máy còn nhớ thì bày MỘT nút, người dùng tự bấm.
+    // Chỉ là dấu vết của chính máy này, không lộ danh sách trường của hệ thống.
+    var vuaDung = (typeof window.truongVuaDung === 'function' && window.truongVuaDung()) || null;
+    var nutVuaDung = vuaDung
+      ? '<button class="nut-phu" id="nut-vua-dung">↪ Vào lại ' +
+        thoat(vuaDung.ten || ('trường mã ' + vuaDung.ma)) + '</button>'
+      : '';
     h.innerHTML = dauCong('Thầy cô nhập mã trường để vào hệ thống của nhà trường mình.') +
       '<div class="cong-nhom">' +
       '<label class="cong-nhan" for="o-ma-truong">Mã trường</label>' +
@@ -69,6 +79,7 @@
       '</div>' +
       (loi ? '<div class="hop-loi khoa">' + thoat(loi) + '</div>' : '') +
       '<button class="nut-google cong-chinh" id="nut-vao">Vào hệ thống</button>' +
+      nutVuaDung +
       '<div class="cong-ngan"><span>Trường chưa có tài khoản?</span></div>' +
       '<button class="nut-phu" id="nut-xem-thu">👁 Xem thử hệ thống</button>' +
       '<button class="nut-phu" id="nut-dang-ky">✍ Đăng ký sử dụng</button>' +
@@ -102,7 +113,11 @@
         // Nạp lại kèm ?truong= để cả app khởi động lại với đúng cấu hình
         // trường, thay vì chạy tiếp trên một nửa cấu hình. Địa chỉ cũng nói rõ
         // đang ở trường nào, gửi cho nhau thì người nhận vào đúng chỗ.
-        location.href = location.pathname + '?truong=' + encodeURIComponent(ma);
+        // ⚠️ Đường dẫn TƯƠNG ĐỐI chỉ-truy-vấn, KHÔNG ghép location.pathname:
+        //    pathname dạng //evil.com/ (hai gạch chéo đầu) ghép vào là thành
+        //    địa chỉ tuyệt đối sang tên miền khác — nơi đăng trang nào trả
+        //    index.html cho mọi đường dẫn (Cloudflare Pages) là bị dắt đi thật.
+        location.href = '?truong=' + encodeURIComponent(ma);
       }, function () {
         veManKhaiMa('Không kết nối được để kiểm tra mã trường. Thầy cô xem lại ' +
           'đường mạng rồi thử lại.', ma);
@@ -111,8 +126,14 @@
 
     nut.addEventListener('click', vao);
     o.addEventListener('keydown', function (e) { if (e.key === 'Enter') vao(); });
+    var nutVD = document.getElementById('nut-vua-dung');
+    if (nutVD) nutVD.addEventListener('click', function () {
+      // Đi cùng một cửa với người gõ mã: nạp lại trang kèm ?truong=<mã> để cả
+      // app khởi động với đúng cấu hình trường, không chạy trên nửa cấu hình.
+      location.href = '?truong=' + encodeURIComponent(vuaDung.ma);
+    });
     document.getElementById('nut-xem-thu').addEventListener('click', function () {
-      location.href = location.pathname + '?xemthu=1';
+      location.href = '?xemthu=1';
     });
     document.getElementById('nut-dang-ky').addEventListener('click', function () {
       veManDangKy();
@@ -334,7 +355,18 @@
   // vẫn KHÓA và hộp cổng hiện "Đang tải…" (viết sẵn trong index.html).
   if (!window.CAU_HINH_SAN_SANG) return;
   window.CAU_HINH_SAN_SANG.then(function (trangThai) {
-    if (trangThai === 'chua-biet') { veManKhaiMa(); return; }
+    if (trangThai === 'chua-biet') {
+      // Vào bằng ?truong=<mã> mà mã không có (gõ nhầm, trường đã gỡ) —
+      // cauhinh.js đặt cờ này. Phải BÁO, không thì bấm nút lối tắt của một mã
+      // đã chết chỉ thấy trang nạp lại y nguyên, ai cũng kết luận "nút hỏng".
+      // Vẫn đúng luật MỘT câu trả lời: cùng câu chữ với LOI_MA khi gõ tay.
+      var maHong = window.MA_TRUONG_KHONG_CO || '';
+      veManKhaiMa(maHong
+        ? 'Mã trường không đúng hoặc chưa được cấp quyền sử dụng. Thầy cô kiểm ' +
+          'tra lại mã; nếu nhà trường chưa có tài khoản thì bấm “Đăng ký sử dụng”.'
+        : undefined, maHong);
+      return;
+    }
     if (trangThai === 'loi') { veManLoiTai(); return; }
     // ── ĐƯỜNG LÙI trên băng xem thử ────────────────────────────────────────
     // Băng vàng hiện ra ở HAI hoàn cảnh khác nhau, và cả hai đều cần lối ra:
@@ -356,7 +388,7 @@
                  (trangThai === 'da-biet' && !window.DA_NOI && window.THEO_TEN_MIEN !== true);
     if (canLui) {
       var b = document.getElementById('bang-xem-thu');
-      if (b) b.innerHTML += ' · <a href="' + thoat(location.pathname) + '?doitruong=1">↩ Về cổng đăng nhập</a>';
+      if (b) b.innerHTML += ' · <a href="?doitruong=1">↩ Về cổng đăng nhập</a>';
     }
     // 'da-biet' và 'xem-thu' → nhường việc cho supabase-ket-noi.js
   });

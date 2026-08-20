@@ -262,6 +262,20 @@ window.CAU_HINH.DA_NOI = false;
     }, function () { return 'loi'; });
   };
 
+  // ── Trường VỪA DÙNG trên máy này — cho lối tắt ở màn khai mã ───────────
+  // Trả { ma, ten } nếu máy còn nhớ mã trường, null nếu không. Tên lấy từ bản
+  // cấu hình đã nhớ (ghiNho) — chưa từng tải được thì đành trống, màn khai mã
+  // tự lo cách hiện. CHỈ đọc dấu vết của CHÍNH máy này, không hỏi mạng: đây
+  // là lịch sử của người dùng, không phải danh sách trường của hệ thống.
+  window.truongVuaDung = function () {
+    var ma = '';
+    try { ma = saChMa(localStorage.getItem('ma_truong')); } catch (e) { return null; }
+    if (!ma) return null;
+    var o = docNho('ma_' + ma);
+    if (o && o.xem) o = docNho('ma_' + saChMa(o.xem));
+    return { ma: ma, ten: (o && o.TEN_TRUONG) || '' };
+  };
+
   // ── Hồ sơ trường MẪU cho chế độ xem thử ────────────────────────────────
   // Tên "Minh Họa" cố tình bịa — đã đối chiếu bảng 513 trường tiểu học của Sở,
   // không trường nào trùng. Đặt tên một trường có thật vào bản mẫu là có ngày
@@ -354,6 +368,17 @@ window.CAU_HINH.DA_NOI = false;
       //    địa chỉ được đổi việc đó — không ai đổi được vẻ ngoài trang thật của
       //    nhà trường chỉ bằng cách thêm chữ vào đường dẫn rồi gửi cho thầy cô.
       buoc = taiTheoTenMien(host).then(function (o) {
+        // ── CỔNG CHUNG được khai rõ (cau-hinh/ten-mien/<tên miền>.json có
+        //    "cong_chung": true) — tên miền gốc của HỆ THỐNG, không thuộc
+        //    trường nào. LUÔN ra màn khai mã, KHÔNG lấy mã đã nhớ ra tự vào:
+        //    máy nhớ mã một trường xem thử hôm trước là hôm sau mở trang chào
+        //    hàng lại chui thẳng vào trường đó (ngõ cụt Hưng Đông 21/8/2026,
+        //    sổ dự án mục 44). Mã đã nhớ chỉ còn dùng làm LỐI TẮT bày trên màn
+        //    khai mã (truongVuaDung), người dùng phải tự bấm.
+        if (o && o.cong_chung) {
+          window.THEO_TEN_MIEN = false;
+          return 'khong-co';
+        }
         if (o && o !== 'khong-co') return o;
         window.THEO_TEN_MIEN = false;
         var nho = nhoDuoc();
@@ -367,12 +392,31 @@ window.CAU_HINH.DA_NOI = false;
     return buoc.then(function (o) {
       if (o && o !== 'khong-co') {
         window.apDungCauHinh(o);
-        try { if (window.CAU_HINH.MA) localStorage.setItem('ma_truong', window.CAU_HINH.MA); }
-        catch (e) { /* bỏ qua */ }
+        try {
+          if (window.CAU_HINH.MA) {
+            localStorage.setItem('ma_truong', window.CAU_HINH.MA);
+            // Nhớ cấu hình dưới khóa của CHÍNH mã vừa ghi. Không có dòng này
+            // thì truongVuaDung() tra 'ma_' + ma_truong (mã CHÍNH THỨC, ví dụ
+            // 'dienlien') mà bản nhớ lại nằm ở khóa theo TÊN TỆP đã tải (ví dụ
+            // 'ma_11819') → lối tắt mất tên trường ở đường vào phổ biến nhất
+            // (tên miền riêng).
+            ghiNho('ma_' + saChMa(window.CAU_HINH.MA), o);
+          }
+        } catch (e) { /* bỏ qua */ }
         return xong('da-biet');
       }
       if (o === null) return xong('loi');       // mất mạng / tệp hỏng
       if (laXemThu) { window.apDungCauHinh(TRUONG_MAU); return xong('xem-thu'); }
+      if (maCanTim) {
+        // ?truong=<mã> mà không có trường nào mang mã đó (gõ nhầm, hoặc trường
+        // đã gỡ khỏi hệ thống). Nói cho màn khai mã biết để BÁO một câu, và dọn
+        // mã đã nhớ nếu trùng — không dọn thì nút lối tắt "Vào lại…" thành nút
+        // câm: bấm → nạp lại → màn cũ y nguyên → bấm lại, vòng quanh mãi.
+        window.MA_TRUONG_KHONG_CO = maCanTim;
+        try {
+          if (saChMa(localStorage.getItem('ma_truong')) === maCanTim) localStorage.removeItem('ma_truong');
+        } catch (e) { /* bỏ qua */ }
+      }
       return xong('chua-biet');
     }, function () { return xong('loi'); });
   })();

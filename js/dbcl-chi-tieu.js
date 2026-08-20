@@ -210,4 +210,18 @@
     ve: ve, nap: nap, noiSuKien: noiSuKien,
     daTai: function () { return DA_NAP; }
   };
+
+  // 🔴 GỠ KẸT SAU ĐĂNG NHẬP. dbcl.js vẽ màn ngay lúc nạp trang (DOMContentLoaded),
+  // thẻ mặc định là chính thẻ này → nap() chạy khi MAY_CHU CHƯA có → DA_NAP=true
+  // với LOI='chua_ket_noi'. Không gỡ thì đăng nhập xong màn vẫn đề "Bản xem thử
+  // chưa nối cơ sở dữ liệu" mãi — đúng bẫy "dữ liệu bản mẫu kẹt lại sau đăng
+  // nhập" đã dính hai lần (sổ dự án, bảng công rồi lịch tuần). Thẻ 'dk' né bằng
+  // chắn window.MAY_CHU trong dbcl.js; thẻ này nạp cả lúc chưa đăng nhập để bản
+  // xem thử có câu giải thích, nên phải gỡ cờ khi đăng nhập xong rồi nạp lại.
+  // Chỉ gỡ đúng ca 'chua_ket_noi' — nap thật đã chạy rồi thì không đụng.
+  document.addEventListener('dangnhap-xong', function () {
+    if (LOI !== 'chua_ket_noi') return;
+    DA_NAP = false; LOI = null;
+    if (window.veDBCL) window.veDBCL();   // vẽ lại là tự nạp vì daTai() đã false
+  });
 })();
