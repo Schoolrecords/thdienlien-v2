@@ -29,9 +29,10 @@
     'ktnb_dot', 'lich_tuan', 'lich_tuan_muc', 'lop_hoc', 'moi_tai_khoan',
     'mon_hoc', 'mon_hoc_khoi', 'nap_link_gv', 'nap_link_hss', 'ngay_nghi',
     'nguoi_dung', 'nhat_ky', 'nhip_tim', 'nhom_con', 'nhom_ho_so',
-    'nl_pc_tieu_chi', 'noi_ham', 'phan_cong_day', 'phan_cong_quan_ly',
+    'nl_pc_tieu_chi', 'noi_ham', 'phan_cong_day', 'phan_cong_quan_ly', 'phu_luc_dbcl',
     'sap_nhap', 'so_lieu_bao_cao',
     'so_lieu_tien_than', 'su_viec', 'tdg_co_so', 'tdg_noi_ham', 'thanh_vien_hoi_dong',
+    'thanh_vien_to_dbcl', 'to_dbcl',
     'thong_bao', 'thong_bao_nhan', 'tieu_chi', 'tieu_chuan', 'truc_tuan',
     'truong_tien_than', 'tu_danh_gia'
   ];
@@ -237,7 +238,11 @@
     'nhom_ho_so', 'nhom_con', 'ho_so', 'ho_so_luu_tru',
     'tieu_chuan', 'tieu_chi', 'noi_ham', 'mon_hoc', 'nl_pc_tieu_chi',
     'lop_hoc', 'hoc_sinh', 'hoc_sinh_lop', 'mon_hoc_khoi',
-    'lich_tuan', 'ktnb_dot', 'hoi_dong_tdg', 'khct_thong_tin', 'cnqg_bang'
+    'lich_tuan', 'ktnb_dot', 'hoi_dong_tdg', 'khct_thong_tin', 'cnqg_bang',
+    // to_dbcl phải đứng trước thanh_vien_to_dbcl. Không khai ở đây thì cả hai
+    // rơi vào nhóm "còn lại" xếp theo bảng chữ cái — mà 'thanh_vien_to_dbcl'
+    // đứng TRƯỚC 'to_dbcl', nên phục hồi là gãy khoá ngoại ngay bảng đầu.
+    'to_dbcl'
   ];
 
   function sqlGiaTri(v) {

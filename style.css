@@ -2879,3 +2879,25 @@ textarea.ht-o { min-height: 116px; display: block; }
    5 cột số, "Tự nhiên và Xã hội" bị bóp xuống bốn dòng. */
 .ct-ten { min-width: 108px; }
 @media (min-width: 760px) { .ct-o { font-size: 14px; width: 68px; } }
+
+/* Tổ ĐBCL & Hồ sơ (js/dbcl-to.js, 20/8/2026) */
+.tv-them {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  margin-top: 12px; padding: 12px; background: #f8fafd;
+  border: 1px dashed var(--vien-dam); border-radius: 11px;
+}
+.tv-them select, .tv-them input {
+  font: inherit; font-size: 16px; padding: 8px 10px;
+  border: 1.5px solid var(--vien-dam); border-radius: 9px; background: var(--the);
+}
+.tv-them select:focus, .tv-them input:focus { outline: none; border-color: var(--chinh); }
+.pl-o {
+  font: inherit; font-size: 16px; padding: 6px 9px;
+  border: 1.5px solid var(--vien-dam); border-radius: 8px; background: var(--the);
+  max-width: 100%;
+}
+.pl-o.pl-link { min-width: 190px; }
+.pl-o:focus { outline: none; border-color: var(--chinh); }
+@media (min-width: 760px) {
+  .tv-them select, .tv-them input, .pl-o { font-size: 14px; }
+}

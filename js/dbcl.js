@@ -1,19 +1,19 @@
 // ============================================================
 // dbcl.js — MODULE 3: ĐẢM BẢO CHẤT LƯỢNG (khung Thông tư 57/2026)
-// ĐỢT NÀY CHỈ DỰNG GIAO DIỆN — chưa nối cơ sở dữ liệu.
 //
 // Bốn màn theo đúng bốn trọng tâm bảo đảm chất lượng của TT57:
-//   1. Chuẩn đầu ra & Cam kết   (nền của cả vòng)
-//   2. Đối sánh chất lượng      → đổi mới phương pháp dạy học
-//   3. Điều kiện bảo đảm        → phát triển đội ngũ + tăng cường điều kiện
-//   4. Tổ ĐBCL & Hồ sơ          → nâng cao hiệu quả quản trị
+//   1. Chuẩn đầu ra & Cam kết   → js/dbcl-chi-tieu.js  · sql/43  ✅ DỮ LIỆU THẬT
+//   2. Đối sánh chất lượng      → js/dbcl-doi-sanh.js  · sql/42  ✅ DỮ LIỆU THẬT
+//   3. Điều kiện bảo đảm        → ⚠️ CÒN LÀ GIAO DIỆN MẪU (cần bảng cơ sở vật chất)
+//   4. Tổ ĐBCL & Hồ sơ          → js/dbcl-to.js        · sql/44  ✅ DỮ LIỆU THẬT
 //
-// ⚠️ MỌI SỐ TRONG FILE NÀY LÀ SỐ MẪU ĐỂ XEM BỐ CỤC.
-//    Nguyên tắc của dự án: KHÔNG được để người dùng nhầm số mẫu là số thật →
-//    mọi bảng số mẫu đều có băng cảnh báo và chữ "mẫu" ngay trên đầu.
+// ⚠️ SỐ MẪU CHỈ CÒN Ở MÀN 3 và ở các mảng dự phòng dưới đây (MON_MAU,
+//    NL_PC_MAU, TO_DBCL) — chúng là ĐƯỜNG LUI cho bản xem thử khi tệp dữ liệu
+//    thật chưa nạp. Nguyên tắc của dự án: KHÔNG được để người dùng nhầm số mẫu
+//    là số thật → chỗ nào còn số mẫu đều có băng cảnh báo vàng ngay trên đầu.
 //
 // ⚠️ KHÔNG ghi tên thật cán bộ giáo viên vào đây — repo là kho công khai.
-//    Bảng Tổ ĐBCL chỉ ghi CHỨC VỤ; tên thật nạp từ CSDL sau.
+//    Bảng Tổ ĐBCL dự phòng chỉ ghi CHỨC VỤ; tên thật nằm trong cơ sở dữ liệu.
 // ============================================================
 (function () {
   'use strict';
@@ -292,6 +292,10 @@
           '<td style="text-align:center"><span style="color:var(--chu-mo)">📂</span></td></tr>';
       }).join('') + '</tbody></table></div>';
 
+    // Nay lấy từ CSDL (js/dbcl-to.js + sql/44). Bản mẫu chỉ-ghi-chức-vụ giữ
+    // lại làm đường lui cho bản xem thử, kèm băng cảnh báo vàng như cũ.
+    if (window.DBCL_TO) return window.DBCL_TO.ve(window.veDBCL, PHAN_CONG, PHU_LUC);
+
     return bangMau('Danh sách Tổ ĐBCL chỉ ghi <b>chức vụ</b>, chưa ghi tên thật — kho mã nguồn là ' +
       'kho công khai, tên và thông tin cá nhân chỉ nằm trong cơ sở dữ liệu có phân quyền.') +
 
@@ -355,6 +359,10 @@
     if (TAB === 'cdr' && window.DBCL_CHI_TIEU) {
       window.DBCL_CHI_TIEU.noiSuKien(than, window.veDBCL);
       if (!window.DBCL_CHI_TIEU.daTai()) window.DBCL_CHI_TIEU.nap(window.veDBCL);
+    }
+    if (TAB === 'to' && window.DBCL_TO) {
+      window.DBCL_TO.noiSuKien(than, window.veDBCL);
+      if (!window.DBCL_TO.daTai()) window.DBCL_TO.nap(window.veDBCL);
     }
   };
 
