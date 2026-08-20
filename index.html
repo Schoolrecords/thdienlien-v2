@@ -3,9 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- ⚠️ TIÊU ĐỀ VÀ MÔ TẢ Ở ĐÂY PHẢI TRUNG TÍNH — xem khối ═══ ngay dưới. -->
+  <!-- ⚠️ TIÊU ĐỀ Ở ĐÂY PHẢI TRUNG TÍNH — xem khối ═══ ngay dưới. -->
   <title>Hệ thống Quản trị số Trường học</title>
-  <meta name="description" content="Hệ thống Quản trị số Trường học — quản lý hồ sơ, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục. Mỗi trường một cơ sở dữ liệu riêng.">
+  <!-- 🔴 CỐ Ý KHÔNG KHAI MÔ TẢ — ĐỪNG THÊM LẠI.
+       Khung xem trước của Zalo lấy meta description làm dòng chữ dưới ảnh, và
+       thầy Chung xem bản thật ngày 20/8/2026 thấy dòng đó vừa dài vừa bị cắt
+       cụt giữa chừng ("…và đảm bảo chất…"), làm rối cả khung vốn đã có tiêu đề
+       và ảnh nói đủ ý.
+       Phải bỏ CẢ BA thẻ mô tả (meta description · og:description ·
+       twitter:description): chỉ bỏ og:description thì bọ đọc thẻ quay về lấy
+       meta description, dòng chữ vẫn hiện y như cũ. -->
+
   <!-- Biểu tượng thẻ để TRUNG TÍNH; js/app.js đổi sang logo của trường ngay khi
        biết người vào thuộc trường nào. Trước đây đặt cứng img/logo.png — mà tệp
        đó là con dấu Trường Tiểu học Diễn Liên, nên thẻ trình duyệt ở địa chỉ
@@ -46,7 +54,7 @@
   <meta property="og:site_name" content="Hệ thống Quản trị số Trường học">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:title" content="Hệ thống Quản trị số Trường học">
-  <meta property="og:description" content="Quản lý hồ sơ số, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục. Mỗi trường một cơ sở dữ liệu riêng.">
+  <!-- Không khai og:description — xem chú thích ở đầu tệp. -->
   <meta property="og:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png">
   <!-- Số đo phải KHỚP tệp thật (1200x630 từ 20/8/2026). Khai sai thì Zalo cắt
        ảnh theo số đo khai chứ không theo ảnh, logo mất một góc. -->
@@ -55,7 +63,7 @@
   <meta property="og:image:alt" content="Hệ thống Quản trị số Trường học">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Hệ thống Quản trị số Trường học">
-  <meta name="twitter:description" content="Quản lý hồ sơ số, trường chuẩn quốc gia theo Thông tư 57/2026 và đảm bảo chất lượng giáo dục.">
+  <!-- Không khai twitter:description — xem chú thích ở đầu tệp. -->
   <meta name="twitter:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png">
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
