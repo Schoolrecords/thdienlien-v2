@@ -40,7 +40,7 @@
       // Trường chưa gửi logo riêng → quay về biểu trưng TRUNG TÍNH.
       // img/logo.png là con dấu của MỘT trường cụ thể, đừng lấy làm ảnh chung.
       '" alt="" onerror="this.onerror=null;this.src=\'img/he-thong.svg\'">' +
-      '<h1>Hệ thống Hồ sơ số<br><span class="dien-ten-truong">' +
+      '<h1>Hệ thống Quản trị số<br><span class="dien-ten-truong">' +
       thoat(C.TEN_TRUONG) + '</span></h1>';
   }
 

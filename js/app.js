@@ -402,7 +402,7 @@
     var laTrungTinh = !C.MA;
     var anh = laTrungTinh ? LOGO_CHUNG : (C.THU_MUC_ANH || 'img/') + 'logo.png';
 
-    document.title = 'Hồ sơ số — ' + (C.TEN_TRUONG || '');
+    document.title = 'Quản trị số — ' + (C.TEN_TRUONG || '');
     $$('.dien-ten-truong').forEach(function (e) { e.textContent = C.TEN_TRUONG || ''; });
     $$('.dien-dia-chi').forEach(function (e) { e.textContent = C.DIA_CHI_TRUONG || ''; });
     $$('.dien-chu-quan').forEach(function (e) { e.textContent = C.DON_VI_CHU_QUAN || ''; });
@@ -463,7 +463,7 @@
 
     // Các thẻ og:*/twitter:* — xem chú thích trong index.html: bọ đọc thẻ của
     // Zalo/Facebook không chạy JS nên phần này chỉ có tác dụng với trình duyệt.
-    var tenDayDu = 'Hệ thống Hồ sơ số — ' + (C.TEN_TRUONG || '');
+    var tenDayDu = 'Hệ thống Quản trị số — ' + (C.TEN_TRUONG || '');
     var anhTuyetDoi = location.origin && location.origin !== 'null'
       ? location.origin + location.pathname.replace(/[^/]*$/, '') + anh : anh;
     [['meta[property="og:site_name"]', C.TEN_TRUONG || ''],

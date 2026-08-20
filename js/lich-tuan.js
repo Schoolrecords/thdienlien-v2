@@ -518,7 +518,7 @@
       '</tr></thead><tbody>' + hang + '</tbody></table>' +
       bangTruc +
       '<p class="nghieng" style="margin-top:10pt;font-size:12pt">Lịch có thể điều chỉnh khi có việc đột xuất; ' +
-      'phần điều chỉnh được thông báo trên hệ thống Hồ sơ số.</p>' +
+      'phần điều chỉnh được thông báo trên hệ thống Quản trị số.</p>' +
       (laNhapW ? '' : W.khoiKy(null));
 
     W.taiVe(W.khungWord('Lịch công tác tuần ' + TUAN.tuanSo, than),
