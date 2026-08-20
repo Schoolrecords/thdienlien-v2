@@ -166,7 +166,8 @@
 
   function thanhCongCu(soHien) {
     return '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 12px">' +
-      '<select id="dm-loc-hop"><option value="">— mọi hộp (' + DS.length + ' hồ sơ) —</option>' +
+      '<select id="dm-loc-hop" class="dm-o-nhap" style="min-width:230px">' +
+      '<option value="">— mọi hộp (' + DS.length + ' hồ sơ) —</option>' +
       HOP.map(function (h) {
         var n = DS.filter(function (x) { return x.nhom_con_id === h.id; }).length;
         return '<option value="' + h.id + '"' + (LOC_HOP === String(h.id) ? ' selected' : '') + '>' +
@@ -184,32 +185,53 @@
     (window.TIEU_CHI || []).forEach(function (t) { tc.push(t.ma); });
     if (!tc.length) tc = ['1.1','1.2','1.3','1.4','2.1','2.2','2.3','3.1','3.2','3.3','3.4','3.5','4.1','4.2','4.3'];
 
-    return '<div class="the-thong-bao" style="padding:16px;margin-bottom:14px">' +
-      '<div class="nhan-nho" style="margin-bottom:10px">Thêm một đầu hồ sơ</div>' +
-      '<div style="display:grid;gap:10px">' +
-      '<input id="dm-ten" placeholder="Tên hồ sơ — ví dụ: Hồ sơ bán trú" style="width:100%">' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-      '<select id="dm-hop">' + HOP.map(function (h) {
-        return '<option value="' + h.id + '">' + thoat(h.ten) + '</option>';
-      }).join('') + '</select>' +
-      '<select id="dm-tc">' + tc.map(function (m) {
-        return '<option value="' + m + '">Tiêu chí ' + m + '</option>';
-      }).join('') + '</select>' +
+    function o(nhan, ruot) {
+      return '<div><label class="dm-nhan-o">' + nhan + '</label>' + ruot + '</div>';
+    }
+
+    return '<div class="the-thong-bao" style="padding:18px 18px 16px;margin-bottom:14px">' +
+      '<div class="nhan-nho" style="margin-bottom:14px">Thêm một đầu hồ sơ</div>' +
+
+      '<div style="display:grid;gap:14px">' +
+
+      o('Tên hồ sơ',
+        '<input id="dm-ten" class="dm-o-nhap" placeholder="ví dụ: Hồ sơ bán trú" autocomplete="off">') +
+
+      '<div style="display:flex;gap:14px;flex-wrap:wrap">' +
+      o('Xếp vào hộp',
+        '<select id="dm-hop" class="dm-o-nhap">' + HOP.map(function (h) {
+          return '<option value="' + h.id + '">' + thoat(h.ten) + '</option>';
+        }).join('') + '</select>') +
+      o('Minh chứng cho tiêu chí',
+        '<select id="dm-tc" class="dm-o-nhap" style="min-width:132px">' + tc.map(function (m) {
+          return '<option value="' + m + '">Tiêu chí ' + m + '</option>';
+        }).join('') + '</select>') +
       (CO_COT_MOI
-        ? '<select id="dm-tang">' + Object.keys(TANG).map(function (k) {
-            return '<option value="' + k + '"' + (k === 'C' ? ' selected' : '') + '>' + TANG[k].ten + '</option>';
-          }).join('') + '</select>'
+        ? o('Tầng',
+            '<select id="dm-tang" class="dm-o-nhap" style="min-width:210px">' +
+            Object.keys(TANG).map(function (k) {
+              return '<option value="' + k + '"' + (k === 'C' ? ' selected' : '') + '>' +
+                TANG[k].ten + '</option>';
+            }).join('') + '</select>')
         : '') +
       '</div>' +
-      '<input id="dm-pt" placeholder="Người phụ trách — ghi CHỨC VỤ, ví dụ: Phó Hiệu trưởng" style="width:100%">' +
+
+      o('Người phụ trách',
+        '<input id="dm-pt" class="dm-o-nhap" autocomplete="off" ' +
+        'placeholder="ghi chức vụ, ví dụ: Phó Hiệu trưởng">') +
+
       (CO_COT_MOI
-        ? '<input id="dm-cc" placeholder="Căn cứ (nếu có) — ví dụ: TT15/2026 Đ.21.1.e" style="width:100%">'
+        ? o('Căn cứ pháp lý <span style="font-weight:400">(để trống nếu là hồ sơ nội bộ)</span>',
+            '<input id="dm-cc" class="dm-o-nhap" autocomplete="off" ' +
+            'placeholder="ví dụ: TT15/2026 Đ.21.1.e">')
         : '') +
       '</div>' +
-      '<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+
+      '<div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
       '<button class="nut-luu-nd" id="dm-luu-them">Thêm vào danh mục</button>' +
-      '<button class="nut-xoa-nd" id="dm-huy-them">Thôi</button>' +
-      '<span style="font-size:13.2px;color:var(--chu-mo)">Mã hồ sơ do máy đặt theo tiêu chí đã chọn.</span>' +
+      '<button class="nut-phu-nd" id="dm-huy-them">Thôi</button>' +
+      '<span style="font-size:13.2px;color:var(--chu-mo)">' +
+      'Mã hồ sơ do hệ thống đặt theo tiêu chí đã chọn.</span>' +
       '</div></div>';
   }
 
@@ -299,12 +321,13 @@
           '</tr>';
       }).join('') + '</tbody></table></div>' +
       (sua ? '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
-        '<input id="hop-ten-moi" placeholder="Tên hộp mới — ví dụ: Bán trú" style="min-width:220px">' +
-        '<select id="hop-bp-moi">' + BO_PHAN.map(function (b) {
+        '<input id="hop-ten-moi" class="dm-o-nhap" autocomplete="off" ' +
+        'placeholder="Tên hộp mới — ví dụ: Bán trú" style="width:auto;min-width:230px">' +
+        '<select id="hop-bp-moi" class="dm-o-nhap">' + BO_PHAN.map(function (b) {
           return '<option value="' + b.id + '">' + thoat(b.bieu_tuong || '') + ' ' + thoat(b.ten) + '</option>';
         }).join('') + '</select>' +
         '<button class="nut-luu-nd" id="hop-them">+ Thêm hộp</button>' +
-        '<span style="font-size:13.2px;color:var(--chu-mo)">Mã hộp do máy đặt.</span></div>' : '');
+        '<span style="font-size:13.2px;color:var(--chu-mo)">Mã hộp do hệ thống đặt.</span></div>' : '');
 
     var bangBP = '<div class="dau-muc" style="text-align:left;margin:24px 0 8px">' +
       '<div class="nhan-nho">Bộ phận · ' + BO_PHAN.length + '</div></div>' +
@@ -337,10 +360,12 @@
       // lại được bộ phận, mà cũng không thêm được hộp nữa vì ô chọn bộ phận
       // rỗng. Hàm so_tt_bo_phan_tiep_theo() đã có sẵn ở sql/50.
       (sua ? '<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
-        '<input id="bp-icon-moi" placeholder="🗂" maxlength="4" style="width:56px;text-align:center;font-size:18px">' +
-        '<input id="bp-ten-moi" placeholder="Tên bộ phận mới — ví dụ: Bộ phận Bán trú" style="min-width:240px">' +
+        '<input id="bp-icon-moi" class="dm-o-nhap" placeholder="🗂" maxlength="4" ' +
+        'style="width:62px;text-align:center;font-size:18px">' +
+        '<input id="bp-ten-moi" class="dm-o-nhap" autocomplete="off" ' +
+        'placeholder="Tên bộ phận mới — ví dụ: Bộ phận Bán trú" style="width:auto;min-width:250px">' +
         '<button class="nut-luu-nd" id="bp-them">+ Thêm bộ phận</button>' +
-        '<span style="font-size:13.2px;color:var(--chu-mo)">Số thứ tự do máy đặt.</span></div>' : '');
+        '<span style="font-size:13.2px;color:var(--chu-mo)">Số thứ tự do hệ thống đặt.</span></div>' : '');
 
     return bangHop + bangBP +
       '<div class="hd-kiem vang" style="margin-top:16px">' +

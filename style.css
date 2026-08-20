@@ -663,6 +663,42 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 .nut-xoa-nd:hover { background: var(--thieu-nen); }
 .nut-xoa-nd:disabled { opacity: .5; cursor: default; }
 
+/* ── Ô nhập của màn Danh mục hồ sơ ──────────────────────────────────────────
+   Trước đây các ô trong khối "Thêm một đầu hồ sơ" không gắn lớp nào nên rơi
+   về kiểu mặc định của trình duyệt: viền xám mảnh, góc vuông, chữ sát mép —
+   trông y như ô bảng tính. Khuôn dưới đây theo đúng .dh-o-nhap của module
+   Điều hành để cả app nhìn cùng một kiểu. */
+.dm-o-nhap {
+  font: inherit; font-size: 14px; width: 100%; box-sizing: border-box;
+  color: var(--chu); background: #fff;
+  border: 1px solid var(--vien-dam); border-radius: 10px; padding: 10px 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dm-o-nhap::placeholder { color: var(--chu-mo); opacity: .75; }
+.dm-o-nhap:hover { border-color: var(--chinh); }
+.dm-o-nhap:focus {
+  outline: none; border-color: var(--chinh);
+  box-shadow: 0 0 0 3px rgba(51, 65, 143, .12);
+}
+select.dm-o-nhap { width: auto; min-width: 168px; cursor: pointer; }
+
+/* Nhãn nhỏ trên mỗi ô. Chỉ dựa vào placeholder thì gõ xong là mất, người
+   dùng nhìn lại không biết ô ấy hỏi gì. */
+.dm-nhan-o {
+  display: block; font-size: 12.4px; font-weight: 600; letter-spacing: .01em;
+  color: var(--chu-mo); margin: 0 0 5px 2px;
+}
+
+/* Nút phụ: "Thôi", "Huỷ" — việc vô hại, không được mang màu đỏ như nút xoá.
+   Bản đầu dùng .nut-xoa-nd nên nút Thôi hiện ra đỏ viền y như nút nguy hiểm. */
+.nut-phu-nd {
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  color: var(--chu-mo); background: var(--the);
+  border: 1.5px solid var(--vien-dam); border-radius: 8px; padding: 5.5px 13px;
+}
+.nut-phu-nd:hover { background: var(--o-con); color: var(--chu); }
+.nut-phu-nd:disabled { opacity: .5; cursor: default; }
+
 /* ════════════════════════════════════════════════════════════
    MODULE HỒ SƠ kiểu Bạch Liêu (thêm 10/8/2026)
    Lớp phủ chi tiết bộ phận · bảng minh chứng · thẻ bộ phận ·
