@@ -50,26 +50,47 @@
   var MUC = 'hs';       // 'hs' = đầu hồ sơ · 'cau-truc' = hộp và bộ phận
 
   // ══════════ ĐỌC ══════════
+  // 🔴 BA CỘT tang / can_cu / ap_dung CHỈ CÓ Ở TRƯỜNG ĐÃ DÙNG DANH MỤC 2026
+  //    (sql/46 với trường mới, sql/48 với trường di trú). Trường còn ở danh mục
+  //    cũ — như Diễn Liên lúc này — chưa có ba cột đó, và PostgREST trả lỗi
+  //    "column ho_so.tang does not exist" cho CẢ CÂU, mất luôn danh mục.
+  //    Nên hỏi bản đầy đủ trước, trượt thì lùi về bản cơ bản và ẩn hai cột
+  //    Tầng, Căn cứ đi. Màn vẫn dùng được, chỉ thiếu phần chưa có dữ liệu.
+  var COT_CO_BAN = 'ma, ten, nhom_con_id, trang_thai, link_drive, tieu_chi, nguoi_phu_trach, so_tt';
+  var COT_DAY_DU = COT_CO_BAN + ', tang, can_cu, ap_dung';
+  var CO_COT_MOI = true;
+
   function nap(veLai) {
     if (!may()) { LOI = 'chua_ket_noi'; DA_NAP = true; veLai(); return; }
     DANG_TAI = true; DA_NAP = true; LOI = null; veLai();
 
-    Promise.all([
-      may().from('ho_so').select('ma, ten, nhom_con_id, trang_thai, link_drive, tieu_chi, ' +
-                                 'tang, can_cu, ap_dung, nguoi_phu_trach, so_tt').order('ma'),
-      may().from('nhom_con').select('id, ma, ten, so_tt, nhom_id').order('so_tt'),
-      may().from('nhom_ho_so').select('id, so_tt, ten, mo_ta, bieu_tuong').order('so_tt')
-    ]).then(function (r) {
-      DANG_TAI = false;
-      if (r[0].error) throw r[0].error;
-      if (r[1].error) throw r[1].error;
-      DS = r[0].data || [];
-      HOP = r[1].data || [];
-      BO_PHAN = (r[2] && !r[2].error && r[2].data) ? r[2].data : [];
-      veLai();
-    }).catch(function (e) {
-      DANG_TAI = false; LOI = e.message || String(e); veLai();
-    });
+    may().from('ho_so').select(COT_DAY_DU).order('ma')
+      .then(function (r) {
+        if (!r.error) { CO_COT_MOI = true; return r; }
+        // Chỉ lùi khi đúng là thiếu cột. Lỗi khác (mất mạng, hết quyền) thì để
+        // nguyên cho nó nổi lên, đừng che bằng một câu truy vấn khác.
+        if (!/column .* does not exist/i.test(r.error.message || '')) return r;
+        CO_COT_MOI = false;
+        return may().from('ho_so').select(COT_CO_BAN).order('ma');
+      })
+      .then(function (rHoSo) {
+        if (rHoSo.error) throw rHoSo.error;
+        DS = rHoSo.data || [];
+        return Promise.all([
+          may().from('nhom_con').select('id, ma, ten, so_tt, nhom_id').order('so_tt'),
+          may().from('nhom_ho_so').select('id, so_tt, ten, mo_ta, bieu_tuong').order('so_tt')
+        ]);
+      })
+      .then(function (r) {
+        DANG_TAI = false;
+        if (r[0].error) throw r[0].error;
+        HOP = r[0].data || [];
+        BO_PHAN = (r[1] && !r[1].error && r[1].data) ? r[1].data : [];
+        veLai();
+      })
+      .catch(function (e) {
+        DANG_TAI = false; LOI = e.message || String(e); veLai();
+      });
   }
 
   function tenHop(id) {
@@ -102,11 +123,19 @@
     hop.innerHTML =
       '<div class="yc" style="margin-top:14px"><div class="yc-nhan">📋 Danh mục hồ sơ của trường</div>' +
       '<p>Danh mục dựng sẵn theo Điều lệ <b>Thông tư 15/2026</b> là <b>khung gợi ý</b>. ' +
-      'Nhà trường thêm hồ sơ của riêng mình, bỏ những dòng không dùng, sửa tên cho hợp thực tế. ' +
-      'Cột <b>Tầng</b> cho biết dòng nào bỏ được: ' +
-      Object.keys(TANG).map(function (k) {
-        return '<b style="color:' + TANG[k].mau + '">' + k + '</b> ' + demTang[k];
-      }).join(' · ') + '.</p></div>' +
+      'Nhà trường thêm hồ sơ của riêng mình, bỏ những dòng không dùng, sửa tên cho hợp thực tế.' +
+      (CO_COT_MOI
+        ? ' Cột <b>Tầng</b> cho biết dòng nào bỏ được: ' +
+          Object.keys(TANG).map(function (k) {
+            return '<b style="color:' + TANG[k].mau + '">' + k + '</b> ' + demTang[k];
+          }).join(' · ') + '.'
+        : '') + '</p></div>' +
+
+      (CO_COT_MOI ? '' :
+        '<div class="hd-kiem vang" style="margin:0 0 14px">⚠ <b>Trường đang dùng danh mục cũ.</b> ' +
+        'Cột <b>Tầng</b> (A bắt buộc / B minh chứng / C nội bộ) và <b>Căn cứ pháp lý</b> chỉ có ở ' +
+        'danh mục theo Điều lệ Thông tư 15/2026 — chuyển sang danh mục mới thì hai cột đó tự hiện. ' +
+        'Mọi việc thêm, sửa tên, gỡ hồ sơ dưới đây vẫn dùng bình thường.</div>') +
 
       '<div class="chip-hang" style="margin:0 0 14px">' +
       [{ ma: 'hs', ten: '📄 Đầu hồ sơ (' + DS.length + ')' },
@@ -153,12 +182,16 @@
       '<select id="dm-tc">' + tc.map(function (m) {
         return '<option value="' + m + '">Tiêu chí ' + m + '</option>';
       }).join('') + '</select>' +
-      '<select id="dm-tang">' + Object.keys(TANG).map(function (k) {
-        return '<option value="' + k + '"' + (k === 'C' ? ' selected' : '') + '>' + TANG[k].ten + '</option>';
-      }).join('') + '</select>' +
+      (CO_COT_MOI
+        ? '<select id="dm-tang">' + Object.keys(TANG).map(function (k) {
+            return '<option value="' + k + '"' + (k === 'C' ? ' selected' : '') + '>' + TANG[k].ten + '</option>';
+          }).join('') + '</select>'
+        : '') +
       '</div>' +
       '<input id="dm-pt" placeholder="Người phụ trách — ghi CHỨC VỤ, ví dụ: Phó Hiệu trưởng" style="width:100%">' +
-      '<input id="dm-cc" placeholder="Căn cứ (nếu có) — ví dụ: TT15/2026 Đ.21.1.e" style="width:100%">' +
+      (CO_COT_MOI
+        ? '<input id="dm-cc" placeholder="Căn cứ (nếu có) — ví dụ: TT15/2026 Đ.21.1.e" style="width:100%">'
+        : '') +
       '</div>' +
       '<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
       '<button class="nut-luu-nd" id="dm-luu-them">Thêm vào danh mục</button>' +
@@ -176,7 +209,7 @@
 
     return '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th style="width:104px">Mã</th><th>Tên hồ sơ</th><th>Hộp</th>' +
-      '<th style="text-align:center">Tầng</th><th>Căn cứ</th>' +
+      (CO_COT_MOI ? '<th style="text-align:center">Tầng</th><th>Căn cứ</th>' : '') +
       '<th style="text-align:center">Link</th>' + (sua ? '<th></th>' : '') +
       '</tr></thead><tbody>' +
       ds.map(function (h) {
@@ -191,13 +224,15 @@
             ? '<br><small style="color:var(--chu-mo)">áp dụng: ' + thoat(h.ap_dung) + '</small>'
             : '') + '</td>' +
           '<td style="font-size:13px">' + thoat(tenHop(h.nhom_con_id)) + '</td>' +
-          '<td style="text-align:center">' + (sua
-            ? '<select class="dm-o" data-dm-tang="' + thoat(h.ma) + '">' +
-              Object.keys(TANG).map(function (k) {
-                return '<option value="' + k + '"' + (h.tang === k ? ' selected' : '') + '>' + k + '</option>';
-              }).join('') + '</select>'
-            : '<b style="color:' + (t.mau || 'var(--chu-mo)') + '">' + thoat(h.tang || '—') + '</b>') + '</td>' +
-          '<td style="font-size:12.6px;color:var(--chu-mo)">' + thoat(h.can_cu || '—') + '</td>' +
+          (CO_COT_MOI
+            ? '<td style="text-align:center">' + (sua
+                ? '<select class="dm-o" data-dm-tang="' + thoat(h.ma) + '">' +
+                  Object.keys(TANG).map(function (k) {
+                    return '<option value="' + k + '"' + (h.tang === k ? ' selected' : '') + '>' + k + '</option>';
+                  }).join('') + '</select>'
+                : '<b style="color:' + (t.mau || 'var(--chu-mo)') + '">' + thoat(h.tang || '—') + '</b>') + '</td>' +
+              '<td style="font-size:12.6px;color:var(--chu-mo)">' + thoat(h.can_cu || '—') + '</td>'
+            : '') +
           '<td style="text-align:center">' + (h.link_drive
             ? '<a href="' + thoat(h.link_drive) + '" target="_blank" rel="noopener" title="Mở thư mục">📂</a>'
             : '<span style="color:var(--chu-mo)">—</span>') + '</td>' +
@@ -357,22 +392,32 @@
     if (!ten) { window.hopHoi('Chưa đặt tên cho hồ sơ.'); return; }
     var hopId = +goc.querySelector('#dm-hop').value;
     var tc = goc.querySelector('#dm-tc').value;
-    var tang = goc.querySelector('#dm-tang').value;
+    // Hai ô này chỉ dựng khi trường đã có ba cột mới — querySelector trả null
+    // ở trường còn danh mục cũ, đọc .value thẳng là vỡ ngay tại đây.
+    var oTang = goc.querySelector('#dm-tang');
+    var oCc = goc.querySelector('#dm-cc');
+    var tang = oTang ? oTang.value : 'C';
+    var cc = oCc ? oCc.value.trim() : '';
     var pt = goc.querySelector('#dm-pt').value.trim();
-    var cc = goc.querySelector('#dm-cc').value.trim();
 
     nut.disabled = true;
     // Mã do máy cấp — lấy số còn trống nhỏ nhất trong tiêu chí đã chọn.
     may().rpc('ma_ho_so_tiep_theo', { p_tieu_chi: tc })
       .then(function (r) {
         if (r.error) throw r.error;
-        return may().from('ho_so').insert({
+        var ban = {
           nhom_con_id: hopId, ma: r.data, ten: ten,
           nguoi_phu_trach: pt || null, trang_thai: 'chua',
-          tieu_chi: [tc], tang: tang, can_cu: cc || null,
-          ap_dung: 'Trường tự thêm',
-          so_tt: DS.length + 1
-        }).select().maybeSingle();
+          tieu_chi: [tc], so_tt: DS.length + 1
+        };
+        // Trường còn ở danh mục cũ chưa có ba cột này — gửi lên là lỗi
+        // "column does not exist", mà lỗi đó xảy ra sau khi đã cấp mã.
+        if (CO_COT_MOI) {
+          ban.tang = tang;
+          ban.can_cu = cc || null;
+          ban.ap_dung = 'Trường tự thêm';
+        }
+        return may().from('ho_so').insert(ban).select().maybeSingle();
       })
       .then(function (r) {
         nut.disabled = false;
