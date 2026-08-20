@@ -336,9 +336,25 @@
   window.CAU_HINH_SAN_SANG.then(function (trangThai) {
     if (trangThai === 'chua-biet') { veManKhaiMa(); return; }
     if (trangThai === 'loi') { veManLoiTai(); return; }
-    if (trangThai === 'xem-thu') {
-      // Thêm đường về cổng vào băng xem thử. Không có nó thì người xem thử mắc
-      // kẹt trong bản mẫu, phải tự sửa địa chỉ mới ra được.
+    // ── ĐƯỜNG LÙI trên băng xem thử ────────────────────────────────────────
+    // Băng vàng hiện ra ở HAI hoàn cảnh khác nhau, và cả hai đều cần lối ra:
+    //   · 'xem-thu'  → bản mẫu, chưa biết trường nào
+    //   · 'da-biet' mà trường CHƯA NỐI CSDL → đã nhận ra trường (mã hoặc mã đã
+    //     nhớ), nhưng trường còn đang cài đặt nên không có hộp đăng nhập.
+    //
+    // 🔴 Bản đầu chỉ xét 'xem-thu' nên hoàn cảnh thứ hai thành NGÕ CỤT: máy nhớ
+    //    mã trường đang cài đặt, mở địa chỉ dùng chung là vào thẳng trường đó,
+    //    băng vàng không có lối ra, hộp đăng nhập cũng không có (chưa nối CSDL
+    //    thì supabase-ket-noi.js chỉ hiện "Trường đang trong quá trình cài đặt"
+    //    — mà đường lùi lại nằm trong chân hộp cổng ấy). Kẹt vĩnh viễn, đúng
+    //    cái đã lường trước ở chanCong() nhưng hàng rào không phủ tới.
+    //    Gặp thật 21/8/2026: mở quantrisotruonghoc.com ra Hưng Đông.
+    //
+    // Trường có TÊN MIỀN RIÊNG thì KHÔNG bày — thầy cô ở đúng nhà mình, hỏi
+    // "có phải trường của thầy cô không" là vô duyên. Giống hệt luật ở chanCong().
+    var canLui = (trangThai === 'xem-thu') ||
+                 (trangThai === 'da-biet' && !window.DA_NOI && window.THEO_TEN_MIEN !== true);
+    if (canLui) {
       var b = document.getElementById('bang-xem-thu');
       if (b) b.innerHTML += ' · <a href="' + thoat(location.pathname) + '?doitruong=1">↩ Về cổng đăng nhập</a>';
     }
