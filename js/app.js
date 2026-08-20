@@ -126,13 +126,11 @@
     var link = (hs && hs.link_drive) || h.link || '';
     var suaDuoc = window.coQuyenSuaHoSo ? window.coQuyenSuaHoSo(h.ma) : false;
     return '<tr data-ma="' + thoatHTML(h.ma) + '">' +
-      '<td class="code">' + thoatHTML(h.ma) +
-      // Dòng nhỏ dưới mã: mã trong danh mục cũ, để đối chiếu với hồ sơ giấy
-      // đang lưu. Hồ sơ mới lập theo TT57 thì chưa có mã cũ — hiện dấu gạch
-      // cho gọn, đừng ghi chữ kẻo cột đọc ra như bảng chuyển mã.
-      (h.maCu
-        ? '<span class="ma-cu" title="Mã theo danh mục cũ, dùng đối chiếu hồ sơ giấy">' + thoatHTML(h.maCu) + '</span>'
-        : '<span class="ma-cu ma-moi" title="Hồ sơ mới lập theo Thông tư 57 — chưa có trong danh mục cũ">—</span>') + '</td>' +
+      // KHÔNG bày mã cũ dưới mã mới nữa — thầy Chung bỏ 21/8/2026: danh mục đã
+      // chuyển hẳn sang mã TT57, bày hai mã đọc ra như bảng chuyển mã. Dữ liệu
+      // ma_cu vẫn GIỮ trong CSDL (di trú sql/47-48 và đối chiếu hồ sơ giấy cần)
+      // và ô tìm kiếm vẫn tìm ra theo mã cũ — chỉ thôi hiển thị.
+      '<td class="code">' + thoatHTML(h.ma) + '</td>' +
       '<td class="rname">' + thoatHTML(h.ten) +
       (hienHop ? '<span class="hop-phu">' + thoatHTML(window.HOP[h.hop].ten) + '</span>' : '') +
       '<span class="crits">' + (h.tc || []).map(function (c) {
@@ -319,7 +317,11 @@
       return '<button type="button" class="muc" data-i="' + idx + '">' +
         '<span class="ma">' + toDam(g.h.ma, kw) + '</span>' +
         '<span class="ten">' + toDam(g.h.ten, kw) +
-        '<span class="phu">' + thoatHTML(hop.ten || '') + (g.h.maCu ? ' · mã cũ ' + toDam(g.h.maCu, kw) : '') + '</span></span></button>';
+        // Mã cũ đã bỏ khỏi màn hình (21/8/2026) — CHỈ còn nhắc ở đây khi chính
+        // từ khóa đang gõ khớp mã cũ, để người tìm bằng mã cũ hiểu vì sao trúng.
+        '<span class="phu">' + thoatHTML(hop.ten || '') +
+        (g.h.maCu && boDau(g.h.maCu).indexOf(k) >= 0 ? ' · mã cũ ' + toDam(g.h.maCu, kw) : '') +
+        '</span></span></button>';
     }).join('');
     xo.classList.add('hien');
     $$('.muc', xo).forEach(function (nut) {
