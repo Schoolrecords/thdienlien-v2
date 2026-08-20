@@ -192,57 +192,20 @@
   }
 
   // ══════════ MÀN 2 · ĐỐI SÁNH CHẤT LƯỢNG ══════════
+  // ĐÃ NỐI DỮ LIỆU THẬT (20/8/2026) — khác ba màn còn lại của tệp này. Mã ở
+  // js/dbcl-doi-sanh.js, số liệu do sql/42 tính từ kết quả học sinh đã nhập.
+  // Trọng tâm là so sánh giữa các địa điểm theo CV 5555 PL II mục V.3–V.4:
+  // chỉ ra nơi thấp hơn mặt bằng chung để nhà trường biết chỗ nào cần ưu tiên.
+  //
+  // Phần "Đã cam kết ↔ Kết quả thật" của bản mẫu cũ TẠM GỠ: chỉ tiêu cam kết
+  // chưa có bảng dữ liệu nào giữ (màn Chuẩn đầu ra vẫn là số mẫu), nên cột
+  // "Đã cam kết" chỉ có thể là số bịa. Bày một con số bịa cạnh một con số
+  // thật là cách chắc chắn nhất để nhà trường tin nhầm.
   function veDoiSanh() {
-    var mauMau = [
-      { mon: 'Toán',        ck: 45, tt: 47 },
-      { mon: 'Tiếng Việt',  ck: 42, tt: 39 },
-      { mon: 'Ngoại ngữ',   ck: 38, tt: 30 },
-      { mon: 'Đạo đức',     ck: 55, tt: 58 }
-    ];
-
-    return bangMau('Màn này cần dữ liệu kết quả học sinh. Hiện <b>chưa nạp danh sách học sinh</b> ' +
-      'nên bảng dưới chỉ minh hoạ cách trình bày.') +
-
-      '<div class="dau-muc" style="text-align:left;margin:6px 0 4px">' +
-      '<div class="nhan-nho">Mốc đối sánh trong năm học</div></div>' +
-      '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:2px">' +
-      // Không nêu đích danh một tỉnh: trường tỉnh khác sẽ đọc thấy khung của
-      // tỉnh không phải của mình. Đọc cơ quan quản lý ngành từ cấu hình.
-      'Ba mốc 30/9 · 30/01 · 30/7 theo khung của ' +
-      ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành') +
-      ', cộng mốc 15/6 là hạn phê duyệt tự đánh giá ' +
-      'của Thông tư 57. Các mốc này để ở phần cấu hình — Sở ban hành văn bản mới thì sửa cấu hình, ' +
-      'không phải sửa chương trình.</div>' +
-      chipHang(MOC, MOC_CHON, 'moc') +
-      '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin:-6px 0 14px">' +
-      thoat((MOC.filter(function (m) { return m.ma === MOC_CHON; })[0] || {}).mo || '') + '</div>' +
-
-      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-      '<th>Môn học</th><th>Đã cam kết</th><th>Kết quả thật</th><th>Chênh lệch</th><th>Kết luận</th>' +
-      '</tr></thead><tbody>' +
-      mauMau.map(function (r) {
-        var lech = r.tt - r.ck;
-        var mau = lech >= 0 ? 'var(--ok)' : 'var(--thieu)';
-        return '<tr><td><b>' + thoat(r.mon) + '</b></td>' +
-          '<td style="text-align:center">≥ ' + r.ck + '%</td>' +
-          '<td style="text-align:center">' + r.tt + '%</td>' +
-          '<td style="text-align:center;color:' + mau + ';font-weight:800">' +
-          (lech >= 0 ? '+' : '') + lech + '</td>' +
-          '<td style="color:' + mau + ';font-weight:700">' +
-          (lech >= 0 ? '✔ Đạt cam kết' : '✘ Hụt — đưa vào Biểu 2') + '</td></tr>';
-      }).join('') + '</tbody></table></div>' +
-
-      '<div class="the-thong-bao" style="margin-top:18px">' +
-      '<p style="font-size:14.5px"><b>Vì sao màn này quan trọng nhất</b></p>' +
-      '<p style="font-size:14px;color:var(--chu-mo);margin-top:6px">' +
-      'Đây là chỗ nối Đảm bảo chất lượng với Trường chuẩn Quốc gia. Môn nào <b>hụt cam kết</b> sẽ ' +
-      'tự đề xuất thành một dòng trong <b>Kế hoạch cải tiến (Biểu 2)</b> — cùng một bảng dữ liệu ' +
-      'với module Trường chuẩn Quốc gia. Nhờ vậy nhà trường làm một lần, dùng được cho cả hai việc, ' +
-      'thay vì làm hai bản rời nhau như trước.</p>' +
-      '<p style="font-size:14px;color:var(--chu-mo);margin-top:8px">' +
-      '⚠️ Màn này <b>không có ô nhập điểm nào</b>. Toàn bộ kết quả lấy từ module Quản lý học sinh ' +
-      '— một số liệu chỉ nhập ở một nơi.</p>' +
-      '</div>';
+    if (!window.DBCL_DOI_SANH) {
+      return bangMau('Chưa nạp được phần đối sánh.');
+    }
+    return window.DBCL_DOI_SANH.ve(window.veDBCL);
   }
 
   // ══════════ MÀN 3 · ĐIỀU KIỆN BẢO ĐẢM ══════════
@@ -378,6 +341,14 @@
     Array.prototype.slice.call(than.querySelectorAll('[data-moc]')).forEach(function (b) {
       b.addEventListener('click', function () { MOC_CHON = b.getAttribute('data-moc'); window.veDBCL(); });
     });
+
+    // Màn Đối sánh làm việc với dữ liệu thật nên tự nối lấy nút của mình, và
+    // lần đầu mở thẻ thì phải gọi nạp. Nạp xong nó gọi lại window.veDBCL —
+    // lúc đó daTai() đã true nên không gọi vòng thứ hai.
+    if (TAB === 'ds' && window.DBCL_DOI_SANH) {
+      window.DBCL_DOI_SANH.noiSuKien(than, window.veDBCL);
+      if (!window.DBCL_DOI_SANH.daTai()) window.DBCL_DOI_SANH.nap(window.veDBCL);
+    }
   };
 
   if (document.readyState === 'loading') {

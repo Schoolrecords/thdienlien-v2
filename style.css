@@ -2848,3 +2848,13 @@ textarea.ht-o { min-height: 116px; display: block; }
    đang chạy thật; ở đây giới hạn trong .cs-muc nên không ảnh hưởng chỗ khác. */
 .cs-muc .pick.dat.on { background: var(--ok); border-color: var(--ok); color: #fff; }
 .cs-muc .pick.khong.on { background: var(--thieu); border-color: var(--thieu); color: #fff; }
+
+/* Đối sánh chất lượng giữa các địa điểm (js/dbcl-doi-sanh.js, 20/8/2026) */
+.ds-ds { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.ds-the { border: 1px solid var(--vien); border-radius: 11px; padding: 11px 13px; background: var(--the); }
+.ds-dau { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ds-dau b { font-size: 14.8px; }
+.ds-so { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 7px; font-size: 13.4px; color: var(--chu-mo); }
+.ds-so b { color: var(--dam); font-size: 15px; }
+.ds-ht { margin-top: 7px; font-size: 13.6px; padding-top: 7px; border-top: 1px dashed var(--vien-dam); }
+@media (min-width: 760px) { .ds-ds { grid-template-columns: 1fr 1fr; } }
