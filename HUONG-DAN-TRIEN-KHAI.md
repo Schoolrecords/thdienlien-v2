@@ -1,5 +1,10 @@
 # HƯỚNG DẪN TRIỂN KHAI — thdienlien-v2
 
+> ⚠️ **CẬP NHẬT 22/8/2026 — thầy Chung bỏ hẳn tên miền `tieuhocdienlien.com`.**
+> Địa chỉ chính thức nay là **https://dienlien.quantrisotruonghoc.com** (mỗi trường một
+> tên miền con của cổng chung). Các đoạn dưới đây nhắc `tieuhocdienlien.com` là lịch sử
+> triển khai cũ, giữ để tra ngược; đừng làm theo cho trường mới.
+
 > Dành cho thầy Chung. Toàn bộ 0 đồng, không cần thẻ ngân hàng. Khoảng 30 phút.
 > Chưa làm các bước dưới thì trang vẫn chạy **chế độ xem thử** với dữ liệu mẫu — dùng để duyệt giao diện.
 

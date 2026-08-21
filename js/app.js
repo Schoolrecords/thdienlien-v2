@@ -521,7 +521,7 @@
     // ⛔ ĐÃ GỠ Ô CHỌN TRƯỜNG khỏi băng xem thử (19/8/2026).
     //    Ô đó là một <select> liệt kê TÊN MỌI TRƯỜNG đang dùng app. Chốt cũ
     //    chỉ giấu nó trên cổng chung, tưởng thế là đủ — không đủ:
-    //    mở https://tieuhocdienlien.com/?truong=11217 là trang tự mở khóa
+    //    mở trang của một trường kèm ?truong=11217 là trang tự mở khóa
     //    (trường đó chưa nối CSDL nên DA_NOI=false) và bày ra ô chọn có đủ
     //    "Trường Tiểu học Diễn Liên" và "Trường Tiểu học Châu Đình". Ai cũng
     //    làm được, không cần biết gì trước; mã trường của Sở là 5 chữ số và

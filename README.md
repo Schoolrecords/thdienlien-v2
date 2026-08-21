@@ -1,6 +1,6 @@
 # Quản trị số v2 — Trường Tiểu học Diễn Liên
 
-🔗 **https://tieuhocdienlien.com**
+🔗 **https://dienlien.quantrisotruonghoc.com**
 
 Hệ thống Quản trị số nhà trường theo **Thông tư 57/2026/TT-BGDĐT**, gồm 3 module:
 
