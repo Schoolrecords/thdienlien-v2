@@ -398,7 +398,7 @@ window.CAU_HINH.DA_NOI = false;
             // Nhớ cấu hình dưới khóa của CHÍNH mã vừa ghi. Không có dòng này
             // thì truongVuaDung() tra 'ma_' + ma_truong (mã CHÍNH THỨC, ví dụ
             // 'dienlien') mà bản nhớ lại nằm ở khóa theo TÊN TỆP đã tải (ví dụ
-            // 'ma_11819') → lối tắt mất tên trường ở đường vào phổ biến nhất
+            // 'ma_12345') → lối tắt mất tên trường ở đường vào phổ biến nhất
             // (tên miền riêng).
             ghiNho('ma_' + saChMa(window.CAU_HINH.MA), o);
           }
