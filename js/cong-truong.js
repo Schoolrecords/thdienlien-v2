@@ -75,11 +75,12 @@
       // app vào đây là tự quảng bá trường đó trên màn hình dùng chung.
       '<input class="cong-o" id="o-ma-truong" type="text" autocomplete="off" ' +
       'spellcheck="false" placeholder="Ví dụ: 12345" value="' + thoat(maCu) + '">' +
-      // Từ 21/8/2026 kho cấu hình có ĐỦ 513 trường tiểu học trong danh bạ của
-      // Sở — trường nào gõ mã 5 chữ số của Sở cũng thấy đúng tên trường mình,
-      // nên câu mách chỉ thẳng vào mã đó (mã CSDL ngành và mã ngắn vẫn nhận).
-      '<div class="cong-mach">Mã trường là mã 5 chữ số của trường trong danh bạ ' +
-      'trường học của Sở GD&amp;ĐT (mã vẫn dùng khi báo cáo với Sở).</div>' +
+      // Câu chữ thầy Chung chốt 21/8/2026: nói mã do ADMIN CẤP KHI ĐĂNG KÝ,
+      // KHÔNG nói đây là mã Sở — kho cấu hình tuy có đủ 513 trường (gõ mã Sở
+      // nào cũng vào được) nhưng màn hình không quảng bá điều đó, để trường
+      // mới đi qua đường đăng ký. Đừng "sửa lại cho chính xác kỹ thuật".
+      '<div class="cong-mach">Mã trường là mã 5 chữ số được cấp cho trường ' +
+      'sau khi đăng ký với Admin.</div>' +
       '</div>' +
       (loi ? '<div class="hop-loi khoa">' + thoat(loi) + '</div>' : '') +
       '<button class="nut-google cong-chinh" id="nut-vao">Vào hệ thống</button>' +

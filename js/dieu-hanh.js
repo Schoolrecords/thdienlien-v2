@@ -21,6 +21,21 @@
   function $(s, p) { return (p || document).querySelector(s); }
   function thoat(s) { return window.thoatHTML ? window.thoatHTML(s) : String(s || ''); }
 
+  // ── Liên kết mở APP NGOÀI (Thời khóa biểu) ──────────────────────────────
+  //   · Máy tính   → TAB MỚI, giữ nguyên màn đang làm.
+  //   · Điện thoại → NGAY TRONG tab này. Mở tab mới trên điện thoại thì nút
+  //     lùi của trình duyệt thành nút chết (tab mới không có lịch sử) — thầy
+  //     cô sang TKB xong không có đường quay lại Quản trị số, tưởng phải thoát
+  //     trình duyệt (thầy Chung gặp trên iPhone 21/8/2026). Cùng tab thì nút
+  //     lùi / vuốt cạnh màn hình đưa về đúng màn đang làm.
+  //   Mốc 900px lấy theo .chi-dien-thoai trong style.css — đổi bên đó thì đổi
+  //   cả đây. Gọi LÚC VẼ chứ không tính sẵn một lần: xoay ngang máy tính bảng
+  //   giữa chừng vẫn ra đúng kiểu mở.
+  function thuocMoNgoai() {
+    var dienThoai = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+    return dienThoai ? '' : ' target="_blank" rel="noopener"';
+  }
+
   // ── Ngày giờ (giờ máy người dùng — Việt Nam UTC+7) ──
   function pad2(n) { return String(n).padStart(2, '0'); }
   function homNayISO() {
@@ -635,7 +650,7 @@
       (ds.length > 3 ? ' và ' + (ds.length - 3) + ' người nữa' : '') +
       '<span>Bấm để sang app Thời khóa biểu bố trí dạy thay — danh sách này được ' +
       'chuyển sẵn, không phải khai lại.</span></div>' +
-      '<a class="nut" href="' + thoat(urlDayThay()) + '" target="_blank" rel="noopener">' +
+      '<a class="nut" href="' + thoat(urlDayThay()) + '"' + thuocMoNgoai() + '>' +
       '👨‍🏫 Bố trí dạy thay ↗</a></div>';
   }
   function tinh() {
@@ -1997,7 +2012,7 @@
       '<div class="hd-kiem vang" style="margin-top:0">Bố trí dạy thay làm ở <b>app Thời khóa biểu</b> — ' +
       'app đó có thời khóa biểu nên tự đưa ra phương án để Hiệu trưởng chọn. ' +
       'Người vắng khai bên này được <b>chuyển sang tự động</b>, không phải khai lại. ' +
-      '<a href="' + thoat(url) + '" target="_blank" rel="noopener">mở app Thời khóa biểu ↗</a></div>';
+      '<a href="' + thoat(url) + '"' + thuocMoNgoai() + '>mở app Thời khóa biểu ↗</a></div>';
   }
 
   // ════════════════════════════════════════════════════════════
@@ -2341,7 +2356,7 @@
         // tab mới theo thói quen, và trình đọc màn hình đọc đúng là liên kết.
         if (m.ngoai) {
           return '<a class="dh-tab-nut dh-tab-ngoai" href="' + thoat(m.ngoai) +
-            '" target="_blank" rel="noopener">' + thoat(m.ten) + '</a>';
+            '"' + thuocMoNgoai() + '>' + thoat(m.ten) + '</a>';
         }
         return '<button class="dh-tab-nut' + (TAB === m.ma ? ' on' : '') +
           '" onclick="DH.tab(\'' + m.ma + '\')">' + thoat(m.ten) +
@@ -2371,7 +2386,9 @@
       moiMuc().filter(function (m) { return TAB_MOBILE.indexOf(m.ma) < 0; }).map(function (m) {
         var d = demCho(m.ma);
         if (m.ngoai) {
-          return '<a class="chip-loc" href="' + thoat(m.ngoai) + '" target="_blank" rel="noopener">' +
+          // Hàng chip này CHỈ hiện trên điện thoại → thuocMoNgoai() gần như
+          // luôn trả '' (cùng tab) — vẫn gọi hàm cho một luật ở một chỗ.
+          return '<a class="chip-loc" href="' + thoat(m.ngoai) + '"' + thuocMoNgoai() + '>' +
             m.bi + ' ' + thoat(m.ten) + '</a>';
         }
         return '<button class="chip-loc' + (TAB === m.ma ? ' on' : '') +
