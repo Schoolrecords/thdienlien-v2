@@ -1,0 +1,13 @@
+{
+  "_doc": "Bản khai cho Android/Chrome lấy đúng LOGO khi 'Thêm vào Màn hình chính' — không có tệp này Chrome vẽ ô chữ cái đầu tiêu đề (chữ Q). ⚠️ Tên phải TRUNG TÍNH, không mang tên trường nào: một manifest phục vụ cả cổng chung lẫn mọi tên miền trường. display để 'browser' cho trang mở như trang web thường — đổi 'standalone' là mất thanh địa chỉ và nút lùi của trình duyệt.",
+  "name": "Hệ thống Quản trị số Trường học",
+  "short_name": "Quản trị số",
+  "start_url": ".",
+  "display": "browser",
+  "background_color": "#062d72",
+  "theme_color": "#062d72",
+  "icons": [
+    { "src": "img/bieu-tuong.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "img/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

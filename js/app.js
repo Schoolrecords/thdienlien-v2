@@ -450,10 +450,25 @@
       e.onerror = function () { this.onerror = null; this.src = LOGO_CHUNG; };
       e.src = anh;
     });
-    ['icon', 'apple-touch-icon'].forEach(function (r) {
-      var l = document.querySelector('link[rel="' + r + '"]');
-      if (l) l.href = anh;
-    });
+    // Biểu tượng thẻ + biểu tượng "Thêm vào MH chính":
+    // 🔴 KHÔNG gán bừa `anh` vào <link> như <img>: thẻ <link> KHÔNG có onerror,
+    //    và apple-touch-icon iOS CHỈ nhận PNG. Bản trước gán thẳng nên:
+    //      · bản xem thử/cổng chung → anh là SVG → iOS bỏ qua → icon trên màn
+    //        hình chính rơi về CHỮ CÁI ĐẦU tiêu đề — chữ "Q" (thầy Chung gặp
+    //        trên iPhone 21/8/2026);
+    //      · trường chưa gửi logo (img/<mã>/logo.png chưa có) → 404 → y hệt.
+    //    Nay: giữ nguyên bộ mặc định của index.html (he-thong.svg + PNG
+    //    bieu-tuong.png); CHỈ khi logo PNG của trường TẢI ĐƯỢC THẬT mới thay.
+    if (!laTrungTinh) {
+      var thuLogo = new Image();
+      thuLogo.onload = function () {
+        ['icon', 'apple-touch-icon'].forEach(function (r) {
+          var l = document.querySelector('link[rel="' + r + '"]');
+          if (l) l.href = anh;   // anh lúc này là …/logo.png — PNG, đã tải được
+        });
+      };
+      thuLogo.src = anh;
+    }
 
     // Ảnh nền dải đầu trang chủ — LỚP TRÊN của hai lớp nền (xem .hero .anh
     // trong style.css). Đặt 'none' thì lộ ra lớp dưới là hình vẽ dùng chung
