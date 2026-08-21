@@ -88,6 +88,9 @@
       '<div class="cong-ngan"><span>Trường chưa có tài khoản?</span></div>' +
       '<button class="nut-phu" id="nut-xem-thu">👁 Xem thử hệ thống</button>' +
       '<button class="nut-phu" id="nut-dang-ky">✍ Đăng ký sử dụng</button>' +
+      // Trang tĩnh huong-dan.html — thầy Chung đặt ở màn khai mã 22/8/2026.
+      // Đi CÙNG tab: là trang thường nên nút lùi của trình duyệt tự quay về.
+      '<button class="nut-phu" id="nut-huong-dan">📖 Hướng dẫn sử dụng</button>' +
       chanCong();
 
     var o = document.getElementById('o-ma-truong');
@@ -142,6 +145,9 @@
     });
     document.getElementById('nut-dang-ky').addEventListener('click', function () {
       veManDangKy();
+    });
+    document.getElementById('nut-huong-dan').addEventListener('click', function () {
+      location.href = 'huong-dan.html';
     });
     o.focus();
   }

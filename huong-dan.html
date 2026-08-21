@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn sử dụng — Hệ thống Quản trị số Trường học</title>
+<link rel="icon" href="img/he-thong.svg">
+<meta name="theme-color" content="#062d72">
+<!-- ⚠️ TRANG CÔNG KHAI DÙNG CHUNG cho mọi trường — như index.html, KHÔNG được
+     nêu tên một trường cụ thể nào (kể cả trong ví dụ). Bản đầy đủ dạng Word để
+     gửi Zalo nằm ở repo tài liệu: quan-tri/HUONG-DAN-SU-DUNG-CHO-TRUONG.doc —
+     sửa nội dung thì sửa CẢ HAI cho khớp. -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background: #eef1f6; color: #1c2b46; line-height: 1.6; }
+  .dau { background: #062d72; color: #fff; padding: 18px 16px 16px; }
+  .dau .khung { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .dau img { width: 44px; height: 44px; }
+  .dau h1 { font-size: 1.15rem; line-height: 1.3; }
+  .dau small { opacity: .85; display: block; font-weight: normal; }
+  main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
+  h2 { color: #062d72; font-size: 1.08rem; margin: 26px 0 8px; padding-bottom: 4px;
+       border-bottom: 2px solid #c9d4ea; }
+  h3 { font-size: 1rem; margin: 14px 0 6px; }
+  p, li { margin-bottom: 6px; }
+  ol, ul { padding-left: 22px; margin-bottom: 8px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; background: #fff;
+          font-size: .95rem; }
+  th, td { border: 1px solid #b9c4d8; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #e3e9f5; }
+  .khung-cuon { overflow-x: auto; }
+  .nut { display: inline-block; border: 1px solid #97a6c4; background: #f0f2f6;
+         padding: 0 6px; border-radius: 4px; white-space: nowrap; font-size: .92em; }
+  .ma { font-family: Consolas, Menlo, monospace; font-size: .95em; background: #edf0f7;
+        padding: 0 4px; border-radius: 3px; }
+  .diemdung { border: 1px solid #2c7a39; background: #eef7ef; border-radius: 8px;
+              padding: 10px 12px; margin: 10px 0; }
+  .luuy { border: 1px solid #8b93a5; background: #f4f5f8; border-radius: 8px;
+          padding: 10px 12px; margin: 10px 0; }
+  .the { background: #fff; border: 1px solid #d3dae8; border-radius: 10px;
+         padding: 12px 14px; margin: 10px 0; }
+  a { color: #0b4bb3; }
+  .ve-cong { display: inline-block; margin-top: 18px; background: #062d72; color: #fff;
+             padding: 10px 18px; border-radius: 8px; text-decoration: none; }
+  footer { text-align: center; color: #5a6478; font-size: .85rem; padding: 0 16px 30px; }
+</style>
+</head>
+<body>
+
+<div class="dau"><div class="khung">
+  <img src="img/he-thong.svg" alt="">
+  <h1>Hướng dẫn sử dụng<small>Hệ thống Quản trị số Trường học</small></h1>
+</div></div>
+
+<main>
+
+<p><b>Tài liệu này dành cho:</b> Ban giám hiệu và thầy cô các trường tiểu học muốn xem
+hệ thống, dùng thử với chính tên trường mình và đăng ký sử dụng chính thức.
+Mỗi trường có một <b>mã trường 5 chữ số</b> do người phụ trách hệ thống cấp —
+gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường của mình.</p>
+
+<h2>I. Hệ thống làm được gì</h2>
+<div class="khung-cuon"><table>
+<tr><th style="width:30%">Khối việc</th><th>Nội dung</th></tr>
+<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng điện tử của toàn trường: hồ sơ chia theo
+bộ phận và hộp hồ sơ, mỗi đầu hồ sơ gắn một thư mục Google Drive chứa file minh chứng.
+Danh mục dựng sẵn theo Điều lệ trường tiểu học mới (2026) — nhà trường <b>tự thêm, sửa,
+xoá</b> được cho khớp thực tế trường mình.</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>Tự đánh giá 4 tiêu chuẩn, 15 tiêu chí, 2 mức độ;
+hội đồng tự đánh giá; tự tổng hợp Biểu 1, Biểu 2 và xuất báo cáo ra Word đúng thể thức
+Nghị định 30/2020/NĐ-CP.</td></tr>
+<tr><td><b>Đảm bảo chất lượng</b></td><td>Chu trình PDCA; chỉ tiêu chất lượng theo Thông tư
+27/2020 (có nút chép chỉ tiêu năm trước); màn Cơ sở vật chất theo dõi phòng học, thiết bị
+theo từng điểm trường.</td></tr>
+</table></div>
+<p>Ngoài ra có màn <b>Điều hành</b> (lịch tuần, phân công, dự giờ…), <b>Quản lý học sinh</b>
+theo năm học và từng điểm trường, <b>Hồ sơ CBGV–NV</b>. Mỗi trường một cơ sở dữ liệu
+<b>riêng biệt</b> — trường này không nhìn thấy dữ liệu của trường khác. Đăng nhập bằng
+Gmail sẵn có, việc xác thực do Google thực hiện, dữ liệu cá nhân được bảo vệ theo
+Luật Bảo vệ dữ liệu cá nhân năm 2025. Hệ thống hỗ trợ đầy đủ <b>trường nhiều điểm
+trường sau sáp nhập</b>.</p>
+
+<h2>II. Vào hệ thống lần đầu bằng mã trường</h2>
+<ol>
+<li>Mở trình duyệt (máy tính hoặc điện thoại), vào <span class="ma">quantrisotruonghoc.com</span>.</li>
+<li>Ở ô <b>Mã trường</b>, gõ mã <b>5 chữ số</b> của trường mình — mã do người phụ trách
+hệ thống cấp khi nhà trường liên hệ hoặc đăng ký (xem phần IV).</li>
+<li>Bấm <span class="nut">Vào hệ thống</span>.</li>
+</ol>
+<div class="diemdung">✅ <b>Điểm kiểm tra:</b> trang hiện <b>đúng tên trường của thầy cô</b>
+kèm băng vàng <i>«👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu»</i>. Số liệu lúc này là
+<b>dữ liệu mẫu để tham quan</b>, chưa phải dữ liệu của trường.</div>
+<div class="khung-cuon"><table>
+<tr><th style="width:45%">Nếu màn hình báo</th><th>Nghĩa là gì — làm gì</th></tr>
+<tr><td><i>«Mã trường không đúng hoặc chưa được cấp quyền sử dụng…»</i></td>
+<td>Mã gõ chưa đúng — soát lại từng chữ số rồi gõ lại, hoặc liên hệ người phụ trách.</td></tr>
+<tr><td><i>«Không kết nối được để kiểm tra mã trường…»</i></td>
+<td>Lỗi đường mạng, <b>không phải mã sai</b>. Kiểm tra mạng rồi bấm lại.</td></tr>
+</table></div>
+<div class="luuy"><b>Ba điều tiện nên biết:</b>
+<ul style="margin-bottom:0">
+<li><b>Lần sau khỏi gõ lại:</b> máy đã vào một lần thì màn nhập mã có nút
+<span class="nut">↪ Vào lại [tên trường]</span>.</li>
+<li><b>Muốn đổi sang trường khác:</b> bấm <span class="nut">↩ Về cổng đăng nhập</span>
+trên băng vàng.</li>
+<li><b>Trường sáp nhập:</b> gõ mã của trường cũ vẫn về đúng trường mới sau sáp nhập.</li>
+</ul></div>
+<p>Chưa muốn gõ mã? Bấm <span class="nut">👁 Xem thử hệ thống</span> — hệ thống chạy với
+«Trường Tiểu học Minh Họa», một trường không có thật dựng riêng cho việc tham quan.</p>
+
+<h2>III. Tham quan bản xem thử — đi từng màn</h2>
+<div class="khung-cuon"><table>
+<tr><th style="width:26%">Màn</th><th>Xem gì ở đó</th></tr>
+<tr><td><b>Trang chủ</b></td><td>Bảng tổng quan: tổng số đầu hồ sơ, tỉ lệ đã có minh chứng,
+tiến độ từng bộ phận.</td></tr>
+<tr><td><b>Điều hành</b></td><td>Lịch công tác tuần, phân công nhiệm vụ, dự giờ, bảng công.</td></tr>
+<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng: bộ phận → hộp hồ sơ → đầu hồ sơ, mỗi đầu
+có nút mở thẳng thư mục Drive; ô tìm kiếm theo tên/mã; màn <b>📋 Danh mục hồ sơ</b> cho
+trường tự thêm/sửa/xoá; xuất <b>phiếu giao việc</b> từng hộp ra Word đúng thể thức, in ký
+được ngay.</td></tr>
+<tr><td><b>Quản lý học sinh</b></td><td>Danh sách lớp theo năm học và từng điểm trường; tổng
+hợp sĩ số, nữ, dân tộc, khuyết tật…</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>15 thẻ tiêu chí — mức đạt, điểm mạnh, điểm yếu,
+kế hoạch cải tiến; minh chứng gắn thẳng từ kho hồ sơ, <b>không phải kê hai lần</b>; xuất
+Biểu 1, Biểu 2 và báo cáo tự đánh giá ra Word.</td></tr>
+<tr><td><b>Đảm bảo chất lượng</b></td><td>Chuẩn đầu ra &amp; Cam kết (chỉ tiêu từng khối, có nút
+«Lấy lại chỉ tiêu năm trước»), Kế hoạch cải tiến PDCA, Cơ sở vật chất theo điểm trường.</td></tr>
+</table></div>
+
+<h2>IV. Đăng ký sử dụng chính thức</h2>
+<ol>
+<li>Về màn nhập mã, bấm <span class="nut">✍ Đăng ký sử dụng</span>.</li>
+<li>Điền biểu 9 ô (ô đánh dấu * là bắt buộc). Quan trọng nhất là ô <b>Địa chỉ Gmail của
+người quản trị</b> — Gmail này sẽ là tài khoản quản trị hệ thống của trường.</li>
+<li>Bấm <span class="nut">📨 Gửi đăng ký</span>. Máy báo <i>«✅ Đã gửi đăng ký»</i> là người
+phụ trách đã nhận được và sẽ liên hệ lại.</li>
+</ol>
+<div class="diemdung">✅ Khi bấm Gửi, nội dung cũng được <b>tự chép vào bộ nhớ tạm</b> —
+dán (Ctrl+V) vào Zalo gửi thêm một lần cho chắc. Mạng trục trặc thì màn hình tự mở khung
+nội dung để chép tay, không phải điền lại.</div>
+<p><b>Sau khi đăng ký:</b> bên hệ thống dựng cơ sở dữ liệu riêng cho trường (khoảng một
+buổi); nhà trường gửi thêm danh sách cán bộ, giáo viên kèm Gmail từng người, danh sách
+lớp – học sinh, và phân công phụ trách hộp hồ sơ (có biểu mẫu sẵn). Chi phí vận hành
+<b>0 đồng</b>; nhà trường <b>không phải đưa mật khẩu Gmail</b> của bất kỳ ai.</p>
+
+<h2>V. Khi trường đã được cấp quyền — đăng nhập dùng thật</h2>
+<ol>
+<li>Vào trang của trường (gõ mã, hoặc bấm nút <span class="nut">↪ Vào lại [tên trường]</span>).</li>
+<li>Bấm <span class="nut">Đăng nhập bằng Google</span>, chọn đúng Gmail đã đăng ký với nhà trường.</li>
+</ol>
+<div class="khung-cuon"><table>
+<tr><th style="width:45%">Màn hình hiện</th><th>Nghĩa là gì</th></tr>
+<tr><td>Vào thẳng trang chủ, băng vàng biến mất</td><td>Đăng nhập thành công, số liệu là của trường.</td></tr>
+<tr><td><i>«🕐 Tài khoản đang chờ duyệt»</i></td><td>Gmail chưa có trong danh sách của trường —
+báo người quản trị của trường thêm vào.</td></tr>
+<tr><td><i>«Chưa mở đăng nhập — Trường đang trong quá trình cài đặt»</i></td>
+<td>Cơ sở dữ liệu của trường đang được dựng — chờ người phụ trách báo xong.</td></tr>
+</table></div>
+<p><b>Việc đầu tiên của người quản trị:</b> vào <b>⚙️ Thông tin trường</b> khai tên hiệu
+trưởng, quy mô; soát danh sách tài khoản; mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp
+trường mình rồi mới phân công các bộ phận nhập minh chứng.</p>
+
+<h2>VI. Câu hỏi thường gặp</h2>
+<div class="khung-cuon"><table>
+<tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
+<tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),
+hoặc người của trường mình từng đăng ký.</td></tr>
+<tr><td>Tên trường hiện ra hơi khác tên thật (thiếu chữ, sai xã)?</td><td>Tên lấy theo danh
+bạ, có thể chưa kịp cập nhật sau sắp xếp đơn vị hành chính. Cứ đăng ký và ghi tên đúng vào
+ô «Tên trường» — khi dùng thật, tên lấy theo khai báo của nhà trường.</td></tr>
+<tr><td>Máy cứ tự mở ra một trường không phải trường mình?</td><td>Máy từng vào trường ấy nên
+ghi nhớ. Bấm <span class="nut">↩ Về cổng đăng nhập</span> trên băng vàng rồi gõ mã trường mình.</td></tr>
+<tr><td>Dùng điện thoại được không?</td><td>Được — chạy trên trình duyệt, không phải cài ứng
+dụng. Nhập liệu nhiều thì máy tính thuận tay hơn.</td></tr>
+<tr><td>Dữ liệu trường có ai khác xem được không?</td><td>Không. Mỗi trường một cơ sở dữ liệu
+riêng, quyền đặt đến từng tài khoản Gmail; file minh chứng nằm trên Google Drive của chính
+nhà trường.</td></tr>
+<tr><td>Xem thử có làm hỏng gì, có mất phí không?</td><td>Không và không. Bản xem thử chỉ chạy
+dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
+</table></div>
+
+<a class="ve-cong" href="./">↩ Về trang đăng nhập</a>
+
+</main>
+<footer>Hệ thống Quản trị số Trường học — quản trị trường tiểu học trong giai đoạn mới.</footer>
+
+</body>
+</html>
