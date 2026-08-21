@@ -210,11 +210,19 @@
         ? '<button class="nut-google cong-chinh" id="nut-gui">📨 Gửi đăng ký</button>' +
           '<button class="nut-phu" id="nut-sao-chep">📋 Chỉ sao chép nội dung</button>'
         : '<button class="nut-google cong-chinh" id="nut-sao-chep">📋 Sao chép nội dung đăng ký</button>') +
+      // Biểu mẫu Excel nhà trường điền SAU khi đăng ký (thông tin trường, lớp,
+      // email, phân công hồ sơ, số liệu 3 năm) — thầy Chung đặt nút tải ngay
+      // đây 22/8/2026 để trường chủ động chuẩn bị. Trỏ tệp là trình duyệt tự
+      // tải về, không rời màn đăng ký.
+      '<button class="nut-phu" id="nut-tai-bieu-mau">📥 Tải biểu mẫu cung cấp dữ liệu (Excel)</button>' +
       lienHe() +
       '<button class="nut-phu" id="nut-quay-lai">↩ Quay lại</button>' +
       chanCong();
 
     document.getElementById('nut-quay-lai').addEventListener('click', function () { veManKhaiMa(); });
+    document.getElementById('nut-tai-bieu-mau').addEventListener('click', function () {
+      location.href = 'bieu-mau/thu-thap-du-lieu-truong.xlsx';
+    });
 
     // Trả về dữ liệu đã điền, hoặc null nếu còn thiếu ô bắt buộc (đã vẽ lại màn
     // kèm câu nhắc). Hai nút dùng chung một hàng rào này.
