@@ -3032,18 +3032,12 @@ textarea.ht-o { min-height: 116px; display: block; }
   background: var(--the); border: 1px solid var(--vien); border-radius: 20px;
   box-shadow: var(--bong); padding: 16px; margin-bottom: 16px;
 }
-/* HANG TREN: khoi lich + day o so lieu */
-.tc-tren { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-/* HANG DUOI: the canh bao trai rong + hai nut ben phai */
-.tc-duoi {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
-  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--ke);
-}
+.tc-tren { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; }
 
 /* -- Khoi lich -- */
 .tc-lich { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; padding-right: 20px; }
-@media (min-width: 860px) { .tc-lich { border-right: 1px solid var(--ke); } }
-.tc-hinh { width: 92px; height: 92px; flex: none; }
+@media (min-width: 1000px) { .tc-lich { border-right: 1px solid var(--ke); } }
+.tc-hinh { width: 96px; height: auto; flex: none; }
 .tc-ngay { text-align: center; line-height: 1.12; }
 .tc-thu { font-size: 15px; font-weight: 800; letter-spacing: .1em; color: var(--dam); }
 .tc-so { font-size: 52px; font-weight: 800; color: var(--dam); letter-spacing: -.02em; }
@@ -3054,11 +3048,12 @@ textarea.ht-o { min-height: 116px; display: block; }
   padding: 7px 16px; border-radius: 999px;
 }
 
-/* -- Day o so lieu: bon o CHIA DEU het phan con lai cua hang tren -- */
-.tc-luoi { flex: 1 1 460px; display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
-@media (min-width: 860px) { .tc-luoi { grid-template-columns: repeat(4, 1fr); } }
+/* -- NAM MANG BANG NHAU: 4 o so lieu + cot thu nam (canh bao & hai nut) -- */
+.tc-luoi { flex: 1 1 520px; display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px)  { .tc-luoi { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1100px) { .tc-luoi { grid-template-columns: repeat(5, 1fr); } }
 .tc-o { border-radius: 18px; padding: 15px 16px; min-width: 0; }
-/* Bieu tuong TRON dung canh nhan, khong nam rieng mot dong (dung ban ve) */
+/* Bieu tuong TRON dung canh nhan tren cung mot hang (dung ban ve) */
 .tc-dau { display: flex; align-items: center; gap: 10px; min-height: 40px; }
 .tc-ic {
   width: 36px; height: 36px; border-radius: 50%; flex: none;
@@ -3075,36 +3070,51 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-o.tim  { background: #f4f1ff; } .tc-o.tim  .tc-ic { background: #e3dcfb; } .tc-o.tim  .tc-con { color: #5b28c4; }
 .tc-o.vang { background: #fdf6e7; } .tc-o.vang .tc-ic { background: #f7e6c9; } .tc-o.vang .tc-con { color: var(--vang-sam); }
 
-/* -- Hang duoi: canh bao + nut -- */
+/* -- Cot thu nam: chia doi theo chieu doc -- */
+.tc-cot5 { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; min-width: 0; }
 .tc-canh {
-  flex: 1 1 320px; display: flex; align-items: center; gap: 12px; text-align: left;
-  font: inherit; cursor: pointer;
-  background: #fef2f2; border: 1px solid #fadcdc; border-radius: 14px; padding: 13px 16px;
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  font: inherit; width: 100%; cursor: pointer;
+  background: #fef2f2; border: 1px solid #fadcdc; border-radius: 16px; padding: 12px 14px;
 }
 .tc-canh:hover { background: #fde9e9; }
 .tc-canh .bi {
-  width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center;
-  background: #e5484d; color: #fff; font-size: 17px; font-weight: 800;
+  width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: #e5484d; color: #fff; font-size: 16px; font-weight: 800;
 }
-.tc-canh .chu { flex: 1; font-size: 14px; font-weight: 700; color: #b91c1c; line-height: 1.35; }
-.tc-canh .mui { color: #d98b8b; font-size: 20px; flex: none; }
+.tc-canh .chu { flex: 1; font-size: 13px; font-weight: 700; color: #b91c1c; line-height: 1.3; }
+.tc-canh .mui { color: #d98b8b; font-size: 18px; flex: none; }
 /* Khong co viec gi cho -> the xanh, cung khuon, KHONG bam duoc */
 .tc-canh.yen { background: #ecfaf1; border-color: #cfeedd; cursor: default; }
 .tc-canh.yen .bi { background: var(--ok); }
 .tc-canh.yen .chu { color: #14663a; }
-.tc-nut { display: flex; flex-wrap: wrap; gap: 10px; flex: 0 0 auto; }
+/* HAI NUT NAM NGANG canh nhau, chia doi be ngang cot — khong xep chong doc */
+.tc-nut { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
+/* Cho chu XUONG DONG khi chat, KHONG cat cut bang dau ba cham: "Mo Dieu..."
+   thi thay co doc ra khong biet nut lam gi. */
+.tc-nut button {
+  width: 100%; min-height: 0; padding: 8px 6px; font-size: 12.2px;
+  white-space: normal; line-height: 1.25;
+}
 
-@media (max-width: 859px) {
+@media (max-width: 999px) {
   .tc-bang { padding: 14px; }
   /* Dien thoai: khoi lich nam NGANG o tren cho do ton chieu cao */
   .tc-lich { padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px; width: 100%; }
-  .tc-hinh { width: 72px; height: 72px; }
+  .tc-hinh { width: 76px; }
   .tc-so { font-size: 40px; }
   .tc-ngay { text-align: left; }
-  .tc-nut { width: 100%; }
-  .tc-nut button { flex: 1 1 auto; }
 }
-@media (max-width: 520px) {
+@media (max-width: 1099px) {
+  /* Chua du cho 5 cot: cot thu nam trai het be ngang, canh bao va nut nam
+     canh nhau cho do trong troi. */
+  .tc-cot5 { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+  .tc-nut { grid-template-columns: auto auto; }
+  .tc-nut button { padding: 9px 14px; font-size: 13px; }
+}
+@media (max-width: 560px) {
+  .tc-cot5 { grid-template-columns: 1fr; }
+  .tc-nut { grid-template-columns: 1fr 1fr; }
   .tc-o { padding: 13px 14px; border-radius: 15px; }
   .tc-ic { width: 34px; height: 34px; font-size: 17px; }
   .tc-nhan { font-size: 12.6px; }

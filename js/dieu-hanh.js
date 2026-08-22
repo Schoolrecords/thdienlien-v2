@@ -2477,12 +2477,27 @@
   function veNhaCard() {
     var vung = $('#dh-home-card');
     if (!vung) return;
-    if (!THAT) { vung.innerHTML = ''; return; }
-    var cuu = LOC_CS; LOC_CS = 'all';
-    var t = tinh();
-    LOC_CS = cuu;
-    var ds = canXuLyDs();
-    var qt = laQT();
+
+    // ── CHẾ ĐỘ XEM THỬ: vẫn vẽ khối này, bằng SỐ LIỆU MẪU ────────────────
+    // Trước 23/8/2026 chế độ xem thử bỏ trống hẳn khối này. Mà đây lại là thứ
+    // trường bạn nhìn thấy ĐẦU TIÊN khi mở bản dùng thử — bỏ trống thì trang
+    // chào hàng hụt mất mảng đắt giá nhất. Thầy Chung: "tính năng trường nào
+    // cũng thích cũng cần".
+    // Số liệu bịa là AN TOÀN ở đây: bản xem thử đã mang tên trường bịa
+    // ("Trường Tiểu học Minh Họa") và luôn có băng vàng CHẾ ĐỘ XEM THỬ.
+    var t, ds, qt, xemThu = !THAT;
+    if (xemThu) {
+      t = { csDaBC: 2, gvCoBC: 28, gvTongBC: 30, hsTong: 415,
+            soXanh: 2, dsCS: [1, 2], soChua: 2, tbToiChuaXN: 0 };
+      ds = [1, 2, 3];
+      qt = true;
+    } else {
+      var cuu = LOC_CS; LOC_CS = 'all';
+      t = tinh();
+      LOC_CS = cuu;
+      ds = canXuLyDs();
+      qt = laQT();
+    }
 
     // Một ô số liệu, dựng theo bản vẽ tay của thầy Chung 22/8/2026:
     // hàng trên là BIỂU TƯỢNG TRÒN + NHÃN nằm cạnh nhau; dưới là số to rồi
@@ -2543,6 +2558,9 @@
     // Nhét bốn ô + thẻ cảnh báo + hai nút vào một hàng thì mỗi ô còn ~150px,
     // nhãn gãy ba dòng và hai nút chồng dọc — thầy Chung nhận xét "rất tệ",
     // đúng. Tách hàng thì ô nào cũng rộng rãi, nhãn nằm gọn một dòng.
+    // NĂM MẢNG BẰNG NHAU: bốn ô số liệu + cột thứ năm. Cột năm chia đôi theo
+    // chiều dọc — nửa trên là thẻ cảnh báo, nửa dưới là hai nút NẰM NGANG
+    // cạnh nhau (thầy Chung góp ý 23/8: trước đó hai nút xếp chồng dọc).
     vung.innerHTML = '<div class="tc-bang">' +
       '<div class="tc-tren">' +
         '<div class="tc-lich">' + hinhLich() +
@@ -2553,76 +2571,30 @@
             '<span class="tc-buoi">' + tenBuoi(buoiXem()).toUpperCase() + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="tc-luoi">' + soLieu + '</div>' +
-      '</div>' +
-      '<div class="tc-duoi">' + canhBao +
-        '<div class="tc-nut">' +
-          '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
-          '<button class="dh-nut-nho" onclick="DH.moTab(\'dexuat\')">＋ Tạo đề xuất</button>' +
-          (qt ? '' : '<button class="dh-nut-nho" onclick="DH.moTab(\'viec\')">✅ Việc của tôi</button>') +
+        '<div class="tc-luoi">' + soLieu +
+          '<div class="tc-cot5">' + canhBao +
+            '<div class="tc-nut">' +
+              '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
+              '<button class="dh-nut-nho" onclick="DH.moTab(\'dexuat\')">＋ Tạo đề xuất</button>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</div></div>';
   }
 
-  // Hình lịch để bàn — VẼ BẰNG SVG, không dùng ảnh.
+  // Hình lịch để bàn — ảnh 3D do thầy Chung gửi 23/8/2026 (nguồn: tệp
+  // "Lich trang chu.png", đã cắt viền thừa và thu về 240px, 63 KB).
   //
-  // Đã thử hai lần dùng ảnh cắt từ bản vẽ tay: lần nào mép đỏ bên trái cũng
-  // rách và lẹm, vì phép tách nền ăn lấn vào chỗ chuyển màu. Vá tay thì hết
-  // rách chỗ này lại thành vệt chỗ kia. SVG thì không có chuyện đó: nét sắc ở
-  // mọi cỡ, đổi màu theo bảng màu app, và nặng 2 KB thay vì 44 KB.
+  // Hai lần trước em cắt ảnh từ ảnh chụp bản vẽ nên mép đỏ bị rách; rồi vẽ lại
+  // bằng SVG thì hết rách nhưng không ra được chất 3D của bản vẽ. Thầy gửi
+  // thẳng tệp gốc nền trong suốt — dùng luôn, gọn nhất.
   //
-  // Dựng khối cho có chiều sâu giống bản vẽ: tấm bìa đỏ phía sau nghiêng ra,
-  // trang giấy trắng phía trước, dải đỏ trên cùng, bốn vòng lò xo, lưới ô ngày
-  // và đồng hồ xanh gác lên góc dưới bên phải.
-  //
-  // Trang trí thuần tuý: alt/aria-hidden để trình đọc màn hình bỏ qua — ngày
-  // tháng đã có bằng CHỮ ngay bên cạnh.
+  // Trang trí thuần tuý: alt rỗng + aria-hidden để trình đọc màn hình bỏ qua,
+  // vì ngày tháng đã có bằng CHỮ ngay bên cạnh.
   function hinhLich() {
-    return '<svg class="tc-hinh" viewBox="0 0 96 96" aria-hidden="true" focusable="false">' +
-      '<defs>' +
-      '<linearGradient id="tcDo" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="#f4695c"/><stop offset="1" stop-color="#d92d20"/></linearGradient>' +
-      '<linearGradient id="tcDoSau" x1="0" y1="0" x2="1" y2="1">' +
-        '<stop offset="0" stop-color="#e5484d"/><stop offset="1" stop-color="#b42318"/></linearGradient>' +
-      '<linearGradient id="tcGiay" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9edf5"/></linearGradient>' +
-      '<linearGradient id="tcXanh" x1="0" y1="0" x2="1" y2="1">' +
-        '<stop offset="0" stop-color="#4b8dfb"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>' +
-      '<linearGradient id="tcVong" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="#e7ebf2"/><stop offset="1" stop-color="#96a3b8"/></linearGradient>' +
-      '</defs>' +
-      // bóng đổ dưới chân
-      '<ellipse cx="48" cy="87" rx="33" ry="4.6" fill="#14306b" opacity=".13"/>' +
-      // tấm bìa đỏ phía sau, nghiêng ra tạo chiều sâu
-      '<path d="M14 24 L26 20 L26 82 L12 86 Z" fill="url(#tcDoSau)"/>' +
-      // thân lịch
-      '<rect x="24" y="18" width="60" height="62" rx="9" fill="url(#tcGiay)"/>' +
-      '<path d="M24 27a9 9 0 0 1 9-9h42a9 9 0 0 1 9 9v6H24z" fill="url(#tcDo)"/>' +
-      // bốn vòng lò xo
-      '<g stroke="url(#tcVong)" stroke-width="3.4" fill="none" stroke-linecap="round">' +
-        '<path d="M34 20v-8"/><path d="M46 20v-8"/><path d="M60 20v-8"/><path d="M72 20v-8"/></g>' +
-      '<g fill="#b9c3d4">' +
-        '<circle cx="34" cy="11" r="3.1"/><circle cx="46" cy="11" r="3.1"/>' +
-        '<circle cx="60" cy="11" r="3.1"/><circle cx="72" cy="11" r="3.1"/></g>' +
-      // lưới ô ngày
-      '<g fill="#ccd5e4">' +
-      '<rect x="32" y="41" width="9" height="7" rx="2.2"/><rect x="45" y="41" width="9" height="7" rx="2.2"/>' +
-      '<rect x="58" y="41" width="9" height="7" rx="2.2"/><rect x="71" y="41" width="9" height="7" rx="2.2"/>' +
-      '<rect x="32" y="53" width="9" height="7" rx="2.2"/><rect x="45" y="53" width="9" height="7" rx="2.2"/>' +
-      '<rect x="58" y="53" width="9" height="7" rx="2.2"/>' +
-      '<rect x="32" y="65" width="9" height="7" rx="2.2"/><rect x="45" y="65" width="9" height="7" rx="2.2"/>' +
-      '</g>' +
-      // đồng hồ
-      '<circle cx="70" cy="68" r="17" fill="#fff"/>' +
-      '<circle cx="70" cy="68" r="14.5" fill="url(#tcXanh)"/>' +
-      '<circle cx="70" cy="68" r="10.6" fill="#fff"/>' +
-      '<g stroke="#2a5cb8" stroke-width="1.5" stroke-linecap="round">' +
-        '<path d="M70 59.6v1.8"/><path d="M70 74.6v1.8"/><path d="M61.4 68h1.8"/><path d="M76.6 68h1.8"/></g>' +
-      '<path d="M70 61.5V68l4.6 2.9" stroke="#14306b" stroke-width="2.4" ' +
-        'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
-      '<circle cx="70" cy="68" r="1.7" fill="#14306b"/>' +
-      '</svg>';
+    return '<img class="tc-hinh" src="img/lich-thong-bao.png" alt="" aria-hidden="true">';
   }
+
 
   // ════════════════════════════════════════════════════════════
   // CẦU NỐI cho các module con của Điều hành (js/lich-tuan.js…)
