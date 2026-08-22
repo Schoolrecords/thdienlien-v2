@@ -3037,7 +3037,7 @@ textarea.ht-o { min-height: 116px; display: block; }
 /* -- Khoi lich -- */
 .tc-lich { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; padding-right: 20px; }
 @media (min-width: 1000px) { .tc-lich { border-right: 1px solid var(--ke); } }
-.tc-hinh { width: 96px; height: auto; flex: none; }
+.tc-hinh { width: 100px; height: auto; flex: none; }
 .tc-ngay { text-align: center; line-height: 1.12; }
 .tc-thu { font-size: 15px; font-weight: 800; letter-spacing: .1em; color: var(--dam); }
 .tc-so { font-size: 52px; font-weight: 800; color: var(--dam); letter-spacing: -.02em; }
@@ -3099,11 +3099,16 @@ textarea.ht-o { min-height: 116px; display: block; }
 
 @media (max-width: 999px) {
   .tc-bang { padding: 14px; }
-  /* Dien thoai: khoi lich nam NGANG o tren cho do ton chieu cao */
-  .tc-lich { padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px; width: 100%; }
-  .tc-hinh { width: 76px; }
+  /* Dien thoai: khoi lich nam NGANG o tren cho do ton chieu cao, va CA CUM
+     (hinh + ngay thang) dat vao GIUA the — de canh trai thi chu don ve mot
+     ben, thua mot mang trong ben phai, nhin lech. Thay Chung goi y 23/8. */
+  .tc-lich {
+    padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px;
+    width: 100%; justify-content: center; gap: 18px;
+  }
+  .tc-hinh { width: 79px; }
   .tc-so { font-size: 40px; }
-  .tc-ngay { text-align: left; }
+  .tc-ngay { text-align: center; }
 }
 @media (max-width: 1099px) {
   /* Chua du cho 5 cot: cot thu nam trai het be ngang, canh bao va nut nam
