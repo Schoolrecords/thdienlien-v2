@@ -99,6 +99,13 @@
         : 'Thầy cô đã đăng nhập thành công, nhưng địa chỉ Gmail này chưa có trong ' +
           'danh sách của nhà trường nên cần Ban giám hiệu duyệt. Nếu thầy cô dùng ' +
           'Gmail khác với địa chỉ đã đăng ký, hãy đăng xuất rồi đăng nhập lại đúng địa chỉ đó.' +
+          // Trường vừa mở: người được nhà trường khai làm quản trị mà vẫn dừng
+          // ở đây thì gần như chắc chắn địa chỉ khai trong đơn khác địa chỉ vừa
+          // đăng nhập. Nói thẳng ra, đừng để họ ngồi đợi một lời duyệt không
+          // bao giờ tới — trường mới chưa có ai đủ quyền mà duyệt cả.
+          '<br><br>Nếu thầy cô là <b>người nhà trường cử làm quản trị</b> mà vẫn thấy màn ' +
+          'hình này: địa chỉ vừa đăng nhập khác với địa chỉ nhà trường ghi trong đơn đăng ký. ' +
+          'Thầy cô đăng nhập lại đúng địa chỉ đó, hoặc báo người phụ trách hệ thống.' +
           // Người vào nhầm địa chỉ trường khác dừng đúng ở đây — nhắc một câu để
           // họ tìm đường về, nhưng KHÔNG nêu tên trường nào cả.
           // Trước câu này chỉ hiện khi đếm được ≥2 trường trong window.DS_TRUONG;
@@ -107,47 +114,24 @@
           'và một đường dẫn riêng — thầy cô mở đúng đường dẫn nhà trường mình đã cấp.') +
       '</div>' +
       '<button class="nut-phu" id="nut-thoat-cong">↩ Đăng xuất</button>' +
-      '<div id="khu-admin-dau"></div>' +
       chanCong();
     document.getElementById('nut-thoat-cong').addEventListener('click', dangXuat);
-    if (!laKhoa) hoiCoAdminChua();
   }
 
-  // ── Trường MỚI: người đăng nhập đầu tiên tự nhận quyền quản trị ──
-  // Bài toán con gà - quả trứng: CSDL mới dựng thì chưa ai là admin, mà không
-  // có admin thì không ai cấp quyền cho ai. Trước đây phải chạy một câu UPDATE
-  // bằng tay ở SQL Editor. Nay hàm nhan_quyen_admin_dau_tien() (sql/36) mở
-  // đúng MỘT lần: có một quản trị viên rồi là khoá vĩnh viễn.
-  function hoiCoAdminChua() {
-    var khu = document.getElementById('khu-admin-dau');
-    if (!khu || !may) return;
-    may.rpc('tinh_trang_cai_dat').then(function (r) {
-      // Lỗi ở đây là chuyện thường (chưa chạy sql/36) — im lặng, đừng dọa người dùng
-      if (r.error || !r.data || r.data.so_admin > 0) return;
-      khu.innerHTML =
-        '<div class="hop-loi cho" style="margin-top:12px">' +
-        '<b>🚀 Hệ thống này chưa có quản trị viên.</b><br>' +
-        'Nếu thầy cô là người được giao quản trị hệ thống của nhà trường, bấm nút dưới ' +
-        'để nhận quyền và bắt đầu khai báo. Chỉ người ĐẦU TIÊN bấm được — sau đó nút này ' +
-        'biến mất, ai muốn có quyền phải do quản trị viên cấp.</div>' +
-        '<button class="nut-google" id="nut-nhan-admin">Tôi là quản trị viên của trường</button>';
-      document.getElementById('nut-nhan-admin').addEventListener('click', function () {
-        if (!window.confirm('Nhận quyền quản trị hệ thống?\n\n' +
-          'Thầy cô sẽ là người khai báo thông tin trường và cấp quyền cho những người khác. ' +
-          'Chỉ bấm nếu nhà trường giao việc này cho thầy cô.')) return;
-        this.disabled = true; this.textContent = 'Đang nhận quyền…';
-        may.rpc('nhan_quyen_admin_dau_tien').then(function (kq) {
-          if (kq.error) { window.alert('Không nhận được quyền.\n\n' + kq.error.message); location.reload(); return; }
-          window.alert('Xong. Thầy cô đã là quản trị viên.\n\n' +
-            'Trang sẽ tải lại. Vào Quản trị → thẻ 🚀 Cài đặt để khai báo nhà trường.');
-          location.reload();
-        }).catch(function (e) {
-          window.alert('Không gọi được máy chủ.\n\n' + ((e && e.message) || e));
-          location.reload();
-        });
-      });
-    }).catch(function () { /* im lặng */ });
-  }
+  // ── ĐÃ GỠ: nút "Tôi là quản trị viên của trường" (22/8/2026, thầy Chung chốt)
+  // Trước đây cơ sở dữ liệu mới chưa có quản trị viên thì người ĐẦU TIÊN đăng
+  // nhập Google bấm một nút là thành admin (sql/36 + sql/37). Lỗ hổng không nằm
+  // ở kỹ thuật mà ở quy trình: gửi đường dẫn cho nhà trường, một giáo viên tò
+  // mò bấm vào trước Hiệu trưởng là người đó thành quản trị — và cửa đóng vĩnh
+  // viễn, sửa phải vào SQL Editor.
+  //
+  // Nay quyền quản trị do ADMIN HỆ THỐNG cấp: nhà trường khai "Địa chỉ Gmail
+  // của người quản trị" trong đơn đăng ký, người dựng cơ sở dữ liệu gieo sẵn
+  // địa chỉ ấy vào danh sách mời với vai trò 'admin' (sql/51, hàm
+  // gieo_quan_tri). Người đó đăng nhập là vào thẳng, không phải bấm gì.
+  //
+  // Nghĩa là màn "chờ duyệt" ở trên KHÔNG còn lối rẽ nào nữa — ai thấy nó thì
+  // đúng là chưa được cấp quyền, và câu chữ ở đó phải tự nó đủ chỉ đường.
 
   function veCongDangTai() {
     var h = hopCong(); if (!h) return;
