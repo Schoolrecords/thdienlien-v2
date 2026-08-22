@@ -3034,43 +3034,48 @@ textarea.ht-o { min-height: 116px; display: block; }
   display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px;
 }
 
-/* ── Khối lịch ── */
-.tc-lich { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; padding-right: 16px; }
-@media (min-width: 900px) { .tc-lich { border-right: 1px solid var(--ke); } }
-.tc-hinh { width: 84px; height: 84px; flex: none; }
-.tc-ngay { text-align: center; line-height: 1.15; }
-.tc-thu { font-size: 13px; font-weight: 800; letter-spacing: .12em; color: var(--dam); }
-.tc-so { font-size: 46px; font-weight: 800; color: var(--dam); letter-spacing: -.02em; }
-.tc-thang { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--chu-mo); }
+/* -- Khoi lich -- */
+.tc-lich { display: flex; align-items: center; gap: 16px; flex: 0 0 auto; padding-right: 20px; }
+@media (min-width: 1000px) { .tc-lich { border-right: 1px solid var(--ke); } }
+.tc-hinh { width: 104px; height: auto; flex: none; }
+.tc-ngay { text-align: center; line-height: 1.12; }
+.tc-thu { font-size: 15px; font-weight: 800; letter-spacing: .1em; color: var(--dam); }
+.tc-so { font-size: 54px; font-weight: 800; color: var(--dam); letter-spacing: -.02em; }
+.tc-thang { font-size: 12px; font-weight: 700; letter-spacing: .09em; color: var(--dam); }
 .tc-buoi {
-  display: inline-block; margin-top: 8px; background: var(--chinh); color: #fff;
-  font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
-  padding: 6px 14px; border-radius: 999px;
+  display: inline-block; margin-top: 10px; background: var(--chinh); color: #fff;
+  font-size: 12px; font-weight: 800; letter-spacing: .1em;
+  padding: 7px 16px; border-radius: 999px;
 }
 
-/* ── Dãy ô số liệu ── */
-.tc-luoi {
-  flex: 1 1 320px; display: grid; gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
-}
-.tc-o { border-radius: 16px; padding: 14px 16px; min-width: 0; }
+/* -- Day o so lieu -- */
+.tc-luoi { flex: 1 1 420px; display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px)  { .tc-luoi { grid-template-columns: repeat(4, 1fr); } }
+.tc-o { border-radius: 18px; padding: 16px 18px; min-width: 0; }
+/* Bieu tuong TRON dung canh nhan, khong nam rieng mot dong (dung ban ve) */
+.tc-dau { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .tc-ic {
-  width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
-  font-size: 19px; margin-bottom: 10px;
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; font-size: 19px;
 }
-.tc-nhan { font-size: 13px; font-weight: 700; color: var(--chu); line-height: 1.35; }
-.tc-con { font-size: 30px; font-weight: 800; line-height: 1.15; margin-top: 6px; }
-.tc-dv { font-size: 12px; color: var(--chu-mo); margin-top: 2px; }
+.tc-nhan { font-size: 13.5px; font-weight: 700; color: var(--chu); line-height: 1.3; }
+.tc-con { font-size: 34px; font-weight: 800; line-height: 1.1; margin-top: 10px; }
+.tc-dv { font-size: 12.5px; color: var(--chu-mo); margin-top: 3px; }
+/* Chua co so lieu: dau gach ngang co 34px trong nhu mot thanh den — thu nho
+   va lam mo di de doc ra la 'chua co', khong phai mot con so la. */
+.tc-con.trong { font-size: 26px; color: var(--chu-nhat); }
 
-.tc-o.lam  { background: #eff4ff; } .tc-o.lam  .tc-ic { background: #dbe6ff; } .tc-o.lam  .tc-con { color: var(--chinh); }
-.tc-o.la   { background: #ecfaf1; } .tc-o.la   .tc-ic { background: #d3f3df; } .tc-o.la   .tc-con { color: var(--ok); }
-.tc-o.tim  { background: #f4f1ff; } .tc-o.tim  .tc-ic { background: #e5dffb; } .tc-o.tim  .tc-con { color: #6d31d4; }
-.tc-o.vang { background: #fdf7e9; } .tc-o.vang .tc-ic { background: #f8ead0; } .tc-o.vang .tc-con { color: var(--vang-sam); }
+.tc-o.lam  { background: #eef4ff; } .tc-o.lam  .tc-ic { background: #d9e6ff; } .tc-o.lam  .tc-con { color: var(--dam); }
+.tc-o.la   { background: #ecfaf1; } .tc-o.la   .tc-ic { background: #cfeedd; } .tc-o.la   .tc-con { color: var(--ok); }
+.tc-o.tim  { background: #f4f1ff; } .tc-o.tim  .tc-ic { background: #e3dcfb; } .tc-o.tim  .tc-con { color: #5b28c4; }
+.tc-o.vang { background: #fdf6e7; } .tc-o.vang .tc-ic { background: #f7e6c9; } .tc-o.vang .tc-con { color: var(--vang-sam); }
 
 /* ── Cột phải: cảnh báo + hai nút ── */
 .tc-phai { flex: 1 1 230px; display: flex; flex-direction: column; gap: 12px; justify-content: space-between; }
+/* flex:1 de the canh bao CAO BANG hang o so lieu ben trai (dung ban ve),
+   khong bi lun mot nua roi chua khoang trong duoi. */
 .tc-canh {
-  display: flex; align-items: center; gap: 12px; text-align: left;
+  flex: 1; display: flex; align-items: center; gap: 12px; text-align: left;
   font: inherit; width: 100%; cursor: pointer;
   background: #fef2f2; border: 1px solid #fadcdc; border-radius: 16px; padding: 14px 16px;
 }
@@ -3087,14 +3092,21 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-canh.yen .chu { color: #14663a; }
 .tc-nut { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
 
-@media (max-width: 899px) {
+@media (max-width: 999px) {
   .tc-bang { padding: 14px; gap: 14px; }
+  /* Dien thoai: khoi lich nam NGANG o tren cho do ton chieu cao */
   .tc-lich { padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px; width: 100%; }
-  .tc-hinh { width: 62px; height: 62px; }
-  .tc-so { font-size: 34px; }
+  .tc-hinh { width: 76px; }
+  .tc-so { font-size: 40px; }
   .tc-ngay { text-align: left; }
   .tc-nut { justify-content: stretch; }
   .tc-nut button { flex: 1 1 auto; }
+}
+@media (max-width: 520px) {
+  .tc-o { padding: 13px 14px; border-radius: 15px; }
+  .tc-ic { width: 34px; height: 34px; font-size: 17px; }
+  .tc-nhan { font-size: 12.6px; }
+  .tc-con { font-size: 28px; }
 }
 
 /* Hàng xác nhận hàng loạt của màn Lên lớp — ô tích ở cột cuối bảng, một nút

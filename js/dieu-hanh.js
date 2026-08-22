@@ -2484,12 +2484,14 @@
     var ds = canXuLyDs();
     var qt = laQT();
 
-    // Một ô số liệu: biểu tượng trong khuôn bo tròn · nhãn · số to · đơn vị.
+    // Một ô số liệu, dựng theo bản vẽ tay của thầy Chung 22/8/2026:
+    // hàng trên là BIỂU TƯỢNG TRÒN + NHÃN nằm cạnh nhau; dưới là số to rồi
+    // đơn vị. Bản đầu xếp dọc cả bốn thứ nên nhìn khác hẳn bản vẽ.
     function o(mau, bieuTuong, nhan, so, donVi) {
       return '<div class="tc-o ' + mau + '">' +
-        '<div class="tc-ic">' + bieuTuong + '</div>' +
-        '<div class="tc-nhan">' + nhan + '</div>' +
-        '<div class="tc-con">' + so + '</div>' +
+        '<div class="tc-dau"><span class="tc-ic">' + bieuTuong + '</span>' +
+        '<span class="tc-nhan">' + nhan + '</span></div>' +
+        '<div class="tc-con' + (so === '—' ? ' trong' : '') + '">' + so + '</div>' +
         '<div class="tc-dv">' + (donVi || '&nbsp;') + '</div></div>';
     }
 
@@ -2552,26 +2554,13 @@
       '</div></div>';
   }
 
-  // Hình lịch để bàn — vẽ bằng SVG nội tuyến, KHÔNG dùng ảnh: không thêm tệp
-  // phải tải, nét sắc ở mọi độ phân giải, và đổi màu theo bảng màu app được.
+  // Hình lịch để bàn. Bản đầu vẽ bằng SVG phẳng cho nhẹ, nhưng thầy Chung đưa
+  // bản vẽ dùng hình khối 3D và bảo cắt thẳng ảnh ấy ra dùng — nên đây là hình
+  // cắt từ chính bản vẽ, đã tách nền trong suốt (204×202, 44 KB).
+  // Ảnh trang trí thuần tuý: alt rỗng + aria-hidden để trình đọc màn hình bỏ
+  // qua, vì ngày tháng đã có bằng CHỮ ngay bên cạnh.
   function hinhLich() {
-    return '<svg class="tc-hinh" viewBox="0 0 64 64" aria-hidden="true">' +
-      '<rect x="6" y="13" width="52" height="45" rx="7" fill="#fff" stroke="#dde5f0" stroke-width="2"/>' +
-      '<path d="M6 20a7 7 0 0 1 7-7h38a7 7 0 0 1 7 7v6H6z" fill="#e5484d"/>' +
-      '<rect x="17" y="4" width="5" height="15" rx="2.5" fill="#8494b3"/>' +
-      '<rect x="42" y="4" width="5" height="15" rx="2.5" fill="#8494b3"/>' +
-      '<g fill="#cdd8ea">' +
-      '<rect x="14" y="33" width="8" height="6" rx="2"/>' +
-      '<rect x="28" y="33" width="8" height="6" rx="2"/>' +
-      '<rect x="42" y="33" width="8" height="6" rx="2"/>' +
-      '<rect x="14" y="44" width="8" height="6" rx="2"/>' +
-      '<rect x="28" y="44" width="8" height="6" rx="2"/></g>' +
-      '<circle cx="47" cy="47" r="12" fill="#fff"/>' +
-      '<circle cx="47" cy="47" r="10" fill="#2a5cb8"/>' +
-      '<circle cx="47" cy="47" r="7.6" fill="#fff"/>' +
-      '<path d="M47 42.4v5.1l3.4 2.1" stroke="#2a5cb8" stroke-width="2.1" ' +
-      'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
-      '</svg>';
+    return '<img class="tc-hinh" src="img/lich-thong-bao.png" alt="" aria-hidden="true">';
   }
 
   // ════════════════════════════════════════════════════════════
