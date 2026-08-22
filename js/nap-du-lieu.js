@@ -390,32 +390,56 @@
   // GIAO DIỆN
   // ══════════════════════════════════════════════════════════════
   function veTab(hop) {
-    var nam = (window.CAU_HINH && window.CAU_HINH.NAM_HOC) || '';
-    var namCu = KQ && KQ.nam;
+    var namNay = (window.CAU_HINH && window.CAU_HINH.NAM_HOC) || '';
+    var dsNam = window.baNamHoc ? window.baNamHoc([KQ && KQ.nam]) : [namNay];
+    // Năm chọn sẵn: lần trước thầy cô chọn gì thì giữ nguyên, chưa chọn thì
+    // NĂM HIỆN HÀNH — không tự nhảy sang năm cũ dù tệp hay là dữ liệu năm cũ.
+    var namChon = (KQ && KQ.nam) || namNay;
 
     hop.innerHTML =
-      '<div class="nhan-nho" style="margin:14px 0 10px">' +
+      '<div class="nhan-nho" style="margin:14px 0 12px">' +
       'Nạp danh sách học sinh từ tệp Excel tải về ở <b>CSDL ngành</b> ' +
       '(truong.csdl.moet.gov.vn → Học sinh → Xuất Excel, tệp mẫu <i>C1-HocSinh</i>). ' +
-      'Máy sẽ <b>xem trước</b> rồi mới hỏi có ghi hay không.</div>' +
+      'Máy <b>xem trước</b> và báo rõ sẽ ghi những gì, rồi mới hỏi có ghi hay không.</div>' +
 
-      '<div class="hd-kiem vang" style="margin-bottom:14px">' +
+      '<div class="hd-kiem vang" style="margin-bottom:16px">' +
       '<b>Hệ thống KHÔNG lấy</b> số điện thoại, họ tên cha mẹ, địa chỉ, nơi sinh — dù tệp có sẵn. ' +
       'Chỉ lấy phần cần cho sổ sách: mã, họ tên, ngày sinh, giới tính, dân tộc, lớp, trạng thái.</div>' +
 
-      '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:14px">' +
-      '<label style="flex:1 1 180px">Năm học nạp vào<br>' +
-      '<input id="nap-nam" type="text" value="' + thoat(namCu || nam) + '" placeholder="2026-2027" style="width:100%"></label>' +
-      '<label style="flex:2 1 240px">Tệp danh sách học sinh<br>' +
-      '<input id="nap-tep" type="file" accept=".xls,.xlsx" style="width:100%"></label>' +
-      '</div>' +
+      '<div class="nap-buoc">' +
+      '<div class="nap-so">1</div>' +
+      '<div class="nap-noi">' +
+      '<label class="nap-nhan" for="nap-nam">Nạp vào năm học nào</label>' +
+      '<select id="nap-nam" class="nap-chon">' +
+      dsNam.map(function (n) {
+        // Hậu tố phải NGẮN: trên điện thoại ô chọn chỉ rộng chừng 250px, nhãn
+        // dài bị cắt cụt giữa chừng ("2026-2027 — năm học hiện…").
+        return '<option value="' + thoat(n) + '"' + (n === namChon ? ' selected' : '') + '>' +
+          thoat(n) + (n === namNay ? ' (năm nay)' : '') + '</option>';
+      }).join('') + '</select>' +
+      '<div class="nap-mach">Trường mới vào hệ thống thường nạp <b>năm vừa xong</b> trước, ' +
+      'vì tệp tải từ CSDL ngành là dữ liệu năm đó. Chọn sai năm thì máy sẽ nhắc lại ở bước xem trước.</div>' +
+      '</div></div>' +
+
+      '<div class="nap-buoc">' +
+      '<div class="nap-so">2</div>' +
+      '<div class="nap-noi">' +
+      '<label class="nap-nhan" for="nap-tep">Chọn tệp danh sách học sinh</label>' +
+      '<input id="nap-tep" type="file" accept=".xls,.xlsx" class="nap-tep-that">' +
+      '<label class="nap-nut-tep" for="nap-tep">📄 Chọn tệp Excel…</label>' +
+      '<span id="nap-ten-tep" class="nap-ten-tep">Chưa chọn tệp nào</span>' +
+      '<div class="nap-mach">Nhận tệp <b>.xls</b> và <b>.xlsx</b>. Giữ nguyên hàng tiêu đề của tệp mẫu, ' +
+      'đừng xoá hay đổi tên cột.</div>' +
+      '</div></div>' +
 
       '<div id="nap-ket"></div>';
 
     var oTep = document.getElementById('nap-tep');
     oTep.addEventListener('change', function () {
       var tep = oTep.files && oTep.files[0];
-      if (!tep) return;
+      var oTen = document.getElementById('nap-ten-tep');
+      if (!tep) { if (oTen) oTen.textContent = 'Chưa chọn tệp nào'; return; }
+      if (oTen) oTen.textContent = tep.name;
       KQ = null;
       var ket = document.getElementById('nap-ket');
       ket.innerHTML = '<div class="the-thong-bao">Đang đọc tệp <b>' + thoat(tep.name) + '</b>…</div>';
@@ -530,7 +554,17 @@
       if (canhBaoNam) {
         var nutNam = document.getElementById('nap-doi-nam');
         if (nutNam) nutNam.addEventListener('click', function () {
-          document.getElementById('nap-nam').value = KQ.namDoan;
+          var oNam = document.getElementById('nap-nam');
+          // Ô chọn chỉ dựng sẵn ba năm quanh năm hiện hành. Tệp cũ hơn thế
+          // (trường nạp bù dữ liệu 2023-2024) thì gán value suông không ăn —
+          // select bỏ qua giá trị không có trong danh sách và giữ nguyên năm cũ,
+          // bấm nút xong không thấy gì đổi.
+          if (oNam.querySelector && !oNam.querySelector('option[value="' + KQ.namDoan + '"]')) {
+            var o = document.createElement('option');
+            o.value = KQ.namDoan; o.textContent = KQ.namDoan;
+            oNam.appendChild(o);
+          }
+          oNam.value = KQ.namDoan;
           veSoiThu();     // đối chiếu lại từ đầu: năm khác thì lớp và sĩ số khác
         });
       }

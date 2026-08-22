@@ -157,10 +157,18 @@
     // đã có sẵn trong ô chọn, thầy cô nhìn thấy ngay là chưa nạp dữ liệu.
     var boc = $('#hs-nam-boc');
     if (!boc) return;
-    var ds = CAC_NAM.slice();
-    if (hienHanh && ds.indexOf(hienHanh) < 0) ds.push(hienHanh);
-    if (NAM && ds.indexOf(NAM) < 0) ds.push(NAM);
-    ds.sort().reverse();
+    // Ba năm học (trước · nay · sau) LUÔN có mặt, cộng thêm mọi năm đã có dữ
+    // liệu. Trước đây ô chỉ liệt kê năm có dữ liệu + năm hiện hành, nên trường
+    // vừa nạp dữ liệu năm cũ không thấy đường xem lại, còn năm sau thì không có
+    // chỗ nào để bắt đầu nạp. Hàm dùng chung ở cauhinh.js.
+    var ds = window.baNamHoc
+      ? window.baNamHoc(CAC_NAM.concat([NAM]))
+      : (function () {
+          var t = CAC_NAM.slice();
+          if (hienHanh && t.indexOf(hienHanh) < 0) t.push(hienHanh);
+          if (NAM && t.indexOf(NAM) < 0) t.push(NAM);
+          return t.sort().reverse();
+        })();
     boc.innerHTML = '<label for="hs-nam">Xem năm học</label>' +
       '<select id="hs-nam">' + ds.map(function (n) {
         return '<option value="' + thoat(n) + '"' + (n === NAM ? ' selected' : '') + '>' +

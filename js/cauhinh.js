@@ -120,6 +120,34 @@ window.tinhNamHoc = function (moc, ngay) {
 };
 
 // ============================================================
+// BA NĂM HỌC: NĂM TRƯỚC · NĂM NAY · NĂM SAU
+//
+// Vì sao KHÔNG chỉ đưa năm hiện hành: phần lớn việc của nhà trường bắc cầu qua
+// hai đến ba năm học. Trường mới vào hệ thống hầu như bao giờ cũng nạp dữ liệu
+// NĂM CŨ trước (tệp tải từ CSDL ngành là dữ liệu năm vừa xong); Trường chuẩn
+// Quốc gia đòi số liệu ba năm liền; đầu tháng 8 vừa đổi năm thì mọi việc dở
+// dang vẫn nằm ở năm trước. Ô chọn chỉ có một năm là bắt thầy cô gõ tay —
+// gõ tay thì sai chính tả năm học, mà sai năm là dữ liệu lạc chỗ.
+//
+// Dùng chung cho MỌI màn có chọn năm học. Truyền thêm mảng năm đã có dữ liệu
+// thì các năm đó được gộp vào (trường nạp dữ liệu từ 2023 vẫn xem lại được).
+// Kết quả sắp mới nhất trước.
+// ============================================================
+window.baNamHoc = function (themVao) {
+  var nay = window.tinhNamHoc(window.CAU_HINH && window.CAU_HINH.MOC_DOI_NAM_HOC);
+  var dau = parseInt(nay.slice(0, 4), 10);
+  var ds = [
+    (dau - 1) + '-' + dau,
+    nay,
+    (dau + 1) + '-' + (dau + 2)
+  ];
+  (themVao || []).forEach(function (n) {
+    if (n && /^\d{4}-\d{4}$/.test(n) && ds.indexOf(n) < 0) ds.push(n);
+  });
+  return ds.sort().reverse();
+};
+
+// ============================================================
 // ÁP CẤU HÌNH MỘT TRƯỜNG VÀO window.CAU_HINH
 //
 // 🔑 SỬA TẠI CHỖ, KHÔNG THAY CẢ ĐỐI TƯỢNG. Vài tệp giữ sẵn tham chiếu tới

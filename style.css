@@ -2941,3 +2941,53 @@ textarea.ht-o { min-height: 116px; display: block; }
 @media (min-width: 760px) {
   .tv-them select, .tv-them input, .pl-o { font-size: 14px; }
 }
+
+/* ── Thẻ "Nạp dữ liệu" trong màn Quản trị ─────────────────────────────
+   Hai bước đánh số, mỗi bước một thẻ: người dùng nhìn là biết còn thiếu
+   bước nào. Ô chọn tệp mặc định của trình duyệt vừa xấu vừa hiện chữ Anh
+   trên một số máy, nên ẩn đi và thay bằng nhãn dựng như nút — vẫn là
+   <input type="file"> thật nên bấm bằng bàn phím và trình đọc màn hình
+   vẫn hoạt động. */
+.nap-buoc {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--the); border: 1px solid var(--vien);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+}
+.nap-so {
+  flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--chinh); color: #fff; font-weight: 700; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.nap-noi { flex: 1 1 auto; min-width: 0; }
+.nap-nhan {
+  display: block; font-weight: 700; color: var(--chu); margin-bottom: 8px;
+}
+.nap-chon {
+  font: inherit; font-size: 16px; padding: 8px 11px; cursor: pointer;
+  border: 1.5px solid var(--vien-dam); border-radius: 8px;
+  background: var(--the); color: var(--chu); max-width: 100%; min-width: 240px;
+}
+.nap-chon:focus { outline: none; border-color: var(--chinh); }
+/* Không dùng display:none — ẩn kiểu ấy là bàn phím không tới được ô nữa. */
+.nap-tep-that {
+  position: absolute; width: 1px; height: 1px; opacity: 0;
+  overflow: hidden; clip: rect(0 0 0 0);
+}
+.nap-nut-tep {
+  display: inline-block; cursor: pointer; font-weight: 600; font-size: 15px;
+  padding: 9px 16px; border-radius: 8px; border: 1.5px solid var(--chinh);
+  color: var(--chinh); background: var(--the);
+}
+.nap-nut-tep:hover { background: var(--kem); }
+.nap-tep-that:focus + .nap-nut-tep { outline: 2px solid var(--chinh); outline-offset: 2px; }
+.nap-ten-tep {
+  display: inline-block; margin-left: 10px; color: var(--chu-mo);
+  font-size: 14px; word-break: break-all;
+}
+.nap-mach { margin-top: 9px; font-size: 13.5px; color: var(--chu-mo); line-height: 1.5; }
+@media (max-width: 560px) {
+  .nap-buoc { padding: 12px 13px; gap: 11px; }
+  .nap-chon { min-width: 0; width: 100%; }
+  .nap-nut-tep { display: block; text-align: center; }
+  .nap-ten-tep { display: block; margin: 8px 0 0; }
+}
