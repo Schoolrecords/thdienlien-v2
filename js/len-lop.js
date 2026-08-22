@@ -21,6 +21,16 @@
   function thoat(s) { return window.thoatHTML ? window.thoatHTML(s) : String(s || ''); }
   function batLoi(e) { window.notify('Không chạy được: ' + ((e && e.message) || e)); }
 
+  // Hỏi ý người dùng bằng hộp thoại của app (js/hop-thoai.js) thay cho confirm()
+  // của trình duyệt — cái đó đề "chaudinh.quantrisotruonghoc.com cho biết", chữ
+  // dồn cục, trông như trang web hỏng chứ không phải phần mềm của nhà trường.
+  // Vẫn giữ đường lui về confirm() phòng khi hop-thoai.js chưa nạp kịp: thà xấu
+  // còn hơn nút bấm không ra gì cả.
+  function xinPhep(noiDung, tuyChon) {
+    return window.hopHoi ? window.hopHoi(noiDung, tuyChon || {})
+                         : Promise.resolve(window.confirm(noiDung));
+  }
+
   // Năm học kế tiếp: '2025-2026' → '2026-2027'. Sai định dạng thì trả rỗng
   // để ô nhập trống, admin tự gõ — đoán bừa một năm học là hỏng cả kho dữ liệu.
   function namKeTiep(nam) {
@@ -128,8 +138,15 @@
           daiChonNam(dsNam) +
           daiTomTat(tong) +
           daiBang(ds) +
+          // Hàng xác nhận HÀNG LOẠT — đặt NGAY DƯỚI bảng, tách khỏi nút lên
+          // lớp bên dưới nữa: hai việc khác hẳn nhau, để cạnh nhau là có ngày
+          // bấm nhầm. Chỉ hiện khi còn lớp trống kết quả.
+          (tong.chua ? '<div class="ll-hang-chon">' +
+            '<button class="nut-phu-nd nut-xac-nhan-chon" disabled>✓ Xác nhận hoàn thành</button>' +
+            '<span class="ll-dem">Tích chọn các lớp cần xác nhận kết quả cả năm.</span>' +
+            '</div>' : '') +
           '<div style="margin-top:14px">' +
-          '<button class="nut-lam-len-lop">🎓 Thực hiện lên lớp</button> ' +
+          '<button class="nut-chinh nut-lam-len-lop">🎓 Thực hiện lên lớp</button> ' +
           '<span class="ll-nhac" style="font-size:12.5px;color:var(--chu-mo)"></span></div>' +
           daiChanTrang();
 
@@ -168,7 +185,7 @@
             '>' + thoat(n) + '</option>';
         }).join('');
       })() + '</select>' +
-      '<button class="nut-doi-nam">Xem lại</button>' +
+      '<button class="nut-vien nut-doi-nam">Xem lại</button>' +
       '</div>';
   }
 
@@ -204,7 +221,9 @@
     if (!ds.length) return '<div class="the-thong-bao">Năm học này không có lớp nào.</div>';
     return '<div class="cuon-ngang"><table class="bang-quan-tri nho" id="ll-bang"><thead><tr>' +
       '<th>Lớp cũ</th><th>Điểm trường</th><th>Sĩ số</th><th>Lên lớp</th><th>Ở lại</th>' +
-      '<th>Chưa có KQ</th><th>Lớp mới</th><th></th></tr></thead><tbody>' +
+      '<th>Chưa có KQ</th><th>Lớp mới</th>' +
+      '<th style="width:52px;text-align:center" title="Chọn để xác nhận kết quả cả năm">' +
+      '<input type="checkbox" class="ll-chon-het"></th></tr></thead><tbody>' +
       ds.map(function (d) {
         var raTruong = d.khoi_nguon === 5;
         return '<tr data-lop="' + thoat(d.lop_nguon) + '">' +
@@ -219,8 +238,11 @@
             ? '<span style="color:var(--chu-mo)">Hoàn thành chương trình tiểu học</span>'
             : '<input class="ll-lop-moi dh-o-nhap" style="width:90px;margin-top:0" value="' +
               thoat(d.lop_dich_goi_y || '') + '">') + '</td>' +
-          '<td>' + (d.chua_co_ket_qua
-            ? '<button class="nut-xac-nhan-lop">Xác nhận hoàn thành</button>' : '') + '</td>' +
+          // Ô TÍCH thay cho nút riêng từng lớp. 20 lớp mà mỗi lớp một nút, mỗi
+          // nút một hộp xác nhận là 40 cú bấm — thầy Chung góp ý 22/8/2026.
+          // Lớp nào đã đủ kết quả thì không có ô tích, khỏi bấm nhầm.
+          '<td style="text-align:center">' + (d.chua_co_ket_qua
+            ? '<input type="checkbox" class="ll-chon" data-so="' + d.chua_co_ket_qua + '">' : '') + '</td>' +
           '</tr>';
       }).join('') +
       '</tbody></table></div>';
@@ -246,30 +268,95 @@
       veTabLL(hop);
     });
 
-    // Xác nhận kết quả cả năm cho một lớp
-    Array.prototype.slice.call(hop.querySelectorAll('.nut-xac-nhan-lop')).forEach(function (nut) {
-      nut.addEventListener('click', function () {
-        var lop = nut.closest('tr').getAttribute('data-lop');
-        if (!window.confirm(
-          'Xác nhận HOÀN THÀNH chương trình cho những học sinh còn trống kết quả của lớp ' +
-          lop + ' — năm học ' + NAM_NGUON + '?\n\n' +
-          'Đây là thẩm quyền của Hiệu trưởng (Điều 9 Thông tư 27/2020). Nhật ký ghi lại ' +
-          'ai xác nhận, lúc nào.\n\n' +
-          'Em nào giáo viên đã ghi kết quả rồi thì KHÔNG bị đụng tới.')) return;
-        nut.disabled = true; nut.textContent = '…';
-        may.rpc('xac_nhan_ket_qua_lop',
-          { p_nam_hoc: NAM_NGUON, p_lop: lop, p_len_lop: true })
-          .then(function (r) {
-            if (r.error) throw r.error;
-            window.notify('Đã xác nhận cho ' + ((r.data && r.data.so_hoc_sinh) || 0) +
-              ' học sinh lớp ' + lop + '.');
-            veTabLL(hop);
-          })
-          .catch(function (e) {
-            nut.disabled = false; nut.textContent = 'Xác nhận hoàn thành'; batLoi(e);
-          });
+    // ── XÁC NHẬN KẾT QUẢ CẢ NĂM CHO NHIỀU LỚP MỘT LƯỢT ──────────────────
+    // Tích lớp nào thì xác nhận lớp ấy, một hộp hỏi duy nhất ở cuối. Cố ý
+    // KHÔNG làm nút "xác nhận tất cả" bấm cái là xong: đây là tuyên bố cả
+    // trường hoàn thành chương trình, thẩm quyền Hiệu trưởng — người bấm phải
+    // nhìn thấy mình đang tích những lớp nào và bao nhiêu em.
+    var nutChon = hop.querySelector('.nut-xac-nhan-chon');
+    var oDem = hop.querySelector('.ll-dem');
+    var chonHet = hop.querySelector('.ll-chon-het');
+    var oChon = Array.prototype.slice.call(hop.querySelectorAll('.ll-chon'));
+
+    function dangChon() { return oChon.filter(function (o) { return o.checked; }); }
+
+    function capNhatDem() {
+      if (!nutChon) return;
+      var c = dangChon();
+      var em = c.reduce(function (s, o) { return s + (parseInt(o.getAttribute('data-so'), 10) || 0); }, 0);
+      nutChon.disabled = !c.length;
+      nutChon.textContent = c.length
+        ? '✓ Xác nhận hoàn thành cho ' + c.length + ' lớp'
+        : '✓ Xác nhận hoàn thành';
+      oDem.textContent = c.length
+        ? em + ' học sinh sẽ được ghi kết quả hoàn thành chương trình.'
+        : 'Tích chọn các lớp cần xác nhận kết quả cả năm.';
+      if (chonHet) {
+        chonHet.checked = c.length === oChon.length && oChon.length > 0;
+        chonHet.indeterminate = c.length > 0 && c.length < oChon.length;
+      }
+    }
+
+    oChon.forEach(function (o) { o.addEventListener('change', capNhatDem); });
+    if (chonHet) {
+      chonHet.addEventListener('change', function () {
+        oChon.forEach(function (o) { o.checked = chonHet.checked; });
+        capNhatDem();
       });
-    });
+    }
+    capNhatDem();
+
+    if (nutChon) {
+      nutChon.addEventListener('click', function () {
+        var c = dangChon();
+        if (!c.length) return;
+        var dsLop = c.map(function (o) { return o.closest('tr').getAttribute('data-lop'); });
+        var em = c.reduce(function (s, o) { return s + (parseInt(o.getAttribute('data-so'), 10) || 0); }, 0);
+
+        xinPhep(
+          'Xác nhận HOÀN THÀNH chương trình cho ' + em + ' học sinh còn trống kết quả, ' +
+          'thuộc ' + dsLop.length + ' lớp — năm học ' + NAM_NGUON + '?\n\n' +
+          'Các lớp: ' + dsLop.join(' · ') + '\n\n' +
+          'Đây là thẩm quyền của Hiệu trưởng (Điều 9 Thông tư 27/2020). Nhật ký ghi lại ' +
+          'ai xác nhận, lúc nào — mỗi lớp một dòng.\n\n' +
+          'Em nào giáo viên đã ghi kết quả rồi thì KHÔNG bị đụng tới.',
+          { tieuDe: 'Xác nhận kết quả cả năm', bieuTuong: '🎓', nutOK: 'Xác nhận ' + dsLop.length + ' lớp' }
+        ).then(function (dongY) {
+          if (!dongY) return;
+          nutChon.disabled = true;
+          if (chonHet) chonHet.disabled = true;
+          oChon.forEach(function (o) { o.disabled = true; });
+
+          // Gọi TUẦN TỰ, không bắn một loạt: 20 lệnh ghi song song vào cùng một
+          // bảng vừa dễ nghẽn vừa khó nói lớp nào hỏng khi có lỗi.
+          var xong = 0, tongEm = 0, hong = [];
+          function lamTiep(i) {
+            if (i >= dsLop.length) return Promise.resolve();
+            nutChon.textContent = 'Đang xác nhận ' + (i + 1) + '/' + dsLop.length + '…';
+            return may.rpc('xac_nhan_ket_qua_lop',
+              { p_nam_hoc: NAM_NGUON, p_lop: dsLop[i], p_len_lop: true })
+              .then(function (r) {
+                if (r.error) throw r.error;
+                xong++; tongEm += (r.data && r.data.so_hoc_sinh) || 0;
+              })
+              .catch(function (e) { hong.push(dsLop[i] + ' (' + ((e && e.message) || e) + ')'); })
+              .then(function () { return lamTiep(i + 1); });
+          }
+
+          lamTiep(0).then(function () {
+            // Báo RÕ cả phần hỏng. Lặng lẽ bỏ qua vài lớp lỗi là kiểu hỏng
+            // nguy hiểm nhất ở màn này: nhìn vào tưởng xong cả trường.
+            if (hong.length) {
+              window.alert('Đã xác nhận ' + xong + '/' + dsLop.length + ' lớp (' + tongEm + ' học sinh).\n\n' +
+                '🔴 KHÔNG xác nhận được ' + hong.length + ' lớp:\n· ' + hong.join('\n· '));
+            } else {
+              window.notify('Đã xác nhận ' + tongEm + ' học sinh của ' + xong + ' lớp.');
+            }
+            veTabLL(hop);
+          });
+        });
+      });
+    }
 
     // Thực hiện lên lớp
     hop.querySelector('.nut-lam-len-lop').addEventListener('click', function () {
@@ -305,39 +392,54 @@
       if (!Object.keys(anhXa).length) {
         window.notify('Chưa có lớp nào được đặt tên lớp mới.'); return;
       }
-      if (loi && !window.confirm(
+      // Hai câu hỏi nối tiếp nhau. Hộp thoại của app trả Promise nên phải nối
+      // chuỗi, không dùng được lối `if (!confirm(...)) return;` như trước.
+      var hoiTrung = !loi ? Promise.resolve(true) : xinPhep(
         'Có từ hai lớp cũ cùng chuyển về lớp "' + loi + '" — các lớp đó sẽ dồn làm một.\n\n' +
-        'Nếu là chủ ý dồn lớp sau sáp nhập thì bấm OK. Nếu không, bấm Cancel rồi sửa lại tên.')) return;
+        'Nếu là chủ ý dồn lớp sau sáp nhập thì bấm Dồn lớp. Nếu không, bấm Huỷ rồi sửa lại tên.',
+        { tieuDe: 'Hai lớp dồn làm một', bieuTuong: '⚠️', nutOK: 'Dồn lớp', nguyHiem: true });
 
-      if (!window.confirm(
-        'Chuyển học sinh từ năm học ' + NAM_NGUON + ' sang ' + NAM_DICH + '?\n\n' +
-        '· ' + tong.len + ' em lên lớp\n' +
-        '· ' + tong.ra + ' em hoàn thành chương trình tiểu học (không tạo dòng năm mới)\n' +
-        '· ' + tong.oLai + ' em ở lại lớp — nhà trường tự xếp lớp sau\n' +
-        '· ' + tong.chua + ' em chưa có kết quả — KHÔNG được chuyển\n\n' +
-        'Không xoá gì của năm cũ, và chạy lại được.')) return;
-
-      nut.disabled = true; nut.textContent = 'Đang chuyển…';
-      may.rpc('thuc_hien_len_lop',
-        { p_nam_nguon: NAM_NGUON, p_nam_dich: NAM_DICH, p_anh_xa: anhXa })
-        .then(function (r) {
-          if (r.error) throw r.error;
-          var k = r.data || {};
-          var thieu = (k.lop_thieu_anh_xa || []);
-          window.alert('✅ Đã chuyển sang năm học ' + NAM_DICH + '.\n\n' +
-            '· Lớp mới tạo: ' + (k.lop_moi || 0) + '\n' +
-            '· Học sinh chuyển sang: ' + (k.hoc_sinh_moi || 0) + '\n' +
-            (thieu.length ? '· Bỏ qua vì chưa đặt tên lớp mới: ' + thieu.join(', ') + '\n' : '') +
-            '\nCòn phải làm tay: xếp lớp cho ' + (k.o_lai_lop || 0) + ' em ở lại lớp, ' +
-            'nạp học sinh lớp 1 tuyển mới và học sinh hai trường nhập về, ' +
-            'rồi vào thẻ Cơ sở & Sáp nhập phân lớp mới về từng điểm trường.');
-          if (window.hocSinhNoiLai) window.hocSinhNoiLai();
-          veTabLL(hop);
-        })
-        .catch(function (e) {
-          nut.disabled = false; nut.textContent = '🎓 Thực hiện lên lớp'; batLoi(e);
+      hoiTrung.then(function (dongY) {
+        if (!dongY) return;
+        return xinPhep(
+          'Chuyển học sinh từ năm học ' + NAM_NGUON + ' sang ' + NAM_DICH + '?\n\n' +
+          '· ' + tong.len + ' em lên lớp\n' +
+          '· ' + tong.ra + ' em hoàn thành chương trình tiểu học (không tạo dòng năm mới)\n' +
+          '· ' + tong.oLai + ' em ở lại lớp — nhà trường tự xếp lớp sau\n' +
+          '· ' + tong.chua + ' em chưa có kết quả — KHÔNG được chuyển\n\n' +
+          'Không xoá gì của năm cũ, và chạy lại được.',
+          { tieuDe: 'Chuyển sang năm học ' + NAM_DICH, bieuTuong: '🎓', nutOK: 'Thực hiện lên lớp' }
+        ).then(function (chac) {
+          if (!chac) return;
+          return chuyenNam(nut, anhXa, hop);
         });
+      });
     });
+  }
+
+  // Tách riêng phần GHI để chỗ hỏi ở trên đọc được thành một mạch.
+  function chuyenNam(nut, anhXa, hop) {
+    var may = window.MAY_CHU;
+    nut.disabled = true; nut.textContent = 'Đang chuyển…';
+    return may.rpc('thuc_hien_len_lop',
+      { p_nam_nguon: NAM_NGUON, p_nam_dich: NAM_DICH, p_anh_xa: anhXa })
+      .then(function (r) {
+        if (r.error) throw r.error;
+        var k = r.data || {};
+        var thieu = (k.lop_thieu_anh_xa || []);
+        window.alert('✅ Đã chuyển sang năm học ' + NAM_DICH + '.\n\n' +
+          '· Lớp mới tạo: ' + (k.lop_moi || 0) + '\n' +
+          '· Học sinh chuyển sang: ' + (k.hoc_sinh_moi || 0) + '\n' +
+          (thieu.length ? '· Bỏ qua vì chưa đặt tên lớp mới: ' + thieu.join(', ') + '\n' : '') +
+          '\nCòn phải làm tay: xếp lớp cho ' + (k.o_lai_lop || 0) + ' em ở lại lớp, ' +
+          'nạp học sinh lớp 1 tuyển mới và học sinh hai trường nhập về, ' +
+          'rồi vào thẻ Cơ sở & Sáp nhập phân lớp mới về từng điểm trường.');
+        if (window.hocSinhNoiLai) window.hocSinhNoiLai();
+        veTabLL(hop);
+      })
+      .catch(function (e) {
+        nut.disabled = false; nut.textContent = '🎓 Thực hiện lên lớp'; batLoi(e);
+      });
   }
 
   // ══════════ ĐĂNG KÝ THẺ ══════════

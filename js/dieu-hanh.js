@@ -2484,35 +2484,94 @@
     var ds = canXuLyDs();
     var qt = laQT();
 
+    // Một ô số liệu: biểu tượng trong khuôn bo tròn · nhãn · số to · đơn vị.
+    function o(mau, bieuTuong, nhan, so, donVi) {
+      return '<div class="tc-o ' + mau + '">' +
+        '<div class="tc-ic">' + bieuTuong + '</div>' +
+        '<div class="tc-nhan">' + nhan + '</div>' +
+        '<div class="tc-con">' + so + '</div>' +
+        '<div class="tc-dv">' + (donVi || '&nbsp;') + '</div></div>';
+    }
+
     var soLieu;
     if (qt) {
       // Cùng nguyên tắc với màn Tổng quan: chưa điểm nào báo cáo thì "—".
-      soLieu = '👨‍🏫 <b>' + (t.csDaBC ? t.gvCoBC + '/' + t.gvTongBC : '—') + '</b> CBGV có mặt' +
-        (t.csDaBC && t.csDaBC < t.dsCS.length ? ' <small>(' + t.csDaBC + '/' + t.dsCS.length + ' điểm)</small>' : '') + ' · ' +
-        '👧 <b>' + t.hsTong.toLocaleString('vi-VN') + '</b> học sinh · ' +
-        '🟢 <b>' + t.soXanh + '/' + t.dsCS.length + '</b> điểm trường an toàn' +
-        (t.soChua ? ' · ⚪ <b>' + t.soChua + '</b> chưa xác nhận' : '');
+      // 🔑 CBGV và HỌC SINH là HAI ô riêng. Bản vẽ tay gộp nhãn "CBGV có mặt"
+      //    với số 433 học sinh làm một — đọc lên thành "433 CBGV có mặt", sai
+      //    hẳn con số. Tách ra mới đúng dữ liệu.
+      soLieu =
+        o('lam', '👨‍🏫', 'CBGV có mặt', t.csDaBC ? t.gvCoBC + '/' + t.gvTongBC : '—',
+          t.csDaBC ? (t.csDaBC < t.dsCS.length ? t.csDaBC + '/' + t.dsCS.length + ' điểm đã báo' : 'đã đủ điểm báo')
+                   : 'chưa điểm nào báo') +
+        o('tim', '👧', 'Học sinh', t.hsTong.toLocaleString('vi-VN'), 'toàn trường') +
+        o(t.soXanh === t.dsCS.length ? 'la' : 'vang', '🛡️', 'Điểm trường an toàn',
+          t.soXanh + '/' + t.dsCS.length,
+          t.soXanh === t.dsCS.length ? 'đã kiểm tra' : 'cần kiểm tra') +
+        (t.soChua ? o('vang', '📋', 'Chưa xác nhận', t.soChua, 'nhiệm vụ') : '');
     } else {
       var toi = emailToi();
       var vToi = DL.viec.filter(function (v) { return emailBang(v.nguoiEmail, toi) && v.tt !== 'xong'; }).length;
       var dxToi = (DL.deXuat || []).filter(function (d) {
         return ((d.guiId && d.guiId === idToi()) || emailBang(d.email, toi)) && d.tt === 'cho_duyet';
       }).length;
-      soLieu = '✅ <b>' + vToi + '</b> việc đang chờ tôi · 🔄 <b>' + dxToi + '</b> đơn chờ duyệt · ' +
-        '📢 <b>' + t.tbToiChuaXN + '</b> thông báo cần xác nhận';
+      soLieu =
+        o(vToi ? 'vang' : 'la', '✅', 'Việc đang chờ tôi', vToi, 'nhiệm vụ') +
+        o('lam', '🔄', 'Đơn chờ duyệt', dxToi, 'đề xuất') +
+        o(t.tbToiChuaXN ? 'vang' : 'la', '📢', 'Thông báo cần xác nhận', t.tbToiChuaXN, 'thông báo');
     }
-    var canhBao = ds.length
-      ? '<div style="margin-top:6px">🔔 <b class="dh-do">' + ds.length + ' việc cần ' + (qt ? 'thầy/cô' : 'tôi') + ' xử lý</b></div>'
-      : '<div style="margin-top:6px">👍 Không có việc nào chờ xử lý.</div>';
 
-    vung.innerHTML = '<div class="the-thong-bao" style="margin-bottom:16px">' +
-      '<div style="font-size:13px;color:var(--chu-mo)">' + homNayChu() + ' · ' + tenBuoi(buoiXem()) + '</div>' +
-      '<div style="font-size:14.5px;margin-top:4px">' + soLieu + '</div>' + canhBao +
-      '<div class="dh-chon-hang" style="margin-top:10px">' +
-      '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
-      '<button class="dh-nut-nho" onclick="DH.moTab(\'dexuat\')">＋ Tạo đề xuất</button>' +
-      (qt ? '' : '<button class="dh-nut-nho" onclick="DH.moTab(\'viec\')">✅ Việc của tôi</button>') +
+    // Thẻ cảnh báo: có việc thì đỏ và BẤM ĐƯỢC (sang thẳng danh sách việc);
+    // không có việc thì xanh, cùng khuôn, cố ý không bấm được — để khối không
+    // bị hụt một mảng khi mọi thứ đều ổn.
+    var canhBao = ds.length
+      ? '<button class="tc-canh" onclick="DH.moTab(\'' + (qt ? 'homnay' : 'viec') + '\')">' +
+        '<span class="bi">!</span><span class="chu">' + ds.length + ' việc cần ' +
+        (qt ? 'thầy/cô' : 'tôi') + ' xử lý</span><span class="mui">›</span></button>'
+      : '<div class="tc-canh yen"><span class="bi">✓</span>' +
+        '<span class="chu">Không có việc nào chờ xử lý</span></div>';
+
+    var d = new Date();
+    var THU = ['CHỦ NHẬT', 'THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY'];
+
+    vung.innerHTML = '<div class="tc-bang">' +
+      '<div class="tc-lich">' + hinhLich() +
+        '<div class="tc-ngay">' +
+          '<div class="tc-thu">' + THU[d.getDay()] + '</div>' +
+          '<div class="tc-so">' + d.getDate() + '</div>' +
+          '<div class="tc-thang">THÁNG ' + (d.getMonth() + 1) + ', ' + d.getFullYear() + '</div>' +
+          '<span class="tc-buoi">' + tenBuoi(buoiXem()).toUpperCase() + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tc-luoi">' + soLieu + '</div>' +
+      '<div class="tc-phai">' + canhBao +
+        '<div class="tc-nut">' +
+          '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
+          '<button class="dh-nut-nho" onclick="DH.moTab(\'dexuat\')">＋ Tạo đề xuất</button>' +
+          (qt ? '' : '<button class="dh-nut-nho" onclick="DH.moTab(\'viec\')">✅ Việc của tôi</button>') +
+        '</div>' +
       '</div></div>';
+  }
+
+  // Hình lịch để bàn — vẽ bằng SVG nội tuyến, KHÔNG dùng ảnh: không thêm tệp
+  // phải tải, nét sắc ở mọi độ phân giải, và đổi màu theo bảng màu app được.
+  function hinhLich() {
+    return '<svg class="tc-hinh" viewBox="0 0 64 64" aria-hidden="true">' +
+      '<rect x="6" y="13" width="52" height="45" rx="7" fill="#fff" stroke="#dde5f0" stroke-width="2"/>' +
+      '<path d="M6 20a7 7 0 0 1 7-7h38a7 7 0 0 1 7 7v6H6z" fill="#e5484d"/>' +
+      '<rect x="17" y="4" width="5" height="15" rx="2.5" fill="#8494b3"/>' +
+      '<rect x="42" y="4" width="5" height="15" rx="2.5" fill="#8494b3"/>' +
+      '<g fill="#cdd8ea">' +
+      '<rect x="14" y="33" width="8" height="6" rx="2"/>' +
+      '<rect x="28" y="33" width="8" height="6" rx="2"/>' +
+      '<rect x="42" y="33" width="8" height="6" rx="2"/>' +
+      '<rect x="14" y="44" width="8" height="6" rx="2"/>' +
+      '<rect x="28" y="44" width="8" height="6" rx="2"/></g>' +
+      '<circle cx="47" cy="47" r="12" fill="#fff"/>' +
+      '<circle cx="47" cy="47" r="10" fill="#2a5cb8"/>' +
+      '<circle cx="47" cy="47" r="7.6" fill="#fff"/>' +
+      '<path d="M47 42.4v5.1l3.4 2.1" stroke="#2a5cb8" stroke-width="2.1" ' +
+      'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
+      '</svg>';
   }
 
   // ════════════════════════════════════════════════════════════

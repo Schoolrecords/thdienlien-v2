@@ -763,14 +763,20 @@ select.dm-o-nhap { width: auto; min-width: 168px; cursor: pointer; }
 }
 .hs-hero h2 { font-size: clamp(22px, 3.4vw, 30px); font-weight: 800; }
 .hs-hero > p { font-size: 14.5px; color: #cbdcee; margin-top: 8px; }
+/* Một hàng duy nhất: [Năm học ▾]  ·  15 lớp · 433 học sinh
+   Máy hẹp thì tự xuống dòng, ô chọn năm vẫn đứng trên vì đó là thứ bấm được. */
+.hs-dieu-khien {
+  margin-top: 18px; display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: center; gap: 12px;
+}
 .hs-pill {
-  display: inline-block; margin-top: 18px;
+  display: inline-block;
   background: rgba(255, 255, 255, .08); border: 1.5px solid var(--vang);
   color: #fff; border-radius: 999px; padding: 10px 24px; font-size: 14px; font-weight: 700;
 }
 .hs-pill b { color: var(--vang); }
 .hs-nam-boc {
-  margin-top: 16px; display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   gap: 10px; font-size: 13.5px; color: #cbdcee;
 }
 .hs-nam-boc select {
@@ -1588,6 +1594,20 @@ td.tdst { white-space: nowrap; text-align: right; }
   body { background: #fff; color: #000; }
   a[href]::after { content: ""; }   /* không in đuôi URL vào giữa câu */
   @page { margin: 15mm 12mm; }
+
+  /* ── IN DANH SÁCH HỌC SINH ────────────────────────────────────────────
+     Nút "🖨 In danh sách" gắn lớp .in-danh-sach vào <body> rồi mới gọi
+     window.print(), gỡ ra ở sự kiện afterprint.
+
+     Vì sao cần: trước 22/8/2026 bấm In là in TRỌN màn hình — hai tờ giấy
+     đầu là lưới thẻ Khối 1…Khối 5 và các thẻ lớp, mãi tờ thứ ba mới tới
+     danh sách học sinh. Thầy cô in một lớp mà tốn ba tờ, hai tờ bỏ đi.
+     #hs-phu là con TRỰC TIẾP của <body> nên giấu anh em của nó là đủ. */
+  body.in-danh-sach > *:not(#hs-phu) { display: none !important; }
+  body.in-danh-sach #hs-phu { display: block !important; }
+  /* Đầu bảng đang dính (sticky) trên màn hình — in ra thì phải thả tự do,
+     không thì nó đè lên dòng đầu của bảng. */
+  body.in-danh-sach .sheet-head { position: static !important; }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2995,3 +3015,96 @@ textarea.ht-o { min-height: 116px; display: block; }
    nút "Huỷ" bị nút chính (chữ dài, có số) bóp còn hai dòng. */
 .nap-hanh-dong { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .nap-hanh-dong button { flex: 0 0 auto; white-space: nowrap; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   VÙNG THÔNG BÁO TRANG CHỦ (dieu-hanh.js → veNhaCard) — tiền tố .tc-
+   Bố cục do thầy Chung vẽ 22/8/2026: khối lịch bên trái · dãy ô số liệu ở
+   giữa · thẻ cảnh báo và hai nút bên phải.
+
+   Vì sao đổi: bản cũ dồn cả bốn con số vào MỘT dòng ngăn bằng dấu chấm giữa —
+   máy tính đọc dài, điện thoại gãy dòng lung tung, và phải đọc hết câu mới
+   thấy số. Bản này liếc là thấy.
+
+   Xếp hàng: máy tính một hàng ngang; máy bảng ô số liệu xuống 2 cột; điện
+   thoại xếp dọc, khối lịch nằm ngang cho đỡ tốn chiều cao.
+   ════════════════════════════════════════════════════════════════════════════ */
+.tc-bang {
+  background: var(--the); border: 1px solid var(--vien); border-radius: 20px;
+  box-shadow: var(--bong); padding: 16px; margin-bottom: 16px;
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px;
+}
+
+/* ── Khối lịch ── */
+.tc-lich { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; padding-right: 16px; }
+@media (min-width: 900px) { .tc-lich { border-right: 1px solid var(--ke); } }
+.tc-hinh { width: 84px; height: 84px; flex: none; }
+.tc-ngay { text-align: center; line-height: 1.15; }
+.tc-thu { font-size: 13px; font-weight: 800; letter-spacing: .12em; color: var(--dam); }
+.tc-so { font-size: 46px; font-weight: 800; color: var(--dam); letter-spacing: -.02em; }
+.tc-thang { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--chu-mo); }
+.tc-buoi {
+  display: inline-block; margin-top: 8px; background: var(--chinh); color: #fff;
+  font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
+  padding: 6px 14px; border-radius: 999px;
+}
+
+/* ── Dãy ô số liệu ── */
+.tc-luoi {
+  flex: 1 1 320px; display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+}
+.tc-o { border-radius: 16px; padding: 14px 16px; min-width: 0; }
+.tc-ic {
+  width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+  font-size: 19px; margin-bottom: 10px;
+}
+.tc-nhan { font-size: 13px; font-weight: 700; color: var(--chu); line-height: 1.35; }
+.tc-con { font-size: 30px; font-weight: 800; line-height: 1.15; margin-top: 6px; }
+.tc-dv { font-size: 12px; color: var(--chu-mo); margin-top: 2px; }
+
+.tc-o.lam  { background: #eff4ff; } .tc-o.lam  .tc-ic { background: #dbe6ff; } .tc-o.lam  .tc-con { color: var(--chinh); }
+.tc-o.la   { background: #ecfaf1; } .tc-o.la   .tc-ic { background: #d3f3df; } .tc-o.la   .tc-con { color: var(--ok); }
+.tc-o.tim  { background: #f4f1ff; } .tc-o.tim  .tc-ic { background: #e5dffb; } .tc-o.tim  .tc-con { color: #6d31d4; }
+.tc-o.vang { background: #fdf7e9; } .tc-o.vang .tc-ic { background: #f8ead0; } .tc-o.vang .tc-con { color: var(--vang-sam); }
+
+/* ── Cột phải: cảnh báo + hai nút ── */
+.tc-phai { flex: 1 1 230px; display: flex; flex-direction: column; gap: 12px; justify-content: space-between; }
+.tc-canh {
+  display: flex; align-items: center; gap: 12px; text-align: left;
+  font: inherit; width: 100%; cursor: pointer;
+  background: #fef2f2; border: 1px solid #fadcdc; border-radius: 16px; padding: 14px 16px;
+}
+.tc-canh:hover { background: #fde9e9; }
+.tc-canh .bi {
+  width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: #e5484d; color: #fff; font-size: 18px; font-weight: 800;
+}
+.tc-canh .chu { flex: 1; font-size: 14px; font-weight: 700; color: #b91c1c; line-height: 1.35; }
+.tc-canh .mui { color: #d98b8b; font-size: 20px; flex: none; }
+/* Không có việc gì chờ → thẻ xanh, cùng khuôn, KHÔNG bấm được */
+.tc-canh.yen { background: #ecfaf1; border-color: #cfeedd; cursor: default; }
+.tc-canh.yen .bi { background: var(--ok); }
+.tc-canh.yen .chu { color: #14663a; }
+.tc-nut { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+
+@media (max-width: 899px) {
+  .tc-bang { padding: 14px; gap: 14px; }
+  .tc-lich { padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px; width: 100%; }
+  .tc-hinh { width: 62px; height: 62px; }
+  .tc-so { font-size: 34px; }
+  .tc-ngay { text-align: left; }
+  .tc-nut { justify-content: stretch; }
+  .tc-nut button { flex: 1 1 auto; }
+}
+
+/* Hàng xác nhận hàng loạt của màn Lên lớp — ô tích ở cột cuối bảng, một nút
+   duy nhất ở đây. Trước 22/8/2026 mỗi lớp một nút riêng: 20 lớp là 40 cú bấm
+   (nút + hộp xác nhận), thầy Chung góp ý đổi. */
+.ll-hang-chon {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--o-con); border: 1px solid var(--vien); border-radius: 12px;
+}
+.ll-hang-chon .ll-dem { font-size: 12.8px; color: var(--chu-mo); }
+.bang-quan-tri input[type="checkbox"].ll-chon,
+.bang-quan-tri input[type="checkbox"].ll-chon-het { width: 18px; height: 18px; cursor: pointer; accent-color: var(--chinh); }

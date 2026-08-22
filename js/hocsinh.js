@@ -149,8 +149,8 @@
     }
     var pill = $('#hs-pill');
     if (pill) {
-      pill.innerHTML = 'Năm học <b>' + thoat(NAM) + '</b> · <b>' + t.soLop + '</b> lớp · <b>' +
-        t.soHS + '</b> học sinh';
+      // KHÔNG nhắc lại năm học ở đây — ô chọn năm ngay bên cạnh đã nói rồi.
+      pill.innerHTML = '<b>' + t.soLop + '</b> lớp · <b>' + t.soHS + '</b> học sinh';
     }
     // Ô chọn năm LUÔN hiện (như Bạch Liêu). Danh sách gồm các năm CÓ dữ liệu
     // cộng thêm năm học hiện hành — để đến 30/8 nhảy sang 2026-2027 thì năm đó
@@ -169,7 +169,7 @@
           if (NAM && t.indexOf(NAM) < 0) t.push(NAM);
           return t.sort().reverse();
         })();
-    boc.innerHTML = '<label for="hs-nam">Xem năm học</label>' +
+    boc.innerHTML = '<label for="hs-nam">Năm học</label>' +
       '<select id="hs-nam">' + ds.map(function (n) {
         return '<option value="' + thoat(n) + '"' + (n === NAM ? ' selected' : '') + '>' +
           thoat(n) + '</option>';
@@ -315,7 +315,12 @@
       'số đó nằm ở bảng riêng, chỉ quản trị đọc được.</p>';
 
     $('#hsp-word').addEventListener('click', function () { xuatWord(lop, d); });
-    $('#hsp-in').addEventListener('click', function () { window.print(); });
+    // Gắn cờ để @media print chỉ in đúng lớp phủ danh sách, không in cả lưới
+    // thẻ khối phía sau. Gỡ cờ ở sự kiện afterprint bên dưới.
+    $('#hsp-in').addEventListener('click', function () {
+      document.body.classList.add('in-danh-sach');
+      window.print();
+    });
     $('#hs-phu').classList.add('on');
     document.body.style.overflow = 'hidden';
   }
@@ -374,6 +379,12 @@
 
   // Module khác nạp xong dữ liệu gọi cái này để màn cập nhật ngay, khỏi F5
   window.hocSinhNoiLai = noi;
+
+  // Gỡ cờ in dù người dùng bấm In hay bấm Huỷ ở hộp thoại in. Quên gỡ thì lần
+  // sau bấm Ctrl+P ở màn khác vẫn ra danh sách học sinh cũ — hỏng lặng lẽ.
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('in-danh-sach');
+  });
 
   document.addEventListener('dangnhap-xong', function () { if (!daNoi) noi(); });
 })();
