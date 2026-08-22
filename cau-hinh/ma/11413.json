@@ -1,4 +1,26 @@
 {
-  "_doc": "Bí danh — trường đã sáp nhập theo QĐ 3805/QĐ-UBND 20/8/2026. Thầy cô gõ mã cũ vẫn về đúng trường mới.",
-  "xem": "11422"
+  "_doc": "Sinh tự động 21/8/2026 từ danh bạ trường tiểu học của Sở GD&ĐT Nghệ An (quan-tri/sinh-cau-hinh-truong.js). DIA_CHI/KHOA_CONG_KHAI trống → trường ở CHẾ ĐỘ XEM THỬ: gõ mã là thấy khung app mang tên trường mình, dữ liệu là dữ liệu mẫu. Khi trường đăng ký dùng thật: soát lại tên trường/xã với nhà trường rồi điền hai chuỗi Supabase — đừng tin danh bạ hơn tin chính trường.",
+  "MA": "11413",
+  "MA_SO": "11413",
+  "MA_MOET": "",
+  "DIA_CHI": "",
+  "KHOA_CONG_KHAI": "",
+  "TEN_TRUONG": "Trường Phổ thông Dân tộc Bán trú Tiểu học Bảo Nam 2",
+  "DIA_CHI_TRUONG": "Xã Hữu Kiệm, Tỉnh Nghệ An",
+  "DIA_DANH": "Hữu Kiệm",
+  "DON_VI_CHU_QUAN": "UBND XÃ HỮU KIỆM",
+  "CO_QUAN_QUAN_LY": "SỞ GIÁO DỤC VÀ ĐÀO TẠO NGHỆ AN",
+  "CHU_QUAN_THUONG": "UBND xã Hữu Kiệm",
+  "CO_QUAN_THUONG": "Sở Giáo dục và Đào tạo Nghệ An",
+  "HIEU_TRUONG": "",
+  "PHO_HIEU_TRUONG": "",
+  "DIEN_THOAI": "",
+  "EMAIL_TRUONG": "",
+  "SLOGAN": "",
+  "MUC_TIEU_CHUAN_QG": "",
+  "MUC_CHUAN_QG": "",
+  "THU_MUC_ANH": "img/",
+  "SO_LOP": 0,
+  "SO_HOC_SINH": 0,
+  "SO_CBGV": 0
 }

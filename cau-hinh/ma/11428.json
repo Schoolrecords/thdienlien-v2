@@ -1,11 +1,11 @@
 {
-  "_doc": "Trường ĐIỂM CHÍNH sau sáp nhập theo QĐ 3805/QĐ-UBND 20/8/2026 — tên đặt theo phương án vì chưa có quyết định đặt tên chính thức; có tên chính thức thì sửa lại. Sinh tự động 21/8/2026 từ danh bạ trường tiểu học của Sở GD&ĐT Nghệ An (quan-tri/sinh-cau-hinh-truong.js). DIA_CHI/KHOA_CONG_KHAI trống → trường ở CHẾ ĐỘ XEM THỬ: gõ mã là thấy khung app mang tên trường mình, dữ liệu là dữ liệu mẫu. Khi trường đăng ký dùng thật: soát lại tên trường/xã với nhà trường rồi điền hai chuỗi Supabase — đừng tin danh bạ hơn tin chính trường.",
+  "_doc": "Sinh tự động 21/8/2026 từ danh bạ trường tiểu học của Sở GD&ĐT Nghệ An (quan-tri/sinh-cau-hinh-truong.js). DIA_CHI/KHOA_CONG_KHAI trống → trường ở CHẾ ĐỘ XEM THỬ: gõ mã là thấy khung app mang tên trường mình, dữ liệu là dữ liệu mẫu. Khi trường đăng ký dùng thật: soát lại tên trường/xã với nhà trường rồi điền hai chuỗi Supabase — đừng tin danh bạ hơn tin chính trường.",
   "MA": "11428",
   "MA_SO": "11428",
   "MA_MOET": "",
   "DIA_CHI": "",
   "KHOA_CONG_KHAI": "",
-  "TEN_TRUONG": "Trường Phổ thông Nội trú TH&THCS Nậm Cắn",
+  "TEN_TRUONG": "Trường Phổ thông Dân tộc Bán trú Tiểu học Nậm Cắn 1",
   "DIA_CHI_TRUONG": "Xã Nậm Cắn, Tỉnh Nghệ An",
   "DIA_DANH": "Nậm Cắn",
   "DON_VI_CHU_QUAN": "UBND XÃ NẬM CẮN",
@@ -22,10 +22,5 @@
   "THU_MUC_ANH": "img/",
   "SO_LOP": 0,
   "SO_HOC_SINH": 0,
-  "SO_CBGV": 0,
-  "_sap_nhap": [
-    "PTDTBT Tiểu học Phà Đánh",
-    "Tiểu học Nậm Cắn 2",
-    "PTDTBT TH&THCS Phà Đánh"
-  ]
+  "SO_CBGV": 0
 }

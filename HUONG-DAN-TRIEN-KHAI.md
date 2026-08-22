@@ -71,9 +71,15 @@ cron-job.org → tạo job mỗi ngày 1 lần, POST tới:
 `https://<mã-dự-án>.supabase.co/rest/v1/rpc/con_song`
 Headers: `apikey: <anon key>` và `Authorization: Bearer <anon key>`.
 
-## Tên miền riêng — cấu hình DNS (làm 11/8/2026)
+## Tên miền riêng — cấu hình DNS (làm 11/8/2026, KHÔNG PHÁT TRIỂN THÊM từ 22/8/2026)
 
-Địa chỉ chính thức: **https://tieuhocdienlien.com**
+> ⚠️ **Mục này là lịch sử, nhưng tên miền vẫn sống.** Địa chỉ đang dùng là
+> **https://dienlien.quantrisotruonghoc.com** trên Cloudflare Pages. Thầy Chung chốt
+> 22/8/2026: **giữ nguyên `CNAME` và bản ghi DNS cũ**, không đụng tới nữa — bookmark của
+> 37 thầy cô vẫn mở được, và không phải đặt luật chuyển hướng nào. Trường mới thì tuyệt
+> đối không khai tên miền này ở đâu cả.
+
+Địa chỉ cũ, vẫn phát: **https://tieuhocdienlien.com**
 Nhà đăng ký: **Mắt Bão** (ns1/ns2.matbao.com) — hết hạn 05/01/2027.
 
 Bản ghi DNS đang đặt (Chi tiết dịch vụ → Bản ghi DNS):
@@ -87,7 +93,8 @@ Bản ghi DNS đang đặt (Chi tiết dịch vụ → Bản ghi DNS):
 Phía GitHub: file **`CNAME`** ở gốc repo chứa đúng một dòng `tieuhocdienlien.com`,
 Settings → Pages tự nhận, **Enforce HTTPS đã bật**, chứng chỉ cấp cho cả apex lẫn `www`.
 
-⚠️ **Đừng xóa file `CNAME`** — xóa là tên miền riêng mất, trang tụt về địa chỉ github.io.
+⚠️ **Đừng xóa file `CNAME`** — xóa là tên miền cũ thành 404 và bookmark của 37 thầy cô chết.
+Cứ để nguyên: hai bản cùng phát từ một kho mã, bản Cloudflare Pages mới là bản đang phát triển.
 
 Ba lối vào đều dẫn về một chỗ:
 - `http://tieuhocdienlien.com` → 301 → `https://tieuhocdienlien.com` ✅
