@@ -2568,6 +2568,54 @@ nav.menu::-webkit-scrollbar { display: none; }
 .tl-viec small { color: var(--chu-mo); }
 .tl-mui { flex: 0 0 auto; font-size: 22px; color: var(--chu-nhat); }
 
+/* ── 3b. THẺ TỔ CHỨC ĐẢNG (js/to-chuc-dang.js) ───────────────────────────────
+   Cố ý KHÔNG mượn .tl-nhom / .tl-o của thẻ Thông tin trường: .tl-nhom thành
+   lưới 2 cột từ 720px và .tl-o input đặt width:100% — nút radio bị kéo rộng cả
+   dòng, còn khối chọn thì bị xé làm đôi. Lớp riêng, không đụng thẻ kia. */
+.tcd-nhom {
+  background: var(--the); border: 1px solid var(--vien); border-radius: 14px;
+  padding: 16px 18px; margin: 14px 0;
+}
+.tcd-nhom h4 { margin: 0 0 4px; font-size: 15px; }
+
+.tcd-chon {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  border: 1px solid var(--vien); border-radius: 11px;
+  padding: 11px 13px; margin-bottom: 9px; background: #fff;
+}
+.tcd-chon:hover { border-color: var(--chinh); }
+.tcd-chon.dang { border-color: var(--chinh); background: var(--o-con); }
+/* width:auto ghi đè luật input rộng 100% của biểu mẫu chung. */
+.tcd-chon input[type="radio"] { width: auto; margin: 3px 0 0; flex: 0 0 auto; }
+.tcd-chu { flex: 1 1 auto; font-size: 14px; line-height: 1.5; }
+.tcd-chu small { display: block; margin-top: 3px; font-size: 12px; color: var(--chu-mo); line-height: 1.5; }
+.tcd-cho {
+  margin-left: 8px; font-size: 11px; font-weight: 700; color: var(--chinh);
+  border: 1px solid var(--chinh); border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+}
+
+.tcd-ds { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.tcd-mot {
+  display: flex; align-items: center; gap: 11px;
+  border: 1px solid var(--vien); border-radius: 11px; padding: 10px 12px; background: #fff;
+}
+/* Mã hộp có ba ký tự (H15) nên KHÔNG dùng vòng tròn 30px như .tl-dau — chữ tràn ra ngoài. */
+.tcd-ma {
+  flex: 0 0 auto; font-weight: 700; font-size: 12.5px; letter-spacing: .3px;
+  background: var(--chinh); color: #fff; border-radius: 8px; padding: 4px 9px;
+}
+.tcd-ten { flex: 1 1 auto; font-size: 14px; line-height: 1.5; }
+.tcd-ten small { color: var(--chu-mo); font-size: 12px; }
+
+.tcd-o { display: block; }
+.tcd-nhan { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.tcd-o input {
+  width: 100%; font: inherit; font-size: 14.5px; padding: 9px 11px;
+  border: 1px solid var(--vien-dam); border-radius: 9px; background: #fff; color: var(--chu);
+}
+.tcd-o input:focus { outline: 2px solid var(--chinh); outline-offset: -1px; }
+.tcd-o small { display: block; margin-top: 3px; font-size: 12px; color: var(--chu-mo); line-height: 1.5; }
+
 /* ── 4. IN RA GIẤY ────────────────────────────────────────────────────────── */
 @media print {
   /* overflow:hidden trên tổ tiên làm trình duyệt cắt phần tràn khi phân trang —

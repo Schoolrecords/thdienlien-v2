@@ -66,7 +66,9 @@
     { ten: '📊 Quy mô — số dự phòng cho bản in', o: [
       ['so_lop', 'Số lớp', 'Máy đếm được từ dữ liệu thật thì luôn ưu tiên số đếm'],
       ['so_hoc_sinh', 'Số học sinh', ''],
-      ['so_cbgv', 'Số cán bộ, giáo viên', '']
+      ['so_cbgv', 'Số cán bộ, giáo viên', ''],
+      ['so_dang_vien', 'Số đảng viên chính thức',
+       'Từ 30 trở lên thì lập đảng bộ cơ sở. Dưới 30 vẫn lập được nhưng phải có văn bản đồng ý của cấp uỷ cấp trên. Mô hình chọn ở thẻ 🚩 Tổ chức đảng']
     ] }
   ];
 

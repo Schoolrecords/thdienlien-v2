@@ -2487,8 +2487,8 @@
     // ("Trường Tiểu học Minh Họa") và luôn có băng vàng CHẾ ĐỘ XEM THỬ.
     var t, ds, qt, xemThu = !THAT;
     if (xemThu) {
-      t = { csDaBC: 2, gvCoBC: 28, gvTongBC: 30, hsTong: 415,
-            soXanh: 2, dsCS: [1, 2], soChua: 2, tbToiChuaXN: 0 };
+      t = { csDaBC: 3, gvCoBC: 60, gvTongBC: 61, hsTong: 1328,
+            soXanh: 3, dsCS: [1, 2, 3], soChua: 2, tbToiChuaXN: 0 };
       ds = [1, 2, 3];
       qt = true;
     } else {
@@ -2543,7 +2543,7 @@
     var canhBao = ds.length
       ? '<button class="tc-canh" onclick="DH.moTab(\'' + (qt ? 'homnay' : 'viec') + '\')">' +
         '<span class="bi">!</span><span class="chu">' + ds.length + ' việc cần ' +
-        (qt ? 'thầy/cô' : 'tôi') + ' xử lý</span><span class="mui">›</span></button>'
+        (qt ? '' : 'tôi ') + 'xử lý gấp</span><span class="mui">›</span></button>'
       : '<div class="tc-canh yen"><span class="bi">✓</span>' +
         '<span class="chu">Không có việc nào chờ xử lý</span></div>';
 

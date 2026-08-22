@@ -91,11 +91,71 @@ window.CAU_HINH = (function () {
     DON_VI_CHU_QUAN: '', CO_QUAN_QUAN_LY: '', CHU_QUAN_THUONG: '', CO_QUAN_THUONG: '',
     HIEU_TRUONG: '', PHO_HIEU_TRUONG: '', DIEN_THOAI: '', EMAIL_TRUONG: '',
     SLOGAN: '', MUC_TIEU_CHUAN_QG: '', MUC_CHUAN_QG: '',
-    THU_MUC_ANH: 'img/', SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0
+    THU_MUC_ANH: 'img/', SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0,
+    // Tổ chức đảng của trường: 'chi_bo' | 'dang_bo' | 'khong'. Xem window.TU_NGU_DANG.
+    TO_CHUC_DANG: 'chi_bo', SO_DANG_VIEN: 0
   }, k;
   for (k in window.CHUNG) if (Object.prototype.hasOwnProperty.call(window.CHUNG, k)) r[k] = window.CHUNG[k];
   return r;
 })();
+
+// ============================================================
+// TỔ CHỨC ĐẢNG CỦA TRƯỜNG — BỘ TỪ VỰNG DÙNG CHUNG
+//
+// Trường sáp nhập đủ 30 đảng viên lập ĐẢNG BỘ cơ sở, dưới có các CHI BỘ trực
+// thuộc (các xã chia theo điểm trường). Trường không sáp nhập vẫn chỉ là CHI
+// BỘ cơ sở — TH Hưng Đông là một ví dụ. Hai mô hình KHÔNG phải hai danh mục:
+// chi bộ cơ sở và đảng bộ cơ sở cùng là tổ chức cơ sở đảng, cùng nhiệm vụ theo
+// Điều lệ Đảng, nên hồ sơ trùng khít. Khác đúng hai thứ: cụm từ gọi tên, và số
+// tổ chức cấp dưới (0 hay N).
+//
+// 🔑 BẢNG NÀY KHÔNG DÙNG ĐỂ VẼ MÀN HÌNH. Tên hồ sơ lưu CHỮ THẬT trong cơ sở dữ
+//    liệu, không lưu ký hiệu thay thế kiểu {TCCSĐ}. Lý do: đường hiển thị của
+//    app quá nhiều — bảng danh mục, tải Word, xuất Excel, phiếu giao việc,
+//    minh chứng bên Trường chuẩn. Sót MỘT chỗ thay là bản Word gửi Đảng ủy xã
+//    in ra dấu ngoặc nhọn, mà app vẫn báo xuất thành công.
+//    Bảng này chỉ để: (1) hiện nhãn đúng ở màn Quản trị, (2) đối chiếu khi
+//    hàm chuyen_mo_hinh_dang() trên máy chủ (sql/54) đổi cụm từ.
+//
+// 🔴 "Đảng bộ" là TỔ CHỨC, "Đảng ủy" là CƠ QUAN BAN HÀNH văn bản. Nghị quyết do
+//    Đảng ủy ra, đại hội là của Đảng bộ. Bên chi bộ thì chi bộ ra nghị quyết
+//    trực tiếp — chi ủy không ra nghị quyết. Lẫn hai chữ này là sai thể thức.
+// ============================================================
+window.TU_NGU_DANG = {
+  chi_bo: {
+    nhan:     'Chi bộ',
+    hop:      'Chi bộ',
+    capUy:    'Chi ủy',
+    biThu:    'Bí thư Chi bộ',
+    nghiQuyet:'Nghị quyết chi bộ',
+    daiHoi:   'Đại hội chi bộ',
+    moTa:     'Trường chưa sáp nhập hoặc chưa đủ 30 đảng viên — tổ chức cơ sở đảng là chi bộ, dưới có tổ đảng.'
+  },
+  dang_bo: {
+    nhan:     'Đảng bộ (có chi bộ trực thuộc)',
+    hop:      'Đảng ủy',
+    capUy:    'Ban Thường vụ Đảng ủy',
+    biThu:    'Bí thư Đảng ủy',
+    nghiQuyet:'Nghị quyết Đảng ủy',
+    daiHoi:   'Đại hội Đảng bộ',
+    moTa:     'Trường sáp nhập từ 30 đảng viên trở lên. Dưới 30 vẫn lập được nhưng phải có văn bản đồng ý của cấp ủy cấp trên (Điều lệ Đảng, Điều 21 khoản 5).'
+  },
+  khong: {
+    nhan:     'Không có tổ chức đảng riêng',
+    hop:      'Chi bộ',
+    capUy:    'Chi ủy',
+    biThu:    'Bí thư Chi bộ',
+    nghiQuyet:'Nghị quyết chi bộ',
+    daiHoi:   'Đại hội chi bộ',
+    moTa:     'Dưới 3 đảng viên chính thức — chưa lập được tổ chức đảng, đảng viên sinh hoạt ghép nơi khác.'
+  }
+};
+
+// Trả về bộ từ vựng đang dùng. Giá trị lạ thì lùi về chi_bo — mô hình phổ
+// biến nhất, và là bên KHÔNG có chi bộ trực thuộc nên không bày ra thứ thừa.
+window.tuNguDang = function () {
+  return window.TU_NGU_DANG[window.CAU_HINH.TO_CHUC_DANG] || window.TU_NGU_DANG.chi_bo;
+};
 
 // ============================================================
 // NĂM HỌC HIỆN HÀNH — TỰ TÍNH THEO NGÀY, KHÔNG GHI CỨNG
@@ -313,7 +373,13 @@ window.CAU_HINH.DA_NOI = false;
     TEN_TRUONG: 'Trường Tiểu học Minh Họa',
     DIA_CHI_TRUONG: 'Bản xem thử — không phải trường có thật',
     SLOGAN: 'Bản xem thử của hệ thống Quản trị số Trường học',
-    THU_MUC_ANH: 'img/', SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0
+    THU_MUC_ANH: 'img/', SO_LOP: 0, SO_HOC_SINH: 0, SO_CBGV: 0,
+    // Trường mẫu là trường SÁP NHẬP ba điểm nên đi theo mô hình đảng bộ —
+    // khớp với js/du-lieu-demo.js (hộp H04 Đảng ủy + ba chi bộ H15-H17).
+    // 28 đảng viên là con số CHƯA ĐỦ 30 có chủ ý: bản xem thử phô luôn lời
+    // nhắc "phải có văn bản đồng ý của cấp ủy cấp trên" (Điều lệ Đảng Đ.21.5),
+    // đúng tình cảnh phần lớn trường tiểu học sau sáp nhập.
+    TO_CHUC_DANG: 'dang_bo', SO_DANG_VIEN: 28
   };
   window.hoSoTruongMau = function () { return TRUONG_MAU; };
 

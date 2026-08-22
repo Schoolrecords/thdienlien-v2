@@ -94,6 +94,13 @@
       if (ch.email_truong) window.CAU_HINH.EMAIL_TRUONG = ch.email_truong;
       if (ch.so_cbgv) window.CAU_HINH.SO_CBGV = parseInt(ch.so_cbgv, 10);
       if (ch.muc_chuan_qg) window.CAU_HINH.MUC_CHUAN_QG = ch.muc_chuan_qg;
+      // Tổ chức đảng: chi_bo | dang_bo | khong. Giá trị lạ (gõ tay vào bảng
+      // cau_hinh) thì BỎ QUA chứ không nhận — window.tuNguDang() sẽ lùi về
+      // chi_bo, còn nhận vào đây thì màn Quản trị hiện một ô chọn rỗng.
+      if (ch.to_chuc_dang && ['chi_bo','dang_bo','khong'].indexOf(ch.to_chuc_dang) >= 0) {
+        window.CAU_HINH.TO_CHUC_DANG = ch.to_chuc_dang;
+      }
+      if (ch.so_dang_vien) window.CAU_HINH.SO_DANG_VIEN = parseInt(ch.so_dang_vien, 10) || 0;
       // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
       // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
       // sửa mã — tránh mỗi nơi một con số.

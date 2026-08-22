@@ -9,7 +9,7 @@
 //        node quan-tri/sinh-sql-danh-muc.js    (danh mục trong CSDL)
 //
 // Nguồn: Điều lệ Thông tư 15/2026/TT-BGDĐT (Điều 21), TT 57/2026 (Phụ lục III,
-// IV), CV 5555/BGDĐT-GDPT. 101 đầu hồ sơ · 13 hộp · 5 bộ phận.
+// IV), CV 5555/BGDĐT-GDPT. 124 đầu hồ sơ · 16 hộp · 5 bộ phận.
 // Tầng: A bắt buộc theo văn bản (66) · B minh chứng TT57 (25) · C nội bộ (10).
 //
 // Khi nối Supabase, các file *-sql.js GHI ĐÈ các mảng này rồi gọi lại hàm vẽ.
@@ -22,29 +22,32 @@
 
 window.BO_PHAN = [
   { soTT: 1, ten: "Bộ phận Lãnh đạo, quản lý", icon: "🏛", hop: ["H01", "H02", "H03"] },
-  { soTT: 2, ten: "Bộ phận Đảng, đoàn thể", icon: "🚩", hop: ["H04", "H05"] },
+  { soTT: 2, ten: "Bộ phận Đảng, đoàn thể", icon: "🚩", hop: ["H04", "H04.1", "H04.2", "H04.3", "H05"] },
   { soTT: 3, ten: "Bộ phận Chuyên môn", icon: "📚", hop: ["H06", "H08"] },
   { soTT: 4, ten: "Bộ phận Văn phòng", icon: "🗄", hop: ["H09", "H10", "H11", "H12"] },
   { soTT: 5, ten: "Bộ phận Ban, hội", icon: "🤝", hop: ["H13", "H14"] },
 ];
 
 window.HOP = {
-  H01: { ten: "Hiệu trưởng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ chỉ đạo, điều hành và quản lý chung của người đứng đầu nhà trường." },
-  H02: { ten: "Phó Hiệu trưởng", phuTrach: "Phó Hiệu trưởng", moTa: "Hồ sơ quản lý chuyên môn, hoạt động dạy học, phổ cập và chất lượng giáo dục." },
-  H03: { ten: "Các hội đồng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ các hội đồng theo Điều lệ: thi đua khen thưởng, kỉ luật, tư vấn, tự đánh giá." },
-  H04: { ten: "Chi bộ", phuTrach: "Bí thư Chi bộ", moTa: "Hồ sơ hoạt động của Chi bộ Đảng trong nhà trường." },
-  H05: { ten: "Đoàn TNCS, Đội TNTP & Sao Nhi đồng", phuTrach: "Tổng phụ trách Đội", moTa: "Kế hoạch, biên bản và tư liệu hoạt động Đoàn, Đội, Sao Nhi đồng." },
-  H06: { ten: "Tổ chuyên môn", phuTrach: "Tổ trưởng chuyên môn", moTa: "Sổ ghi chép hoạt động tổ, kế hoạch dạy học và sinh hoạt chuyên môn." },
-  H08: { ten: "Giáo viên & Giáo viên chủ nhiệm", phuTrach: "Giáo viên", moTa: "Kế hoạch bài dạy và sổ chủ nhiệm — hồ sơ giáo viên theo Điều 21 khoản 2." },
-  H09: { ten: "Văn thư, lưu trữ", phuTrach: "Văn thư", moTa: "Văn bản đi - đến, quản lý văn bản điện tử, danh mục hồ sơ và lưu trữ." },
-  H10: { ten: "Kế toán", phuTrach: "Kế toán", moTa: "Hồ sơ tài chính, tài sản, mua sắm, kiểm kê và công khai tài chính." },
-  H11: { ten: "Y tế học đường", phuTrach: "Nhân viên y tế", moTa: "Theo dõi sức khoẻ học sinh, y tế học đường và an toàn thực phẩm." },
-  H12: { ten: "Thư viện - Thiết bị", phuTrach: "Cán bộ Thiết bị", moTa: "Hồ sơ thư viện, thiết bị dạy học, hạ tầng công nghệ thông tin và học liệu số." },
-  H13: { ten: "Ban đại diện cha mẹ học sinh", phuTrach: "Trưởng Ban ĐDCMHS", moTa: "Quy chế, kế hoạch và biên bản hoạt động Ban đại diện cha mẹ học sinh." },
-  H14: { ten: "Ban an ninh - an toàn trường học", phuTrach: "Ban an ninh - an toàn", moTa: "An ninh trật tự, an toàn trường học, phòng chống bạo lực và xử lý sự cố." },
+  "H01": { ten: "Hiệu trưởng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ chỉ đạo, điều hành và quản lý chung của người đứng đầu nhà trường." },
+  "H02": { ten: "Phó Hiệu trưởng", phuTrach: "Phó Hiệu trưởng", moTa: "Hồ sơ quản lý chuyên môn, hoạt động dạy học, phổ cập và chất lượng giáo dục." },
+  "H03": { ten: "Các hội đồng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ các hội đồng theo Điều lệ: thi đua khen thưởng, kỉ luật, tư vấn, tự đánh giá." },
+  "H04": { ten: "Đảng ủy", phuTrach: "Bí thư Đảng ủy", moTa: "Hồ sơ lãnh đạo, chỉ đạo của Đảng ủy nhà trường và công tác tổ chức, đảng viên." },
+  "H04.1": { ten: "Chi bộ 1 — điểm trường trung tâm", phuTrach: "Bí thư Chi bộ 1", moTa: "Chi bộ 1 — điểm trường trung tâm" },
+  "H04.2": { ten: "Chi bộ 2 — điểm trường phía Bắc", phuTrach: "Bí thư Chi bộ 2", moTa: "Chi bộ 2 — điểm trường phía Bắc" },
+  "H04.3": { ten: "Chi bộ 3 — điểm trường phía Nam", phuTrach: "Bí thư Chi bộ 3", moTa: "Chi bộ 3 — điểm trường phía Nam" },
+  "H05": { ten: "Đoàn TNCS, Đội TNTP & Sao Nhi đồng", phuTrach: "Tổng phụ trách Đội", moTa: "Kế hoạch, biên bản và tư liệu hoạt động Đoàn, Đội, Sao Nhi đồng." },
+  "H06": { ten: "Tổ chuyên môn", phuTrach: "Tổ trưởng chuyên môn", moTa: "Sổ ghi chép hoạt động tổ, kế hoạch dạy học và sinh hoạt chuyên môn." },
+  "H08": { ten: "Giáo viên & Giáo viên chủ nhiệm", phuTrach: "Giáo viên", moTa: "Kế hoạch bài dạy và sổ chủ nhiệm — hồ sơ giáo viên theo Điều 21 khoản 2." },
+  "H09": { ten: "Văn thư, lưu trữ", phuTrach: "Văn thư", moTa: "Văn bản đi - đến, quản lý văn bản điện tử, danh mục hồ sơ và lưu trữ." },
+  "H10": { ten: "Kế toán", phuTrach: "Kế toán", moTa: "Hồ sơ tài chính, tài sản, mua sắm, kiểm kê và công khai tài chính." },
+  "H11": { ten: "Y tế học đường", phuTrach: "Nhân viên y tế", moTa: "Theo dõi sức khoẻ học sinh, y tế học đường và an toàn thực phẩm." },
+  "H12": { ten: "Thư viện - Thiết bị", phuTrach: "Cán bộ Thiết bị", moTa: "Hồ sơ thư viện, thiết bị dạy học, hạ tầng công nghệ thông tin và học liệu số." },
+  "H13": { ten: "Ban đại diện cha mẹ học sinh", phuTrach: "Trưởng Ban ĐDCMHS", moTa: "Quy chế, kế hoạch và biên bản hoạt động Ban đại diện cha mẹ học sinh." },
+  "H14": { ten: "Ban an ninh - an toàn trường học", phuTrach: "Ban an ninh - an toàn", moTa: "An ninh trật tự, an toàn trường học, phòng chống bạo lực và xử lý sự cố." },
 };
 
-// 101 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
+// 124 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
 // vì tự sinh là ra mã khác mã trong cơ sở dữ liệu.
 window.HO_SO = [
   // ── H01 · Hiệu trưởng (26)
@@ -107,12 +110,38 @@ window.HO_SO = [
   { hop: "H03", ma: "MC.1.2.12", maCu: "1.2.1→1.2.4", ten: "Hồ sơ Hội đồng trường (nghị quyết, biên bản, giám sát)", tc: ["1.2"], tt: "co", phuTrach: "Hiệu trưởng", tang: "A" },
   { hop: "H03", ma: "MC.1.4.05", maCu: "—", ten: "Hồ sơ Hội đồng tự đánh giá", tc: ["1.4"], tt: "co", phuTrach: "Hiệu trưởng", tang: "A" },
   { hop: "H03", ma: "MC.1.2.13", maCu: "", ten: "Biên bản bàn giao hồ sơ, tài liệu của Hội đồng trường cho Hiệu trưởng", tc: ["1.2"], tt: "chua", phuTrach: "Hiệu trưởng", tang: "A" },
-  // ── H04 · Chi bộ (5)
-  { hop: "H04", ma: "MC.1.2.14", maCu: "6.1", ten: "Nghị quyết Chi bộ", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Chi bộ", tang: "A" },
-  { hop: "H04", ma: "MC.1.2.15", maCu: "6.2", ten: "Quyết định của Chi bộ", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Chi bộ", tang: "A" },
-  { hop: "H04", ma: "MC.1.2.16", maCu: "6.3", ten: "Biên bản họp Chi ủy, Chi bộ", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Chi bộ", tang: "A" },
-  { hop: "H04", ma: "MC.1.2.17", maCu: "6.4", ten: "Báo cáo của Chi bộ", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Chi bộ", tang: "A" },
-  { hop: "H04", ma: "MC.1.2.18", maCu: "6.5", ten: "Hồ sơ đánh giá, xếp loại đảng viên", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Chi bộ", tang: "A" },
+  // ── H04 · Đảng ủy (10)
+  { hop: "H04", ma: "MC.1.2.14", maCu: "6.1", ten: "Nghị quyết Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.15", maCu: "6.2", ten: "Quyết định của Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.16", maCu: "6.3", ten: "Biên bản họp Ban Thường vụ, Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.17", maCu: "6.4", ten: "Báo cáo của Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.18", maCu: "6.5", ten: "Hồ sơ đánh giá, xếp loại đảng viên", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.24", maCu: "", ten: "Quyết định thành lập, kiện toàn các chi bộ trực thuộc", tc: ["1.2"], tt: "chua", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.25", maCu: "", ten: "Quyết định chỉ định cấp ủy, bí thư, phó bí thư chi bộ trực thuộc", tc: ["1.2"], tt: "chua", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.26", maCu: "", ten: "Sổ theo dõi sinh hoạt và chất lượng sinh hoạt các chi bộ trực thuộc", tc: ["1.2"], tt: "chua", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.27", maCu: "", ten: "Báo cáo tổng hợp của các chi bộ trực thuộc gửi Đảng ủy", tc: ["1.2"], tt: "chua", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  { hop: "H04", ma: "MC.1.2.28", maCu: "", ten: "Văn bản đồng ý của cấp ủy cấp trên về lập đảng bộ khi chưa đủ 30 đảng viên", tc: ["1.2"], tt: "chua", phuTrach: "Bí thư Đảng ủy", tang: "A" },
+  // ── H04.1 · Chi bộ 1 — điểm trường trung tâm (6)
+  { hop: "H04.1", ma: "MC.1.2.29", maCu: "", ten: "Nghị quyết chi bộ (hằng tháng)", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  { hop: "H04.1", ma: "MC.1.2.30", maCu: "", ten: "Sổ biên bản sinh hoạt chi bộ và sinh hoạt chuyên đề", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  { hop: "H04.1", ma: "MC.1.2.31", maCu: "", ten: "Sổ danh sách đảng viên của chi bộ", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  { hop: "H04.1", ma: "MC.1.2.32", maCu: "", ten: "Bản kiểm điểm, đánh giá xếp loại đảng viên hằng năm", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  { hop: "H04.1", ma: "MC.1.2.33", maCu: "", ten: "Hồ sơ đề nghị kết nạp, chuyển đảng chính thức", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  { hop: "H04.1", ma: "MC.1.2.34", maCu: "", ten: "Báo cáo của chi bộ gửi Đảng ủy", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 1", tang: "A" },
+  // ── H04.2 · Chi bộ 2 — điểm trường phía Bắc (6)
+  { hop: "H04.2", ma: "MC.1.2.35", maCu: "", ten: "Nghị quyết chi bộ (hằng tháng)", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  { hop: "H04.2", ma: "MC.1.2.36", maCu: "", ten: "Sổ biên bản sinh hoạt chi bộ và sinh hoạt chuyên đề", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  { hop: "H04.2", ma: "MC.1.2.37", maCu: "", ten: "Sổ danh sách đảng viên của chi bộ", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  { hop: "H04.2", ma: "MC.1.2.38", maCu: "", ten: "Bản kiểm điểm, đánh giá xếp loại đảng viên hằng năm", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  { hop: "H04.2", ma: "MC.1.2.39", maCu: "", ten: "Hồ sơ đề nghị kết nạp, chuyển đảng chính thức", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  { hop: "H04.2", ma: "MC.1.2.40", maCu: "", ten: "Báo cáo của chi bộ gửi Đảng ủy", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 2", tang: "A" },
+  // ── H04.3 · Chi bộ 3 — điểm trường phía Nam (6)
+  { hop: "H04.3", ma: "MC.1.2.41", maCu: "", ten: "Nghị quyết chi bộ (hằng tháng)", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
+  { hop: "H04.3", ma: "MC.1.2.42", maCu: "", ten: "Sổ biên bản sinh hoạt chi bộ và sinh hoạt chuyên đề", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
+  { hop: "H04.3", ma: "MC.1.2.43", maCu: "", ten: "Sổ danh sách đảng viên của chi bộ", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
+  { hop: "H04.3", ma: "MC.1.2.44", maCu: "", ten: "Bản kiểm điểm, đánh giá xếp loại đảng viên hằng năm", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
+  { hop: "H04.3", ma: "MC.1.2.45", maCu: "", ten: "Hồ sơ đề nghị kết nạp, chuyển đảng chính thức", tc: [], tt: "chua", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
+  { hop: "H04.3", ma: "MC.1.2.46", maCu: "", ten: "Báo cáo của chi bộ gửi Đảng ủy", tc: [], tt: "co", phuTrach: "Bí thư Chi bộ 3", tang: "A" },
   // ── H05 · Đoàn TNCS, Đội TNTP & Sao Nhi đồng (6)
   { hop: "H05", ma: "MC.3.3.02", maCu: "", ten: "Hồ sơ công tác Đoàn TNCS Hồ Chí Minh", tc: ["3.3", "1.2"], tt: "chua", phuTrach: "Bí thư Đoàn", tang: "A" },
   { hop: "H05", ma: "MC.3.3.03", maCu: "7.1 + 7.2 (tách)", ten: "Sổ công tác Đội", tc: ["3.3"], tt: "co", phuTrach: "Tổng phụ trách Đội", tang: "A" },
