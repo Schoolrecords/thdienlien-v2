@@ -155,8 +155,19 @@
           '>' + thoat(n) + '</option>';
       }).join('') + '</select>' +
       '<span style="font-size:13px;align-self:center">sang năm học</span>' +
-      '<input class="dh-o-nhap ll-nam-dich" style="width:120px;margin-top:0" value="' +
-      thoat(NAM_DICH) + '">' +
+      // Ô CHỌN, không gõ tay. Đây là màn KHÔNG CÓ ĐƯỜNG LÙI: gõ nhầm một chữ số
+      // là đổ cả trường lên lớp vào một năm học không tồn tại. Danh sách gồm ba
+      // năm dùng chung của app cộng năm kế tiếp năm nguồn (trường nạp bù dữ
+      // liệu cũ thì năm kế tiếp có thể nằm ngoài ba năm ấy).
+      '<select class="dh-o-nhap ll-nam-dich" style="width:auto;margin-top:0">' +
+      (function () {
+        var ds = window.baNamHoc ? window.baNamHoc([namKeTiep(NAM_NGUON), NAM_DICH])
+                                 : [namKeTiep(NAM_NGUON)];
+        return ds.map(function (n) {
+          return '<option value="' + thoat(n) + '"' + (n === NAM_DICH ? ' selected' : '') +
+            '>' + thoat(n) + '</option>';
+        }).join('');
+      })() + '</select>' +
       '<button class="nut-doi-nam">Xem lại</button>' +
       '</div>';
   }
