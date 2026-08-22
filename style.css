@@ -2991,3 +2991,7 @@ textarea.ht-o { min-height: 116px; display: block; }
   .nap-nut-tep { display: block; text-align: center; }
   .nap-ten-tep { display: block; margin: 8px 0 0; }
 }
+/* Hàng nút Ghi / Huỷ của màn Nạp dữ liệu. Không cho nút co lại: để mặc thì
+   nút "Huỷ" bị nút chính (chữ dài, có số) bóp còn hai dòng. */
+.nap-hanh-dong { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.nap-hanh-dong button { flex: 0 0 auto; white-space: nowrap; }

@@ -180,7 +180,46 @@ báo người quản trị của trường thêm vào.</td></tr>
 trưởng, quy mô; soát danh sách tài khoản; mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp
 trường mình rồi mới phân công các bộ phận nhập minh chứng.</p>
 
-<h2>VI. Câu hỏi thường gặp</h2>
+<h2>VI. Nạp danh sách học sinh và đội ngũ vào hệ thống</h2>
+<p>Nhà trường <b>tự nạp</b>, không phải gửi dữ liệu đi đâu cả. Vào <b>Quản trị →
+<span class="nut">📥 Nạp dữ liệu</span></b>.</p>
+<ol>
+<li><b>Chuẩn bị tệp.</b> Vào <b>truong.csdl.moet.gov.vn</b> → Học sinh → <b>Xuất Excel</b>
+(tệp mẫu <i>C1-HocSinh</i>). Giữ nguyên hàng tiêu đề, đừng xoá hay đổi tên cột.</li>
+<li><b>Chọn năm học.</b> Ô chọn có ba năm: năm trước, năm nay, năm sau. Tệp tải từ CSDL ngành
+thường là dữ liệu <b>năm vừa xong</b> — chọn đúng năm của tệp.</li>
+<li><b>Chọn tệp</b> rồi chờ vài giây.</li>
+<li><b>Đọc bảng xem trước.</b> Máy báo rõ: bao nhiêu em thêm mới, bao nhiêu em cập nhật, em nào
+đổi lớp, lớp nào sẽ được tạo, dòng nào trong tệp bị thiếu dữ liệu (kèm số hàng Excel).
+<b>Chưa có gì được ghi ở bước này.</b></li>
+<li>Thấy đúng thì bấm <span class="nut">📥 Ghi … em vào hệ thống</span>.</li>
+</ol>
+<div class="khung-cuon"><table>
+<tr><th style="width:38%">Điều cần biết</th><th>Vì sao</th></tr>
+<tr><td>Hệ thống <b>không lấy</b> số điện thoại, họ tên cha mẹ, địa chỉ, nơi sinh</td>
+<td>Dù tệp của Bộ có sẵn. Chỉ lấy phần cần cho sổ sách: mã, họ tên, ngày sinh, giới tính,
+dân tộc, lớp, trạng thái — thu thập ít nhất có thể theo Luật Bảo vệ dữ liệu cá nhân năm 2025.</td></tr>
+<tr><td>Hệ thống <b>không xoá</b> học sinh nào</td>
+<td>Em nào có trong hệ thống mà không có trong tệp thì máy chỉ báo số lượng để nhà trường kiểm
+lại, không tự dọn.</td></tr>
+<tr><td>Nạp lại nhiều lần <b>an toàn</b></td>
+<td>Ghi đè theo mã học sinh, không sinh bản trùng. Tệp sai thì sửa trong Excel rồi nạp lại.</td></tr>
+<tr><td>Ô <b>số định danh cá nhân</b> mặc định để trống</td>
+<td>Chỉ tích khi nhà trường thật sự cần (làm học bạ số). Nạp rồi thì chỉ quản trị đọc được.</td></tr>
+<tr><td>Lớp mới tạo <b>chưa gắn điểm trường</b></td>
+<td>Nạp xong vào <b>Quản trị → 🏫 Cơ sở &amp; Sáp nhập</b> gán lớp nào thuộc điểm trường nào —
+trường có phân hiệu thì bước này bắt buộc, không thì mọi báo cáo dồn về một chỗ.</td></tr>
+</table></div>
+<div class="diemdung">✅ Nạp xong mở <b>Quản lý học sinh</b>, chọn đúng năm học vừa nạp:
+thấy đủ khối, đủ lớp, đúng sĩ số là được.</div>
+<p><b>Đội ngũ CBGV</b> nạp cùng chỗ, chọn loại dữ liệu <i>Đội ngũ CBGV</i> rồi chọn tệp
+<i>CSDL_GiaoVien</i> xuất từ CSDL ngành. Máy đọc họ tên, email, chức vụ để dựng
+<b>danh sách được phép đăng nhập</b>.
+⚠️ Email trong CSDL ngành hay là email công vụ hoặc khai nhầm sang người khác — máy sẽ
+chỉ ra từng dòng đáng ngờ, nhà trường soát rồi sửa lại cho đúng <b>Gmail thầy cô dùng thật</b>,
+vì đăng nhập hệ thống là đăng nhập bằng Google.</p>
+
+<h2>VII. Câu hỏi thường gặp</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
 <tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),

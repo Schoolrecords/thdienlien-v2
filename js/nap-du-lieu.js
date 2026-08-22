@@ -66,7 +66,7 @@
   // chữ ở hàng tiêu đề thì tệp phiên bản khác vẫn nạp được; dò theo số thứ tự
   // cột thì im lặng lấy nhầm cột bên cạnh — sai mà không báo.
   // ══════════════════════════════════════════════════════════════
-  var CAC_COT = {
+  var COT_HS = {
     lop:        { ten: 'Mã lớp',                 tim: ['ma lop'],                     buoc: true },
     ma:         { ten: 'Mã học sinh',            tim: ['ma hoc sinh', 'ma hs'],       buoc: true },
     ho_ten:     { ten: 'Họ tên',                 tim: ['ho ten', 'ho va ten'],        buoc: true },
@@ -78,6 +78,33 @@
     khuyet_tat: { ten: 'Loại khuyết tật',        tim: ['loai khuyet tat'] },
     dinh_danh:  { ten: 'Số định danh cá nhân',   tim: ['so dinh danh ca nhan', 'so dinh danh'] }
   };
+
+  // Tệp CSDL_GiaoVien của CSDL ngành — 72 cột, ta chỉ cần bốn.
+  // Cột nhận diện bắt buộc là "Họ tên" + "Email": đó là cặp phân biệt tệp đội
+  // ngũ với tệp học sinh (tệp học sinh không có cột Email).
+  var COT_GV = {
+    ho_ten:     { ten: 'Họ tên',              tim: ['ho ten', 'ho va ten'],   buoc: true },
+    email:      { ten: 'Email',               tim: ['email', 'thu dien tu'],  buoc: true },
+    trang_thai: { ten: 'Trạng thái CB',       tim: ['trang thai cb', 'trang thai can bo'] },
+    vi_tri:     { ten: 'Vị trí việc làm',     tim: ['vi tri viec lam'] },
+    chuc_vu:    { ten: 'Nhóm chức vụ',        tim: ['nhom chuc vu', 'chuc vu'] },
+    mon:        { ten: 'Môn dạy',             tim: ['mon day'] }
+  };
+
+  var BO_NAP = {
+    hs: {
+      ten: 'Học sinh', tenDai: 'Danh sách học sinh',
+      tepMau: 'C1-HocSinh', duong: 'Học sinh → Xuất Excel',
+      coNam: true, cot: COT_HS, batBuoc: ['ma', 'ho_ten', 'lop']
+    },
+    gv: {
+      ten: 'Đội ngũ CBGV', tenDai: 'Danh sách cán bộ, giáo viên, nhân viên',
+      tepMau: 'CSDL_GiaoVien', duong: 'Cán bộ → Xuất Excel',
+      coNam: false, cot: COT_GV, batBuoc: ['ho_ten', 'email']
+    }
+  };
+  var LOAI = 'hs';
+  function bo() { return BO_NAP[LOAI]; }
 
   // Bỏ dấu + gộp khoảng trắng: tiêu đề trong tệp của Bộ có xuống dòng giữa ô
   // ("Tỉnh/Thành phố\n(Theo địa chỉ thường trú)") và lẫn NFC/NFD.
@@ -157,6 +184,7 @@
   // thì đó là hàng tiêu đề. Tệp của Bộ để dữ liệu ở "Sheet1" nhưng còn 16 trang
   // danh mục kèm theo, và trường nào lỡ đổi tên trang thì vẫn phải nạp được.
   function timTieuDe(XLSX, wb) {
+    var COT = bo().cot, BUOC = bo().batBuoc;
     for (var i = 0; i < wb.SheetNames.length; i++) {
       var ten = wb.SheetNames[i];
       var hang = XLSX.utils.sheet_to_json(wb.Sheets[ten], { header: 1, raw: false, defval: '', blankrows: true });
@@ -165,13 +193,13 @@
         for (var c = 0; c < hang[r].length; c++) {
           var v = chuanHoa(hang[r][c]);
           if (!v) continue;
-          Object.keys(CAC_COT).forEach(function (k) {
+          Object.keys(COT).forEach(function (k) {
             if (o[k] != null) return;
-            if (CAC_COT[k].tim.some(function (t) { return v === t || v.indexOf(t) === 0; })) o[k] = c;
+            if (COT[k].tim.some(function (t) { return v === t || v.indexOf(t) === 0; })) o[k] = c;
           });
         }
-        Object.keys(CAC_COT).forEach(function (k) { if (o[k] != null) co++; });
-        if (o.ma != null && o.ho_ten != null && o.lop != null) {
+        Object.keys(COT).forEach(function (k) { if (o[k] != null) co++; });
+        if (BUOC.every(function (k) { return o[k] != null; })) {
           return { trang: ten, hang: hang, dongTieuDe: r, cot: o, soCot: co };
         }
       }
@@ -182,14 +210,19 @@
   function phanTich(XLSX, wb) {
     var t = timTieuDe(XLSX, wb);
     if (!t) {
-      throw new Error('Tệp này không giống danh sách học sinh của CSDL ngành: không tìm thấy hàng ' +
-        'tiêu đề có đủ ba cột "Mã lớp", "Mã học sinh", "Họ tên". ' +
-        'Hãy tải lại tệp mẫu C1-HocSinh từ trang truong.csdl.moet.gov.vn và giữ nguyên hàng tiêu đề.');
+      var canCo = bo().batBuoc.map(function (k) { return '"' + bo().cot[k].ten + '"'; }).join(', ');
+      throw new Error('Tệp này không giống ' + bo().tenDai.toLowerCase() + ' của CSDL ngành: không tìm ' +
+        'thấy hàng tiêu đề có đủ các cột ' + canCo + '. ' +
+        'Hãy tải lại tệp mẫu ' + bo().tepMau + ' từ trang truong.csdl.moet.gov.vn và giữ nguyên hàng ' +
+        'tiêu đề. Cũng kiểm lại ô "Loại dữ liệu" ở bước 1 — chọn nhầm loại thì máy tìm nhầm cột.');
     }
+    return LOAI === 'gv' ? phanTichGV(t) : phanTichHS(t);
+  }
 
+  function phanTichHS(t) {
     var cot = t.cot;
     var em = [], loi = [], nhac = [], daGap = {}, demNgay = {};
-    var thieuCot = Object.keys(CAC_COT).filter(function (k) { return cot[k] == null; });
+    var thieuCot = Object.keys(COT_HS).filter(function (k) { return cot[k] == null; });
 
     for (var r = t.dongTieuDe + 1; r < t.hang.length; r++) {
       var d = t.hang[r] || [];
@@ -246,7 +279,7 @@
     Object.keys(demNgay).forEach(function (k) { if (!namDoan || demNgay[k] > demNgay[namDoan]) namDoan = k; });
 
     if (thieuCot.length) {
-      nhac.push('Tệp không có các cột: ' + thieuCot.map(function (k) { return CAC_COT[k].ten; }).join(' · ') +
+      nhac.push('Tệp không có các cột: ' + thieuCot.map(function (k) { return COT_HS[k].ten; }).join(' · ') +
         ' — phần đó sẽ để trống.');
     }
     if (em.length > TRAN_DONG) {
@@ -257,10 +290,93 @@
   }
 
   // ══════════════════════════════════════════════════════════════
+  // ĐỘI NGŨ CBGV — đích đến là DANH SÁCH MỜI, không phải bảng nhân sự
+  //
+  // 🔴 CÁI BẪY LỚN NHẤT CỦA TỆP NÀY: cột "Email" trong CSDL ngành KHÔNG phải
+  //    địa chỉ đăng nhập. Soi tệp thật của Diễn Liên thấy ngay hai kiểu hỏng:
+  //      · người này mang email của người khác (khai vội, chép nhầm dòng);
+  //      · email công vụ @nghean.edu.vn — không đăng nhập Google được, trừ khi
+  //        Sở dựng trên Google Workspace.
+  //    Đăng nhập hệ thống là đăng nhập BẰNG GOOGLE, nên địa chỉ sai là thầy cô
+  //    vĩnh viễn không vào được mà chẳng hiểu vì sao. Vì vậy màn soi thử phải
+  //    chỉ mặt từng dòng đáng ngờ, chứ không lặng lẽ nạp cho xong.
+  // ══════════════════════════════════════════════════════════════
+  function phanTichGV(t) {
+    var cot = t.cot;
+    var em = [], loi = [], nhac = [], daGap = {}, khongGmail = [], daNghi = 0;
+    var thieuCot = Object.keys(COT_GV).filter(function (k) { return cot[k] == null; });
+
+    for (var r = t.dongTieuDe + 1; r < t.hang.length; r++) {
+      var d = t.hang[r] || [];
+      var lay = function (k) { return cot[k] == null ? '' : String(d[cot[k]] == null ? '' : d[cot[k]]).trim(); };
+
+      var hoTen = lay('ho_ten'), email = lay('email').toLowerCase();
+      if (!hoTen && !email) continue;
+      var soDong = r + 1;
+
+      if (!hoTen) { loi.push('Hàng ' + soDong + ': thiếu HỌ TÊN (' + (email || 'không có email') + ')'); continue; }
+
+      // Người đã nghỉ / chuyển đi: KHÔNG đưa vào danh sách được phép đăng nhập.
+      var tt = chuanHoa(lay('trang_thai'));
+      if (tt && tt.indexOf('dang lam viec') < 0) { daNghi++; continue; }
+
+      if (!email) {
+        loi.push('Hàng ' + soDong + ': ' + hoTen + ' KHÔNG có email — chưa cho đăng nhập được');
+        continue;
+      }
+      if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(email)) {
+        loi.push('Hàng ' + soDong + ': ' + hoTen + ' — "' + email + '" không phải một địa chỉ thư hợp lệ');
+        continue;
+      }
+      if (daGap[email]) {
+        loi.push('Hàng ' + soDong + ': ' + hoTen + ' dùng CHUNG email với ' + daGap[email] +
+          ' (' + email + ') — hai người không thể chung một tài khoản, sửa trong tệp rồi nạp lại');
+        continue;
+      }
+      daGap[email] = hoTen;
+
+      if (email.slice(-10) !== '@gmail.com') khongGmail.push(hoTen + ' (' + email + ')');
+
+      em.push({
+        email: email,
+        ho_ten: hoTen.replace(/\s+/g, ' '),
+        chuc_vu: lay('chuc_vu') || lay('vi_tri') || null,
+        vai_tro: doiVaiTro(lay('chuc_vu'), lay('vi_tri')),
+        mon: lay('mon') || null
+      });
+    }
+
+    if (daNghi) nhac.push('Bỏ qua ' + daNghi + ' người có trạng thái khác "Đang làm việc" (đã nghỉ, chuyển đi).');
+    if (khongGmail.length) {
+      nhac.push('<b>' + khongGmail.length + ' địa chỉ không phải Gmail</b> — đăng nhập hệ thống là đăng nhập ' +
+        'bằng Google, địa chỉ không gắn với tài khoản Google thì thầy cô sẽ không vào được: ' +
+        khongGmail.slice(0, 8).join(' · ') + (khongGmail.length > 8 ? ' … và ' + (khongGmail.length - 8) + ' người nữa' : ''));
+    }
+    if (thieuCot.length) {
+      nhac.push('Tệp không có các cột: ' + thieuCot.map(function (k) { return COT_GV[k].ten; }).join(' · ') +
+        ' — phần đó sẽ để trống.');
+    }
+
+    return { trang: t.trang, em: em, loi: loi, nhac: nhac, namDoan: '', soCot: t.soCot };
+  }
+
+  // Vai trò suy từ chức vụ trong tệp. TUYỆT ĐỐI không suy ra 'admin': quyền
+  // quản trị do Admin hệ thống cấp (sql/51), không phải do một dòng Excel.
+  function doiVaiTro(chucVu, viTri) {
+    var c = chuanHoa(chucVu) + ' ' + chuanHoa(viTri);
+    if (c.indexOf('hieu truong') >= 0) return 'ban_giam_hieu';   // gồm cả "phó hiệu trưởng"
+    if (c.indexOf('to truong') >= 0) return 'to_truong';
+    if (c.indexOf('giao vien') >= 0) return 'giao_vien';
+    if (c.indexOf('nhan vien') >= 0) return 'nhan_vien';
+    return 'giao_vien';
+  }
+
+  // ══════════════════════════════════════════════════════════════
   // ĐỐI CHIẾU VỚI CƠ SỞ DỮ LIỆU — soi thử, KHÔNG ghi gì
   // ══════════════════════════════════════════════════════════════
   function doiChieu(kq, nam) {
     var may = window.MAY_CHU;
+    if (LOAI === 'gv') return doiChieuGV(kq);
     var maTrongTep = {};
     kq.em.forEach(function (e) { maTrongTep[e.ma] = e; });
 
@@ -317,12 +433,85 @@
     });
   }
 
+  // Đối chiếu đội ngũ: so với DANH SÁCH MỜI và với người ĐÃ đăng nhập.
+  function doiChieuGV(kq) {
+    var may = window.MAY_CHU;
+    return Promise.all([
+      may.from('moi_tai_khoan').select('email,ho_ten,chuc_vu,vai_tro'),
+      may.from('nguoi_dung').select('email,ho_ten,vai_tro,trang_thai')
+    ]).then(function (r) {
+      if (r[0].error) throw r[0].error;
+      if (r[1].error) throw r[1].error;
+      var moiCu = {}; (r[0].data || []).forEach(function (x) { moiCu[String(x.email).toLowerCase()] = x; });
+      var daVao = {}; (r[1].data || []).forEach(function (x) { daVao[String(x.email).toLowerCase()] = x; });
+
+      var themMoi = 0, capNhat = 0, giuVaiTro = [], daDangNhap = 0, khongCoTrongTep = [];
+      var emTrongTep = {};
+
+      kq.em.forEach(function (e) {
+        emTrongTep[e.email] = true;
+        var cu = moiCu[e.email];
+        if (cu) {
+          capNhat++;
+          // 🔴 KHÔNG ĐỔI VAI TRÒ NGƯỜI ĐÃ CÓ. Tệp CSDL ngành chỉ biết chức vụ
+          // hành chính, không biết ai được trường giao quản trị hệ thống. Nạp
+          // đè là hạ quyền quản trị xuống 'giao_vien' — trường mất đường vào
+          // mà không ai hiểu vì sao. Vai trò chỉ đặt cho người MỚI.
+          if (cu.vai_tro && cu.vai_tro !== e.vai_tro) {
+            giuVaiTro.push(e.ho_ten + ': giữ ' + TEN_VAI[cu.vai_tro] +
+              ' (tệp ghi ' + TEN_VAI[e.vai_tro] + ')');
+          }
+          e.vai_tro_ghi = cu.vai_tro;
+        } else {
+          themMoi++;
+          e.vai_tro_ghi = e.vai_tro;
+        }
+        if (daVao[e.email]) daDangNhap++;
+      });
+
+      Object.keys(moiCu).forEach(function (k) {
+        if (!emTrongTep[k]) khongCoTrongTep.push(moiCu[k].ho_ten || k);
+      });
+
+      return {
+        themMoi: themMoi, capNhat: capNhat, giuVaiTro: giuVaiTro,
+        daDangNhap: daDangNhap, khongCoTrongTep: khongCoTrongTep
+      };
+    });
+  }
+
+  var TEN_VAI = {
+    admin: 'Quản trị', ban_giam_hieu: 'Ban giám hiệu', to_truong: 'Tổ trưởng',
+    giao_vien: 'Giáo viên', nhan_vien: 'Nhân viên'
+  };
+
   // ══════════════════════════════════════════════════════════════
   // GHI — ba bảng, theo lô, dừng ngay khi có lỗi
   // ══════════════════════════════════════════════════════════════
   function ghi(kq, nam, keDinhDanh, bao) {
     var may = window.MAY_CHU;
     var em = kq.em;
+    if (LOAI === 'gv') {
+      return (function () {
+        var i = 0;
+        function tiep() {
+          if (i >= em.length) return Promise.resolve();
+          var phan = em.slice(i, i + LO);
+          bao('Ghi danh sách được phép đăng nhập ' + Math.min(i + phan.length, em.length) + '/' + em.length + '…');
+          return may.from('moi_tai_khoan').upsert(phan.map(function (e) {
+            return {
+              email: e.email, ho_ten: e.ho_ten, chuc_vu: e.chuc_vu,
+              vai_tro: e.vai_tro_ghi || e.vai_tro
+            };
+          }), { onConflict: 'email' }).then(function (r) {
+            if (r && r.error) throw r.error;
+            i += LO;
+            return tiep();
+          });
+        }
+        return tiep();
+      })();
+    }
 
     function loKe(ds, lam, nhan) {
       var i = 0;
@@ -396,35 +585,55 @@
     // NĂM HIỆN HÀNH — không tự nhảy sang năm cũ dù tệp hay là dữ liệu năm cũ.
     var namChon = (KQ && KQ.nam) || namNay;
 
+    var laGV = LOAI === 'gv';
+    var so = 0;
+    function soBuoc() { return '<div class="nap-so">' + (++so) + '</div>'; }
+
     hop.innerHTML =
       '<div class="nhan-nho" style="margin:14px 0 12px">' +
-      'Nạp danh sách học sinh từ tệp Excel tải về ở <b>CSDL ngành</b> ' +
-      '(truong.csdl.moet.gov.vn → Học sinh → Xuất Excel, tệp mẫu <i>C1-HocSinh</i>). ' +
+      'Nạp ' + bo().tenDai.toLowerCase() + ' từ tệp Excel tải về ở <b>CSDL ngành</b> ' +
+      '(truong.csdl.moet.gov.vn → ' + bo().duong + ', tệp mẫu <i>' + bo().tepMau + '</i>). ' +
       'Máy <b>xem trước</b> và báo rõ sẽ ghi những gì, rồi mới hỏi có ghi hay không.</div>' +
 
       '<div class="hd-kiem vang" style="margin-bottom:16px">' +
-      '<b>Hệ thống KHÔNG lấy</b> số điện thoại, họ tên cha mẹ, địa chỉ, nơi sinh — dù tệp có sẵn. ' +
-      'Chỉ lấy phần cần cho sổ sách: mã, họ tên, ngày sinh, giới tính, dân tộc, lớp, trạng thái.</div>' +
+      (laGV
+        ? '<b>Hệ thống KHÔNG lấy</b> ngày sinh, số căn cước, điện thoại, địa chỉ, lương, ngạch bậc — ' +
+          'dù tệp có sẵn tất cả. Chỉ lấy <b>họ tên · email · chức vụ</b> để dựng danh sách được phép ' +
+          'đăng nhập.'
+        : '<b>Hệ thống KHÔNG lấy</b> số điện thoại, họ tên cha mẹ, địa chỉ, nơi sinh — dù tệp có sẵn. ' +
+          'Chỉ lấy phần cần cho sổ sách: mã, họ tên, ngày sinh, giới tính, dân tộc, lớp, trạng thái.') +
+      '</div>' +
 
-      '<div class="nap-buoc">' +
-      '<div class="nap-so">1</div>' +
+      '<div class="nap-buoc">' + soBuoc() +
       '<div class="nap-noi">' +
-      '<label class="nap-nhan" for="nap-nam">Nạp vào năm học nào</label>' +
-      '<select id="nap-nam" class="nap-chon">' +
-      dsNam.map(function (n) {
-        // Hậu tố phải NGẮN: trên điện thoại ô chọn chỉ rộng chừng 250px, nhãn
-        // dài bị cắt cụt giữa chừng ("2026-2027 — năm học hiện…").
-        return '<option value="' + thoat(n) + '"' + (n === namChon ? ' selected' : '') + '>' +
-          thoat(n) + (n === namNay ? ' (năm nay)' : '') + '</option>';
+      '<label class="nap-nhan" for="nap-loai">Loại dữ liệu</label>' +
+      '<select id="nap-loai" class="nap-chon">' +
+      Object.keys(BO_NAP).map(function (k) {
+        return '<option value="' + k + '"' + (k === LOAI ? ' selected' : '') + '>' +
+          thoat(BO_NAP[k].ten) + '</option>';
       }).join('') + '</select>' +
-      '<div class="nap-mach">Trường mới vào hệ thống thường nạp <b>năm vừa xong</b> trước, ' +
-      'vì tệp tải từ CSDL ngành là dữ liệu năm đó. Chọn sai năm thì máy sẽ nhắc lại ở bước xem trước.</div>' +
+      '<div class="nap-mach">Mỗi loại đọc một tệp mẫu khác nhau của CSDL ngành. ' +
+      'Chọn nhầm loại thì máy báo không tìm thấy cột, chứ không nạp bừa.</div>' +
       '</div></div>' +
 
-      '<div class="nap-buoc">' +
-      '<div class="nap-so">2</div>' +
+      (laGV ? '' :
+        '<div class="nap-buoc">' + soBuoc() +
+        '<div class="nap-noi">' +
+        '<label class="nap-nhan" for="nap-nam">Nạp vào năm học nào</label>' +
+        '<select id="nap-nam" class="nap-chon">' +
+        dsNam.map(function (n) {
+          // Hậu tố phải NGẮN: trên điện thoại ô chọn chỉ rộng chừng 250px, nhãn
+          // dài bị cắt cụt giữa chừng ("2026-2027 — năm học hiện…").
+          return '<option value="' + thoat(n) + '"' + (n === namChon ? ' selected' : '') + '>' +
+            thoat(n) + (n === namNay ? ' (năm nay)' : '') + '</option>';
+        }).join('') + '</select>' +
+        '<div class="nap-mach">Trường mới vào hệ thống thường nạp <b>năm vừa xong</b> trước, ' +
+        'vì tệp tải từ CSDL ngành là dữ liệu năm đó. Chọn sai năm thì máy sẽ nhắc lại ở bước xem trước.</div>' +
+        '</div></div>') +
+
+      '<div class="nap-buoc">' + soBuoc() +
       '<div class="nap-noi">' +
-      '<label class="nap-nhan" for="nap-tep">Chọn tệp danh sách học sinh</label>' +
+      '<label class="nap-nhan" for="nap-tep">Chọn tệp ' + bo().tenDai.toLowerCase() + '</label>' +
       '<input id="nap-tep" type="file" accept=".xls,.xlsx" class="nap-tep-that">' +
       '<label class="nap-nut-tep" for="nap-tep">📄 Chọn tệp Excel…</label>' +
       '<span id="nap-ten-tep" class="nap-ten-tep">Chưa chọn tệp nào</span>' +
@@ -433,6 +642,13 @@
       '</div></div>' +
 
       '<div id="nap-ket"></div>';
+
+    var oLoai = document.getElementById('nap-loai');
+    if (oLoai) oLoai.addEventListener('change', function () {
+      LOAI = oLoai.value;
+      KQ = null;              // tệp cũ thuộc loại cũ, giữ lại là lẫn lộn
+      veTab(hop);
+    });
 
     var oTep = document.getElementById('nap-tep');
     oTep.addEventListener('change', function () {
@@ -449,7 +665,7 @@
           kq.tenTep = tep.name;
           KQ = kq;
           if (!kq.em.length) {
-            ket.innerHTML = '<div class="hd-kiem do"><b>Không có dòng học sinh nào đọc được.</b><br>' +
+            ket.innerHTML = '<div class="hd-kiem do"><b>Không đọc được dòng nào.</b><br>' +
               (kq.loi.length ? kq.loi.slice(0, 10).map(thoat).join('<br>') : 'Trang tính “' + thoat(kq.trang) + '” chỉ có hàng tiêu đề.') +
               '</div>';
             return;
@@ -459,7 +675,7 @@
           // và lần sau không ai hiểu vì sao dữ liệu nằm ở năm khác. Máy chỉ
           // NÓI năm nó đọc được từ tệp, kèm nút đổi; người bấm.
           var oNam = document.getElementById('nap-nam');
-          if (kq.namDoan && !String(oNam.value || '').trim()) oNam.value = kq.namDoan;
+          if (oNam && kq.namDoan && !String(oNam.value || '').trim()) oNam.value = kq.namDoan;
           veSoiThu();
         })
         .catch(function (e) {
@@ -472,8 +688,9 @@
 
   function veSoiThu() {
     var ket = document.getElementById('nap-ket');
-    var nam = (document.getElementById('nap-nam').value || '').trim();
-    if (!/^\d{4}-\d{4}$/.test(nam)) {
+    var oNam = document.getElementById('nap-nam');
+    var nam = oNam ? String(oNam.value || '').trim() : '';
+    if (bo().coNam && !/^\d{4}-\d{4}$/.test(nam)) {
       ket.innerHTML = '<div class="hd-kiem do"><b>Năm học phải viết dạng 2026-2027.</b> ' +
         'Sửa ô năm học rồi chọn lại tệp.</div>';
       return;
@@ -483,6 +700,7 @@
 
     doiChieu(KQ, nam).then(function (soi) {
       KQ.soi = soi;
+      if (LOAI === 'gv') return veSoiThuGV(ket, soi);
 
       var theoKhoi = {}, theoLop = {}, dangHoc = 0;
       KQ.em.forEach(function (e) {
@@ -545,7 +763,7 @@
         '<input type="checkbox" id="nap-dinh-danh"> Nạp cả <b>số định danh cá nhân</b> ' +
         '(căn cước) — chỉ quản trị đọc được, dùng khi làm học bạ số. Không cần thì để trống.</label>' +
 
-        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">' +
+        '<div class="nap-hanh-dong">' +
         '<button class="nut-chinh" id="nap-ghi">📥 Ghi ' + KQ.em.length + ' em vào hệ thống</button>' +
         '<button class="nut-phu" id="nap-huy">Huỷ</button></div>' +
         '<div id="nap-tien" style="margin-top:12px"></div>';
@@ -578,6 +796,69 @@
     });
   }
 
+  // ── Xem trước ĐỘI NGŨ ──
+  function veSoiThuGV(ket, soi) {
+    var theoVai = {};
+    KQ.em.forEach(function (e) {
+      var v = e.vai_tro_ghi || e.vai_tro;
+      theoVai[v] = (theoVai[v] || 0) + 1;
+    });
+
+    var html =
+      '<div class="hd-kiem xanh"><b>Đã đọc xong — chưa ghi gì vào hệ thống.</b><br>' +
+      'Tệp <b>' + thoat(KQ.tenTep) + '</b> · trang tính “' + thoat(KQ.trang) + '”</div>' +
+
+      '<div class="cuon-ngang" style="margin-top:12px"><table class="bang-quan-tri"><tbody>' +
+      dong('Đọc được', '<b>' + KQ.em.length + '</b> người đang làm việc') +
+      dong('Thêm vào danh sách đăng nhập', '<b>' + soi.themMoi + '</b> người') +
+      dong('Cập nhật họ tên / chức vụ', soi.capNhat + ' người') +
+      dong('Phân theo vai trò', Object.keys(theoVai).map(function (v) {
+        return TEN_VAI[v] + ': ' + theoVai[v];
+      }).join(' · ')) +
+      (soi.daDangNhap ? dong('Trong đó đã từng đăng nhập', soi.daDangNhap + ' người') : '') +
+      (soi.giuVaiTro.length ? dong('GIỮ NGUYÊN vai trò đang có',
+        '<b>' + soi.giuVaiTro.length + '</b> người<br><small>' +
+        thoat(soi.giuVaiTro.slice(0, 6).join(' · ')) +
+        (soi.giuVaiTro.length > 6 ? ' … và ' + (soi.giuVaiTro.length - 6) + ' người nữa' : '') +
+        '<br>Tệp CSDL ngành chỉ biết chức vụ hành chính, không biết ai được trường giao quản trị ' +
+        'hệ thống — nên nạp lại <b>không bao giờ hạ quyền ai</b>. Đổi vai trò ở thẻ 👥 Tài khoản.' +
+        '</small>') : '') +
+      (soi.khongCoTrongTep.length ? dong('Có trong danh sách, KHÔNG có trong tệp',
+        '<b>' + soi.khongCoTrongTep.length + '</b> người<br><small>Hệ thống <b>không xoá</b> ai. ' +
+        thoat(soi.khongCoTrongTep.slice(0, 6).join(' · ')) +
+        (soi.khongCoTrongTep.length > 6 ? ' …' : '') + '</small>') : '') +
+      '</tbody></table></div>';
+
+    if (KQ.loi.length) {
+      html += '<div class="hd-kiem do" style="margin-top:12px"><b>' + KQ.loi.length +
+        ' dòng bị bỏ qua:</b><br>' + KQ.loi.slice(0, 15).map(thoat).join('<br>') +
+        (KQ.loi.length > 15 ? '<br>… và ' + (KQ.loi.length - 15) + ' dòng nữa' : '') +
+        '<br><br>Sửa trong tệp Excel rồi chọn lại tệp. Vẫn ghi được phần còn lại.</div>';
+    }
+    if (KQ.nhac.length) {
+      // Cố ý KHÔNG thoát HTML: các câu nhắc do chính module này soạn, có thẻ <b>.
+      html += '<div class="hd-kiem vang" style="margin-top:12px">' + KQ.nhac.join('<br><br>') + '</div>';
+    }
+
+    html += '<div class="hd-kiem vang" style="margin-top:12px">' +
+      '<b>Việc này chỉ mở cửa đăng nhập, chưa tạo tài khoản cho ai.</b> Thầy cô có tên trong ' +
+      'danh sách thì lần đầu đăng nhập Google là vào thẳng, đúng vai trò; ai không có tên vẫn ' +
+      'đăng nhập được nhưng dừng ở màn chờ duyệt. ' +
+      '<b>Địa chỉ phải đúng Gmail thầy cô dùng thật</b> — đăng nhập hệ thống là đăng nhập bằng Google.' +
+      '</div>' +
+
+      '<div class="nap-hanh-dong">' +
+      '<button class="nut-chinh" id="nap-ghi">📥 Ghi ' + KQ.em.length + ' người vào danh sách</button>' +
+      '<button class="nut-phu" id="nap-huy">Huỷ</button></div>' +
+      '<div id="nap-tien" style="margin-top:12px"></div>';
+
+    ket.innerHTML = html;
+    document.getElementById('nap-ghi').addEventListener('click', bamGhi);
+    document.getElementById('nap-huy').addEventListener('click', function () {
+      KQ = null; window.veQuanTri();
+    });
+  }
+
   function dong(a, b) {
     return '<tr><td style="white-space:nowrap">' + a + '</td><td>' + b + '</td></tr>';
   }
@@ -585,16 +866,23 @@
   function bamGhi() {
     if (DANG_GHI || !KQ || !KQ.soi) return;
     var nam = KQ.nam;
-    var keDinhDanh = document.getElementById('nap-dinh-danh').checked;
+    var oDD = document.getElementById('nap-dinh-danh');
+    var keDinhDanh = !!(oDD && oDD.checked);
     var tien = document.getElementById('nap-tien');
     var nutGhi = document.getElementById('nap-ghi');
 
-    var hoi = 'Ghi ' + KQ.em.length + ' em vào năm học ' + nam + '?\n\n' +
-      '· Thêm mới: ' + KQ.soi.themMoi + ' em\n' +
-      '· Cập nhật: ' + KQ.soi.capNhat + ' em\n' +
-      (Object.keys(KQ.soi.lopMoi).length ? '· Tạo mới ' + Object.keys(KQ.soi.lopMoi).length + ' lớp\n' : '') +
-      (keDinhDanh ? '· KÈM số định danh cá nhân\n' : '') +
-      '\nHệ thống không xoá em nào. Thao tác được ghi vào sổ nhật ký.';
+    var hoi = LOAI === 'gv'
+      ? 'Ghi ' + KQ.em.length + ' người vào danh sách được phép đăng nhập?\n\n' +
+        '· Thêm mới: ' + KQ.soi.themMoi + ' người\n' +
+        '· Cập nhật họ tên / chức vụ: ' + KQ.soi.capNhat + ' người\n' +
+        (KQ.soi.giuVaiTro.length ? '· GIỮ NGUYÊN vai trò của ' + KQ.soi.giuVaiTro.length + ' người đã có\n' : '') +
+        '\nKhông xoá ai, không hạ quyền ai. Thao tác được ghi vào sổ nhật ký.'
+      : 'Ghi ' + KQ.em.length + ' em vào năm học ' + nam + '?\n\n' +
+        '· Thêm mới: ' + KQ.soi.themMoi + ' em\n' +
+        '· Cập nhật: ' + KQ.soi.capNhat + ' em\n' +
+        (Object.keys(KQ.soi.lopMoi).length ? '· Tạo mới ' + Object.keys(KQ.soi.lopMoi).length + ' lớp\n' : '') +
+        (keDinhDanh ? '· KÈM số định danh cá nhân\n' : '') +
+        '\nHệ thống không xoá em nào. Thao tác được ghi vào sổ nhật ký.';
 
     var xacNhan = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Ghi vào hệ thống', nutOK: 'Ghi' })
       : Promise.resolve(window.confirm(hoi));
@@ -610,10 +898,15 @@
       })
         .then(function () {
           DANG_GHI = false;
-          tien.innerHTML = '<div class="hd-kiem xanh"><b>Xong. Đã ghi ' + KQ.em.length +
-            ' em vào năm học ' + thoat(nam) + '.</b><br>' +
-            'Mở màn <b>Quản lý học sinh</b> để xem danh sách theo khối và lớp. ' +
-            'Lớp mới tạo cần gán điểm trường ở thẻ <b>🏫 Cơ sở &amp; Sáp nhập</b>.</div>';
+          tien.innerHTML = LOAI === 'gv'
+            ? '<div class="hd-kiem xanh"><b>Xong. Đã ghi ' + KQ.em.length + ' người vào danh sách ' +
+              'được phép đăng nhập.</b><br>' +
+              'Soát lại ở thẻ <b>✉️ Danh sách mời</b>; ai đã đăng nhập rồi thì xem ở thẻ ' +
+              '<b>👥 Tài khoản</b>. Vai trò sửa được ở đó.</div>'
+            : '<div class="hd-kiem xanh"><b>Xong. Đã ghi ' + KQ.em.length +
+              ' em vào năm học ' + thoat(nam) + '.</b><br>' +
+              'Mở màn <b>Quản lý học sinh</b> để xem danh sách theo khối và lớp. ' +
+              'Lớp mới tạo cần gán điểm trường ở thẻ <b>🏫 Cơ sở &amp; Sáp nhập</b>.</div>';
           KQ = null;
         })
         // Hỏng giữa chừng thì một PHẦN đã vào cơ sở dữ liệu — phải nói thẳng,

@@ -27,7 +27,7 @@
   <!-- manifest cho Android/Chrome: thiếu nó thì "Thêm vào Màn hình chính" ra
        Ô CHỮ CÁI đầu tiêu đề (chữ Q) thay vì logo. iOS thì đi theo
        apple-touch-icon ở trên. -->
-  <link rel="manifest" href="manifest.webmanifest?v=202608246">
+  <link rel="manifest" href="manifest.webmanifest?v=202608247">
   <meta name="theme-color" content="#062d72">
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -72,8 +72,8 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608246">
-  <link rel="stylesheet" href="style.css?v=202608246">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=202608247">
+  <link rel="stylesheet" href="style.css?v=202608247">
 </head>
 <body class="dang-khoa">
 
@@ -444,61 +444,61 @@
   Hệ thống quản trị số - Trường tiểu học trong giai đoạn mới
 </footer>
 
-<script src="js/cauhinh.js?v=202608246"></script>
+<script src="js/cauhinh.js?v=202608247"></script>
 <!-- Cổng chung nhiều trường. PHẢI đứng ngay sau cauhinh.js và TRƯỚC mọi tệp
      khác: nó dựng lại CAU_HINH cho chế độ xem thử, và giữ trang ở trạng thái
      khóa khi chưa biết người vào thuộc trường nào. -->
-<script src="js/cong-truong.js?v=202608246"></script>
+<script src="js/cong-truong.js?v=202608247"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/du-lieu-demo.js?v=202608246"></script>
-<script src="js/du-lieu-sql.js?v=202608246"></script>
-<script src="js/quan-tri.js?v=202608246"></script>
+<script src="js/du-lieu-demo.js?v=202608247"></script>
+<script src="js/du-lieu-sql.js?v=202608247"></script>
+<script src="js/quan-tri.js?v=202608247"></script>
 <!-- Nạp NGAY SAU quan-tri.js để ba thẻ Cài đặt · Thông tin trường · Danh sách
      mời đứng đầu hàng thẻ — trường mới mở Quản trị là thấy việc phải làm. -->
-<script src="js/thiet-lap.js?v=202608246"></script>
-<script src="js/supabase-ket-noi.js?v=202608246"></script>
+<script src="js/thiet-lap.js?v=202608247"></script>
+<script src="js/supabase-ket-noi.js?v=202608247"></script>
 <!-- Hộp thoại dùng chung (window.hopNhap / window.hopHoi) — nạp trước các
      module dùng nó. Chỉ khai báo hàm, không đụng DOM lúc nạp. -->
-<script src="js/hop-thoai.js?v=202608246"></script>
+<script src="js/hop-thoai.js?v=202608247"></script>
 <!-- Thẻ Sao lưu — gói Supabase miễn phí KHÔNG có sao lưu tự động, mất là mất
      hẳn. Đăng ký thẻ qua window.qtTabPhu (cần quan-tri.js đã nạp) và dùng
      window.hopHoi, nên đứng sau cả hai. -->
-<script src="js/sao-luu.js?v=202608246"></script>
+<script src="js/sao-luu.js?v=202608247"></script>
 <!-- Sổ phân công – ủy quyền (CV 5555/BGDĐT-GDPT, trường sau sắp xếp). Cùng
      điều kiện nạp như sao-luu.js: cần quan-tri.js cho window.qtTabPhu và
      hop-thoai.js cho window.hopHoi. -->
-<script src="js/phan-cong.js?v=202608246"></script>
-<script src="js/app.js?v=202608246"></script>
-<script src="js/hoso-sua.js?v=202608246"></script>
-<script src="js/xuat-word.js?v=202608246"></script>
+<script src="js/phan-cong.js?v=202608247"></script>
+<script src="js/app.js?v=202608247"></script>
+<script src="js/hoso-sua.js?v=202608247"></script>
+<script src="js/xuat-word.js?v=202608247"></script>
 <!-- Lớp soi từng địa điểm cho tự đánh giá (CV 5555). Nạp TRƯỚC tcqg.js để
      window.TCQG_CO_SO đã có lúc tcqg.js tải dữ liệu; thiếu tệp này thì màn
      Trường chuẩn Quốc gia vẫn chạy đầy đủ, chỉ không có thẻ Địa điểm. -->
-<script src="js/tcqg-co-so.js?v=202608246"></script>
-<script src="js/tcqg.js?v=202608246"></script>
-<script src="js/tcqg-hoidong.js?v=202608246"></script>
-<script src="js/tcqg-word.js?v=202608246"></script>
-<script src="js/bach-lieu-shim.js?v=202608246"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608246"></script>
-<script src="js/co-so.js?v=202608246"></script>
-<script src="js/len-lop.js?v=202608246"></script>
+<script src="js/tcqg-co-so.js?v=202608247"></script>
+<script src="js/tcqg.js?v=202608247"></script>
+<script src="js/tcqg-hoidong.js?v=202608247"></script>
+<script src="js/tcqg-word.js?v=202608247"></script>
+<script src="js/bach-lieu-shim.js?v=202608247"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608247"></script>
+<script src="js/co-so.js?v=202608247"></script>
+<script src="js/len-lop.js?v=202608247"></script>
 <!-- Màn Đối sánh của Đảm bảo chất lượng — phần DUY NHẤT của module đó đã nối
      dữ liệu thật (sql/42). Nạp trước dbcl.js để window.DBCL_DOI_SANH đã có
      khi dbcl.js vẽ lần đầu. -->
 <!-- Chỉ tiêu chất lượng đầu năm (sql/43) — nguồn cho cột "Đã cam kết" của
      màn Đối sánh, nên nạp trước cả hai tệp kia. -->
-<script src="js/danh-muc-sua.js?v=202608246"></script>
-<script src="js/csvc.js?v=202608246"></script>
-<script src="js/dbcl-chi-tieu.js?v=202608246"></script>
-<script src="js/dbcl-to.js?v=202608246"></script>
-<script src="js/dbcl-doi-sanh.js?v=202608246"></script>
-<script src="js/dbcl.js?v=202608246"></script>
-<script src="js/link-cbgv.js?v=202608246"></script>
-<script src="js/hocsinh.js?v=202608246"></script>
+<script src="js/danh-muc-sua.js?v=202608247"></script>
+<script src="js/csvc.js?v=202608247"></script>
+<script src="js/dbcl-chi-tieu.js?v=202608247"></script>
+<script src="js/dbcl-to.js?v=202608247"></script>
+<script src="js/dbcl-doi-sanh.js?v=202608247"></script>
+<script src="js/dbcl.js?v=202608247"></script>
+<script src="js/link-cbgv.js?v=202608247"></script>
+<script src="js/hocsinh.js?v=202608247"></script>
 <!-- Nạp dữ liệu từ Excel CSDL ngành. Sau quan-tri.js (nơi tạo window.qtTabPhu). -->
-<script src="js/nap-du-lieu.js?v=202608246"></script>
-<script src="js/dieu-hanh.js?v=202608246"></script>
-<script src="js/lich-tuan.js?v=202608246"></script>
+<script src="js/nap-du-lieu.js?v=202608247"></script>
+<script src="js/dieu-hanh.js?v=202608247"></script>
+<script src="js/lich-tuan.js?v=202608247"></script>
 <!-- SheetJS đọc tệp Excel thời khóa biểu. Bản CHO TRÌNH DUYỆT: chỉ có
      XLSX.read(mảng byte), KHÔNG có readFile. Nạp trước thoi-khoa-bieu.js. -->
 <!-- ⚠️ MODULE THỜI KHÓA BIỂU ĐÃ GỠ (15/8/2026) — thầy Chung chốt.
@@ -516,6 +516,6 @@
        lib/xlsx.min.js       · thư viện đọc Excel, 930 KB
 -->
 
-<script src="js/du-gio.js?v=202608246"></script>
+<script src="js/du-gio.js?v=202608247"></script>
 </body>
 </html>
