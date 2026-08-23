@@ -626,9 +626,14 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20, 48, 107, .12);
   border-color: #c9d6ea;
 }
+/* Navy nhạt đi 30% (#14306b → #5a6e97, pha 30% trắng). Một màn 39 thẻ mà mỗi
+   thẻ có hai khối navy đặc thì cả trang nặng như bảng biểu; nhạt xuống thì tên
+   người nổi lên, ảnh và nút lùi về đúng vai phụ.
+   #5a6e97 với chữ trắng đạt 5,11:1 — vẫn qua chuẩn AA (4,5:1). Đừng nhạt thêm:
+   nhạt nữa là chữ tắt trên ảnh đại diện tụt xuống dưới ngưỡng đọc được. */
 .the-cbgv .anh {
   flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
-  background-image: linear-gradient(135deg, var(--dam), var(--dam-2));
+  background: #5a6e97;
   color: #fff; font-size: 13.5px; font-weight: 800; letter-spacing: .02em;
   display: grid; place-items: center;
 }
@@ -646,9 +651,11 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 .the-cbgv .nut-hs {
   flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center;
   text-decoration: none; font-size: 16px; line-height: 1;
-  border: 0; border-radius: 9px; background: var(--dam); color: #fff;
+  border: 0; border-radius: 9px; background: #5a6e97; color: #fff;
 }
-.the-cbgv .nut-hs:hover { background: var(--dam-2); }
+/* Rê chuột thì ĐẬM lên chứ không nhạt đi như các nút navy khác của app: nền đã
+   nhạt sẵn, nhạt thêm nữa là mất hẳn cảm giác bấm được. */
+.the-cbgv .nut-hs:hover { background: #46598a; }
 .the-cbgv .nut-hs.trong { background: #eef2f8; cursor: default; filter: grayscale(1); opacity: .55; }
 
 .the-cbgv .than b, .the-cbgv .than small { display: block; }
