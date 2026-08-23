@@ -19,6 +19,77 @@
 
   var daNap = false;
 
+  // ══════════════════════════════════════════════════════════
+  // QUY MÔ TRƯỜNG — số ĐẾM ĐƯỢC thắng số khai bằng tay
+  //
+  // Dải số liệu đầu trang trước đây chỉ đọc cau_hinh.so_lop / so_hoc_sinh, là
+  // hai ô ADMIN TỰ GÕ ở màn Quản trị. Trường nào chưa gõ thì đầu trang trơ hai
+  // dấu gạch — mà ngay bên dưới, thẻ Điều hành đã hiện "506 học sinh toàn
+  // trường" đếm thật từ danh sách lớp. Cùng một trang, hai câu trả lời khác
+  // nhau, và câu sai lại nằm ở chỗ dễ nhìn nhất (thầy Chung bắt được ở Châu
+  // Đình 23/8/2026).
+  //
+  // Nay mọi màn hỏi qua hàm này. Đếm được thì lấy số đếm: danh sách học sinh
+  // tăng giảm trong năm là đầu trang tự đúng theo, không ai phải nhớ vào sửa
+  // cấu hình. Hai ô trong cau_hinh lùi về đúng vai DỰ PHÒNG cho trường chưa
+  // nạp danh sách — lời chỉ dẫn ở màn Quản trị vốn đã hứa như vậy rồi.
+  // ══════════════════════════════════════════════════════════
+  window.quyMoTruong = function () {
+    var qm = window.QUY_MO_THAT || {}, C = window.CAU_HINH || {};
+    return {
+      lop:  qm.lop  || C.SO_LOP      || 0,
+      hs:   qm.hs   || C.SO_HOC_SINH || 0,
+      khoi: qm.khoi || 0,             // 0 = chưa biết, ĐỪNG đoán bừa là 5 khối
+      nam:  qm.nam  || C.NAM_HOC     || '',
+      dem:  !!(qm.lop || qm.hs)       // true = số đếm thật, không phải số khai tay
+    };
+  };
+
+  // Chạy RỜI, sau khi kho hồ sơ đã vẽ xong — hai câu đọc này KHÔNG được nằm
+  // trong Promise.all chính, vì cổng vào chờ Promise.all ấy mới mở khoá trang.
+  function demQuyMoThat(may) {
+    // Bảng lop_hoc nhỏ (mỗi năm vài chục dòng) nên đọc trọn, không cần phân trang.
+    return may.from('lop_hoc').select('lop, khoi, nam_hoc').then(function (r) {
+      if (r.error || !r.data || !r.data.length) return;   // RLS chặn / chưa xếp lớp → im lặng
+      var ds = r.data, namCo = {};
+      ds.forEach(function (l) { if (l.nam_hoc) namCo[l.nam_hoc] = 1; });
+      // Ưu tiên năm hiện hành; đầu tháng 9 chưa xếp lớp năm mới thì lùi về năm
+      // CÓ dữ liệu — đúng cách dieu-hanh.js và hocsinh.js đang chọn, để ba màn
+      // không nói ba con số của ba năm khác nhau.
+      var hienHanh = window.CAU_HINH.NAM_HOC;
+      var nam = namCo[hienHanh] ? hienHanh
+        : (Object.keys(namCo).sort().reverse()[0] || hienHanh);
+
+      var lop = {}, khoi = {};
+      ds.forEach(function (l) {
+        if (l.nam_hoc !== nam || !l.lop) return;
+        lop[l.lop] = 1;
+        if (l.khoi !== null && l.khoi !== undefined && l.khoi !== '') khoi[l.khoi] = 1;
+      });
+      var qm = window.QUY_MO_THAT = window.QUY_MO_THAT || {};
+      qm.nam = nam;
+      qm.lop = Object.keys(lop).length || null;
+      qm.khoi = Object.keys(khoi).length || null;
+      try { window.veThongKe && window.veThongKe(); } catch (e) {}
+
+      // Sĩ số đếm bằng head:true — máy chủ trả về ĐÚNG MỘT CON SỐ, không kéo
+      // về 500-800 dòng học sinh chỉ để lấy độ dài mảng (và cũng khỏi vướng
+      // trần 1000 dòng của PostgREST). Dòng chưa ghi trạng thái vẫn tính là
+      // đang học — đúng quy ước của hocsinh.js và dieu-hanh.js.
+      return may.from('hoc_sinh_lop').select('*', { count: 'exact', head: true })
+        .eq('nam_hoc', nam).or('trang_thai.is.null,trang_thai.eq.dang_hoc')
+        .then(function (h) {
+          if (h.error || h.count === null || h.count === undefined) return;
+          qm.hs = h.count || null;
+          try { window.veThongKe && window.veThongKe(); } catch (e) {}
+        });
+    }).catch(function (e) {
+      // Quy mô là số PHỤ: hỏng thì đầu trang lùi về số khai tay, không việc gì
+      // phải dựng băng đỏ hay chặn trang vì nó.
+      console.warn('[Quy mô] Không đếm được từ danh sách lớp:', e);
+    });
+  }
+
   window.napDuLieuThat = function () {
     if (daNap || !window.MAY_CHU) return;
     daNap = true;
@@ -26,15 +97,32 @@
 
     // TRẢ VỀ promise: cổng vào chờ nạp xong mới mở khóa trang, nhờ vậy thầy cô
     // không thấy số liệu mẫu loé lên rồi mới nhảy sang số thật.
-    return Promise.all([
+    // Bọc thuLaiSQL: đúng lúc vừa đăng nhập xong, vé có thể bị máy dữ liệu chê
+    // "ký ở tương lai" vì hai máy chủ lệch đồng hồ vài giây (xem khối chú thích
+    // ở js/supabase-ket-noi.js). Không thử lại thì cả kho hồ sơ bị xoá trắng và
+    // băng đỏ hiện lên, trong khi chỉ cần chờ vài giây là đọc được.
+    // Tệp này nạp TRƯỚC supabase-ket-noi.js nhưng hàm chỉ chạy khi được gọi,
+    // lúc đó window.thuLaiSQL đã có; vẫn để đường lùi cho chắc.
+    var thuLai = window.thuLaiSQL || function (goi) { return goi(); };
+    var daBaoCho = false;
+    return thuLai(function () {
+      return Promise.all([
       may.from('cau_hinh').select('khoa,gia_tri'),
       may.from('nhom_ho_so').select('id,so_tt,ten,mo_ta,bieu_tuong').order('so_tt'),
       may.from('nhom_con').select('id,ma,ten,so_tt,nhom_id').order('so_tt'),
       may.from('ho_so').select('*').order('so_tt'),
       may.from('tieu_chi').select('ma,ten,bat_buoc,muc_1,muc_2').order('ma'),
       may.from('nguoi_dung').select('id,ho_ten,email,chuc_vu,vai_tro').eq('trang_thai', 'hoat_dong').order('ho_ten')
-    ]).then(function (kq) {
+      ]);
+    }, function (lan) {
+      daBaoCho = true;
+      window.baoTrangThai && window.baoTrangThai('cho',
+        '⏳ Máy chủ chưa sẵn sàng, đang tự thử lại lần ' + lan + '…');
+    }).then(function (kq) {
       var loi = kq.filter(function (r) { return r.error; });
+      // Gỡ băng chờ do chính mình treo lên. Không gỡ thì thử lại thành công rồi
+      // mà dòng "đang tự thử lại lần 3…" vẫn nằm nguyên dưới đầu trang cả buổi.
+      if (daBaoCho && !loi.length) { daBaoCho = false; window.baoTrangThai && window.baoTrangThai(null); }
       if (loi.length) {
         console.error('Lỗi nạp dữ liệu:', loi[0].error);
         window.baoTrangThai && window.baoTrangThai('loi',
@@ -153,6 +241,20 @@
       window.veTatCa && window.veTatCa();
       window.khoiDongTCQG && window.khoiDongTCQG();
       napCBGV(may);
+      demQuyMoThat(may);
+    }, function (e) {
+      // Lời hứa bị TỪ CHỐI (đứt mạng, thử lại hết lượt) chứ không trả về
+      // {error} — nhánh lỗi ở trên không chạy. Không có chỗ này thì trang mở ra
+      // với 94 hồ sơ MẪU của một trường không có thật, mà không một lời cảnh báo.
+      console.error('Lỗi nạp dữ liệu:', e);
+      window.baoTrangThai && window.baoTrangThai('loi',
+        '⚠️ KHÔNG GỌI ĐƯỢC MÁY CHỦ: ' + thoat((e && e.message) || e) +
+        ' — <b>những con số đang hiện KHÔNG phải của trường</b>. Thầy cô kiểm tra ' +
+        'đường mạng rồi tải lại trang.');
+      daNap = false;
+      window.BO_PHAN = []; window.HO_SO = []; window.TIEU_CHI = [];
+      window.DS_TAI_KHOAN = []; window.HOP = {}; window.HS_BAN_GHI = {};
+      try { window.veTatCa && window.veTatCa(); } catch (e2) { /* băng đỏ vẫn còn */ }
     });
   };
 

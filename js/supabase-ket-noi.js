@@ -133,10 +133,89 @@
   // Nghĩa là màn "chờ duyệt" ở trên KHÔNG còn lối rẽ nào nữa — ai thấy nó thì
   // đúng là chưa được cấp quyền, và câu chữ ở đó phải tự nó đủ chỉ đường.
 
-  function veCongDangTai() {
+  function veCongDangTai(chu) {
     var h = hopCong(); if (!h) return;
-    h.innerHTML = dauCong() + '<div class="dang-cho">Đang tải dữ liệu nhà trường…</div>';
+    h.innerHTML = dauCong() + '<div class="dang-cho">' +
+      thoat(chu || 'Đang tải dữ liệu nhà trường…') + '</div>';
   }
+
+  // ══════════ THỬ LẠI KHI MÁY CHỦ TRẢ LỖI CHỚP NHOÁNG ══════════
+  // Vé đăng nhập do máy XÁC THỰC (GoTrue) ký, nhưng máy soi vé lại là máy DỮ
+  // LIỆU (PostgREST) — hai máy khác nhau, mỗi máy một đồng hồ. Lệch nhau vài
+  // giây thôi là cái vé vừa ký xong đã bị coi là "ký ở tương lai"
+  // (JWT issued at future) và bị chặn sạch mọi câu đọc.
+  //
+  // Thầy Chung gặp ở Châu Đình 23/8/2026: cổng vào hiện băng đỏ, đứng đúng một
+  // phút, bấm tải lại trang mới vào được. Lỗi TỰ HẾT sau ít giây — bắt người
+  // dùng bấm tải lại là giao việc của máy cho người, mà người thì không biết
+  // phải đợi bao lâu nên họ bấm liên tục, mỗi lần lại tải lại cả trang.
+  //
+  // ⛔ CHỈ thử lại đúng nhóm lỗi TỰ HẾT. Lỗi quyền (RLS chặn), thiếu bảng, sai
+  //    cú pháp… thử mười lần vẫn ra đúng lỗi ấy: chỉ tổ kéo màn chờ dài ra rồi
+  //    mới báo, và che mất lỗi thật khỏi mắt người đi sửa. Thêm mẫu lỗi vào
+  //    danh sách dưới đây thì phải chắc chắn nó tự hết mà không cần ai làm gì.
+  // Cộng lại ~70 giây, chọn theo thời gian thầy Chung phải chờ ở Châu Đình.
+  //
+  // ⚠️ ĐỪNG đổ cho "cơ sở dữ liệu ngủ dậy". Em đã nghĩ vậy và SAI: robot
+  //    .github/workflows/giu-supabase-thuc.yml chạy đúng ngày 22/8, một ngày
+  //    trước sự cố, và Châu Đình trả HTTP 200 — dự án vẫn thức. Vả lại dự án đã
+  //    ngủ thật thì KHÔNG tự thức dậy được, phải có người bấm Resume project
+  //    (xem mục 21.3 sổ dự án). Nguyên nhân còn lại đúng là lệch đồng hồ giữa
+  //    hai máy chủ, và nó tự hết khi vé được ký lại.
+  //
+  // Vậy vì sao vẫn để tới 70 giây? Vì cái giá hai bên lệch hẳn nhau: thử lại
+  // thừa thì thầy cô ngồi chờ thêm, có dòng chữ giải thích; thử lại thiếu thì
+  // họ gặp lại đúng băng đỏ cũ và mất hẳn niềm tin vào app.
+  var CHO_THU_LAI = [1200, 2500, 4000, 6000, 9000, 12000, 15000, 20000];
+
+  function loiChopNhoang(loi) {
+    if (!loi) return false;
+    var m = String((loi && loi.message) || loi || '').toLowerCase();
+    return (
+      // Lệch đồng hồ giữa máy xác thực và máy dữ liệu — chính là lỗi ở trên
+      m.indexOf('issued at future') >= 0 ||
+      m.indexOf('jwsissuedatfuture') >= 0 ||
+      // Mạng chập chờn: fetch ném lỗi chứ không trả về {error}
+      m.indexOf('failed to fetch') >= 0 ||
+      m.indexOf('networkerror') >= 0 ||
+      m.indexOf('load failed') >= 0 ||
+      // Máy chủ bận / đang khởi động lại
+      m.indexOf('502') >= 0 || m.indexOf('503') >= 0 || m.indexOf('504') >= 0 ||
+      m.indexOf('timeout') >= 0
+    );
+  }
+
+  // goi() phải trả về một lời hứa. Nhận cả hai lối báo lỗi của supabase-js:
+  // trả về {error: …} (lỗi từ máy chủ) và ném lỗi (đứt mạng).
+  // khiCho(lanThu, soGiay) — tuỳ chọn, để nơi gọi tự nói cho người dùng biết.
+  window.thuLaiSQL = function (goi, khiCho) {
+    var lan = 0;
+    function chay() {
+      var lh;
+      try { lh = Promise.resolve(goi()); } catch (e) { lh = Promise.reject(e); }
+      return lh.then(function (r) {
+        // Promise.all trả về MẢNG kết quả — soi từng phần tử, hỏng một là hỏng cả
+        var loi = null;
+        if (r && r.error) loi = r.error;
+        else if (Array.isArray(r)) {
+          for (var i = 0; i < r.length; i++) {
+            if (r[i] && r[i].error) { loi = r[i].error; break; }
+          }
+        }
+        if (loi && loiChopNhoang(loi) && lan < CHO_THU_LAI.length) return lui();
+        return r;
+      }, function (e) {
+        if (loiChopNhoang(e) && lan < CHO_THU_LAI.length) return lui();
+        throw e;
+      });
+    }
+    function lui() {
+      var cho = CHO_THU_LAI[lan++];
+      if (khiCho) { try { khiCho(lan, Math.round(cho / 1000)); } catch (e) {} }
+      return new Promise(function (ok) { setTimeout(ok, cho); }).then(chay);
+    }
+    return chay();
+  };
 
   function veCongLoi(chu) {
     var h = hopCong(); if (!h) return;
@@ -250,11 +329,24 @@
     if (idPhienDaXuLy === phien.user.id) return; // tránh xử lý lặp khi đổi tab
     idPhienDaXuLy = phien.user.id;
 
-    may.from('nguoi_dung').select('*').eq('id', phien.user.id).maybeSingle().then(function (r) {
+    // Lượt đọc ĐẦU TIÊN sau khi Google trả về — cũng là lượt hay vấp lỗi lệch
+    // đồng hồ nhất, vì vé vừa được ký xong đúng giây trước đó.
+    window.thuLaiSQL(function () {
+      return may.from('nguoi_dung').select('*').eq('id', phien.user.id).maybeSingle();
+    }, function (lan) {
+      veCongDangTai('Máy chủ của nhà trường đang khởi động lại. ' +
+        'Hệ thống tự thử lại (lần ' + lan + ')… thầy cô cứ để yên màn hình, ' +
+        'KHÔNG cần bấm tải lại trang.');
+    }).then(function (r) {
       if (r.error) {
         idPhienDaXuLy = null;
+        // Đã tự thử lại hết thang chờ mà vẫn hỏng: nói rõ máy đã thử rồi, để
+        // thầy cô khỏi ngồi bấm tải lại thêm chục lần nữa cho cùng một lỗi.
         veCongLoi('Không đọc được hồ sơ tài khoản: ' + (r.error.message || '') +
-          '. Thầy cô thử tải lại trang; nếu vẫn lỗi thì báo quản trị viên.');
+          (loiChopNhoang(r.error)
+            ? '. Hệ thống đã tự thử lại suốt hơn một phút mà máy chủ vẫn chưa trả lời. ' +
+              'Thầy cô chờ ít phút rồi tải lại trang; nếu vẫn vậy thì báo quản trị viên.'
+            : '. Thầy cô thử tải lại trang; nếu vẫn lỗi thì báo quản trị viên.'));
         return;
       }
       // Đăng nhập Google được nhưng CHƯA có dòng trong nguoi_dung: trigger tạo
@@ -285,6 +377,12 @@
         // cho_duyet hoặc khoa → giữ nguyên cổng, KHÔNG mở khóa trang
         veCongChoDuyet(r.data.email, r.data.trang_thai === 'khoa');
       }
+    }, function (e) {
+      // Đứt mạng giữa chừng thì lời hứa bị TỪ CHỐI chứ không trả về {error} —
+      // không có nhánh này thì cổng đứng mãi ở dòng "Đang tự thử lại lần 6…".
+      idPhienDaXuLy = null;
+      veCongLoi('Không gọi được máy chủ khi đọc hồ sơ tài khoản: ' +
+        ((e && e.message) || e) + '. Thầy cô kiểm tra đường mạng rồi tải lại trang.');
     });
   }
 

@@ -84,17 +84,25 @@
     // Đếm thật từ dữ liệu, KHÔNG viết số cứng vào HTML — thêm/bớt một đầu hồ sơ
     // là chữ trên trang chủ tự đúng theo.
     $('#chip-ho-so').textContent = (window.BO_PHAN || []).length + ' bộ phận · ' + d.tong + ' danh mục';
-    // Trường chưa khai quy mô thì để dấu gạch, ĐỪNG in số 0. "0 lớp · 0 học
+    // Quy mô: hỏi window.quyMoTruong() chứ ĐỪNG đọc thẳng CAU_HINH.SO_LOP —
+    // hàm đó ưu tiên số đếm thật từ danh sách lớp, chỉ lùi về ô admin tự khai
+    // khi trường chưa nạp danh sách. Xem khối chú thích ở js/du-lieu-sql.js.
+    // Trường chưa có cả hai thì để dấu gạch, ĐỪNG in số 0. "0 lớp · 0 học
     // sinh" đọc ra như trường không có học sinh nào, trong khi sự thật chỉ là
     // chưa ai điền. Dấu gạch nói đúng: chưa có số.
-    $('#chip-so-lop').textContent = window.CAU_HINH.SO_LOP
-      ? window.CAU_HINH.SO_LOP + ' lớp' : 'chưa khai quy mô';
-    $('#tk-lop').textContent = window.CAU_HINH.SO_LOP || '–';
+    var qm = window.quyMoTruong ? window.quyMoTruong()
+      : { lop: window.CAU_HINH.SO_LOP, hs: window.CAU_HINH.SO_HOC_SINH, khoi: 0 };
+    $('#chip-so-lop').textContent = qm.lop ? qm.lop + ' lớp' : 'chưa khai quy mô';
+    $('#tk-lop').textContent = qm.lop || '–';
+    // Số khối KHÔNG ghi cứng "5 khối lớp" trong HTML nữa. Ghi cứng thì trường
+    // chưa nạp danh sách vẫn thấy "– lớp · 5 khối lớp" — một con số app tự bịa;
+    // và app còn dùng cho cấp khác thì 5 lại sai hẳn. Chưa đếm được thì im.
+    var oLopNhan = document.getElementById('tk-lop-nhan');
+    if (oLopNhan) oLopNhan.textContent = qm.khoi ? 'lớp · ' + qm.khoi + ' khối lớp' : 'lớp';
     // Vẽ lại hai dòng chữ này sau khi nạp cấu hình từ CSDL — chúng được đặt
     // lần đầu lúc DOMContentLoaded, tức là TRƯỚC khi đọc bảng cau_hinh.
     $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
-    $('#tk-hoc-sinh').textContent = window.CAU_HINH.SO_HOC_SINH
-      ? Number(window.CAU_HINH.SO_HOC_SINH).toLocaleString('vi-VN') : '–';
+    $('#tk-hoc-sinh').textContent = qm.hs ? Number(qm.hs).toLocaleString('vi-VN') : '–';
     $('#hs-tong').textContent = d.tong;
     $('#hs-co').textContent = d.co;
     // Chắn phép chia cho 0: kho hồ sơ rỗng (hoặc đọc lỗi) thì d.tong = 0 →
@@ -419,6 +427,15 @@
       oMucNhan.textContent = C.MUC_CHUAN_QG
         ? 'phấn đấu giữ vững và phát triển' : 'mức chuẩn quốc gia';
     }
+    // Ô này KHÔNG đếm được từ đâu cả — nhà trường phải tự khai. Để trơ dấu
+    // gạch thì người xem tưởng phần mềm hỏng, nên chỉ luôn đường đi bằng lời
+    // mách khi rê chuột. Vẫn không bịa chữ "Chưa đạt": để trống trong cấu hình
+    // có thể là chưa đạt, mà cũng có thể là chưa ai kịp khai.
+    var oMucHop = oMuc && oMuc.closest ? oMuc.closest('.o') : null;
+    if (oMucHop) {
+      oMucHop.title = C.MUC_CHUAN_QG ? ''
+        : 'Chưa khai mức chuẩn quốc gia. Quản trị → ⚙️ Thông tin trường → Mức ĐANG đạt.';
+    }
 
     // Khẩu hiệu: dựng cả dòng ở đây. Trống thì ẩn hẳn, đừng để trơ hai bông lúa.
     var oKh = document.getElementById('dien-khau-hieu');
@@ -426,6 +443,14 @@
       oKh.innerHTML = C.SLOGAN ? '🌾 <span id="dien-slogan"></span> 🌾' : '';
       if (C.SLOGAN) oKh.querySelector('#dien-slogan').textContent = C.SLOGAN;
       oKh.style.display = C.SLOGAN ? '' : 'none';
+      // Ẩn dòng khẩu hiệu là ẩn luôn cả khoảng thở dưới tên trường — tên trường
+      // cỡ 52px dính sát chữ SỨ MỆNH, chật cứng (Châu Đình 23/8/2026). Báo cho
+      // CSS biết để nó trả lại khoảng cách ấy; xem .hero.khong-khau-hieu.
+      var oHero = document.getElementById('hero');
+      if (oHero) {
+        if (C.SLOGAN) oHero.classList.remove('khong-khau-hieu');
+        else oHero.classList.add('khong-khau-hieu');
+      }
     }
 
     // Mục tiêu trong câu SỨ MỆNH/MỤC TIÊU: dấu chấm phẩy đi kèm phần chữ, nên
@@ -551,4 +576,7 @@
 
   function veTatCa() { veThongKe(); veHoSo(); veTieuChi(); }
   window.veTatCa = veTatCa;
+  // Đếm quy mô chạy RỜI, xong sau khi kho hồ sơ đã vẽ — nó gọi lại đúng hàm này
+  // để điền hai ô lớp / học sinh, khỏi vẽ lại cả bảng danh mục.
+  window.veThongKe = veThongKe;
 })();

@@ -268,18 +268,34 @@ nav.menu button.dang-chon { background: #fff; color: var(--dam); border-color: #
     rgba(20, 48, 107, .18) 72%,
     rgba(20, 48, 107, 0) 88%);
 }
-.hero .khung { position: relative; max-width: var(--rong-khung); margin: 0 auto; padding: 40px 16px 28px; }
+/* 🔴 KHOẢNG THỞ DƯỚI TÊN TRƯỜNG PHẢI THUỘC VỀ CHÍNH TÊN TRƯỜNG.
+   Trước đây cả khoảng cách giữa tên trường và khối SỨ MỆNH đều do lề của dòng
+   KHẨU HIỆU gánh (margin: 10px 0 26px). Trường nào có khẩu hiệu thì trông ổn;
+   trường chưa khai — app.js ẩn hẳn dòng ấy đi — là hai khối DÍNH LIỀN 0px, tên
+   trường cỡ 52px nằm đè lên chữ SỨ MỆNH (Châu Đình, thầy Chung bắt 23/8/2026).
+   Bài học: đừng để khoảng cách của A với C nằm nhờ ở B, khi B có thể biến mất.
+   Kèm theo: nhích cả khối chữ lên (padding-top 40 → 32) và thu lề dưới thẻ
+   "HỆ THỐNG QUẢN TRỊ SỐ NHÀ TRƯỜNG", để có chỗ thở mà hero không cao thêm. */
+.hero .khung { position: relative; max-width: var(--rong-khung); margin: 0 auto; padding: 32px 16px 28px; }
 .hieu-bai {
   display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase; color: #d5e6f7;
   border: 1px solid rgba(255, 255, 255, .35); border-radius: 999px; padding: 7px 16px;
-  margin-bottom: 18px; background: rgba(255, 255, 255, .06);
+  margin-bottom: 16px; background: rgba(255, 255, 255, .06);
 }
 .hero h1 {
   font-size: clamp(30px, 6vw, 52px); font-weight: 800; letter-spacing: .02em;
   text-transform: uppercase; line-height: 1.15; text-shadow: 0 2px 14px rgba(0, 0, 0, .35);
+  /* Khẩu hiệu là câu PHỤ ĐỀ của tên trường — phải nằm sát, đừng nới rộng ra */
+  margin-bottom: 10px;
 }
-.hero .khau-hieu { color: var(--vang); font-weight: 700; font-size: clamp(15px, 2.6vw, 20px); margin: 10px 0 26px; }
+.hero .khau-hieu { color: var(--vang); font-weight: 700; font-size: clamp(15px, 2.6vw, 20px); margin: 0 0 24px; }
+/* Trường chưa khai khẩu hiệu: js/app.js gắn lớp này vào .hero, tên trường tự
+   nhận lấy khoảng thở mà dòng khẩu hiệu vốn giữ hộ. Dùng LỚP chứ không dùng
+   :has() — máy phòng máy nhà trường còn nhiều bản Chrome cũ, mà hỏng ở đây là
+   hỏng ngay dòng chữ to nhất trang chủ.
+   Co theo bề ngang màn: điện thoại 18px là đủ, máy tính chữ 52px nên cần 30px. */
+.hero.khong-khau-hieu h1 { margin-bottom: clamp(18px, 3vw, 30px); }
 .su-menh { display: flex; gap: 14px; max-width: 620px; margin-bottom: 20px; }
 .su-menh .bi {
   flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%;

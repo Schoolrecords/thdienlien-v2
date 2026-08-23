@@ -228,7 +228,10 @@
       // và cả bản xem thử đều hiện đúng quy mô của Diễn Liên.
       '<div class="o-so"><div class="so vang">' + (window.CAU_HINH.SO_CBGV || '—') + '</div>' +
       '<div class="nhan">cán bộ, giáo viên, nhân viên</div></div>' +
-      '<div class="o-so"><div class="so trang">' + (window.CAU_HINH.SO_LOP || '—') + '</div>' +
+      // Số lớp qua quyMoTruong(): đếm được từ danh sách lớp thì lấy số đếm,
+      // đừng để màn này nói một số còn đầu trang nói một số khác.
+      '<div class="o-so"><div class="so trang">' +
+      ((window.quyMoTruong ? window.quyMoTruong().lop : window.CAU_HINH.SO_LOP) || '—') + '</div>' +
       '<div class="nhan">lớp học</div></div>' +
       '<div class="o-so"><div class="so xanh">—</div>' +
       '<div class="nhan">phòng học kiên cố</div></div>' +
