@@ -283,9 +283,9 @@
         giao_vien: 'Giáo viên', nhan_vien: 'Nhân viên'
       };
       var NHOM = [
-        { ten: '🏛 Ban giám hiệu — Quản trị', loc: ['admin', 'ban_giam_hieu'] },
-        { ten: '📚 Giáo viên', loc: ['to_truong', 'giao_vien'] },
-        { ten: '🗄 Nhân viên', loc: ['nhan_vien'] }
+        { icon: '🏛', ten: 'Ban giám hiệu — Quản trị', loc: ['admin', 'ban_giam_hieu'] },
+        { icon: '📚', ten: 'Giáo viên', loc: ['to_truong', 'giao_vien'] },
+        { icon: '🗄', ten: 'Nhân viên', loc: ['nhan_vien'] }
       ];
       // Một người có thể có HAI email trong danh sách mời (thầy Chung: gmail và
       // nghean.edu.vn). Trước đây chỗ này giữ dòng gặp trước rồi BỎ dòng sau —
@@ -295,6 +295,7 @@
       // và coi là đã kích hoạt nếu BẤT KỲ email nào đã đăng nhập.
       var daVe = {};
       var html = '';
+      var soNhomDaVe = 0;   // nhóm đầu tiên CÓ người thì mở sẵn, các nhóm sau đóng
       NHOM.forEach(function (nh) {
         var ds = [], viTri = {};
         moi.forEach(function (m) {
@@ -317,8 +318,21 @@
         });
         ds.forEach(function (g) { daVe[g.ho_ten] = true; });
         if (!ds.length) return;
-        html += '<div class="dau-muc" style="text-align:left;margin:20px 0 10px"><div class="nhan-nho">' + nh.ten +
-          ' · ' + ds.length + ' người</div></div><div class="luoi-cbgv">';
+        // Xếp gọn thành khối bấm mở — dùng lại đúng kiểu `.sub` của danh mục hộp
+        // hồ sơ, đừng vẽ kiểu riêng. Trường 39 người mà trải phẳng một mạch thì
+        // phải cuộn hết trang mới thấy nhóm Nhân viên nằm cuối.
+        // Nhóm đầu tiên có người mở sẵn: mở app ra mà toàn khối đóng thì người
+        // dùng không biết bên trong có gì, tưởng màn hình rỗng.
+        var moSan = (soNhomDaVe === 0);
+        soNhomDaVe++;
+        html += '<div class="sub' + (moSan ? ' open' : '') + '">' +
+          '<div class="sub-head" role="button" tabindex="0"' +
+          ' onclick="this.parentNode.classList.toggle(\'open\')"' +
+          ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.parentNode.classList.toggle(\'open\')}">' +
+          '<span class="fo">' + nh.icon + '</span><b>' + thoat(nh.ten) + '</b>' +
+          '<span class="sub-cnt">' + ds.length + ' người</span>' +
+          '<span class="sub-arrow">▶</span></div>' +
+          '<div class="sub-body"><div class="luoi-cbgv">';
         html += ds.map(function (m) {
           // Duyệt mọi email của người này: lấy ảnh đại diện đầu tiên tìm được,
           // và chỉ cần MỘT email đã đăng nhập là coi như đã kích hoạt.
@@ -348,7 +362,7 @@
               : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này">📁 Chưa gán thư mục</span>') +
             '</div></div>';
         }).join('');
-        html += '</div>';
+        html += '</div></div></div>';   // luoi-cbgv · sub-body · sub
       });
 
       var vung = document.getElementById('vung-cbgv');

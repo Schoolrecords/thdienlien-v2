@@ -609,6 +609,9 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
    Chiều cao rút còn ~60% bản Bạch Liêu (≈160px so với ≈265px): mũ mỏng hơn,
    huy hiệu 40px thay vì 62px, bỏ dòng email — email đã có ở tab Quản trị. */
 .luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; }
+/* Lưới thẻ nằm trong khối xếp gọn (.sub) thì phải có lề trong: sát mép nhìn
+   chật, mà thẻ lại nhấc lên 2px lúc rê chuột nên không có lề là bị cắt bóng. */
+.sub-body > .luoi-cbgv { padding: 13px; }
 .the-cbgv {
   background: var(--the); border: 1px solid var(--vien); border-radius: 14px;
   overflow: hidden; display: flex; flex-direction: column; text-align: center;
