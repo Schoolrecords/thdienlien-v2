@@ -345,22 +345,34 @@
           });
           // Chỉ nhận đường dẫn http(s) — ô link nhập tay có thể chứa 'javascript:'
           var link = /^https?:\/\//i.test(m.link_drive || '') ? m.link_drive : '';
+          // Thẻ NẰM NGANG: ảnh · (tên / chức vụ / trạng thái) · nút thư mục.
+          // Trạng thái rút gọn còn "Đã kích hoạt" / "Chưa đăng nhập", câu đầy đủ
+          // để trong title — dòng dài làm thẻ phải nới ngang, mà nới ngang thì
+          // mỗi hàng bớt một thẻ.
+          var tenDayDu = thoat(m.ho_ten);
           return '<div class="the-cbgv">' +
-            '<div class="mu">' +
             (u && u.anh_dai_dien
               ? '<img class="anh" src="' + thoat(u.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">'
               : '<span class="anh chu-tat">' + thoat(chuTat(m.ho_ten)) + '</span>') +
-            '</div>' +
             '<div class="than">' +
-            '<b>' + thoat(m.ho_ten) + '</b>' +
+            '<b title="' + tenDayDu + '">' + tenDayDu + '</b>' +
             '<small class="vt">' + thoat(m.chuc_vu || TEN_VAI_TRO[m.vai_tro]) +
             (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') + '</small>' +
-            '<small class="tt ' + (daVao ? 'da-vao' : 'chua-vao') + '">' +
-            (daVao ? '● Đã kích hoạt tài khoản' : '○ Chưa đăng nhập lần nào') + '</small>' +
+            '<small class="tt ' + (daVao ? 'da-vao' : 'chua-vao') + '"' +
+            ' title="' + (daVao ? 'Đã đăng nhập vào hệ thống ít nhất một lần'
+                                : 'Người này chưa đăng nhập lần nào') + '">' +
+            (daVao ? '● Đã kích hoạt' : '○ Chưa đăng nhập') + '</small>' +
+            '</div>' +
+            // Nút chỉ còn biểu tượng — đúng kiểu nút 📂 ở bảng danh mục hồ sơ,
+            // nên thầy cô đã quen. Tên người nằm trong aria-label để trình đọc
+            // màn hình không đọc ra 39 nút giống hệt nhau.
             (link
-              ? '<a class="nut-hs" target="_blank" rel="noopener" href="' + thoat(link) + '">📁 Hồ sơ cá nhân</a>'
-              : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này">📁 Chưa gán thư mục</span>') +
-            '</div></div>';
+              ? '<a class="nut-hs" target="_blank" rel="noopener" href="' + thoat(link) + '"' +
+                ' title="Mở thư mục hồ sơ cá nhân trên Drive"' +
+                ' aria-label="Mở thư mục hồ sơ cá nhân của ' + tenDayDu + '">📁</a>'
+              : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này"' +
+                ' aria-label="' + tenDayDu + ' chưa được gán thư mục Drive">📁</span>') +
+            '</div>';
         }).join('');
         html += '</div></div></div>';   // luoi-cbgv · sub-body · sub
       });

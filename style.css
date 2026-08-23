@@ -603,48 +603,53 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 .bang-trang-thai.khoa,
 .bang-trang-thai.loi  { background: #fdeaea; color: #a33; border-bottom: 1px solid #f2cccc; }
 
-/* Thẻ danh bạ CBGV-NV */
-/* Thẻ CBGV kiểu Bạch Liêu: mũ navy có hoa văn chấm, huy hiệu chữ tắt tràn
-   xuống mép mũ, rồi tên · chức vụ · trạng thái · nút mở thư mục Drive.
-   Chiều cao rút còn ~60% bản Bạch Liêu (≈160px so với ≈265px): mũ mỏng hơn,
-   huy hiệu 40px thay vì 62px, bỏ dòng email — email đã có ở tab Quản trị. */
-.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; }
+/* Thẻ danh bạ CBGV-NV — bản NẰM NGANG (23/8/2026, thay bản dựng đứng kiểu
+   Bạch Liêu). Trường 39 người thì bản cũ cao ~175px, cuộn mãi không hết.
+   Ba thứ bỏ đi để rút còn ~85px, tức hơn một nửa:
+     · dải mũ navy trang trí — tốn ~54px mà không mang thông tin nào;
+     · nút "📁 Hồ sơ cá nhân" trải hết bề ngang — thu về một nút biểu tượng
+       36px ở mép phải, đúng kiểu nút 📂 của bảng danh mục hồ sơ nên đã quen;
+     · lối xếp dọc căn giữa — nay ảnh · chữ · nút nằm trên MỘT trục ngang, mắt
+       quét dọc theo cột tên là đọc được cả nhóm, không phải nhảy zíc-zắc.
+   Ô lưới nới từ 212px lên 240px: thẻ ngang cần chỗ, nhưng mỗi hàng bớt một
+   thẻ vẫn lãi to vì chiều cao giảm hơn một nửa. */
+.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 /* Lưới thẻ nằm trong khối xếp gọn (.sub) thì phải có lề trong: sát mép nhìn
    chật, mà thẻ lại nhấc lên 2px lúc rê chuột nên không có lề là bị cắt bóng. */
 .sub-body > .luoi-cbgv { padding: 13px; }
 .the-cbgv {
-  background: var(--the); border: 1px solid var(--vien); border-radius: 14px;
-  overflow: hidden; display: flex; flex-direction: column; text-align: center;
-  transition: transform .15s, box-shadow .15s;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 12px;
+  display: flex; align-items: center; gap: 11px; padding: 11px 12px;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
 }
-.the-cbgv:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20, 48, 107, .13); }
-.the-cbgv .mu {
-  height: 34px; position: relative;
-  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2));
-  background-size: 14px 14px, auto;
+.the-cbgv:hover {
+  transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20, 48, 107, .12);
+  border-color: #c9d6ea;
 }
-.the-cbgv .mu .anh {
-  position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%);
-  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
-  background: #fff; color: var(--dam); font-size: 14px; font-weight: 800;
+.the-cbgv .anh {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+  background-image: linear-gradient(135deg, var(--dam), var(--dam-2));
+  color: #fff; font-size: 13.5px; font-weight: 800; letter-spacing: .02em;
   display: grid; place-items: center;
-  box-shadow: 0 0 0 3px #fff, 0 3px 10px rgba(10, 25, 60, .25);
 }
-.the-cbgv .than {
-  padding: 26px 11px 11px; display: flex; flex-direction: column; gap: 2px; flex: 1;
+/* min-width:0 là thứ giữ cho tên dài không đẩy nút thư mục tràn khỏi thẻ —
+   ô flex mặc định không co nhỏ hơn nội dung của nó. */
+.the-cbgv .than { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.the-cbgv .than b { font-size: 14px; color: var(--dam); line-height: 1.25; }
+.the-cbgv .vt {
+  font-size: 11.8px; color: var(--chu-mo); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.the-cbgv .than b { font-size: 14px; color: var(--dam); line-height: 1.3; }
-.the-cbgv .vt { font-size: 11.8px; color: var(--chu-mo); }
-.the-cbgv .tt { font-size: 11.2px; margin-bottom: 9px; }
+.the-cbgv .tt { font-size: 11.2px; line-height: 1.3; }
 .the-cbgv .da-vao  { color: #1f7a5e; }
-.the-cbgv .chua-vao { color: #6b7688; }
+.the-cbgv .chua-vao { color: #8b93a3; }
 .the-cbgv .nut-hs {
-  margin-top: auto; display: block; width: 100%; text-decoration: none;
-  font: inherit; font-size: 12.4px; font-weight: 700; padding: 9px 8px;
+  flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center;
+  text-decoration: none; font-size: 16px; line-height: 1;
   border: 0; border-radius: 9px; background: var(--dam); color: #fff;
 }
 .the-cbgv .nut-hs:hover { background: var(--dam-2); }
-.the-cbgv .nut-hs.trong { background: #eef2f8; color: #6b7688; cursor: default; }
+.the-cbgv .nut-hs.trong { background: #eef2f8; cursor: default; filter: grayscale(1); opacity: .55; }
 
 .the-cbgv .than b, .the-cbgv .than small { display: block; }
 .nut-drive { margin-left: auto; text-decoration: none; font-size: 18px; flex: 0 0 auto; }
