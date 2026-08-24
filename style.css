@@ -3136,6 +3136,15 @@ textarea.ht-o { min-height: 116px; display: block; }
    24/8/2026 co lop `co-tkb` xep SAU mang — o TKB nay thay cho o "Chua xac
    nhan" nen dai lai dung nam mang, bo lop do.) */
 @media (min-width: 1100px) { .tc-luoi.bon-mang { grid-template-columns: repeat(4, 1fr); } }
+/* Duoi 1100px so o khong chia het so cot: 720-1099px luoi 3 cot ma co 4 o
+   (3 + o TKB) -> o TKB mot minh mot hang, cho no trai het hang thay vi ho hai
+   o trong; duoi 720px luoi 2 cot ma chi 3 o (khong TKB) -> o thu ba trai het. */
+@media (min-width: 720px) and (max-width: 1099px) {
+  .tc-luoi:not(.bon-mang) .tc-o-tkb { grid-column: 1 / -1; }
+}
+@media (max-width: 719px) {
+  .tc-luoi.bon-mang .tc-o:nth-child(3) { grid-column: 1 / -1; }
+}
 .tc-o { border-radius: 18px; padding: 15px 16px; min-width: 0; }
 /* Bieu tuong TRON dung canh nhan tren cung mot hang (dung ban ve) */
 .tc-dau { display: flex; align-items: center; gap: 10px; min-height: 40px; }

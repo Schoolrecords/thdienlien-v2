@@ -2490,7 +2490,7 @@
     var t, ds, qt, xemThu = !THAT;
     if (xemThu) {
       t = { csDaBC: 3, gvCoBC: 60, gvTongBC: 61, hsTong: 1328,
-            soXanh: 3, dsCS: [1, 2, 3], soChua: 2, tbToiChuaXN: 0 };
+            soXanh: 3, soVang: 0, soDo: 0, soNghiChieu: 0, dsCS: [1, 2, 3], soChua: 2, tbToiChuaXN: 0 };
       ds = [1, 2, 3];
       qt = true;
     } else {
@@ -2544,6 +2544,26 @@
         '<div class="tc-dv">xếp lịch · dạy thay</div></a>';
     }
 
+    // Ô "Điểm trường an toàn" — phải NÓI CÙNG MỘT CHUYỆN với màn Tổng quan
+    // (veTongQuan): điểm đã tick "chiều không học" thì buổi chiều không có ai
+    // ở đó để mà kiểm tra → loại khỏi mẫu số chứ không tính là "chưa an toàn";
+    // chưa điểm nào báo thì để "—", không được ra "0/3 · cần kiểm tra" — đó
+    // là khẳng định trước một việc chưa xảy ra (rà soát 24/8/2026 phát hiện
+    // ô này lệch với Tổng quan trong cả hai tình huống).
+    var atCanXet = t.dsCS.length - (t.soNghiChieu || 0);
+    var atDaBao = t.soXanh + (t.soVang || 0) + (t.soDo || 0);
+    var atSo, atMau, atChu;
+    if (!atDaBao) {
+      atSo = '—'; atMau = 'lam';
+      atChu = atCanXet ? 'chưa điểm nào báo' : 'chiều không học';
+    } else {
+      atSo = t.soXanh + '/' + atCanXet;
+      atMau = !t.soDo && !t.soVang && t.soXanh === atCanXet ? 'la' : 'vang';
+      atChu = t.soDo ? 'có điểm báo đỏ' : t.soVang ? 'có điểm cần lưu ý'
+        : t.soXanh === atCanXet ? 'đã kiểm tra'
+        : 'còn ' + (atCanXet - atDaBao) + ' điểm chưa báo';
+    }
+
     var soLieu;
     if (qt) {
       // Cùng nguyên tắc với màn Tổng quan: chưa điểm nào báo cáo thì "—".
@@ -2555,9 +2575,7 @@
           t.csDaBC ? (t.csDaBC < t.dsCS.length ? t.csDaBC + '/' + t.dsCS.length + ' điểm đã báo' : 'đã đủ điểm báo')
                    : 'chưa điểm nào báo') +
         o('tim', '👧', 'Học sinh', t.hsTong.toLocaleString('vi-VN'), 'toàn trường') +
-        o(t.soXanh === t.dsCS.length ? 'la' : 'vang', '🛡️', 'Điểm trường an toàn',
-          t.soXanh + '/' + t.dsCS.length,
-          t.soXanh === t.dsCS.length ? 'đã kiểm tra' : 'cần kiểm tra') +
+        o(atMau, '🛡️', 'Điểm trường an toàn', atSo, atChu) +
         oTKB();
     } else {
       var toi = emailToi();
