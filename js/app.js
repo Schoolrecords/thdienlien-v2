@@ -568,6 +568,17 @@
     $$('nav.menu button').forEach(function (b) {
       b.addEventListener('click', function () { chuyenManHinh(b.getAttribute('data-di')); });
     });
+
+    // ── Nhảy thẳng theo #hash trên địa chỉ (vd …/#cbgv) ──
+    // Dùng cho "đầu mục trỏ": hai đầu H08 gắn link .../#cbgv — bấm 📂 là vào
+    // thẳng trang Hồ sơ CBGV – NV, nơi có nút thư mục Drive của TỪNG giáo viên
+    // (chốt của thầy Chung 25/8/2026 — giáo án, sổ chủ nhiệm nằm trong thư mục
+    // cá nhân, không bắt nộp lại). PHẢI kiểm màn hình tồn tại rồi mới chuyển:
+    // chuyenManHinh với mã lạ sẽ tắt hết mọi màn — trang trắng không lời.
+    (function () {
+      var mh = (location.hash || '').replace(/^#/, '');
+      if (mh && document.getElementById('mh-' + mh)) chuyenManHinh(mh);
+    })();
     $('#o-tim-ho-so').addEventListener('input', function () { tuKhoa = this.value; veGoiY(); veHoSo(); });
     $('#chon-trang-thai').addEventListener('change', function () { locTT = this.value; veHoSo(); });
     document.addEventListener('click', function (e) {
