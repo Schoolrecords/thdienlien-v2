@@ -200,6 +200,73 @@
       '</div>';
   }
 
+  // ── Kiểm tra ngay: rà trạng thái ↔ link Drive của cả bộ phận đang mở ──
+  // Soát bằng dữ liệu ĐÃ nạp trên máy (HO_SO + HS_BAN_GHI), không gọi đi đâu —
+  // chạy được cả ở bản xem thử. Bốn phép soát, xếp theo mức đáng lo:
+  //   🔴 "Đã có tệp" mà chưa gán thư mục Drive và ghi chú không nói nơi lưu
+  //      khác → tệp nằm đâu không ai biết, thanh tra hỏi là tìm không ra.
+  //   🟠 Hai hồ sơ dán TRÙNG một link (dán nhầm hay gặp nhất khi gán hàng
+  //      loạt). Link nội bộ có dấu # (đầu mục trỏ, vd …/#cbgv) được phép
+  //      dùng chung — đó là chủ ý, không phải dán nhầm.
+  //   🟡 Link không phải drive.google.com và cũng không phải trang nội bộ.
+  //   🟡 Chưa gán người phụ trách.
+  window.kiemTraBoPhan = function (soTT) {
+    var bp = window.BO_PHAN.filter(function (b) { return b.soTT === soTT; })[0];
+    var vung = $('#kq-kiem-tra');
+    if (!bp || !vung) return;
+    var ds = window.HO_SO.filter(function (h) { return bp.hop.indexOf(h.hop) >= 0; });
+
+    var coKhongLink = [], coNoiKhac = 0, thieuPT = [], linkLa = [], theoLink = {}, demLink = 0;
+    ds.forEach(function (h) {
+      var bg = (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) || {};
+      var link = (bg.link_drive || h.link || '').trim();
+      var noiBo = link.indexOf('#') >= 0;
+      if (link) {
+        demLink++;
+        if (!noiBo) (theoLink[link] = theoLink[link] || []).push(h.ma);
+        if (!noiBo && !/drive\.google\.com/.test(link)) linkLa.push(h.ma);
+      }
+      if (h.tt === 'co' && !link) {
+        // Ghi chú / ô định dạng có chữ = trường đã khai nơi lưu (hồ sơ giấy,
+        // hồ sơ đảng viên không đưa Drive…) — không tính là vênh.
+        if (String(bg.ghi_chu || '').trim() || String(bg.dinh_dang || '').trim()) coNoiKhac++;
+        else coKhongLink.push(h);
+      }
+      if (!String(h.phuTrach || '').trim()) thieuPT.push(h.ma);
+    });
+    var trungLink = Object.keys(theoLink).filter(function (k) { return theoLink[k].length > 1; });
+
+    function khoi(mau, tieuDe, than) {
+      return '<div style="border:1px solid var(--ke);border-left:4px solid ' + mau +
+        ';border-radius:10px;padding:10px 14px;margin:0 0 8px;font-size:13.5px;line-height:1.6">' +
+        '<b>' + tieuDe + '</b>' + (than ? '<br>' + than : '') + '</div>';
+    }
+    var html = '';
+    if (coKhongLink.length) {
+      html += khoi('var(--thieu)', '🔴 ' + coKhongLink.length + ' hồ sơ đánh dấu "Đã có tệp" nhưng chưa gán thư mục Drive và chưa ghi nơi lưu:',
+        coKhongLink.map(function (h) { return thoatHTML(h.ma + ' — ' + h.ten); }).join('<br>') +
+        '<br><i>Gán thư mục (nút ✏), hoặc ghi nơi lưu thật vào ô Ghi chú.</i>');
+    }
+    if (trungLink.length) {
+      html += khoi('var(--canh)', '🟠 ' + trungLink.length + ' link Drive đang bị dùng chung cho nhiều hồ sơ (dán nhầm?):',
+        trungLink.map(function (k) { return thoatHTML(theoLink[k].join(' · ')); }).join('<br>'));
+    }
+    if (linkLa.length) {
+      html += khoi('var(--canh)', '🟡 ' + linkLa.length + ' hồ sơ có link không phải thư mục Drive: ' + thoatHTML(linkLa.join(' · ')), '');
+    }
+    if (thieuPT.length) {
+      html += khoi('var(--canh)', '🟡 ' + thieuPT.length + ' hồ sơ chưa gán người phụ trách: ' + thoatHTML(thieuPT.join(' · ')), '');
+    }
+    if (!html) html = khoi('var(--ok)', '✅ Không thấy điểm vênh nào giữa trạng thái, link Drive và người phụ trách.', '');
+
+    vung.innerHTML =
+      '<div style="margin:10px 0 14px">' +
+      '<div class="nhan-nho" style="margin-bottom:8px">Kết quả rà soát · ' + demLink + '/' + ds.length +
+      ' hồ sơ đã gán thư mục' + (coNoiKhac ? ' · ' + coNoiKhac + ' hồ sơ khai lưu ngoài Drive' : '') + '</div>' +
+      html + '</div>';
+    vung.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
   // ── Lớp phủ chi tiết một bộ phận ──
   window.moBoPhan = function (soTT, maChon) {
     var bp = window.BO_PHAN.filter(function (b) { return b.soTT === soTT; })[0];
@@ -221,7 +288,8 @@
       '<div class="big">' + d.co + '/' + d.tong + ' hồ sơ đã có tệp</div>' +
       '<div class="sub-chu">' + (window.DA_NOI ? 'Số liệu đọc trực tiếp từ cơ sở dữ liệu' : 'Đang xem dữ liệu mẫu') + '</div>' +
       '</div><div class="sp"></div>' +
-      '<button class="nut-kiem-tra" onclick="window.notify(\'Chức năng rà soát thư mục Drive sẽ mở khi nạp xong link Drive các hồ sơ.\')">🔄 Kiểm tra ngay</button></div>' +
+      '<button class="nut-kiem-tra" onclick="kiemTraBoPhan(' + soTT + ')">🔄 Kiểm tra ngay</button></div>' +
+      '<div id="kq-kiem-tra"></div>' +
       bp.hop.map(function (maHop, i) {
         var hop = window.HOP[maHop];
         var ds = window.HO_SO.filter(function (h) { return h.hop === maHop; });
