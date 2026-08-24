@@ -190,6 +190,10 @@
         window.CAU_HINH.TO_CHUC_DANG = ch.to_chuc_dang;
       }
       if (ch.so_dang_vien) window.CAU_HINH.SO_DANG_VIEN = parseInt(ch.so_dang_vien, 10) || 0;
+      // URL dịch vụ đếm tệp Drive (sql/07 + quan-tri/kiem-tra-tep-drive.gs)
+      // cho nút "🔄 Kiểm tra ngay". Gán không điều kiện: trường xoá URL trong
+      // cau_hinh thì nút phải lùi về đếm theo trạng thái, không dùng URL cũ.
+      window.CAU_HINH.LINK_KIEM_TRA_DRIVE = ch.link_kiem_tra_drive || '';
       // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
       // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
       // sửa mã — tránh mỗi nơi một con số.

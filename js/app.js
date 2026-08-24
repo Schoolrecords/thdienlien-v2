@@ -200,71 +200,200 @@
       '</div>';
   }
 
-  // ── Kiểm tra ngay: rà trạng thái ↔ link Drive của cả bộ phận đang mở ──
-  // Soát bằng dữ liệu ĐÃ nạp trên máy (HO_SO + HS_BAN_GHI), không gọi đi đâu —
-  // chạy được cả ở bản xem thử. Bốn phép soát, xếp theo mức đáng lo:
-  //   🔴 "Đã có tệp" mà chưa gán thư mục Drive và ghi chú không nói nơi lưu
-  //      khác → tệp nằm đâu không ai biết, thanh tra hỏi là tìm không ra.
-  //   🟠 Hai hồ sơ dán TRÙNG một link (dán nhầm hay gặp nhất khi gán hàng
-  //      loạt). Link nội bộ có dấu # (đầu mục trỏ, vd …/#cbgv) được phép
-  //      dùng chung — đó là chủ ý, không phải dán nhầm.
-  //   🟡 Link không phải drive.google.com và cũng không phải trang nội bộ.
-  //   🟡 Chưa gán người phụ trách.
+  // ── Kiểm tra ngay: đếm tệp THẬT trên Drive của cả bộ phận đang mở ──
+  // Thiết kế gốc sql/07-kiem-tra-drive.sql: gửi {mã hồ sơ: id thư mục} cho
+  // dịch vụ Apps Script của trường (quan-tri/kiem-tra-tep-drive.gs — URL nằm
+  // ở cau_hinh.link_kiem_tra_drive), nhận về {mã: số tệp}, rồi:
+  //   · báo bao nhiêu hồ sơ CÓ TỆP ngay dưới dải tổng
+  //   · icon 📂 từng dòng: SÁNG = có tệp · XÁM = thư mục trống / không kiểm được
+  //   · gọi RPC cap_nhat_tu_drive nâng 'chua'/'dang' → 'co' (chỉ NÂNG, không
+  //     hạ — trạng thái người đặt tay không bị máy ghi đè; RPC chỉ admin/BGH
+  //     chạy được, người khác bấm vẫn xem kết quả, chỉ không nâng trạng thái)
+  // Gọi theo LÔ 20 thư mục: mỗi thư mục ngốn 1-2 giây Drive API phía dịch vụ,
+  // gửi cả bộ phận một gói là chạm trần 6 phút Apps Script và mất trắng kết
+  // quả (soát đối kháng 26/8). ⚠️ fetch KHÔNG đặt header Content-Type — đặt
+  // application/json là dính preflight OPTIONS mà Apps Script không trả lời
+  // được, CORS chặn toàn bộ.
+  // Chưa cấu hình dịch vụ, hoặc đang xem thử → lùi về đếm theo trạng thái đã
+  // lưu: icon vẫn đổi màu theo "Đã có / Chưa có", chỉ không có số tệp thật.
+  var luotKiemTra = 0;   // mã lượt chạy: bấm lượt mới là mọi callback lượt cũ câm
   window.kiemTraBoPhan = function (soTT) {
     var bp = window.BO_PHAN.filter(function (b) { return b.soTT === soTT; })[0];
-    var vung = $('#kq-kiem-tra');
-    if (!bp || !vung) return;
+    if (!bp || !$('#kq-kiem-tra')) return;
     var ds = window.HO_SO.filter(function (h) { return bp.hop.indexOf(h.hop) >= 0; });
+    var luot = ++luotKiemTra;
+    // Còn sống = vẫn là lượt bấm mới nhất VÀ lớp phủ vẫn mở đúng bộ phận này.
+    // Soát đối kháng 26/8 bắt được hai ca thiếu chốt này: timeout lượt cũ đè
+    // kết quả đúng của lượt mới, và RPC về muộn ghi số bộ phận cũ lên dải
+    // tổng của bộ phận vừa mở.
+    function conSong() { return luot === luotKiemTra && boPhanDangMo === soTT; }
 
-    var coKhongLink = [], coNoiKhac = 0, thieuPT = [], linkLa = [], theoLink = {}, demLink = 0;
+    // Nhận diện id thư mục Drive trong link (…/folders/<id> hoặc …?id=<id>,
+    // id= không cần đứng ngay sau dấu hỏi). Neo đúng tên miền drive.google.com.
+    function layIdThuMuc(link) {
+      if (!/^https?:\/\/drive\.google\.com\//.test(link)) return null;
+      var m = /\/folders\/([A-Za-z0-9_-]{10,})/.exec(link) ||
+              /[?&]id=([A-Za-z0-9_-]{10,})/.exec(link);
+      return m ? m[1] : null;
+    }
+
+    var quet = {}, linkCua = {}, troNoiBo = 0, linkNgoai = 0, chuaGan = 0;
     ds.forEach(function (h) {
       var bg = (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) || {};
-      var link = (bg.link_drive || h.link || '').trim();
-      var noiBo = link.indexOf('#') >= 0;
-      if (link) {
-        demLink++;
-        if (!noiBo) (theoLink[link] = theoLink[link] || []).push(h.ma);
-        if (!noiBo && !/drive\.google\.com/.test(link)) linkLa.push(h.ma);
-      }
-      if (h.tt === 'co' && !link) {
-        // Ghi chú / ô định dạng có chữ = trường đã khai nơi lưu (hồ sơ giấy,
-        // hồ sơ đảng viên không đưa Drive…) — không tính là vênh.
-        if (String(bg.ghi_chu || '').trim() || String(bg.dinh_dang || '').trim()) coNoiKhac++;
-        else coKhongLink.push(h);
-      }
-      if (!String(h.phuTrach || '').trim()) thieuPT.push(h.ma);
+      var link = ((bg.link_drive || h.link) || '').trim();
+      linkCua[h.ma] = link;
+      var id = link ? layIdThuMuc(link) : null;
+      if (id) quet[h.ma] = id;
+      else if (!link) chuaGan++;
+      else if (link.indexOf('#') >= 0) troNoiBo++;   // đầu mục trỏ (…/#cbgv)
+      else linkNgoai++;                              // Docs/Sheets/tệp đơn… — không quét được
     });
-    var trungLink = Object.keys(theoLink).filter(function (k) { return theoLink[k].length > 1; });
+    var cacMa = Object.keys(quet);
 
-    function khoi(mau, tieuDe, than) {
-      return '<div style="border:1px solid var(--ke);border-left:4px solid ' + mau +
-        ';border-radius:10px;padding:10px 14px;margin:0 0 8px;font-size:13.5px;line-height:1.6">' +
-        '<b>' + tieuDe + '</b>' + (than ? '<br>' + than : '') + '</div>';
+    // Tô icon 📂 từng dòng. kq = {ma: số tệp} khi quét Drive; null khi lùi về
+    // trạng thái đã lưu. (Chỉ chọn icon thư mục — nút ✏ cũng mang class .drive.)
+    function toMau(kq) {
+      $$('#lp-than tr[data-ma]').forEach(function (tr) {
+        var ma = tr.getAttribute('data-ma');
+        var h = null;
+        ds.forEach(function (x) { if (x.ma === ma) h = x; });
+        if (!h) return;
+        var ic = $('a.drive, button.drive:not(.hs-sua)', tr);
+        if (!ic) return;
+        ic.classList.remove('xam');
+        if (!linkCua[ma]) return;                       // chưa gán — .mo đã làm mờ sẵn
+        if (kq && quet[ma] != null) {
+          var n = Number(kq[ma]);
+          if (n > 0) ic.title = 'Mở thư mục trên Drive — ' + (n >= 50 ? '50+' : n) + ' tệp';
+          else if (n === 0) { ic.classList.add('xam'); ic.title = 'Thư mục trên Drive đang TRỐNG'; }
+          else { ic.classList.add('xam'); ic.title = 'Không kiểm được thư mục (link hỏng, nằm ngoài kho minh chứng, hoặc lượt quét bị cắt)'; }
+        } else if (kq) {
+          ic.title = linkCua[ma].indexOf('#') >= 0
+            ? 'Trỏ trang nội bộ của app — không quét Drive'
+            : 'Link không phải thư mục Drive — không quét được';
+        } else if (h.tt !== 'co') {
+          ic.classList.add('xam');
+          ic.title = 'Mở thư mục trên Drive — hồ sơ đang ghi "' + ST_LABEL[h.tt] + '"';
+        }
+      });
     }
-    var html = '';
-    if (coKhongLink.length) {
-      html += khoi('var(--thieu)', '🔴 ' + coKhongLink.length + ' hồ sơ đánh dấu "Đã có tệp" nhưng chưa gán thư mục Drive và chưa ghi nơi lưu:',
-        coKhongLink.map(function (h) { return thoatHTML(h.ma + ' — ' + h.ten); }).join('<br>') +
-        '<br><i>Gán thư mục (nút ✏), hoặc ghi nơi lưu thật vào ô Ghi chú.</i>');
-    }
-    if (trungLink.length) {
-      html += khoi('var(--canh)', '🟠 ' + trungLink.length + ' link Drive đang bị dùng chung cho nhiều hồ sơ (dán nhầm?):',
-        trungLink.map(function (k) { return thoatHTML(theoLink[k].join(' · ')); }).join('<br>'));
-    }
-    if (linkLa.length) {
-      html += khoi('var(--canh)', '🟡 ' + linkLa.length + ' hồ sơ có link không phải thư mục Drive: ' + thoatHTML(linkLa.join(' · ')), '');
-    }
-    if (thieuPT.length) {
-      html += khoi('var(--canh)', '🟡 ' + thieuPT.length + ' hồ sơ chưa gán người phụ trách: ' + thoatHTML(thieuPT.join(' · ')), '');
-    }
-    if (!html) html = khoi('var(--ok)', '✅ Không thấy điểm vênh nào giữa trạng thái, link Drive và người phụ trách.', '');
 
-    vung.innerHTML =
-      '<div style="margin:10px 0 14px">' +
-      '<div class="nhan-nho" style="margin-bottom:8px">Kết quả rà soát · ' + demLink + '/' + ds.length +
-      ' hồ sơ đã gán thư mục' + (coNoiKhac ? ' · ' + coNoiKhac + ' hồ sơ khai lưu ngoài Drive' : '') + '</div>' +
-      html + '</div>';
-    vung.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    function dong(chu) {
+      if (!conSong()) return;
+      var vung = $('#kq-kiem-tra');   // hỏi lại mỗi lần: lớp phủ có thể vừa vẽ lại
+      if (!vung) return;
+      vung.innerHTML = '<div style="margin:10px 0 14px"><div class="nhan-nho">' + chu + '</div></div>';
+      vung.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function khoaNut(khoa) {
+      var nut = $('.sheet-sum .nut-kiem-tra');
+      if (nut) nut.disabled = !!khoa;
+    }
+
+    var duoiChu = (troNoiBo ? ' · ' + troNoiBo + ' hồ sơ trỏ trang nội bộ' : '') +
+      (linkNgoai ? ' · ' + linkNgoai + ' hồ sơ link ngoài Drive (không quét)' : '') +
+      (chuaGan ? ' · ' + chuaGan + ' hồ sơ chưa gán thư mục' : '');
+
+    // ── Không quét được (xem thử / chưa cấu hình) → đếm theo trạng thái đã lưu
+    var diaChi = String((window.CAU_HINH || {}).LINK_KIEM_TRA_DRIVE || '').trim();
+    if (!window.DA_NOI || !diaChi || !cacMa.length) {
+      var d = demTrangThai(ds);
+      toMau(null);
+      dong('📂 Theo trạng thái đã lưu: <b>' + d.co + '/' + d.tong + '</b> hồ sơ có tệp — icon thư mục xám là hồ sơ chưa có.' + duoiChu +
+        (!window.DA_NOI ? '<br><i>Đang xem dữ liệu mẫu nên không quét Drive thật.</i>'
+          : (!diaChi ? '<br><i>Muốn đếm tệp thật trên Drive: triển khai dịch vụ quét (quan-tri/kiem-tra-tep-drive.gs) rồi lưu URL vào cấu hình <code>link_kiem_tra_drive</code>.</i>' : '')));
+      return;
+    }
+
+    // ── Quét thật: hỏi dịch vụ đếm tệp của trường, tuần tự từng lô ──
+    var LO = 20, kqGop = {};
+    khoaNut(true);
+
+    function goiLo(tu) {
+      if (!conSong()) return khoaNut(false);
+      if (tu >= cacMa.length) return hoanTat();
+      dong('⏳ Đang đếm tệp trên Drive… ' + tu + '/' + cacMa.length + ' thư mục' +
+        (cacMa.length > LO ? ' (lô ' + (Math.floor(tu / LO) + 1) + '/' + Math.ceil(cacMa.length / LO) + ')' : ''));
+      var goi = {};
+      cacMa.slice(tu, tu + LO).forEach(function (ma) { goi[ma] = quet[ma]; });
+
+      var hen = null;
+      var qua = new Promise(function (_, tuChoi) {
+        hen = setTimeout(function () { tuChoi(new Error('dịch vụ không trả lời sau 100 giây')); }, 100000);
+      });
+      Promise.race([fetch(diaChi, { method: 'POST', body: JSON.stringify(goi) }), qua])
+        .then(function (r) {
+          if (!r.ok) throw new Error('dịch vụ trả mã ' + r.status);
+          return r.json().catch(function () {
+            throw new Error('dịch vụ trả về không phải JSON — kiểm bản triển khai Apps Script');
+          });
+        })
+        .then(function (kq) {
+          clearTimeout(hen);
+          if (!conSong()) return khoaNut(false);
+          if (kq && kq.loi) throw new Error(kq.loi === 'sai_khoa' ? 'sai khóa dịch vụ (?k=)' : 'dịch vụ trả dữ liệu hỏng');
+          Object.keys(goi).forEach(function (ma) { if (kq && kq[ma] != null) kqGop[ma] = kq[ma]; });
+          goiLo(tu + LO);
+        })
+        .catch(function (e) {
+          clearTimeout(hen);
+          if (!conSong()) return khoaNut(false);
+          khoaNut(false);
+          dong('⚠️ Không gọi được dịch vụ đếm tệp: ' + thoatHTML((e && e.message) || 'lỗi mạng') +
+            '.<br><i>Kiểm lại URL + khóa trong cấu hình <code>link_kiem_tra_drive</code>, và bản triển khai Apps Script (Who has access: Anyone).</i>');
+        });
+    }
+
+    function hoanTat() {
+      khoaNut(false);
+      var coTep = 0, trong = [], hong = [];
+      cacMa.forEach(function (ma) {
+        var n = Number(kqGop[ma]);   // thiếu trong trả lời (lượt quét bị cắt) → NaN → hong
+        if (n > 0) coTep++;
+        else if (n === 0) trong.push(ma);
+        else { hong.push(ma); if (kqGop[ma] == null) kqGop[ma] = -1; }
+      });
+      toMau(kqGop);
+      dong('🗂 Kiểm tra trên Drive: <b>' + coTep + '/' + cacMa.length + '</b> thư mục có tệp' +
+        (trong.length ? ' · <b>' + trong.length + '</b> thư mục trống (icon xám): ' + thoatHTML(trong.join(' · ')) : '') +
+        (hong.length ? ' · <b>' + hong.length + '</b> thư mục không kiểm được: ' + thoatHTML(hong.join(' · ')) : '') +
+        duoiChu);
+
+      // Nâng trạng thái → 'co' cho hồ sơ quét ra tệp (chỉ admin/BGH được —
+      // người khác thì RPC từ chối, bỏ qua trong im lặng).
+      var nang = {}, demNang = 0;
+      ds.forEach(function (h) {
+        if (h.tt !== 'co' && Number(kqGop[h.ma]) > 0) { nang[h.ma] = Number(kqGop[h.ma]); demNang++; }
+      });
+      if (!demNang || !window.MAY_CHU) return;
+      window.MAY_CHU.rpc('cap_nhat_tu_drive', { du_lieu: nang }).then(function (r) {
+        if (r.error || !r.data) return;
+        // Dữ liệu trên máy cập nhật KHÔNG cần chốt conSong: máy chủ đã ghi
+        // thật rồi, bộ nhớ phải khớp theo dù người dùng đã mở màn khác.
+        ds.forEach(function (h) {
+          if (nang[h.ma] != null) {
+            h.tt = 'co';
+            if (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) window.HS_BAN_GHI[h.ma].trang_thai = 'co';
+          }
+        });
+        // Nhãn trạng thái từng dòng khớp theo data-ma nên tự an toàn; riêng
+        // dải tổng là ô dùng chung giữa các bộ phận — phải còn sống mới ghi.
+        $$('#lp-than tr[data-ma]').forEach(function (tr) {
+          if (nang[tr.getAttribute('data-ma')] == null) return;
+          var st = $('.st', tr);
+          if (st) { st.className = 'st st-co'; st.textContent = ST_LABEL.co; }
+        });
+        if (conSong()) {
+          var d2 = demTrangThai(ds);
+          var big = $('.sheet-sum .big');
+          if (big) big.textContent = d2.co + '/' + d2.tong + ' hồ sơ đã có tệp';
+        }
+        veThongKe();
+        window.notify('Đã nâng trạng thái ' + r.data + ' hồ sơ thành "Đã có" theo kết quả quét Drive.');
+      }).catch(function () { /* lỗi mạng lúc nâng — kết quả quét vẫn nguyên trên màn */ });
+    }
+
+    goiLo(0);
   };
 
   // ── Lớp phủ chi tiết một bộ phận ──

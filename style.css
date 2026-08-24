@@ -1025,6 +1025,9 @@ select.csvc-o { cursor: pointer; }
 }
 .rec-tbl .drive:hover { background: #f9edd2; }
 .rec-tbl .drive.mo { opacity: .4; }
+/* Sau khi "Kiểm tra ngay": thư mục trống / không mở được / hồ sơ chưa có tệp
+   → icon 📂 chuyển XÁM; thư mục có tệp giữ màu sáng bình thường. */
+.rec-tbl .drive.xam { filter: grayscale(1); opacity: .45; }
 @media (hover: none) { .rec-tbl .drive { width: 44px; height: 44px; font-size: 18px; margin-left: 6px; } }
 td.tdst { white-space: nowrap; text-align: right; }
 
