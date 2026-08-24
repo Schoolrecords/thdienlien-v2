@@ -185,6 +185,10 @@
   // Cần TÔI bấm xác nhận: đúng phạm vi, chưa xác nhận, và không phải chính
   // mình là người gửi (BGH không tự nhắc mình nhận thông báo mình soạn)
   function tbCanToiXN(x) {
+    // Lời nhắc đích danh: chỉ người được nhắc phải xác nhận, người khác
+    // (kể cả cùng điểm trường) chỉ đọc — hết cảnh cả điểm bấm "Tôi đã nhận"
+    // cho một lời nhắc gửi phụ trách (ảnh thầy Chung 26/8/2026).
+    if (x.nguoiNhanEmail && !emailBang(x.nguoiNhanEmail, emailToi())) return false;
     return !!x.canXacNhan && !x.toiDaXacNhan && tbChoToi(x) &&
       !(x.guiId && x.guiId === idToi());
   }
@@ -424,8 +428,12 @@
       may.from('cong_viec_mau').select('*').order('id'),
       // đơn CHỜ DUYỆT lấy riêng không giới hạn — kẻo đơn cũ tụt khỏi trang 200 dòng
       may.from('de_xuat').select('*').eq('trang_thai', 'cho_duyet').order('gui_luc'),
-      // mốc giờ báo cáo đầu buổi (sql/34) — mỗi trường một giờ vào lớp
-      may.from('cau_hinh').select('khoa, gia_tri').in('khoa', ['gio_bao_cao_sang', 'gio_bao_cao_chieu'])
+      // mốc giờ báo cáo đầu buổi (sql/34) — mỗi trường một giờ vào lớp;
+      // ngay_lam_viec (sql/30) + bao_cao_co_so_chinh cho laNgayHoc/csPhaiBao
+      may.from('cau_hinh').select('khoa, gia_tri')
+        .in('khoa', ['gio_bao_cao_sang', 'gio_bao_cao_chieu', 'ngay_lam_viec', 'bao_cao_co_so_chinh']),
+      // hôm nay có trong bảng ngày nghỉ không (sql/30) — bảng có thể chưa có
+      may.from('ngay_nghi').select('ngay, loai').eq('ngay', homNayISO()).limit(1)
     ]).then(function (kq) {
       kq.slice(0, 6).forEach(function (r) { if (r.error) throw r.error; });
       // Nguồn tùy chọn: thiếu bảng (chưa chạy sql/25) → trả null; lỗi khác vẫn ném
@@ -533,6 +541,9 @@
         ds.forEach(function (n) { if (n.xac_nhan_luc && n.email) daXN[n.email.toLowerCase()] = 1; });
         moi.thongBao.push({ id: b2.id, tieuDe: b2.tieu_de, noiDung: b2.noi_dung || '',
           canXacNhan: !!b2.can_xac_nhan, phamVi: b2.pham_vi, coSo: b2.co_so_ma,
+          // Lời nhắc ĐÍCH DANH (sql/61): có cột này thì chỉ người ấy phải
+          // xác nhận, người khác chỉ đọc. Trường chưa vá → undefined → ''.
+          nguoiNhanEmail: b2.nguoi_nhan_email || '',
           nguoiGui: b2.nguoi_gui_ten, guiId: b2.nguoi_gui_id || null,
           luc: gioTu(b2.gui_luc), ngay: ngayCuaMoc(b2.gui_luc),
           daXNEmail: daXN, soXacNhan: Object.keys(daXN).length,
@@ -563,7 +574,17 @@
       if (kq[12] && !kq[12].error) (kq[12].data || []).forEach(function (c) {
         if (c.khoa === 'gio_bao_cao_sang' && c.gia_tri) GIO_BC.sang = c.gia_tri;
         if (c.khoa === 'gio_bao_cao_chieu' && c.gia_tri) GIO_BC.chieu = c.gia_tri;
+        if (c.khoa === 'ngay_lam_viec' && c.gia_tri) {
+          var cacThu = String(c.gia_tri).split(',')
+            .map(function (s) { return parseInt(s, 10); })
+            .filter(function (n) { return n >= 1 && n <= 7; });
+          if (cacThu.length) NGAY_LAM = cacThu;
+        }
+        if (c.khoa === 'bao_cao_co_so_chinh') BC_CHINH = String(c.gia_tri || '').trim();
       });
+      // Trường chưa chạy sql/30 (thiếu bảng ngay_nghi) thì coi như không có
+      // ngày nghỉ khai báo — laNgayHoc vẫn xét được thứ trong tuần.
+      NGHI_HOM_NAY = (kq[13] && !kq[13].error && (kq[13].data || [])[0]) || null;
       moi.nhatKy.sort(function (a, b) { return String(b.khi).localeCompare(String(a.khi)); });
       moi.nhatKy = moi.nhatKy.map(function (n) { return { luc: gioTu(n.khi), chu: n.chu }; });
       return moi;
@@ -671,14 +692,16 @@
       if (d) { lopDaDD++; hsVang += d.soVang; }
     });
 
-    var soXanh = 0, soVang = 0, soDo = 0, soChua = 0, soNghiChieu = 0;
+    var soXanh = 0, soVang = 0, soDo = 0, soChua = 0, soNghiChieu = 0, soMien = 0;
     dsCS.forEach(function (c) {
       var bc = (DL.baoCao[c.ma] || {})[b];
       if (b === 'chieu' && !bc) {
         var sang = (DL.baoCao[c.ma] || {}).sang;
         if (sang && sang.chieuKhongHoc) { soNghiChieu++; return; }
       }
-      if (!bc) soChua++;
+      // Cơ sở được miễn (cơ sở chính trường một điểm) mà chưa báo thì KHÔNG
+      // tính "chưa báo cáo" — nó không nợ ai bản báo cáo nào.
+      if (!bc) { if (csPhaiBao(c)) soChua++; else soMien++; }
       else if (bc.anToan === 'xanh') soXanh++;
       else if (bc.anToan === 'vang') soVang++;
       else soDo++;
@@ -713,6 +736,7 @@
       csDaBC: csDaBC, gvCoBC: gvCoBC, gvTongBC: gvTongBC,
       hsTong: hsTong, hsVang: hsVang, lopDaDD: lopDaDD, lopTong: cacLop.length,
       soXanh: soXanh, soVang: soVang, soDo: soDo, soChua: soChua, soNghiChieu: soNghiChieu,
+      soMien: soMien, homNayHoc: laNgayHoc(),
       viecTong: viec.length, vXong: viec.filter(function (v) { return v.tt === 'xong'; }).length,
       vQuaHan: vQuaHan, vHomNay: vHomNay, svCanXuLy: svCanXuLy, tietThieu: tietThieu,
       dxCho: dxCho, tbToiChuaXN: tbToiChuaXN };
@@ -750,11 +774,13 @@
         nut: '<button class="dh-nut-nho" onclick="DH.svTiepNhan(' + s.id + ')">Tiếp nhận</button>' });
     });
 
-    // 3 · Điểm trường chưa xác nhận buổi này — của mình thì có nút báo ngay
+    // 3 · Điểm trường chưa xác nhận buổi này — của mình thì có nút báo ngay.
+    // Ngày nghỉ không đòi ai; cơ sở được miễn (csPhaiBao) cũng không đòi.
     var duocBao = coSoDuocBao();
-    DL.coSo.forEach(function (c) {
+    if (laNgayHoc()) DL.coSo.forEach(function (c) {
       var bc = (DL.baoCao[c.ma] || {})[b];
       if (bc) return;
+      if (!csPhaiBao(c)) return;
       if (b === 'chieu') {
         var sang = (DL.baoCao[c.ma] || {}).sang;
         if (sang && sang.chieuKhongHoc) return;
@@ -821,7 +847,38 @@
   // Mốc giờ báo cáo lấy từ cau_hinh (sql/34) — quá giờ mà điểm chưa gửi thì
   // bảng điều hành tự sinh dòng "CHƯA BÁO CÁO". Mỗi trường một giờ vào lớp.
   var GIO_BC = { sang: '07:15', chieu: '13:45' };
+
+  // ── Hôm nay có phải NGÀY HỌC không ──
+  // Trước 26/8/2026 dòng "CHƯA BÁO CÁO · Nhắc" chỉ xét GIỜ trong ngày, không
+  // xét THỨ — thứ Bảy mở app là thấy cả trường "chưa gửi báo cáo" kèm nút
+  // Nhắc (rà soát theo ảnh thầy Chung). Thứ trong tuần theo
+  // cau_hinh.ngay_lam_viec (chuẩn ISO '1,2,3,4,5' — sql/30, trường học sáng
+  // thứ Bảy tự thêm 6); ngày trong bảng ngay_nghi cũng nghỉ, riêng 'lam_bu'
+  // là NGÀY LÀM đè lên tất (cùng luật ưu tiên với bảng công, sql/30).
+  var NGAY_LAM = [1, 2, 3, 4, 5];   // nạp từ cau_hinh lúc taiLai
+  var NGHI_HOM_NAY = null;          // bản ghi ngay_nghi của hôm nay (null = không có)
+  function laNgayHoc() {
+    if (NGHI_HOM_NAY) return NGHI_HOM_NAY.loai === 'lam_bu';
+    var thu = new Date().getDay();  // 0 = CN … 6 = T7 → ISO 1..7
+    return NGAY_LAM.indexOf(thu === 0 ? 7 : thu) >= 0;
+  }
+
+  // ── Cơ sở nào PHẢI gửi báo cáo đầu buổi ──
+  // Trường MỘT cơ sở: Ban giám hiệu ngồi ngay tại đó, không bắt "báo cáo cho
+  // chính mình" ngày hai lần (góp ý thầy Chung 26/8/2026 — ảnh Châu Đình).
+  // Vẫn ĐƯỢC gửi tự nguyện (màn Báo việc giữ nguyên), chỉ không bị ĐÒI.
+  // cau_hinh 'bao_cao_co_so_chinh' = 'co' | 'khong' đè lên mặc định;
+  // mặc định: trường nhiều cơ sở thì cơ sở chính vẫn phải báo như trước.
+  var BC_CHINH = '';                // nạp từ cau_hinh lúc taiLai
+  function csPhaiBao(c) {
+    if (!c || c.loai !== 'chinh') return true;
+    if (BC_CHINH === 'co') return true;
+    if (BC_CHINH === 'khong') return false;
+    return (DL.coSo || []).length > 1;
+  }
+
   function quaGioBaoCao() {
+    if (!laNgayHoc()) return false;   // ngày nghỉ thì không có hạn nào để quá
     var m = /^(\d{1,2}):(\d{2})$/.exec(GIO_BC[buoiXem()] || '');
     if (!m) return false;
     var d = new Date();
@@ -866,7 +923,10 @@
 
     return {
       ma: c.ma, ten: c.ten, bc: bc, nghiChieu: nghiChieu, mau: mau,
-      pill: nghiChieu ? 'Chiều không học' : (bc ? 'Đã báo cáo' : 'Chưa báo cáo'),
+      phaiBao: csPhaiBao(c),
+      pill: nghiChieu ? 'Chiều không học' : bc ? 'Đã báo cáo'
+          : !laNgayHoc() ? 'Hôm nay nghỉ'
+          : csPhaiBao(c) ? 'Chưa báo cáo' : 'Không bắt buộc',
       phuTrach: tenPhuTrach(c.phuTrach),
       quyMo: cacLop.length + ' lớp · ' + hs.toLocaleString('vi-VN') + ' HS',
       anToan: !bc ? '—' : bc.anToan === 'xanh' ? 'Xanh' : bc.anToan === 'vang' ? 'Vàng' : 'Đỏ',
@@ -907,14 +967,19 @@
     var ds = dsCS.map(tinhDiem);
     var t = tinh();
 
-    var daBao = ds.filter(function (d) { return d.bc || d.nghiChieu; }).length;
+    // Mẫu số của "đã báo cáo" là những điểm PHẢI báo, cộng thêm điểm tuy được
+    // miễn nhưng ĐÃ tự báo (báo tự nguyện thì tính cả tử lẫn mẫu — không để
+    // "2/1"). Trường một cơ sở được miễn: dsDoi rỗng → thẻ ghi "—".
+    var homNayHoc = laNgayHoc();
+    var dsDoi = ds.filter(function (d) { return d.phaiBao || d.bc || d.nghiChieu; });
+    var daBao = dsDoi.filter(function (d) { return d.bc || d.nghiChieu; }).length;
     var coDo = ds.some(function (d) { return d.mau === 'do'; });
     var coVang = ds.some(function (d) { return d.mau === 'vang'; });
     // Mục cơ sở vật chất "Có vấn đề" cũng phải kéo dải trạng thái xuống VÀNG.
     // Chỉ nhìn ô An toàn thì tick "mất nước khu B" xong vẫn báo ỔN ĐỊNH.
     var coCSVC = ds.some(function (d) { return d.csvcLoi; });
     var mauTT = coDo ? 'do' : (coVang || coCSVC) ? 'vang'
-      : (daBao === ds.length && ds.length) ? 'xanh' : 'xam';
+      : (daBao === dsDoi.length && dsDoi.length) ? 'xanh' : 'xam';
     // (Dòng "Toàn trường: …" đã bỏ — nội dung của nó nay nằm trong dòng phụ
     //  của hai thẻ đầu, để nguyên là nói hai lần cùng một chuyện.)
 
@@ -923,13 +988,13 @@
     var dsBC = ds.filter(function (d) { return d.bc; });
     var gvCoBC = 0, gvTongBC = 0;
     dsBC.forEach(function (d) { gvCoBC += d.gvCo; gvTongBC += d.gvTongSo; });
-    var duBaoCao = daBao === ds.length && ds.length > 0;
+    var duBaoCao = daBao === dsDoi.length && dsDoi.length > 0;
 
     // ── NĂM THẺ SỐ LIỆU (bản thiết kế thầy Chung chọn 15/8/2026) ──
     // Mỗi thẻ có DÒNG PHỤ trả lời ngay câu hỏi kế tiếp: "2/3 điểm" thì thiếu
     // điểm nào, "33/37" thì bốn người kia đi đâu. Thiếu dòng đó thì nhìn số
     // xong vẫn phải đi tìm — mà chính chỗ phải đi tìm mới là chỗ bỏ cuộc.
-    var conThieu = ds.length - daBao;
+    var conThieu = dsDoi.length - daBao;
     var soLuuY = ds.filter(function (d) { return d.mau === 'vang' || d.csvcLoi; }).length;
     var soXuLy = ds.filter(function (d) { return d.mau === 'do'; }).length;
 
@@ -949,18 +1014,27 @@
     }).length;
 
     var kpis = [
-      { nhan: 'Điểm đã báo cáo', so: daBao + '/' + ds.length,
-        phu: conThieu ? 'còn ' + conThieu + ' điểm chưa gửi' : 'tất cả điểm đã gửi',
-        mau: daBao === ds.length ? 'xanh' : 'vang' },
+      // Ngày nghỉ / trường một cơ sở được miễn: nói thẳng vì sao không chờ ai,
+      // đừng bày "0/1 còn 1 điểm chưa gửi" cho một việc không ai phải làm.
+      { nhan: 'Điểm đã báo cáo',
+        // Ngày nghỉ để "—" cho khớp ô cùng tên trên trang chủ — "0/2" là con
+        // số của một món nợ, mà hôm nay không ai nợ báo cáo nào.
+        so: (!homNayHoc && !daBao) ? '—' : dsDoi.length ? daBao + '/' + dsDoi.length : '—',
+        phu: !homNayHoc ? 'hôm nay không phải ngày học'
+           : !dsDoi.length ? 'trường một cơ sở — không yêu cầu'
+           : conThieu ? 'còn ' + conThieu + ' điểm chưa gửi' : 'tất cả điểm đã gửi',
+        mau: (!homNayHoc || !dsDoi.length) ? 'navy' : daBao === dsDoi.length ? 'xanh' : 'vang' },
       // Tin XẤU thì hiện ngay dù chưa đủ điểm báo (một điểm báo Đỏ là cả trường
       // phải biết). Nhưng chữ "Xanh" — lời khẳng định cả trường an toàn — chỉ
-      // được nói khi MỌI điểm đã báo cáo.
+      // được nói khi MỌI điểm phải báo đã báo cáo.
       { nhan: 'An toàn toàn trường',
         so: coDo ? 'Đỏ' : coVang ? 'Vàng' : duBaoCao ? 'Xanh' : '—',
         phu: soXuLy ? soXuLy + ' điểm cần xử lý ngay'
            : soLuuY ? soLuuY + ' điểm cần lưu ý'
            : duBaoCao ? 'mọi điểm báo an toàn'
-           : 'chờ ' + conThieu + ' điểm báo cáo',
+           : !homNayHoc ? 'hôm nay không phải ngày học'
+           : dsDoi.length ? 'chờ ' + conThieu + ' điểm báo cáo'
+           : 'không yêu cầu báo cáo đầu buổi',
         mau: mauTT },
       { nhan: 'GV có mặt', so: dsBC.length ? gvCoBC + '/' + gvTongBC : '—',
         phu: !dsBC.length ? 'chưa điểm nào báo cáo'
@@ -1030,6 +1104,7 @@
       var them = [];
       DL.coSo.forEach(function (c) {
         if (maCS.indexOf(c.ma) < 0) return;
+        if (!csPhaiBao(c)) return;   // cơ sở được miễn thì không có gì để nhắc
         var bc = (DL.baoCao[c.ma] || {})[b];
         if (bc) return;
         if (b === 'chieu') {
@@ -2205,8 +2280,13 @@
         '<button class="dh-nut-nho" onclick="DH.tbGui()">📢 Gửi thông báo</button>'
       : '';
 
-    // Danh sách nhân sự thuộc phạm vi để đếm "x/y đã xác nhận"
+    // Danh sách nhân sự thuộc phạm vi để đếm "x/y đã xác nhận".
+    // Lời nhắc đích danh: mẫu số là MỘT người được nhắc, không phải cả điểm.
     function nguoiTrongPhamVi(x) {
+      if (x.nguoiNhanEmail) {
+        var rieng = DL.gvDs.filter(function (g) { return emailBang(g.email, x.nguoiNhanEmail); });
+        return rieng.length ? rieng : [{ ten: x.nguoiNhanEmail, email: x.nguoiNhanEmail }];
+      }
       return DL.gvDs.filter(function (g) { return x.phamVi !== 'co_so' || g.coSo === x.coSo; });
     }
     var dsTB = (DL.thongBao || []).filter(tbChoToi).map(function (x) {
@@ -2235,7 +2315,8 @@
         (x.canXacNhan ? '🔴 ' : '📄 ') + thoat(x.tieuDe) + '</div>' +
         (x.noiDung ? '<div style="font-size:13.5px;margin-top:4px">' + thoat(x.noiDung) + '</div>' : '') +
         '<div class="dh-ghi-chu-nho" style="margin-top:6px">' + thoat(x.nguoiGui) + ' · ' + ngayVN(x.ngay) + ' ' + x.luc +
-        ' · ' + (x.phamVi === 'co_so' ? thoat(tenCoSo(x.coSo)) : 'Toàn trường') + '</div>' +
+        ' · ' + (x.phamVi === 'co_so' ? thoat(tenCoSo(x.coSo)) : 'Toàn trường') +
+        (x.nguoiNhanEmail ? ' · đích danh người phụ trách' : '') + '</div>' +
         xacNhan + '</div>';
     }).join('') || '<div class="the-thong-bao">Chưa có thông báo nào.</div>';
 
@@ -2554,17 +2635,24 @@
     // chưa điểm nào báo thì để "—", không được ra "0/3 · cần kiểm tra" — đó
     // là khẳng định trước một việc chưa xảy ra (rà soát 24/8/2026 phát hiện
     // ô này lệch với Tổng quan trong cả hai tình huống).
-    var atCanXet = t.dsCS.length - (t.soNghiChieu || 0);
+    // Cơ sở được miễn báo cáo (soMien) không nằm trong mẫu số — nó không nợ
+    // báo cáo nên không thể "chưa an toàn". Ngày nghỉ thì nói là ngày nghỉ.
+    var atCanXet = t.dsCS.length - (t.soNghiChieu || 0) - (t.soMien || 0);
     var atDaBao = t.soXanh + (t.soVang || 0) + (t.soDo || 0);
     var atSo, atMau, atChu;
     if (!atDaBao) {
       atSo = '—'; atMau = 'lam';
-      atChu = atCanXet ? 'chưa điểm nào báo' : 'chiều không học';
+      atChu = t.homNayHoc === false ? 'hôm nay nghỉ'
+        : atCanXet ? 'chưa điểm nào báo'
+        : (t.soNghiChieu ? 'chiều không học' : 'không yêu cầu');
     } else {
       atSo = t.soXanh + '/' + atCanXet;
       atMau = !t.soDo && !t.soVang && t.soXanh === atCanXet ? 'la' : 'vang';
       atChu = t.soDo ? 'có điểm báo đỏ' : t.soVang ? 'có điểm cần lưu ý'
         : t.soXanh === atCanXet ? 'đã kiểm tra'
+        // Ngày nghỉ mà có điểm báo tự nguyện: đừng đòi các điểm còn lại —
+        // Tổng quan đã nói "hôm nay không phải ngày học", đây phải nói theo.
+        : t.homNayHoc === false ? 'hôm nay nghỉ'
         : 'còn ' + (atCanXet - atDaBao) + ' điểm chưa báo';
     }
 
@@ -2800,18 +2888,40 @@
 
     // Nhắc điểm trường chưa gửi báo cáo — gửi một thông báo cần xác nhận,
     // KHÔNG nhắn ngoài app: có vết trong nhật ký thì mới đối chiếu được sau.
+    // Từ 26/8/2026 lời nhắc gửi ĐÍCH DANH người phụ trách (chỉ người ấy phải
+    // xác nhận); điểm chưa gán phụ trách thì CHẶN LẠI — nhắc một địa chỉ
+    // không có ai là bắt cả điểm (kể cả BGH) bấm "Tôi đã nhận" hộ (ảnh
+    // Châu Đình: hiệu trưởng phải xác nhận lời nhắc của chính trường mình).
     nhacBaoCao: function (ma) {
       var c = DL.coSo.filter(function (x) { return x.ma === ma; })[0];
       if (!c) return;
-      var chu = 'Nhắc gửi báo cáo đầu buổi — ' + c.ten + ' (' + tenBuoi(buoiXem()) + ' ' +
-        ngayVN(homNayISO()) + ')';
+      // Bản xem thử trả lời TRƯỚC chốt phụ trách: dữ liệu mẫu cố ý bỏ trống
+      // phuTrach, chặn ở đây là trang chào hàng chỉ lời cảnh báo về một màn
+      // phải đăng nhập mới thấy (soát đối kháng 26/8).
       if (!THAT) {
         window.notify('Bản mẫu — đã nhắc ' + c.ten + '.');
         return;
       }
+      if (!c.phuTrach) {
+        window.notify('⚠ ' + c.ten + ' chưa gán người phụ trách — vào Quản trị → 🏫 Cơ sở & Sáp nhập ' +
+          'gán trước, lời nhắc mới có người nhận.');
+        return;
+      }
+      // Email phụ trách phải khớp MỘT người trong danh bạ. Email mồ côi (gõ
+      // nhầm, người đã nghỉ) mà gửi đích danh thì KHÔNG AI phải xác nhận —
+      // lời nhắc treo "0/1" vĩnh viễn (soát đối kháng 26/8).
+      if (!(DL.gvDs || []).some(function (g) { return emailBang(g.email, c.phuTrach); })) {
+        window.notify('⚠ Địa chỉ phụ trách của ' + c.ten + ' (' + c.phuTrach + ') không khớp ' +
+          'tài khoản nào trong danh bạ — kiểm lại ở Quản trị → 🏫 Cơ sở & Sáp nhập rồi nhắc lại.');
+        return;
+      }
+      var chu = 'Nhắc gửi báo cáo đầu buổi — ' + c.ten + ' (' + tenBuoi(buoiXem()) + ' ' +
+        ngayVN(homNayISO()) + ')';
       if (!DL.tbCoBang) { window.notify('Chức năng nhắc cần chạy sql/25 trên Supabase.'); return; }
-      // Bấm hai lần là hai thông báo, mà mỗi cái đòi cả điểm trường xác nhận —
-      // tiêu đề đã chứa tên điểm + buổi + ngày nên đủ làm khoá chống trùng.
+      // Chặn trùng hai lớp: lớp một soi dữ liệu đã nạp trên máy (nhanh, nhưng
+      // bấm nhanh hai cái trước khi màn kịp tải lại là lọt); lớp hai là khoá
+      // unique trong CSDL (sql/61) — lọt lớp một thì lớp hai trả lỗi 23505,
+      // được đón thành lời tử tế bên dưới. Ảnh 24/8: hai lời nhắc y hệt nhau.
       var daNhac = (DL.thongBao || []).filter(function (x) {
         return x.tieuDe === chu && x.ngay === homNayISO();
       }).length;
@@ -2819,16 +2929,40 @@
         window.notify('Đã nhắc ' + c.ten + ' ' + daNhac + ' lần trong buổi này rồi.');
         return;
       }
-      window.MAY_CHU.from('thong_bao').insert({
+      var goi = {
         tieu_de: chu,
         noi_dung: 'Ban giám hiệu nhắc điểm trường gửi báo cáo đầu buổi trên hệ thống.',
         can_xac_nhan: true, pham_vi: 'co_so', co_so_ma: ma,
+        nguoi_nhan_email: c.phuTrach,
         // nguoi_gui_ten là NOT NULL và chưa có trigger chép tên — thiếu nó thì
         // nút Nhắc thất bại 100% với lỗi tiếng Anh của Postgres.
         nguoi_gui_id: idToi(), nguoi_gui_ten: tenToi()
+      };
+      var kieuCu = false;
+      window.MAY_CHU.from('thong_bao').insert(goi).then(function (r) {
+        // Trường chưa chạy sql/61: PostgREST không biết cột nguoi_nhan_email
+        // (PGRST204 — kèm soi tên cột trong message cho chắc) — gửi lại kiểu
+        // cũ (cả điểm xác nhận) còn hơn tắc hẳn.
+        if (r.error && r.error.code === 'PGRST204' &&
+            /nguoi_nhan_email/.test(String(r.error.message || ''))) {
+          kieuCu = true;
+          delete goi.nguoi_nhan_email;
+          return window.MAY_CHU.from('thong_bao').insert(goi);
+        }
+        return r;
       }).then(function (r) {
-        if (r.error) { baoLoi(r.error); return; }
-        window.notify('🔔 Đã nhắc ' + c.ten + ' — lời nhắc vào nhật ký và cần xác nhận.');
+        if (r.error) {
+          if (r.error.code === '23505') {
+            window.notify('Buổi này đã có đúng lời nhắc ấy rồi — không gửi thêm.');
+            taiLai();
+            return;
+          }
+          baoLoi(r.error);
+          return;
+        }
+        window.notify(kieuCu
+          ? '🔔 Đã nhắc ' + c.ten + ' — cả điểm sẽ thấy (CSDL trường chưa vá sql/61 để nhắc đích danh).'
+          : '🔔 Đã nhắc ' + tenPhuTrach(c.phuTrach) + ' (' + c.ten + ') — lời nhắc vào nhật ký và cần xác nhận.');
         taiLai();
       });
     },
@@ -3278,7 +3412,18 @@
         pham_vi: coSo ? 'co_so' : 'toan_truong', co_so_ma: coSo || null,
         can_xac_nhan: canXN, nguoi_gui_id: idToi(), nguoi_gui_ten: tenToi()
       }).then(function (r) {
-        if (r.error) { baoLoi(r.error); return; }
+        if (r.error) {
+          // Khoá tb_chong_gui_dup (sql/61): thông báo CẦN XÁC NHẬN trùng
+          // tiêu đề + phạm vi trong cùng ngày là một cú bấm đúp — nói bằng
+          // tiếng Việt, đừng để BGH đọc "duplicate key value…".
+          if (r.error.code === '23505') {
+            window.notify('Hôm nay đã có thông báo cần-xác-nhận đúng tiêu đề này cho đúng phạm vi này rồi. ' +
+              'Nếu là thông báo MỚI, thầy/cô đổi tiêu đề (thêm giờ hoặc nội dung khác) rồi gửi lại.');
+            return;
+          }
+          baoLoi(r.error);
+          return;
+        }
         window.notify('📢 Đã gửi thông báo.');
         taiLai();
       });
