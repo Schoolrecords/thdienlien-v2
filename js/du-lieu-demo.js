@@ -9,8 +9,8 @@
 //        node quan-tri/sinh-sql-danh-muc.js    (danh mục trong CSDL)
 //
 // Nguồn: Điều lệ Thông tư 15/2026/TT-BGDĐT (Điều 21), TT 57/2026 (Phụ lục III,
-// IV), CV 5555/BGDĐT-GDPT. 121 đầu hồ sơ · 16 hộp · 5 bộ phận.
-// Tầng: A bắt buộc theo văn bản (86) · B minh chứng TT57 (25) · C nội bộ (10).
+// IV), CV 5555/BGDĐT-GDPT. 125 đầu hồ sơ · 16 hộp · 5 bộ phận.
+// Tầng: A bắt buộc theo văn bản (90) · B minh chứng TT57 (25) · C nội bộ (10).
 //
 // Khi nối Supabase, các file *-sql.js GHI ĐÈ các mảng này rồi gọi lại hàm vẽ.
 // tc: tiêu chí TT57 mà hồ sơ làm minh chứng · maCu: mã hồ sơ app cũ (rỗng =
@@ -47,7 +47,7 @@ window.HOP = {
   "H14": { ten: "Ban an ninh - an toàn trường học", phuTrach: "Ban an ninh - an toàn", moTa: "An ninh trật tự, an toàn trường học, phòng chống bạo lực và xử lý sự cố." },
 };
 
-// 121 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
+// 125 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
 // vì tự sinh là ra mã khác mã trong cơ sở dữ liệu.
 window.HO_SO = [
   // ── H01 · Hiệu trưởng (26)
@@ -146,11 +146,15 @@ window.HO_SO = [
   { hop: "H05", ma: "MC.3.3.05", maCu: "7.2", ten: "Biên bản, báo cáo hoạt động Đội", tc: ["3.3", "1.2"], tt: "co", phuTrach: "Tổng phụ trách Đội", tang: "B" },
   { hop: "H05", ma: "MC.3.3.06", maCu: "7.3", ten: "Hình ảnh, tư liệu hoạt động ngoài giờ lên lớp", tc: ["3.3"], tt: "co", phuTrach: "Tổng phụ trách Đội", tang: "B" },
   { hop: "H05", ma: "MC.3.3.07", maCu: "1.9.3", ten: "Hồ sơ giáo dục truyền thống và khuyến học", tc: ["3.3", "4.3"], tt: "co", phuTrach: "Tổng phụ trách Đội", tang: "C" },
-  // ── H06 · Tổ chuyên môn (4)
+  // ── H06 · Tổ chuyên môn (8)
   { hop: "H06", ma: "MC.1.2.19", maCu: "3.2.3", ten: "Sổ ghi chép hoạt động của Tổ chuyên môn khối 1-2-3", tc: ["1.2", "3.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
   { hop: "H06", ma: "MC.1.2.20", maCu: "3.2.3", ten: "Sổ ghi chép hoạt động của Tổ chuyên môn khối 4-5", tc: ["1.2", "3.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
   { hop: "H06", ma: "MC.1.2.21", maCu: "", ten: "Sổ ghi chép hoạt động của Tổ Ngoại ngữ - Công nghệ - Năng khiếu", tc: ["1.2", "3.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
   { hop: "H06", ma: "MC.1.2.22", maCu: "", ten: "Sổ ghi chép hoạt động của Tổ giáo dục đặc thù", tc: ["1.2", "3.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
+  { hop: "H06", ma: "MC.3.1.08", maCu: "", ten: "Kế hoạch hoạt động của Tổ chuyên môn khối 1-2-3", tc: ["3.1", "1.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
+  { hop: "H06", ma: "MC.3.1.09", maCu: "", ten: "Kế hoạch hoạt động của Tổ chuyên môn khối 4-5", tc: ["3.1", "1.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
+  { hop: "H06", ma: "MC.3.1.10", maCu: "", ten: "Kế hoạch hoạt động của Tổ Ngoại ngữ - Công nghệ - Năng khiếu", tc: ["3.1", "1.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
+  { hop: "H06", ma: "MC.3.1.11", maCu: "", ten: "Kế hoạch hoạt động của Tổ giáo dục đặc thù", tc: ["3.1", "1.2"], tt: "chua", phuTrach: "Tổ trưởng chuyên môn", tang: "A" },
   // ── H08 · Giáo viên & Giáo viên chủ nhiệm (2)
   { hop: "H08", ma: "MC.3.2.03", maCu: "9.1.4", ten: "Kế hoạch bài dạy (giáo án)", tc: ["3.2", "2.2"], tt: "chua", phuTrach: "Giáo viên", tang: "A" },
   { hop: "H08", ma: "MC.3.4.08", maCu: "9.2.1", ten: "Sổ chủ nhiệm", tc: ["3.4", "2.2", "3.2"], tt: "co", phuTrach: "Giáo viên chủ nhiệm", tang: "A" },
