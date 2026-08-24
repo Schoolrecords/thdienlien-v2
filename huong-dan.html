@@ -10,9 +10,11 @@
      nêu tên một trường cụ thể nào (kể cả trong ví dụ). Bản đầy đủ dạng Word để
      gửi Zalo nằm ở repo tài liệu: quan-tri/HUONG-DAN-SU-DUNG-CHO-TRUONG.doc —
      sửa nội dung thì sửa CẢ HAI cho khớp.
-     Viết lại 24/8/2026: nội dung cập nhật theo app (ô Thời khóa biểu trên trang
-     chủ, danh sách vắng chuyển tự động, màn Sao lưu, dán danh sách mời từ Excel);
-     giao diện hai cột có mục lục dính — bản cũ bó 860px giữa màn hình rộng. -->
+     Bố cục 24/8/2026 (lần hai, theo góp ý thầy Chung): MỘT CỘT căn giữa, mục
+     lục là HỘP đầu trang kiểu tài liệu Word + nút nổi ↑ quay về mục lục. Bản
+     hai-cột-mục-lục-dính bị chê ở cả hai cỡ màn: máy tính thì trục trang lệch,
+     điện thoại thì thành dải cuộn ngang — đúng lỗi đã có bài học bên app TKB
+     ("dải điều hướng có ai sắp xếp chạy ngang phía trên bao giờ đâu"). -->
 <style>
   * { box-sizing: border-box; margin: 0; }
   :root {
@@ -27,45 +29,39 @@
 
   /* ── Đầu trang ── */
   .dau { background: linear-gradient(120deg, #041f52 0%, var(--navy) 55%, #0a3f9e 100%);
-         color: #fff; padding: 30px 20px 26px; }
-  .dau .khung { max-width: 1160px; margin: 0 auto; display: flex; align-items: center;
-                gap: 18px; flex-wrap: wrap; }
-  .dau img { width: 58px; height: 58px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
-  .dau h1 { font-size: 1.5rem; line-height: 1.25; letter-spacing: .01em; }
-  .dau small { opacity: .82; display: block; font-weight: normal; font-size: .98rem;
+         color: #fff; padding: 28px 20px 24px; }
+  .dau .khung { max-width: 1010px; margin: 0 auto; display: flex; align-items: center; gap: 18px; }
+  .dau img { width: 56px; height: 56px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+  .dau h1 { font-size: 1.45rem; line-height: 1.25; letter-spacing: .01em; }
+  .dau small { opacity: .82; display: block; font-weight: normal; font-size: .97rem;
                margin-top: 2px; }
-  .dau .nhan-nho { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
-  .dau .hieu { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.28);
-               border-radius: 999px; padding: 4px 13px; font-size: .82rem; white-space: nowrap; }
 
-  /* ── Khung hai cột: mục lục dính + nội dung ── */
-  .trang { max-width: 1160px; margin: 0 auto; padding: 26px 20px 50px;
-           display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 34px;
-           align-items: start; }
-  nav.muc-luc { position: sticky; top: 18px; background: #fff; border: 1px solid var(--ke);
-                border-radius: 12px; padding: 14px 6px 10px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
-  nav.muc-luc .tieu { font-size: .78rem; font-weight: 800; letter-spacing: .08em;
-                      color: var(--chu-mo); padding: 0 12px 8px; text-transform: uppercase; }
-  nav.muc-luc a { display: block; padding: 7px 12px; border-radius: 8px; color: var(--chu);
-                  text-decoration: none; font-size: .92rem; line-height: 1.35;
-                  border-left: 3px solid transparent; }
-  nav.muc-luc a:hover { background: var(--navy-nhat); }
-  nav.muc-luc a.on { background: var(--navy-nhat); border-left-color: var(--navy-2);
-                     color: var(--navy); font-weight: 700; }
-  nav.muc-luc .ve { display: block; margin: 10px 12px 4px; text-align: center;
-                    background: var(--navy); color: #fff; padding: 9px 10px;
-                    border-radius: 8px; text-decoration: none; font-size: .9rem; }
+  /* ── Một cột căn giữa ── */
+  main { max-width: 1010px; margin: 0 auto; padding: 24px 20px 50px; }
+  .mo-dau { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
+            padding: 16px 20px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
 
-  main { min-width: 0; }
-  main > .mo-dau { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
-                   padding: 16px 20px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+  /* ── Hộp mục lục kiểu tài liệu — hai cột trên máy tính ── */
+  .hop-ml { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
+            padding: 16px 20px 12px; margin: 14px 0 6px;
+            box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+  .hop-ml .ml-tieu { font-weight: 800; color: var(--navy); font-size: 1.02rem;
+                     margin-bottom: 8px; }
+  .hop-ml ol { list-style: none; padding: 0; margin: 0;
+               display: grid; grid-template-columns: 1fr 1fr; gap: 2px 28px; }
+  .hop-ml a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--chu);
+              text-decoration: none; border-left: 3px solid var(--ke); line-height: 1.4; }
+  .hop-ml a:hover { background: var(--navy-nhat); border-left-color: var(--navy-2);
+                    color: var(--navy); }
+  .hop-ml b { color: var(--navy); margin-right: 4px; }
 
   /* ── Tiêu đề mục đánh số ── */
   h2 { display: flex; align-items: center; gap: 12px; color: var(--navy);
        font-size: 1.22rem; margin: 40px 0 14px; scroll-margin-top: 16px; }
-  h2 .so { flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--navy);
-           color: #fff; font-size: .95rem; display: flex; align-items: center;
-           justify-content: center; box-shadow: 0 2px 5px rgba(6,45,114,.3); }
+  h2 .so { flex: none; min-width: 34px; height: 34px; padding: 0 7px; border-radius: 9px;
+           background: var(--navy); color: #fff; font-size: .92rem; display: flex;
+           align-items: center; justify-content: center;
+           box-shadow: 0 2px 5px rgba(6,45,114,.3); }
   h3 { font-size: 1.02rem; margin: 16px 0 6px; color: var(--navy); }
   p, li { margin-bottom: 7px; }
   ol, ul { padding-left: 24px; margin-bottom: 10px; }
@@ -81,7 +77,6 @@
   td + td, th + th { border-left: 1px solid var(--ke); }
   tr:last-child td { border-bottom: none; }
   th { background: var(--navy); color: #fff; font-weight: 700; letter-spacing: .01em; }
-  tbody tr:nth-child(even) td, tr:nth-child(odd) td { background: #fff; }
   table tr:nth-child(even) td { background: #f7f9fd; }
 
   .nut { display: inline-block; border: 1px solid #97a6c4; background: #f0f2f6;
@@ -99,28 +94,31 @@
           background: var(--vang-nen); }
   .the { background: #fff; border: 1px solid var(--ke); border-left: 5px solid var(--navy-2); }
 
+  .ve-cong { display: inline-block; margin-top: 18px; background: var(--navy); color: #fff;
+             padding: 11px 22px; border-radius: 9px; text-decoration: none; }
   footer { text-align: center; color: var(--chu-mo); font-size: .88rem; padding: 0 16px 34px; }
 
-  /* ── Màn hẹp: một cột, mục lục thành dải nút cuộn ngang ── */
-  @media (max-width: 980px) {
+  /* ── Nút nổi quay về mục lục ── */
+  #len-dau { position: fixed; right: 22px; bottom: 24px; width: 46px; height: 46px;
+             border-radius: 50%; border: none; background: var(--navy); color: #fff;
+             font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(6,45,114,.35);
+             opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 50; }
+  #len-dau.hien { opacity: 1; pointer-events: auto; }
+  #len-dau:hover { background: var(--navy-2); }
+
+  @media (max-width: 720px) {
     body { font-size: 15.5px; }
-    .trang { grid-template-columns: 1fr; gap: 14px; padding: 16px 14px 40px; }
-    nav.muc-luc { position: static; display: flex; overflow-x: auto; gap: 6px;
-                  padding: 10px; border-radius: 10px; -webkit-overflow-scrolling: touch; }
-    nav.muc-luc .tieu, nav.muc-luc .ve { display: none; }
-    nav.muc-luc a { flex: none; border: 1px solid var(--ke); border-left-width: 1px;
-                    border-radius: 999px; padding: 6px 13px; font-size: .86rem; }
-    nav.muc-luc a.on { border-color: var(--navy-2); }
+    main { padding: 16px 14px 40px; }
     .dau { padding: 20px 16px 18px; }
     .dau h1 { font-size: 1.2rem; }
-    .dau .nhan-nho { display: none; }
+    .hop-ml ol { grid-template-columns: 1fr; }
     h2 { font-size: 1.12rem; margin-top: 30px; }
+    #len-dau { right: 14px; bottom: 16px; }
   }
   @media print {
-    nav.muc-luc, .ve-cong, .dau .nhan-nho { display: none !important; }
-    .trang { display: block; max-width: none; }
+    #len-dau, .ve-cong { display: none !important; }
     body { background: #fff; }
-    .khung-cuon, .diemdung, .luuy, .the, main > .mo-dau { box-shadow: none; }
+    .khung-cuon, .diemdung, .luuy, .the, .mo-dau, .hop-ml { box-shadow: none; }
   }
 </style>
 </head>
@@ -129,27 +127,7 @@
 <div class="dau"><div class="khung">
   <img src="img/he-thong.svg" alt="">
   <h1>Hướng dẫn sử dụng<small>Hệ thống Quản trị số Trường học</small></h1>
-  <div class="nhan-nho">
-    <span class="hieu">🌐 Chạy trên trình duyệt</span>
-    <span class="hieu">💰 Chi phí 0 đồng</span>
-    <span class="hieu">🗓 Cập nhật 8/2026</span>
-  </div>
 </div></div>
-
-<div class="trang">
-
-<nav class="muc-luc" id="muc-luc">
-  <div class="tieu">Trên trang này</div>
-  <a href="#lam-duoc-gi">I. Hệ thống làm được gì</a>
-  <a href="#vao-lan-dau">II. Vào lần đầu bằng mã trường</a>
-  <a href="#tham-quan">III. Tham quan bản xem thử</a>
-  <a href="#dang-ky">IV. Đăng ký sử dụng chính thức</a>
-  <a href="#dang-nhap-that">V. Đăng nhập dùng thật</a>
-  <a href="#nap-du-lieu">VI. Nạp học sinh và đội ngũ</a>
-  <a href="#sao-luu">VII. Sao lưu dữ liệu hằng tháng</a>
-  <a href="#hoi-dap">VIII. Câu hỏi thường gặp</a>
-  <a class="ve" href="./">↩ Về trang đăng nhập</a>
-</nav>
 
 <main>
 
@@ -158,6 +136,21 @@
 tiểu học muốn xem hệ thống, dùng thử với chính tên trường mình và đăng ký sử dụng chính thức.
 Mỗi trường có một <b>mã trường 5 chữ số</b> do người phụ trách hệ thống cấp —
 gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường của mình.</p>
+</div>
+
+<div class="hop-ml" id="muc-luc">
+  <div class="ml-tieu">📑 Mục lục</div>
+  <ol>
+    <li><a href="#lam-duoc-gi"><b>I.</b> Hệ thống làm được gì</a></li>
+    <li><a href="#vao-lan-dau"><b>II.</b> Vào lần đầu bằng mã trường</a></li>
+    <li><a href="#tham-quan"><b>III.</b> Tham quan bản xem thử</a></li>
+    <li><a href="#dang-ky"><b>IV.</b> Đăng ký sử dụng chính thức</a></li>
+    <li><a href="#dang-nhap-that"><b>V.</b> Đăng nhập dùng thật</a></li>
+    <li><a href="#nap-du-lieu"><b>VI.</b> Nạp học sinh và đội ngũ</a></li>
+    <li><a href="#len-drive"><b>VII.</b> Đưa hồ sơ lên Google Drive</a></li>
+    <li><a href="#sao-luu"><b>VIII.</b> Sao lưu dữ liệu hằng tháng</a></li>
+    <li><a href="#hoi-dap"><b>IX.</b> Câu hỏi thường gặp</a></li>
+  </ol>
 </div>
 
 <h2 id="lam-duoc-gi"><span class="so">I</span>Hệ thống làm được gì</h2>
@@ -343,7 +336,57 @@ vì đăng nhập hệ thống là đăng nhập bằng Google.</p>
 năm học mới theo đúng quy trình (khối 5 ra trường, các khối còn lại lên lớp), nhà trường
 xác nhận từng lớp, không phải nạp lại từ đầu.</p>
 
-<h2 id="sao-luu"><span class="so">VII</span>Sao lưu dữ liệu hằng tháng</h2>
+<h2 id="len-drive"><span class="so">VII</span>Đưa hồ sơ minh chứng lên Google Drive</h2>
+<p>File minh chứng (bản quét, ảnh chụp, văn bản…) <b>không nằm trong hệ thống</b> — chúng nằm
+trên <b>Google Drive của chính nhà trường</b>; hệ thống chỉ giữ đường dẫn tới từng thư mục.
+Nhờ vậy nhà trường toàn quyền với file của mình, và dung lượng không phụ thuộc hệ thống.</p>
+
+<h3>Chuẩn bị một lần (người quản trị)</h3>
+<ol>
+<li>Đăng nhập <b>tài khoản Google Drive của trường</b> — không dùng Drive cá nhân của một
+thầy cô: người chuyển công tác là kho minh chứng đi theo người.</li>
+<li>Dựng cây thư mục theo đúng danh mục hồ sơ: mỗi <b>hộp hồ sơ</b> một thư mục, trong đó
+mỗi <b>đầu hồ sơ</b> một thư mục con.</li>
+<li>Chia sẻ thư mục gốc ở chế độ <i>«Bất kỳ ai có đường liên kết → Người xem»</i> (hoặc chỉ
+chia sẻ cho các Gmail trong trường nếu muốn chặt hơn) — để thầy cô bấm nút trong app là
+xem được, còn quyền <b>bỏ file vào</b> thì cấp cho người phụ trách từng hộp.</li>
+<li>Chép đường dẫn từng thư mục dán vào từng đầu hồ sơ: mở <b>Quản trị Hồ sơ</b>, bấm vào
+đầu hồ sơ, dán vào ô <b>Đường dẫn Drive</b> rồi lưu (hoặc sửa hàng loạt trong màn
+<b>📋 Danh mục hồ sơ</b>).</li>
+</ol>
+
+<h3>Hằng ngày (người phụ trách hồ sơ)</h3>
+<ol>
+<li>Mở app → <b>Quản trị Hồ sơ</b> → tìm đầu hồ sơ mình phụ trách (gõ tên hoặc mã vào ô
+tìm kiếm).</li>
+<li>Bấm nút <span class="nut">📂</span> ở cuối dòng — thư mục Drive của đúng đầu hồ sơ ấy
+mở ra trong thẻ mới.</li>
+<li>Đưa file vào thư mục:
+<ul>
+<li><b>Trên máy tính:</b> kéo thả file vào cửa sổ Drive vừa mở, hoặc bấm
+<span class="nut">＋ Mới → Tải tệp lên</span>.</li>
+<li><b>Trên điện thoại:</b> dùng app <b>Google Drive</b>, bấm <span class="nut">＋</span> →
+<b>Quét</b> — camera chụp văn bản giấy và tự ghép thành một tệp PDF ngay ngắn, không cần
+máy quét. Chụp xong chọn đúng thư mục để lưu.</li>
+</ul></li>
+<li>Quay lại app, bấm vào đầu hồ sơ, chuyển trạng thái sang <span class="nut">Đã có</span> —
+bảng tổng quan và tiến độ từng bộ phận cập nhật theo.</li>
+</ol>
+<div class="diemdung">✅ <b>Điểm kiểm tra:</b> ở trang chủ, tỉ lệ «đã có minh chứng» của bộ
+phận mình tăng lên; bấm lại nút <span class="nut">📂</span> thấy đúng file vừa đưa.</div>
+<div class="luuy"><b>Bốn thói quen nên giữ:</b>
+<ul style="margin-bottom:0">
+<li><b>Đặt tên file có năm học và nội dung</b> — <i>2026-2027 Ke hoach giao duc.pdf</i> dễ
+tìm hơn <i>Scan0012.pdf</i> rất nhiều.</li>
+<li><b>Quét bằng nút Quét của app Drive</b> thay vì chụp ảnh thường: chữ phẳng, nét, một
+văn bản nhiều trang gộp một tệp PDF.</li>
+<li>File chứa dữ liệu cá nhân (danh sách học sinh, hồ sơ CBGV…) thì <b>không để chế độ
+công khai toàn mạng</b> — chỉ chia sẻ trong trường.</li>
+<li>Nút <span class="nut">📂</span> báo <i>«Hồ sơ này chưa được gán thư mục trên Drive»</i>
+thì nhờ người quản trị dán đường dẫn (bước chuẩn bị ở trên) — không phải lỗi.</li>
+</ul></div>
+
+<h2 id="sao-luu"><span class="so">VIII</span>Sao lưu dữ liệu hằng tháng</h2>
 <p>Dữ liệu của trường nằm trên máy chủ, nhưng <b>bản sao lưu do chính nhà trường giữ</b>
 mới là bảo hiểm cuối cùng. Mỗi tháng một lần, người quản trị vào <b>Quản trị →
 <span class="nut">💾 Sao lưu</span></b>:</p>
@@ -364,7 +407,7 @@ tệp như hồ sơ mật.</li>
 bằng cách kéo thả, đây là chủ ý để không ai lỡ tay ghi đè dữ liệu đang dùng.</li>
 </ul></div>
 
-<h2 id="hoi-dap"><span class="so">VIII</span>Câu hỏi thường gặp</h2>
+<h2 id="hoi-dap"><span class="so">IX</span>Câu hỏi thường gặp</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
 <tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),
@@ -386,39 +429,32 @@ hội đồng cùng chấm tiêu chí) là cách dùng bình thường.</td></tr
 dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
 </table></div>
 
-<a class="ve-cong" href="./" style="display:inline-block;margin-top:18px;background:var(--navy);color:#fff;padding:11px 22px;border-radius:9px;text-decoration:none">↩ Về trang đăng nhập</a>
+<a class="ve-cong" href="./">↩ Về trang đăng nhập</a>
 
 </main>
-</div>
 
 <footer>Hệ thống Quản trị số Trường học — quản trị trường tiểu học trong giai đoạn mới.</footer>
 
+<button id="len-dau" title="Về mục lục" aria-label="Về mục lục">↑</button>
+
 <script>
-// Đánh dấu mục đang đọc trên mục lục: mục được tô là tiêu đề GẦN NHẤT phía
-// trên mép màn. Không dùng IntersectionObserver quan sát riêng các tiêu đề —
-// tiêu đề mỏng, cuộn tới giữa một mục dài là không có tiêu đề nào trong dải
-// quan sát và đèn không bao giờ sáng. Không có JS thì trang vẫn đọc bình
-// thường — đây chỉ là lớp phủ tiện dùng.
+// Nút nổi quay về mục lục — chỉ hiện khi đã cuộn qua hộp mục lục. Không có
+// JS thì trang vẫn đọc bình thường, chỉ thiếu nút tắt này.
 (function () {
-  var links = Array.prototype.slice.call(document.querySelectorAll('#muc-luc a[href^="#"]'));
-  var muc = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
-                 .filter(Boolean);
-  if (!muc.length) return;
+  var nut = document.getElementById('len-dau');
+  var ml = document.getElementById('muc-luc');
+  if (!nut || !ml) return;
+  nut.addEventListener('click', function () {
+    ml.scrollIntoView({ behavior: 'smooth' });
+  });
   var cho = null;
-  function capNhat() {
-    var y = window.scrollY + 130;
-    var dau = muc[0];
-    muc.forEach(function (m) { if (m.offsetTop <= y) dau = m; });
-    links.forEach(function (a) {
-      a.classList.toggle('on', a.getAttribute('href') === '#' + dau.id);
-    });
-  }
   window.addEventListener('scroll', function () {
-    // Gom về một lần mỗi khung hình — cuộn nhanh không giật.
     if (cho) return;
-    cho = requestAnimationFrame(function () { cho = null; capNhat(); });
+    cho = requestAnimationFrame(function () {
+      cho = null;
+      nut.classList.toggle('hien', window.scrollY > ml.offsetTop + 300);
+    });
   }, { passive: true });
-  capNhat();
 })();
 </script>
 
