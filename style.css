@@ -3131,28 +3131,11 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-luoi { flex: 1 1 520px; display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 720px)  { .tc-luoi { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1100px) { .tc-luoi { grid-template-columns: repeat(5, 1fr); } }
-/* Co them o Thoi khoa bieu -> 5 o so lieu + cot thu nam la SAU mang. Nhoi ca
-   sau vao mot hang thi moi mang con ~150px, nhan gay ba dong — dung loi cu da
-   bi che 22/8/2026. Nen: hang tren la day o (auto-fit, o nao cung >=150px, it
-   o thi tu gian ra cho khoi trong troi), hang duoi la canh bao + hai nut trai
-   het be ngang. Duoi 1100px khong doi gi: cot thu nam von da trai het roi. */
-/* Duoi 1100px so o KHONG chia het so cot: quan tri co 5 o (2 cot -> o cuoi
-   mot minh mot hang), giao vien co 4 o (3 cot -> hang duoi hut hai cho). O
-   Thoi khoa bieu luon la o CUOI, nen cho chinh no gian ra lap cho trong —
-   tren dien thoai lai hoa hay: thanh mot dai trai ngang, thay ngay. */
-@media (max-width: 719px) {
-  .tc-luoi.co-tkb .tc-o-tkb:nth-child(odd) { grid-column: 1 / -1; }
-}
-@media (min-width: 720px) and (max-width: 1099px) {
-  .tc-luoi.co-tkb .tc-o-tkb:nth-child(3n+1) { grid-column: 1 / -1; }
-  .tc-luoi.co-tkb .tc-o-tkb:nth-child(3n+2) { grid-column: span 2; }
-}
-@media (min-width: 1100px) {
-  .tc-luoi.co-tkb { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .tc-luoi.co-tkb .tc-cot5 { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
-  .tc-luoi.co-tkb .tc-nut { grid-template-columns: auto auto; }
-  .tc-luoi.co-tkb .tc-nut button { padding: 9px 14px; font-size: 13px; }
-}
+/* Truong khong khai URL_TKB thi thieu o Thoi khoa bieu: con 3 o + cot thu nam
+   = BON mang, chia bon cot cho khoi ho mot mang trong o cuoi hang. (Truoc
+   24/8/2026 co lop `co-tkb` xep SAU mang — o TKB nay thay cho o "Chua xac
+   nhan" nen dai lai dung nam mang, bo lop do.) */
+@media (min-width: 1100px) { .tc-luoi.bon-mang { grid-template-columns: repeat(4, 1fr); } }
 .tc-o { border-radius: 18px; padding: 15px 16px; min-width: 0; }
 /* Bieu tuong TRON dung canh nhan tren cung mot hang (dung ban ve) */
 .tc-dau { display: flex; align-items: center; gap: 10px; min-height: 40px; }

@@ -2263,7 +2263,8 @@
   //    (sql/33) GIỮ NGUYÊN — làm y như đã làm với Điểm danh học sinh ở mục
   //    11.2: bật lại chỉ cần trả một dòng vào danh sách này. Muốn xoá hẳn dữ
   //    liệu thì phải có lệnh riêng, và không lấy lại được.
-  //  · Thêm "Thời khóa biểu" — module mới, thay chỗ Dự giờ.
+  //  · Thêm "Thời khóa biểu" — module mới, thay chỗ Dự giờ (24/8/2026 lại
+  //    gỡ khỏi thanh tab: lối sang app TKB đã nằm trên trang chủ).
   var DS_NHOM = [
     { nhom: 'HÔM NAY', muc: [
       { ma: 'tongquan', ten: 'Tổng quan', bi: '🏠', ngan: 'Hôm nay' },
@@ -2277,10 +2278,10 @@
     // với người vắng, đứng riêng một màn thì lạc lõng.
     { nhom: 'KẾ HOẠCH', muc: [
       { ma: 'lichtuan', ten: 'Lịch tuần', bi: '📅' },
-      // MỞ SANG APP KHÁC, không phải một màn của Hồ sơ số — xem chú thích
-      // "vì sao gỡ module Thời khóa biểu" ở đầu tệp.
-      { ma: 'tkb', ten: 'Thời khóa biểu ↗', bi: '🗓️', ngan: 'TKB',
-        ngoai: (window.CAU_HINH || {}).URL_TKB },
+      // Mục "Thời khóa biểu ↗" (liên kết ngoài, khai `ngoai: URL_TKB`) GỠ
+      // 24/8/2026 theo yêu cầu thầy Chung: lối sang app TKB nay là ô thứ tư
+      // trên trang chủ (oTKB), để cả hai chỗ là thừa. Mã vẽ mục `ngoai`
+      // trong veDieuHanh() giữ nguyên — muốn bật lại chỉ cần trả một dòng.
       { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
@@ -2310,8 +2311,9 @@
   // Mã màn CŨ → màn tương ứng hiện nay. Không có bảng này thì ai đang mở dở
   // một màn đã bị gộp hoặc gỡ (trạng thái còn trong bộ nhớ trình duyệt) sẽ
   // rơi vào màn không có tab nào sáng, không biết đường quay lại.
-  // 'tkb' nay là LIÊN KẾT NGOÀI chứ không còn là màn — ai giữ trạng thái cũ
-  // thì đưa về Tổng quan, đừng để rơi vào màn trắng không tab nào sáng.
+  // 'tkb' không còn là màn (lối sang app TKB nằm trên trang chủ) — ai giữ
+  // trạng thái cũ thì đưa về Tổng quan, đừng để rơi vào màn trắng không tab
+  // nào sáng.
   var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao', daythay: 'lichtuan',
                  dugio: 'tongquan', tkb: 'tongquan', homnay: 'tongquan' };
 
@@ -2517,6 +2519,14 @@
     // thấy. Nay thành một ô trong dải số liệu: CÙNG KHUÔN `tc-o` nên không phá
     // bố cục, nhưng là thẻ <a> bấm được.
     //
+    // 🔑 Ô này THAY CHỖ ô "Chưa xác nhận" (thầy Chung 24/8/2026): dải vẫn đúng
+    //    NĂM MẢNG BẰNG NHAU như bản 23/8 — bốn ô + cột cảnh báo/nút — chứ không
+    //    nhồi sáu mảng rồi đẩy cột thứ năm xuống hàng riêng. Không mất thông
+    //    tin: ô cũ đếm `t.soChua` = số ĐIỂM TRƯỜNG chưa gửi báo cáo (nhãn
+    //    "nhiệm vụ" vốn đã gây hiểu nhầm), mà mỗi điểm chưa báo đã là một dòng
+    //    "CHƯA BÁO CÁO" trong "N việc cần xử lý gấp" (canXuLyDs) ngay cột bên
+    //    cạnh — và ô cũ chỉ hiện khi có điểm chưa báo, dải lúc 4 lúc 5 mảng.
+    //
     // 🔑 Vẽ cho CẢ HAI VAI (quản trị và giáo viên). Thời khóa biểu là thứ giáo
     //    viên cần nhất mà dải của họ lại là dải khác — đặt mỗi bên quản trị thì
     //    coi như chưa làm gì.
@@ -2548,7 +2558,6 @@
         o(t.soXanh === t.dsCS.length ? 'la' : 'vang', '🛡️', 'Điểm trường an toàn',
           t.soXanh + '/' + t.dsCS.length,
           t.soXanh === t.dsCS.length ? 'đã kiểm tra' : 'cần kiểm tra') +
-        (t.soChua ? o('vang', '📋', 'Chưa xác nhận', t.soChua, 'nhiệm vụ') : '') +
         oTKB();
     } else {
       var toi = emailToi();
@@ -2597,10 +2606,9 @@
             '<span class="tc-buoi">' + tenBuoi(buoiXem()).toUpperCase() + '</span>' +
           '</div>' +
         '</div>' +
-        // `co-tkb` báo cho CSS biết dải có thêm một ô: từ 1100px trở lên, cột
-        // thứ năm (cảnh báo + hai nút) tụt xuống một hàng riêng trải hết bề
-        // ngang, thay vì chen làm sáu mảng cho ô nào cũng hẹp lại.
-        '<div class="tc-luoi' + (oTKB() ? ' co-tkb' : '') + '">' + soLieu +
+        // Trường không khai URL_TKB thì thiếu một ô → `bon-mang` cho CSS chia
+        // bốn cột thay vì năm, khỏi hở một mảng trống ở cuối hàng.
+        '<div class="tc-luoi' + (oTKB() ? '' : ' bon-mang') + '">' + soLieu +
           '<div class="tc-cot5">' + canhBao +
             '<div class="tc-nut">' +
               '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +
