@@ -3131,6 +3131,28 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-luoi { flex: 1 1 520px; display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 720px)  { .tc-luoi { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1100px) { .tc-luoi { grid-template-columns: repeat(5, 1fr); } }
+/* Co them o Thoi khoa bieu -> 5 o so lieu + cot thu nam la SAU mang. Nhoi ca
+   sau vao mot hang thi moi mang con ~150px, nhan gay ba dong — dung loi cu da
+   bi che 22/8/2026. Nen: hang tren la day o (auto-fit, o nao cung >=150px, it
+   o thi tu gian ra cho khoi trong troi), hang duoi la canh bao + hai nut trai
+   het be ngang. Duoi 1100px khong doi gi: cot thu nam von da trai het roi. */
+/* Duoi 1100px so o KHONG chia het so cot: quan tri co 5 o (2 cot -> o cuoi
+   mot minh mot hang), giao vien co 4 o (3 cot -> hang duoi hut hai cho). O
+   Thoi khoa bieu luon la o CUOI, nen cho chinh no gian ra lap cho trong —
+   tren dien thoai lai hoa hay: thanh mot dai trai ngang, thay ngay. */
+@media (max-width: 719px) {
+  .tc-luoi.co-tkb .tc-o-tkb:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 720px) and (max-width: 1099px) {
+  .tc-luoi.co-tkb .tc-o-tkb:nth-child(3n+1) { grid-column: 1 / -1; }
+  .tc-luoi.co-tkb .tc-o-tkb:nth-child(3n+2) { grid-column: span 2; }
+}
+@media (min-width: 1100px) {
+  .tc-luoi.co-tkb { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .tc-luoi.co-tkb .tc-cot5 { grid-column: 1 / -1; grid-template-rows: none; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+  .tc-luoi.co-tkb .tc-nut { grid-template-columns: auto auto; }
+  .tc-luoi.co-tkb .tc-nut button { padding: 9px 14px; font-size: 13px; }
+}
 .tc-o { border-radius: 18px; padding: 15px 16px; min-width: 0; }
 /* Bieu tuong TRON dung canh nhan tren cung mot hang (dung ban ve) */
 .tc-dau { display: flex; align-items: center; gap: 10px; min-height: 40px; }
@@ -3148,6 +3170,17 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-o.la   { background: #ecfaf1; } .tc-o.la   .tc-ic { background: #cfeedd; } .tc-o.la   .tc-con { color: var(--ok); }
 .tc-o.tim  { background: #f4f1ff; } .tc-o.tim  .tc-ic { background: #e3dcfb; } .tc-o.tim  .tc-con { color: #5b28c4; }
 .tc-o.vang { background: #fdf6e7; } .tc-o.vang .tc-ic { background: #f7e6c9; } .tc-o.vang .tc-con { color: var(--vang-sam); }
+
+/* -- O THOI KHOA BIEU: cung khuon o so lieu nhung la the <a> BAM DUOC --
+   Bieu tuong la anh 3D nen BO nen tron: hinh ve chi tiet nhoi vao vong tron
+   36px thi thanh mot vet mau. Chu "Mo app" nho hon con so 32px cua cac o kia —
+   day la loi di, khong phai mot con so de doc. */
+.tc-o-tkb { display: block; text-decoration: none; color: inherit; transition: transform .12s ease, box-shadow .12s ease; }
+.tc-o-tkb:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30, 64, 140, .16); }
+.tc-o-tkb:focus-visible { outline: 3px solid var(--chinh); outline-offset: 2px; }
+.tc-o-tkb .tc-ic { width: 46px; height: 46px; border-radius: 0; background: none; }
+.tc-o-tkb .tc-ic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tc-o-tkb .tc-con { font-size: 18px; margin-top: 10px; }
 
 /* -- Cot thu nam: chia doi theo chieu doc -- */
 .tc-cot5 { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; min-width: 0; }

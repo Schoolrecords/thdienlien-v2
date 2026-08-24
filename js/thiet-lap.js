@@ -77,6 +77,9 @@
     giao_vien: 'Giáo viên', nhan_vien: 'Nhân viên'
   };
   var DS_VAI_TRO = ['admin', 'ban_giam_hieu', 'to_truong', 'giao_vien', 'nhan_vien'];
+  // Cơ sở dữ liệu của trường này đã có cột moi_tai_khoan.email_chinh hay chưa
+  // (sql/55). Đặt lúc đọc danh sách mời, quyết định có bày cột "Gộp vào" không.
+  var CO_GOP = false;
 
   // ══════════════════════════════════════════════════════════
   // THẺ ⚙️ THÔNG TIN TRƯỜNG
@@ -159,11 +162,18 @@
         return;
       }
       var ds = kq.data || [];
+      // Cột "Gộp vào" chỉ bày ra khi cơ sở dữ liệu đã có (sql/55). Bày ra ở
+      // trường chưa chạy di trú thì bấm Lưu là máy chủ báo không có cột ấy,
+      // và cả dòng KHÔNG lưu được — hỏng một việc đang chạy tốt.
+      CO_GOP = !!(ds.length && Object.prototype.hasOwnProperty.call(ds[0], 'email_chinh'));
 
       hop.innerHTML =
         '<div class="nhan-nho" style="margin:14px 0 10px">Thầy cô có tên ở đây thì <b>lần đầu đăng nhập ' +
         'Google là vào thẳng</b>, không phải chờ duyệt. Bỏ tên khỏi danh sách này KHÔNG xoá tài khoản đã ' +
-        'tạo — muốn chặn hẳn thì sang thẻ 👥 Tài khoản.</div>' +
+        'tạo — muốn chặn hẳn thì sang thẻ 👥 Tài khoản.' +
+        (CO_GOP ? '<br>Một thầy cô dùng <b>hai địa chỉ thư</b> thì ghi mỗi địa chỉ một dòng, ' +
+          'dòng phụ điền cột <b>Gộp vào</b> là địa chỉ chính — danh bạ sẽ hiện <b>một thẻ</b>. ' +
+          'Hai người <b>trùng họ tên</b> thì để trống cột đó, đừng gộp.' : '') + '</div>' +
 
         '<details class="tl-dan"><summary>📋 Dán cả danh sách từ Excel</summary>' +
         '<div class="nhan-nho" style="margin:8px 0">Ở Excel bôi đen các cột theo đúng thứ tự dưới đây rồi Ctrl+C, ' +
@@ -177,7 +187,8 @@
         '<span id="tl-bao-dan" class="tl-bao"></span></details>' +
 
         '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-        '<th>Email</th><th>Họ tên</th><th>Chức vụ</th><th>Tổ</th><th>Vai trò</th><th>Link Drive</th><th></th>' +
+        '<th>Email</th><th>Họ tên</th><th>Chức vụ</th><th>Tổ</th><th>Vai trò</th><th>Link Drive</th>' +
+        (CO_GOP ? '<th>Gộp vào</th>' : '') + '<th></th>' +
         '</tr></thead><tbody id="tl-than-moi">' +
         ds.map(dongMoi).join('') +
         '</tbody></table></div>' +
@@ -204,6 +215,7 @@
           (!m && v === 'giao_vien' ? ' selected' : '') + '>' + TEN_VAI_TRO[v] + '</option>';
       }).join('') + '</select></td>' +
       o('link_drive', m && m.link_drive, '11em') +
+      (CO_GOP ? o('email_chinh', m && m.email_chinh, '13em') : '') +
       '<td><button class="tl-luu-moi">Lưu</button>' +
       (id ? '<button class="tl-xoa-moi">Xoá</button>' : '') + '</td></tr>';
   }
@@ -282,6 +294,18 @@
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email)) { bao('Email chưa đúng dạng.'); return; }
       Object.keys(b).forEach(function (k) { if (b[k] === '') b[k] = null; });
       b.email = b.email.toLowerCase();
+      if (b.email_chinh) {
+        b.email_chinh = b.email_chinh.toLowerCase();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email_chinh)) {
+          bao('Cột "Gộp vào" phải là một địa chỉ thư, hoặc để trống.'); return;
+        }
+        // Trỏ về chính mình thì danh bạ không gộp được với ai, mà nhìn vào bảng
+        // lại tưởng đã khai xong.
+        if (b.email_chinh === b.email) {
+          bao('Cột "Gộp vào" đang ghi chính địa chỉ của dòng này. Để trống nếu ' +
+            'đây là địa chỉ chính.'); return;
+        }
+      }
       luu.disabled = true; luu.textContent = '…';
       var lenh = id
         ? may().from('moi_tai_khoan').update(b).eq('id', id).select()

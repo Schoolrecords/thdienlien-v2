@@ -268,9 +268,22 @@
   }
 
   // ── Danh bạ CBGV-NV (màn Hồ sơ CBGV) ──
+  // Cột `email_chinh` chỉ có ở trường đã chạy sql/55. Hỏi một cột không tồn tại
+  // là PostgREST trả lỗi cho CẢ câu → màn hình rỗng trơn, không báo gì (nhánh
+  // `kq[0].error` dưới kia im lặng vì RLS). Nên hỏi lần hai bỏ cột đó ra, thay
+  // vì bắt mọi trường phải chạy di trú TRƯỚC khi đẩy bản web mới.
+  var COT_MOI = 'email,ho_ten,chuc_vu,to_chuyen_mon,vai_tro,link_drive,la_ky_thuat';
+  function docDanhSachMoi(may) {
+    return may.from('moi_tai_khoan').select(COT_MOI + ',email_chinh').order('ho_ten')
+      .then(function (r) {
+        if (!r.error) return r;
+        return may.from('moi_tai_khoan').select(COT_MOI).order('ho_ten');
+      });
+  }
+
   function napCBGV(may) {
     Promise.all([
-      may.from('moi_tai_khoan').select('email,ho_ten,chuc_vu,to_chuyen_mon,vai_tro,link_drive,la_ky_thuat').order('ho_ten'),
+      docDanhSachMoi(may),
       may.from('nguoi_dung').select('email,trang_thai,anh_dai_dien')
     ]).then(function (kq) {
       if (kq[0].error) return; // GV chưa hoạt động thì RLS chặn — bỏ qua im lặng
@@ -293,6 +306,34 @@
       // không có link là thẻ hiện "Chưa gán thư mục" dù thư mục vẫn có thật.
       // Nay GỘP hai dòng thành một thẻ: lấy link, chức vụ, tổ của dòng nào có,
       // và coi là đã kích hoạt nếu BẤT KỲ email nào đã đăng nhập.
+      //
+      // 🔴 GỘP THEO `email_chinh`, TUYỆT ĐỐI KHÔNG THEO HỌ TÊN. Bản đầu gộp theo
+      //    họ tên nên HAI NGƯỜI TRÙNG TÊN bị nhập làm một: Châu Đình có hai cô
+      //    Nguyễn Thị Hà, danh bạ chỉ hiện một thẻ — cô còn lại mất cả thẻ lẫn
+      //    nút mở thư mục Drive, mà không có chỗ nào báo là thiếu người.
+      //    Trùng họ tên là chuyện THƯỜNG trong một trường; một người hai địa chỉ
+      //    mới là chuyện hiếm. Vậy chỉ gộp khi nhà trường KHAI RÕ ở cột
+      //    moi_tai_khoan.email_chinh (⚙️ Thiết lập → ✉️ Danh sách mời → cột
+      //    "Gộp vào"), chứ không đoán.
+      function khoaNguoi(m) {
+        return String(m.email_chinh || m.email || '').trim().toLowerCase();
+      }
+      // Hai người khác nhau mà trùng họ tên thì thẻ nào cũng chỉ ghi "Nguyễn Thị
+      // Hà", nhìn vào không biết ai với ai. Ghi thêm phần đầu địa chỉ thư — đúng
+      // cách script Drive đặt tên thư mục cá nhân cho hai cô.
+      var tenTrung = {};
+      (function () {
+        var thay = {};
+        moi.forEach(function (m) {
+          if (m.la_ky_thuat) return;
+          var t = String(m.ho_ten || '').trim();
+          (thay[t] = thay[t] || {})[khoaNguoi(m)] = 1;
+        });
+        Object.keys(thay).forEach(function (t) {
+          if (Object.keys(thay[t]).length > 1) tenTrung[t] = 1;
+        });
+      })();
+
       var daVe = {};
       var html = '';
       var soNhomDaVe = 0;   // nhóm đầu tiên CÓ người thì mở sẵn, các nhóm sau đóng
@@ -300,11 +341,13 @@
         var ds = [], viTri = {};
         moi.forEach(function (m) {
           if (m.la_ky_thuat || nh.loc.indexOf(m.vai_tro) < 0) return;
-          if (daVe[m.ho_ten]) return;           // đã vẽ ở nhóm trước
-          var i = viTri[m.ho_ten];
+          var k = khoaNguoi(m);
+          if (daVe[k]) return;                  // đã vẽ ở nhóm trước
+          var i = viTri[k];
           if (i === undefined) {
-            viTri[m.ho_ten] = ds.length;
+            viTri[k] = ds.length;
             ds.push({
+              khoa: k,
               ho_ten: m.ho_ten, chuc_vu: m.chuc_vu, to_chuyen_mon: m.to_chuyen_mon,
               vai_tro: m.vai_tro, link_drive: m.link_drive, emails: [m.email]
             });
@@ -316,7 +359,7 @@
           if (!g.chuc_vu)       g.chuc_vu       = m.chuc_vu;
           if (!g.to_chuyen_mon) g.to_chuyen_mon = m.to_chuyen_mon;
         });
-        ds.forEach(function (g) { daVe[g.ho_ten] = true; });
+        ds.forEach(function (g) { daVe[g.khoa] = true; });
         if (!ds.length) return;
         // Xếp gọn thành khối bấm mở — dùng lại đúng kiểu `.sub` của danh mục hộp
         // hồ sơ, đừng vẽ kiểu riêng. Trường 39 người mà trải phẳng một mạch thì
@@ -357,7 +400,9 @@
             '<div class="than">' +
             '<b title="' + tenDayDu + '">' + tenDayDu + '</b>' +
             '<small class="vt">' + thoat(m.chuc_vu || TEN_VAI_TRO[m.vai_tro]) +
-            (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') + '</small>' +
+            (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') +
+            (tenTrung[String(m.ho_ten || '').trim()]
+              ? ' · ' + thoat(String(m.emails[0] || '').split('@')[0]) : '') + '</small>' +
             '<small class="tt ' + (daVao ? 'da-vao' : 'chua-vao') + '"' +
             ' title="' + (daVao ? 'Đã đăng nhập vào hệ thống ít nhất một lần'
                                 : 'Người này chưa đăng nhập lần nào') + '">' +

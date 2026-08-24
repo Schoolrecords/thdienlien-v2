@@ -2510,6 +2510,30 @@
         '<div class="tc-dv">' + (donVi || '&nbsp;') + '</div></div>';
     }
 
+    // Ô THỜI KHÓA BIỂU — lối sang app ngoài, đặt thẳng lên trang chủ.
+    //
+    // Trước 24/8/2026 đường sang TKB chỉ nằm trong khối "bố trí dạy thay" giữa
+    // màn Điều hành, phải có người vắng mới hiện ra — thầy cô gần như không tìm
+    // thấy. Nay thành một ô trong dải số liệu: CÙNG KHUÔN `tc-o` nên không phá
+    // bố cục, nhưng là thẻ <a> bấm được.
+    //
+    // 🔑 Vẽ cho CẢ HAI VAI (quản trị và giáo viên). Thời khóa biểu là thứ giáo
+    //    viên cần nhất mà dải của họ lại là dải khác — đặt mỗi bên quản trị thì
+    //    coi như chưa làm gì.
+    //
+    // Không khai `URL_TKB` thì KHÔNG vẽ ô: trường chưa có app thời khóa biểu mà
+    // hiện nút là dẫn thầy cô sang thời khóa biểu của một trường khác.
+    function oTKB() {
+      var url = (window.CAU_HINH || {}).URL_TKB;
+      if (!url) return '';
+      return '<a class="tc-o lam tc-o-tkb" href="' + thoat(url) + '"' + thuocMoNgoai() + '>' +
+        '<div class="tc-dau"><span class="tc-ic">' +
+        '<img src="img/tkb-3d.png" alt="" aria-hidden="true"></span>' +
+        '<span class="tc-nhan">Thời khóa biểu</span></div>' +
+        '<div class="tc-con">Mở app ↗</div>' +
+        '<div class="tc-dv">xếp lịch · dạy thay</div></a>';
+    }
+
     var soLieu;
     if (qt) {
       // Cùng nguyên tắc với màn Tổng quan: chưa điểm nào báo cáo thì "—".
@@ -2524,7 +2548,8 @@
         o(t.soXanh === t.dsCS.length ? 'la' : 'vang', '🛡️', 'Điểm trường an toàn',
           t.soXanh + '/' + t.dsCS.length,
           t.soXanh === t.dsCS.length ? 'đã kiểm tra' : 'cần kiểm tra') +
-        (t.soChua ? o('vang', '📋', 'Chưa xác nhận', t.soChua, 'nhiệm vụ') : '');
+        (t.soChua ? o('vang', '📋', 'Chưa xác nhận', t.soChua, 'nhiệm vụ') : '') +
+        oTKB();
     } else {
       var toi = emailToi();
       var vToi = DL.viec.filter(function (v) { return emailBang(v.nguoiEmail, toi) && v.tt !== 'xong'; }).length;
@@ -2534,7 +2559,8 @@
       soLieu =
         o(vToi ? 'vang' : 'la', '✅', 'Việc đang chờ tôi', vToi, 'nhiệm vụ') +
         o('lam', '🔄', 'Đơn chờ duyệt', dxToi, 'đề xuất') +
-        o(t.tbToiChuaXN ? 'vang' : 'la', '📢', 'Thông báo cần xác nhận', t.tbToiChuaXN, 'thông báo');
+        o(t.tbToiChuaXN ? 'vang' : 'la', '📢', 'Thông báo cần xác nhận', t.tbToiChuaXN, 'thông báo') +
+        oTKB();
     }
 
     // Thẻ cảnh báo: có việc thì đỏ và BẤM ĐƯỢC (sang thẳng danh sách việc);
@@ -2571,7 +2597,10 @@
             '<span class="tc-buoi">' + tenBuoi(buoiXem()).toUpperCase() + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="tc-luoi">' + soLieu +
+        // `co-tkb` báo cho CSS biết dải có thêm một ô: từ 1100px trở lên, cột
+        // thứ năm (cảnh báo + hai nút) tụt xuống một hàng riêng trải hết bề
+        // ngang, thay vì chen làm sáu mảng cho ô nào cũng hẹp lại.
+        '<div class="tc-luoi' + (oTKB() ? ' co-tkb' : '') + '">' + soLieu +
           '<div class="tc-cot5">' + canhBao +
             '<div class="tc-nut">' +
               '<button class="dh-nut-nho" onclick="DH.moTab(\'homnay\')">📊 Mở Điều hành</button>' +

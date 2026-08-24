@@ -47,11 +47,17 @@
   // ── Phân tích ô dán: mỗi dòng tìm 1 email (hoặc họ tên) + 1 link ──
   function phanTich(chu) {
     var khop = [], hong = [];
-    var theoEmail = {}, theoTen = {};
+    var theoEmail = {}, theoTen = {}, tenTrung = {};
     DS.forEach(function (m) {
       theoEmail[String(m.email || '').toLowerCase()] = m;
-      theoTen[khongDau(m.ho_ten)] = m;
+      var t = khongDau(m.ho_ten);
+      // 🔴 Hai người TRÙNG HỌ TÊN thì không được khớp theo tên: trước đây dòng
+      //    sau đè dòng trước, nên link thư mục của cô này lặng lẽ gán cho cô kia.
+      //    Châu Đình có hai cô Nguyễn Thị Hà. Thà báo "không nhận ra là ai" để
+      //    thầy cô dán kèm địa chỉ thư, còn hơn gán nhầm mà không ai biết.
+      if (theoTen[t]) tenTrung[t] = 1; else theoTen[t] = m;
     });
+    Object.keys(tenTrung).forEach(function (t) { delete theoTen[t]; });
 
     String(chu || '').split(/\r?\n/).forEach(function (dong) {
       if (!dong.trim()) return;
@@ -62,12 +68,19 @@
       var nguoi = mail ? theoEmail[mail.toLowerCase()] : null;
 
       // Không có email → thử khớp họ tên: lấy phần chữ trước đường dẫn
+      var ten = '';
       if (!nguoi) {
         var phanChu = dong.slice(0, dong.indexOf(link)).replace(/[\t;,|]+/g, ' ');
-        nguoi = theoTen[khongDau(phanChu)];
+        ten = khongDau(phanChu);
+        nguoi = theoTen[ten];
       }
       if (!nguoi) {
-        hong.push({ dong: dong, vi: mail ? 'email ' + mail + ' không có trong danh sách mời' : 'không nhận ra là ai' });
+        hong.push({
+          dong: dong,
+          vi: mail ? 'email ' + mail + ' không có trong danh sách mời'
+            : (tenTrung[ten] ? 'trường có hai người trùng họ tên này — dán kèm địa chỉ thư mới biết là ai'
+                             : 'không nhận ra là ai')
+        });
         return;
       }
       // Dòng sau đè dòng trước nếu trùng người

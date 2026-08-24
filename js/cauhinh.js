@@ -28,10 +28,17 @@
 
 // --- Phần dùng chung cho MỌI trường ---
 window.CHUNG = {
-  // App xếp Thời khóa biểu (dự án riêng: Schoolrecords/tkb) — Hồ sơ số KHÔNG
+  // App xếp Thời khóa biểu (dự án riêng: Schoolrecords/tkb) — Quản trị số KHÔNG
   // quản lý thời khóa biểu và KHÔNG bố trí dạy thay, app kia đã làm cả hai và
-  // làm sâu hơn. Ở đây chỉ có một nút mở sang đó. Xem mục 13.7 sổ dự án.
-  URL_TKB: 'https://schoolrecords.github.io/tkb/',
+  // làm sâu hơn. Ở đây chỉ có lối mở sang đó. Xem mục 13.7 sổ dự án.
+  //
+  // ⚠️ App TKB là MỘT TRƯỜNG MỘT DỰ ÁN (Supabase riêng), không đa trường như
+  //    Quản trị số. Địa chỉ dưới đây là app của Diễn Liên, mà khoá này nằm ở
+  //    CHUNG nên MỌI trường đều mở vào đó. Trường nào có app thời khóa biểu
+  //    riêng thì khai đè `"URL_TKB": "…"` trong cau-hinh/ma/<mã>.json — khoá
+  //    khai trong tệp trường luôn thắng khoá ở CHUNG (window.apDungCauHinh).
+  //    Khai chuỗi rỗng thì ô Thời khóa biểu ở trang chủ KHÔNG hiện.
+  URL_TKB: 'https://tkb.quantrisotruonghoc.com/',
 
   // Mốc đổi năm học mặc định. Trường nào khác thì đặt đè trong tệp cấu hình
   // của trường, hoặc sửa khóa 'moc_doi_nam_hoc' trong bảng cau_hinh.
