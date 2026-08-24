@@ -230,6 +230,11 @@
         // lúc dựng thử.
         var hutVuot = !dat && c.chi_tieu_chua != null &&
           c.thuc_te_chua != null && (+c.thuc_te_chua) > (+c.chi_tieu_chua);
+        // Ngưỡng "Hoàn thành trở lên" (cột chi_tieu_dat/thuc_te_dat của bản vá
+        // sql/57). RPC bản cũ chưa có hai cột này → undefined → dòng không hiện,
+        // bảng y như trước.
+        var hutDat = !dat && c.chi_tieu_dat != null &&
+          c.thuc_te_dat != null && (+c.thuc_te_dat) < (+c.chi_tieu_dat);
         var mau = dat ? 'var(--ok)' : 'var(--thieu)';
         // Cột chênh lệch tô theo CHÍNH nó, không tô theo kết luận chung: chỉ
         // tiêu Hoàn thành tốt đạt thì con số đó là số dương thật.
@@ -237,10 +242,17 @@
         return '<tr><td><b>' + thoat(c.mon_ten) + '</b></td>' +
           '<td style="text-align:center">' +
           (c.chi_tieu_tot == null ? '—' : '≥ ' + c.chi_tieu_tot + '%') +
+          (c.chi_tieu_dat != null
+            ? '<br><small style="color:var(--chu-mo)">HT trở lên ≥ ' + c.chi_tieu_dat + '%</small>'
+            : '') +
           (c.chi_tieu_chua != null
             ? '<br><small style="color:var(--chu-mo)">chưa HT ≤ ' + c.chi_tieu_chua + '%</small>'
             : '') + '</td>' +
           '<td style="text-align:center">' + c.thuc_te_tot + '%' +
+          (c.thuc_te_dat != null && c.chi_tieu_dat != null
+            ? '<br><small style="color:' + (hutDat ? 'var(--thieu)' : 'var(--chu-mo)') + '">HT trở lên ' +
+              c.thuc_te_dat + '%</small>'
+            : '') +
           (c.thuc_te_chua != null
             ? '<br><small style="color:' + (hutVuot ? 'var(--thieu)' : 'var(--chu-mo)') + '">chưa HT ' +
               c.thuc_te_chua + '%</small>'
@@ -252,6 +264,8 @@
                : '✘ Hụt — đưa vào Biểu 2' +
                  (hutVuot
                    ? '<br><small style="font-weight:400">vì tỉ lệ chưa hoàn thành vượt ngưỡng</small>'
+                   : hutDat
+                   ? '<br><small style="font-weight:400">vì tỉ lệ hoàn thành trở lên hụt ngưỡng</small>'
                    : '')) +
           '</td></tr>';
       }).join('') + '</tbody></table></div>';

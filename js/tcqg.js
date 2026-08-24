@@ -177,6 +177,12 @@
           // chạy sql/41 thì cột chưa có → undefined → thẻ Địa điểm không hiện.
           theoDiaDiem: !!t.theo_dia_diem,
           self: r.muc_dat || 0, datM1: !!r.dat_m1, datM2: !!r.dat_m2,
+          /* "Đã chấm" = cột da_cham THẬT (sql/57 — chỉ nút Đạt/Không đạt bật)
+             hoặc mức > 0. KHÔNG dùng cap_nhat_luc: trigger đóng dấu nó cho MỌI
+             lệnh ghi, kể cả chỉ gõ ghi chú — soát đối kháng 24/8 bắt được vụ
+             "gõ một ghi chú là trường tụt xuống Không đạt Mức 1". CSDL chưa
+             chạy sql/57 thì r.da_cham undefined → lùi về mức > 0 (hành vi cũ). */
+          daCham: !!(r.da_cham || (r.muc_dat || 0) > 0),
           htM1: r.hien_trang_m1 || '', htM2: r.hien_trang_m2 || '',
           ghiChu: r.ghi_chu || '', capNhatLuc: r.cap_nhat_luc || null
         };
@@ -229,7 +235,11 @@
       namHoc: NAM_DL || NAM,   // năm của dữ liệu đang có, không phải năm vừa chọn
       tieuChi: TC.map(function (t) {
         return { code: t.ma, std: t.tieuChuan, bb: t.batBuoc, name: t.ten,
-                 m1: t.m1, m2: t.m2, self: t.self, htM1: t.htM1, htM2: t.htM2 };
+                 m1: t.m1, m2: t.m2, self: t.self, htM1: t.htM1, htM2: t.htM2,
+                 // Phân biệt "chưa chấm" với "chấm Không đạt": self đều 0 nhưng
+                 // Biểu 1 không được in "Không đạt" cho tiêu chí chưa ai đụng tới.
+                 // t.daCham đã dựa trên cột da_cham thật (xem chú thích lúc nạp).
+                 daCham: t.daCham };
       }),
       noiHam: NOI_HAM, htNh: HT_NH, dgtc: DGTC, bc: BC, mcTheoTC: mcTheoTC,
       thieuNoiHam: !Object.keys(NOI_HAM).length
@@ -264,7 +274,10 @@
     // ② Chưa chấm tiêu chí nào thì là CHƯA ĐÁNH GIÁ, không phải KHÔNG ĐẠT.
     //    Trường mới mở màn này lần đầu từng thấy thẻ navy to nhất ghi
     //    "Không đạt Mức 1" — trong khi trường đang giữ Bằng Mức độ 2.
-    if (!TC.some(function (t) { return t.self > 0; })) {
+    // daCham dựa trên cột da_cham THẬT (chỉ nút chấm mới bật) — hội đồng chấm
+    // toàn "Không đạt" thì KHÔNG rơi vào nhánh này, xuống dưới ra "Không đạt
+    // Mức 1" thật; còn mới gõ ghi chú/mô tả thì vẫn là "Chưa đánh giá".
+    if (!TC.some(function (t) { return t.daCham; })) {
       return {
         ketLuan: 'Chưa đánh giá',
         vi: 'Nhà trường chưa chấm tiêu chí nào cho năm học này. Xếp mức chỉ có ' +
@@ -353,14 +366,20 @@
 
   function veStats() {
     var kq = xepMuc();
-    var chuaM1 = TC.filter(function (t) { return t.self === 0; }).length;
+    // Tách "chưa chấm" khỏi "chấm Không đạt": trường mới mở màn từng thấy
+    // "15 tiêu chí chưa đạt Mức 1" ngay dưới chữ "Chưa đánh giá".
+    var chuaCham = TC.filter(function (t) { return !t.daCham; }).length;
+    var chuaM1 = TC.filter(function (t) { return t.daCham && t.self === 0; }).length;
     var daM2 = TC.filter(function (t) { return t.self >= 2; }).length;
     var nh = demNoiHamTat();
     var pt = nh.tong ? Math.round(nh.viet * 100 / nh.tong) : 0;
+    var phuNavy = (TC.length && chuaCham >= TC.length) ? 'Chưa chấm tiêu chí nào'
+      : (chuaM1 ? chuaM1 + ' tiêu chí chưa đạt Mức 1' : 'Không tiêu chí nào chưa đạt Mức 1') +
+        (chuaCham ? ' · ' + chuaCham + ' chưa chấm' : '');
     $('#kd-stats').innerHTML =
       '<div class="the navy"><span class="ic">🏠</span><span class="noi">' +
       '<span class="so">' + kq.ketLuan + '</span><span class="nhan">Mức hiện tại</span>' +
-      '<span class="them">' + (chuaM1 ? chuaM1 + ' tiêu chí chưa đạt Mức 1' : 'Không tiêu chí nào chưa đạt Mức 1') + '</span></span></div>' +
+      '<span class="them">' + phuNavy + '</span></span></div>' +
       '<div class="the xanh"><span class="ic">📌</span><span class="noi">' +
       '<span class="so">' + TC.length + '</span><span class="nhan">Tiêu chí</span>' +
       '<span class="them">' + daM2 + ' tiêu chí đã đạt Mức 2</span></span></div>' +
@@ -526,7 +545,8 @@
 
   function khoiMuc(c, muc) {
     var dat = muc === 1 ? c.datM1 : c.datM2;
-    var daCham = muc === 1 ? (c.self >= 1 || c.datM1 === false && c.capNhatLuc) : null;
+    // c.daCham là cột da_cham thật (sql/57) — ghi chú/mô tả không còn bị coi là đã chấm
+    var daCham = muc === 1 ? c.daCham : null;
     var khoa = muc === 2 && !c.datM1;
     var html = '<div class="yc"><div class="yc-nhan">📌 Yêu cầu tiêu chí (Thông tư 57) — Mức ' + muc + '</div>' +
       '<p>' + thoat(muc === 1 ? c.m1 : c.m2) + '</p>';
@@ -537,10 +557,10 @@
     if (coQuyenCham()) {
       html += '<div class="lv-pick">Nhà trường tự đánh giá Mức ' + muc + ':' +
         '<button class="pick dat' + (dat ? ' on' : '') + '" onclick="tcqgSetMuc(\'' + c.ma + '\',' + muc + ',true)">Đạt</button>' +
-        '<button class="pick khong' + (c.capNhatLuc && !dat ? ' on' : '') + '" onclick="tcqgSetMuc(\'' + c.ma + '\',' + muc + ',false)">Không đạt</button></div>';
+        '<button class="pick khong' + (c.daCham && !dat ? ' on' : '') + '" onclick="tcqgSetMuc(\'' + c.ma + '\',' + muc + ',false)">Không đạt</button></div>';
     } else {
       html += '<div class="lv-pick">Nhà trường tự đánh giá Mức ' + muc + ': <b class="' + (dat ? 'chu-dat' : 'chu-khong') + '">' +
-        (c.capNhatLuc ? (dat ? 'Đạt' : 'Không đạt') : 'chưa chấm') + '</b></div>';
+        (c.daCham ? (dat ? 'Đạt' : 'Không đạt') : 'chưa chấm') + '</b></div>';
     }
     html += '</div>';
 
@@ -677,6 +697,10 @@
         c.id = d.id;
         c.datM1 = !!d.dat_m1; c.datM2 = !!d.dat_m2;
         c.self = d.muc_dat || 0;
+        // da_cham do trigger tinh_muc_dat bật khi lệnh ghi THẬT SỰ chấm mức
+        // (sql/57) — client không gửi cột này để web mới vẫn chạy được trên
+        // CSDL chưa vá (gửi cột lạ là PostgREST từ chối cả lệnh).
+        c.daCham = !!(d.da_cham || (d.muc_dat || 0) > 0);
         c.htM1 = d.hien_trang_m1 || ''; c.htM2 = d.hien_trang_m2 || '';
         c.ghiChu = d.ghi_chu || ''; c.capNhatLuc = d.cap_nhat_luc;
         if (sauKhi) sauKhi();

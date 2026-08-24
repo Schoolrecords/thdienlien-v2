@@ -328,7 +328,7 @@
       '<p class="giua" style="margin:4pt 0 0"><b>Năm học ' + W.chan(namHoc) + '</b></p>' +
       '<p class="nghieng giua" style="margin:2pt 0 12pt;font-size:12pt">' +
       '(Kèm theo Báo cáo tự đánh giá — Công văn số 5555/BGDĐT-GDPT ngày 18/8/2026, Phụ lục II mục V)</p>' +
-      '<p style="font-size:12.5px;margin-bottom:6pt" class="nghieng">' +
+      '<p style="font-size:12.5pt;margin-bottom:6pt" class="nghieng">' +
       'Việc tự đánh giá xem xét điều kiện và kết quả tại trường chính, phân hiệu và các điểm ' +
       'trường; không chỉ căn cứ điều kiện tại trường chính hoặc kết quả chung của toàn trường.</p>' +
       bang +

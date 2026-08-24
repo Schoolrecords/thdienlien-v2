@@ -125,11 +125,16 @@ header.dau-trang {
 .khu-dieu-huong { display: contents; }
 .nut-menu { display: none; }
 
-/* ── Đầu trang trên điện thoại và máy tính bảng (dưới 1360px) ──
+/* ── Đầu trang trên điện thoại và máy tính bảng (dưới 1000px) ──
    Trước đây 5 nút menu xuống dòng thành 2–3 hàng, cộng thêm cụm tên người
    dùng, chiếm gần nửa màn hình điện thoại. Nay gói hết vào nút ☰ như bản
-   THCS Bạch Liêu: đầu trang chỉ còn một hàng, cao đúng 66px ở mọi bề rộng. */
-@media (max-width: 1359px) {
+   THCS Bạch Liêu: đầu trang chỉ còn một hàng, cao đúng 66px.
+   ⚠ Mốc từng là 1360px và đó là LỖI trên máy tính: Windows phóng to 125–150%
+   (mặc định của nhiều laptop Dell màn 14") làm màn 1920px chỉ còn 1280px CSS,
+   tụt dưới 1360 → máy tính hiện ☰ như điện thoại (các cô báo 24/8/2026).
+   Nay ☰ CHỈ dành cho dưới 1000px; dải 1000–1359 là máy tính, menu trải thành
+   hàng riêng — xem khối "MÁY TÍNH PHÓNG TO" ở CUỐI TỆP. */
+@media (max-width: 999px) {
   .dau-trang .khung { position: relative; flex-wrap: nowrap; }
   .ten-khu { margin-right: auto; min-width: 0; }
   .ten-khu .ten { font-size: 15.5px; }
@@ -1594,9 +1599,9 @@ td.tdst { white-space: nowrap; text-align: right; }
 }
 
 /* Thanh công cụ TT57 dính ở top:66px — đúng bằng chiều cao đầu trang khi menu
-   nằm một hàng. Từ khi có nút ☰ (khối @media ở đầu tệp), đầu trang luôn cao
-   66px ở mọi bề rộng nên số này lại đúng. Dưới 1000px màn xếp dọc, dính thêm
-   chỉ tổ chiếm chỗ — cho về static. */
+   nằm một hàng (≥1360px). Dải 1000–1359 đầu trang cao 124px (menu xuống hàng
+   riêng) → top được hạ theo ở khối "MÁY TÍNH PHÓNG TO" cuối tệp. Dưới 1000px
+   màn xếp dọc, dính thêm chỉ tổ chiếm chỗ — cho về static. */
 @media (max-width: 999px) { .kd-thanh { position: static; } }
 
 /* Danh sách 15 tiêu chí bị nhốt trong hộp cuộn 640px → cuộn lồng: ngón tay
@@ -1889,7 +1894,7 @@ select.dh-o-nhap { width: auto; margin-top: 0; }
       sự thiếu chỗ, nhưng ẩn thanh trượt (Windows luôn vẽ thanh trượt đè ngay
       dưới dãy nút, rất rối mắt).
    2) Nút đăng nhập / tài khoản thành NÚT TRÒN trên màn rộng — gọn đầu trang,
-      menu 6 nút đủ chỗ nằm một hàng. Dưới 1360px (trong bảng ☰) giữ nguyên
+      menu 6 nút đủ chỗ nằm một hàng. Dưới 1000px (trong bảng ☰) giữ nguyên
       nút chữ đầy đủ để thầy cô mới dùng không phải đoán.
    ════════════════════════════════════════════════════════════════════════════ */
 nav.menu { scrollbar-width: none; }
@@ -1898,7 +1903,7 @@ nav.menu::-webkit-scrollbar { display: none; }
 .nut-dang-nhap { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .nut-dang-nhap .ic { width: 19px; height: 19px; flex: 0 0 auto; }
 
-@media (min-width: 1360px) {
+@media (min-width: 1000px) {
   .nut-dang-nhap {
     width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%;
   }
@@ -1925,6 +1930,22 @@ nav.menu::-webkit-scrollbar { display: none; }
 @media (max-width: 560px) {
   /* nút hành động rơi hẳn xuống dòng dưới, phần chữ chiếm trọn hàng trên */
   .dh-diem-hang .tt { flex: 1 1 100%; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MÁY TÍNH PHÓNG TO 125–150% (24/8/2026) — các cô máy Dell báo "giao diện như
+   điện thoại" dù màn Full HD: Windows phóng to 150% làm 1920px chỉ còn 1280px
+   CSS, tụt dưới mốc ☰ cũ (1360). Nay ☰ chỉ còn dưới 1000px (khối đầu tệp);
+   dải 1000–1359 này là MÁY TÍNH: menu trải thành hàng ngang riêng ngay dưới
+   hàng tên trường (order đẩy nav xuống cuối + chiếm trọn hàng, khu tài khoản
+   ở lại hàng trên bên phải). Đầu trang cao 10+46+12+46+10 = 124px nên thanh
+   TT57 dính phải hạ top theo — vì vậy khối này bắt buộc nằm CUỐI TỆP, sau
+   khai báo .kd-thanh gốc (@media không cộng độ đặc hiệu, sau mới thắng). */
+@media (min-width: 1000px) and (max-width: 1359px) {
+  .dau-trang .khung { flex-wrap: wrap; }
+  nav.menu { order: 5; flex: 1 1 100%; }
+  .khu-tai-khoan { margin-left: auto; }
+  .kd-thanh { top: 124px; }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

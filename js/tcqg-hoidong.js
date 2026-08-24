@@ -454,9 +454,13 @@
       (kq[2].data || []).forEach(function (r) { tdg[r.ma_dk] = r; });
       var bang = kq[3].data || [];
 
-      // RPC trả về nhưng không có dòng (chưa tự đánh giá năm này) → CHƯA XÉT
-      // (null), không phải "không đạt" (false).
-      var datC = xep.ket_luan ? (/Đạt/.test(xep.ket_luan) && !/Không/.test(xep.ket_luan)) : null;
+      // RPC là aggregate không GROUP BY nên LUÔN trả đúng một dòng — "chưa tự
+      // đánh giá" không đến dưới dạng thiếu dòng mà dưới dạng ket_luan bắt đầu
+      // bằng "Chưa" (bản vá sql/57: 'Chưa đánh giá' / 'Chưa tính được').
+      // Cả hai ca đều là CHƯA XÉT (null), không phải "không đạt" (false).
+      var datC = !xep.ket_luan || /^Chưa/.test(xep.ket_luan)
+        ? null
+        : (/Đạt/.test(xep.ket_luan) && !/Không/.test(xep.ket_luan));
       var datB = (dem.so_nam_lien_tiep || 0) >= 3;
 
       var DK = [
@@ -495,7 +499,10 @@
           var chiTiet = dk[0] === 'b'
             ? '<small>' + thoat(dem.chi_tiet || '') + '</small>'
             : dk[0] === 'c'
-              ? '<small>Máy tính: <b>' + thoat(xep.ket_luan || 'chưa tính được') + '</b> (bắt buộc M1: ' + (xep.bb_m1 || 0) + '/8 · M2: ' + (xep.bb_m2 || 0) + '/8 · còn lại M1: ' + (xep.cl_m1 || 0) + '/7 · M2: ' + (xep.cl_m2 || 0) + '/7)</small>'
+              // Mẫu số lấy từ RPC (bb_tong/cl_tong, bản vá sql/57) — sql/05 cố ý
+              // không ghi cứng "= 8" để đổi cấu hình bắt buộc vẫn đúng; RPC bản
+              // cũ chưa có hai cột này thì mới lùi về 8/7 của TT57 hiện hành.
+              ? '<small>Máy tính: <b>' + thoat(xep.ket_luan || 'chưa tính được') + '</b> (bắt buộc M1: ' + (xep.bb_m1 || 0) + '/' + (xep.bb_tong || 8) + ' · M2: ' + (xep.bb_m2 || 0) + '/' + (xep.bb_tong || 8) + ' · còn lại M1: ' + (xep.cl_m1 || 0) + '/' + (xep.cl_tong || 7) + ' · M2: ' + (xep.cl_m2 || 0) + '/' + (xep.cl_tong || 7) + ')</small>'
               : '';
           return '<div class="tt-dk"><div class="tt-dk-dau">' + den(dk) + ' <b>Điều kiện ' + dk[0] + ')</b> ' + dk[2] + '</div>' +
             chiTiet +

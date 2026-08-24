@@ -88,7 +88,14 @@
   function keDuoi(ten, laTenTruong) {
     const W = window.WORD_TIEN_ICH;
     if (W && W.gach && W.gachTenTruong) return laTenTruong ? W.gachTenTruong(ten || '') : W.gach(4.4, 13);
-    return '<div style="border-top:1px solid #000;width:' + (laTenTruong ? 58 : 50) + '%;margin:2pt auto 0"></div>';
+    /* Dự phòng khi WORD_TIEN_ICH chưa nạp: cũng phải là DÃY DẤU CÁCH GẠCH CHÂN
+       — bẫy số 1 trong CLAUDE.md: <div width> vào Word thành đoạn văn kẻ hết ô.
+       Cùng công thức 0,0088cm/pt mỗi dấu cách với gach() của xuat-word.js. */
+    const cm = laTenTruong ? Math.max(2.2, Math.min(4, String(ten || '').length * 0.24 * 0.4)) : 4.4;
+    const co = laTenTruong ? 12 : 13;
+    const n = Math.max(4, Math.round(cm / (0.0088 * co)));
+    return '<p style="margin:1pt 0 0;font-size:' + co + 'pt;line-height:1;text-align:center"><u>' +
+      new Array(n + 1).join('&nbsp;') + '</u></p>';
   }
 
   function layDuLieu() {
@@ -176,18 +183,17 @@
      Đếm không được thì trả về null để nơi in ra để trống, không đoán. */
   async function demQuyMo(namHoc) {
     const kq = { lop: null, hs: null, tong: null, cbql: null, gv: null, ht: null,
-                 khac: 0, kyThuat: 0 };
+                 khac: 0, kyThuat: 0, gop: 0 };
     const s = window.sbClient;
     if (!s) return kq;
     try {
       const [hsl, mtk] = await Promise.all([
         s.from('hoc_sinh_lop').select('lop').eq('nam_hoc', namHoc).eq('trang_thai', 'dang_hoc'),
-        /* Lấy cả cột la_ky_thuat (tệp sql/34) để LOẠI tài khoản kỹ thuật khỏi số
-           lượng đội ngũ. Danh sách CBGV-NV có 39 dòng nhưng chỉ 38 người trong
-           biên chế; in 39 vào báo cáo gửi Sở là khai vượt một người.
-           Chưa chạy sql/34 thì cột chưa có, giá trị về undefined và mọi dòng
-           đều được tính — đúng bằng cách cũ, không vỡ màn hình. */
-        s.from('moi_tai_khoan').select('vai_tro, la_ky_thuat')
+        /* select('*') chứ không liệt kê cột: cần la_ky_thuat (sql/34) để loại
+           tài khoản kỹ thuật và email_chinh (sql/55) để gộp người có hai địa
+           chỉ — trường chưa chạy tệp nào thì cột đó vắng, liệt kê tên cột vắng
+           là PostgREST trả lỗi 42703 và mất cả bảng quy mô. */
+        s.from('moi_tai_khoan').select('*')
       ]);
       if (!hsl.error && hsl.data && hsl.data.length) {
         kq.hs = hsl.data.length;
@@ -199,11 +205,28 @@
         kq.lop = Object.keys(lop).length || null;
       }
       if (!mtk.error && mtk.data && mtk.data.length) {
-        const v = mtk.data.filter(function (x) { return !x.la_ky_thuat; })
-          .map(function (x) { return String(x.vai_tro || ''); });
+        /* Gộp NGƯỜI trước khi đếm: một người hai địa chỉ (sql/55, email_chinh
+           trỏ về địa chỉ chính) chỉ được đếm MỘT lần — trước 24/8/2026 bản Word
+           đếm 38 trong khi danh bạ trên màn (đã gộp) hiện 37. Khoá gộp trùng
+           cách gộp của du-lieu-sql.js: lower(email_chinh || email). */
+        const nguoi = {};
+        mtk.data.filter(function (x) { return !x.la_ky_thuat; }).forEach(function (x) {
+          const khoa = String(x.email_chinh || x.email || '').toLowerCase().trim()
+            || ('#' + Object.keys(nguoi).length);
+          // Dòng chính (không có email_chinh) thắng dòng phụ khi cả hai cùng về
+          if (!nguoi[khoa] || !x.email_chinh) nguoi[khoa] = String(x.vai_tro || '');
+        });
+        const v = Object.keys(nguoi).map(function (k) { return nguoi[k]; });
         kq.tong = v.length;
-        kq.kyThuat = mtk.data.length - v.length;
-        kq.cbql = v.filter(function (x) { return x === 'ban_giam_hieu'; }).length;
+        kq.kyThuat = mtk.data.filter(function (x) { return x.la_ky_thuat; }).length;
+        // Số dòng bị gộp vì một người có hai địa chỉ — in ra ghi chú để hội
+        // đồng đối chiếu danh sách N dòng với tổng không thấy vênh khó hiểu.
+        kq.gop = (mtk.data.length - kq.kyThuat) - v.length;
+        /* CBQL gồm cả vai trò admin: Phó Hiệu trưởng quản trị hệ thống mang
+           vai_tro='admin' (quy ước sql/22) — danh bạ trên màn đã xếp admin vào
+           nhóm "Ban giám hiệu — Quản trị", bản Word phải cùng một quy ước.
+           Tài khoản kỹ thuật vai trò admin đã bị la_ky_thuat loại ở trên. */
+        kq.cbql = v.filter(function (x) { return x === 'ban_giam_hieu' || x === 'admin'; }).length;
         kq.gv = v.filter(function (x) { return x === 'giao_vien' || x === 'to_truong'; }).length;
         kq.ht = v.filter(function (x) { return x === 'nhan_vien'; }).length;
         kq.khac = kq.tong - kq.cbql - kq.gv - kq.ht;
@@ -214,6 +237,10 @@
     return kq;
   }
   function so(v) { return (v === null || v === undefined) ? '…' : String(v); }
+  /* "Đã chấm" của một tiêu chí — hợp đồng cũ không có cột daCham thì coi như
+     đã chấm (giữ nguyên hành vi với shim Bạch Liêu). Dùng chung cho mọi bảng
+     đánh dấu ×: tiêu chí CHƯA chấm không được nhận dấu × ở cột "Không đạt". */
+  function daChamTC(c) { return (c.daCham === undefined) ? true : !!c.daCham; }
 
   /* ---------------- Phần I — Tổng quan ---------------- */
 
@@ -265,10 +292,12 @@
           : '')
       /* Nói rõ đã loại tài khoản kỹ thuật, để hội đồng thẩm định đối chiếu với
          danh sách 39 dòng của nhà trường không thấy vênh mà không hiểu vì sao. */
-      + (qm.kyThuat > 0
+      + (qm.kyThuat > 0 || qm.gop > 0
           ? '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:0 0 5pt">Số liệu trên là '
-            + 'người trong biên chế nhà trường; không tính ' + qm.kyThuat
-            + ' tài khoản kỹ thuật dùng để quản trị hệ thống.</p>'
+            + 'người trong biên chế nhà trường'
+            + (qm.kyThuat > 0 ? '; không tính ' + qm.kyThuat + ' tài khoản kỹ thuật dùng để quản trị hệ thống' : '')
+            + (qm.gop > 0 ? '; ' + qm.gop + ' người dùng hai địa chỉ thư chỉ đếm một lần' : '')
+            + '.</p>'
           : '');
 
     return ''
@@ -342,6 +371,9 @@
   /* ---------------- Phần II — Tự đánh giá ---------------- */
   function motTieuChi(c, d) {
     const datM1 = c.self >= 1, datM2 = c.self >= 2;
+    /* Hợp đồng cũ (shim Bạch Liêu) chưa có cột daCham → coi như đã chấm để
+       giữ nguyên hành vi; hợp đồng mới phân biệt được "chưa chấm". */
+    const daCham = (c.daCham === undefined) ? true : !!c.daCham;
     const mc = d.mcTheoTC[c.code] || [];
     const theoNoiHam = ((d.noiHam || {})[c.code + '|1'] || []).some(function (n) {
       return String(((d.htNh || {})[n.id] || {}).hien_trang || '').trim();
@@ -383,19 +415,22 @@
       + '<tr>'
       +   '<td style="' + O + 'text-align:center">Mức 1</td>'
       +   '<td style="' + O + '">' + doanHienTrang(c, 1, d) + '</td>'
-      +   '<td style="' + O + 'text-align:center;font-weight:bold">' + (datM1 ? 'Đạt' : 'Không đạt') + '</td>'
+      +   '<td style="' + O + 'text-align:center;font-weight:bold">'
+      +     (daCham ? (datM1 ? 'Đạt' : 'Không đạt') : '<i style="font-weight:normal">Chưa đánh giá</i>') + '</td>'
       + '</tr>'
       + '<tr>'
       +   '<td style="' + O + 'text-align:center">Mức 2</td>'
       +   '<td style="' + O + '">' + (datM1 ? doanHienTrang(c, 2, d)
             : '<p style="' + TR + 'font-size:12pt;font-style:italic;color:#555;margin:0">'
               + 'Chỉ xem xét Mức 2 khi Mức 1 được xác định đạt.</p>') + '</td>'
-      +   '<td style="' + O + 'text-align:center;font-weight:bold">' + (datM2 ? 'Đạt' : 'Không đạt') + '</td>'
+      +   '<td style="' + O + 'text-align:center;font-weight:bold">'
+      +     (daCham ? (datM2 ? 'Đạt' : 'Không đạt') : '<i style="font-weight:normal">Chưa đánh giá</i>') + '</td>'
       + '</tr>'
       + '</tbody></table>'
       + dsMa
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:5pt 0 0">Tự đánh giá: Tiêu chí '
-      + (datM2 ? 'đạt Mức 2' : datM1 ? 'đạt Mức 1' : 'không đạt Mức 1') + '.</p>';
+      + (daCham ? (datM2 ? 'đạt Mức 2' : datM1 ? 'đạt Mức 1' : 'không đạt Mức 1')
+                : 'chưa được tự đánh giá') + '.</p>';
   }
 
   function danhGiaChung(soTC, d) {
@@ -423,11 +458,14 @@
       +   '<td style="' + OT + '">Mức 2</td></tr></thead><tbody>';
     ds.forEach(function (c) {
       h += '<tr><td style="' + O + '">Tiêu chí ' + chan(c.code) + '</td>'
-        + '<td style="' + O + 'text-align:center">' + (c.self === 0 ? '×' : '') + '</td>'
+        + '<td style="' + O + 'text-align:center">' + (daChamTC(c) && c.self === 0 ? '×' : '') + '</td>'
         + '<td style="' + O + 'text-align:center">' + (c.self === 1 ? '×' : '') + '</td>'
         + '<td style="' + O + 'text-align:center">' + (c.self === 2 ? '×' : '') + '</td></tr>';
     });
-    return h + '</tbody></table>';
+    const chuaChamDS = ds.filter(function (c) { return !daChamTC(c); }).length;
+    return h + '</tbody></table>'
+      + (chuaChamDS ? '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:3pt 0 0">'
+        + 'Còn ' + chuaChamDS + ' tiêu chí chưa tự đánh giá — chưa đánh dấu vào bảng.</p>' : '');
   }
 
   function phanII(d) {
@@ -473,12 +511,15 @@
         + '<td style="' + O + 'background:#f2f2f2"></td></tr>';
       tc.filter(function (c) { return c.std === so; }).forEach(function (c) {
         bang1 += '<tr><td style="' + O + '">Tiêu chí ' + chan(c.code) + '</td>'
-          + '<td style="' + O + 'text-align:center">' + (c.self === 0 ? '×' : '') + '</td>'
+          + '<td style="' + O + 'text-align:center">' + (daChamTC(c) && c.self === 0 ? '×' : '') + '</td>'
           + '<td style="' + O + 'text-align:center">' + (c.self === 1 ? '×' : '') + '</td>'
           + '<td style="' + O + 'text-align:center">' + (c.self === 2 ? '×' : '') + '</td></tr>';
       });
     });
-    const t0 = tc.filter(function (c) { return c.self === 0; }).length;
+    /* "Không đạt" chỉ đếm tiêu chí ĐÃ chấm mà không đạt — tiêu chí chưa chấm
+       đứng ngoài cả ba cột, có ghi chú riêng dưới bảng. */
+    const tChua = tc.filter(function (c) { return !daChamTC(c); }).length;
+    const t0 = tc.filter(function (c) { return daChamTC(c) && c.self === 0; }).length;
     const t1 = tc.filter(function (c) { return c.self === 1; }).length;
     const t2 = tc.filter(function (c) { return c.self === 2; }).length;
     bang1 += '<tr><td style="' + O + 'font-weight:bold;background:#e8e8e8">Cộng chung</td>'
@@ -506,7 +547,7 @@
       + '</tr></thead><tbody>';
     [1, 2, 3, 4].forEach(function (so) {
       const ds = tc.filter(function (c) { return c.std === so; });
-      const a0 = ds.filter(function (c) { return c.self === 0; }).length;
+      const a0 = ds.filter(function (c) { return daChamTC(c) && c.self === 0; }).length;
       const a1 = ds.filter(function (c) { return c.self === 1; }).length;
       const a2 = ds.filter(function (c) { return c.self === 2; }).length;
       bang2 += '<tr><td style="' + O + '">Tiêu chuẩn ' + so + '</td>'
@@ -534,9 +575,20 @@
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 3pt">2. Tổng hợp kết quả tự đánh giá</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt"><i>a) Bảng tổng hợp kết quả đánh giá tiêu chí</i></p>' + bang1
       + '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:3pt 0 0">Đánh dấu (×) vào ô kết quả Đạt hoặc Không đạt (từ mức đạt thấp nhất đến mức đạt cao nhất của tiêu chí).</p>'
+      + (tChua ? '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:2pt 0 0">Còn ' + tChua
+          + ' tiêu chí nhà trường chưa tự đánh giá — các tiêu chí này chưa đánh dấu vào bảng.</p>' : '')
       + '<p style="' + TR + 'font-size:12pt;margin:8pt 0 3pt"><i>b) Bảng tổng hợp chung</i></p>' + bang2
+      /* Bảng 2 cũng phải tự cắt nghĩa: có tiêu chí chưa chấm thì SL ba cột cộng
+         lại nhỏ hơn "Tổng số tiêu chí" — không ghi chú là hội đồng thấy 15 ≠
+         tổng ba cột mà không hiểu vì sao. */
+      + (tChua ? '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:3pt 0 0">Tổng ba cột nhỏ hơn '
+          + 'tổng số tiêu chí vì còn ' + tChua + ' tiêu chí chưa tự đánh giá.</p>' : '')
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:10pt 0 3pt">3. Mức đạt của cơ sở giáo dục</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 5pt">Cơ sở giáo dục <b>' + chan(ketLuan) + '</b>.</p>'
+      /* xepMuc trả "Chưa đánh giá"/"Chưa tính được" thì không được viết thành
+         "Cơ sở giáo dục Chưa đánh giá" như một mức — nói thẳng là chưa xếp mức. */
+      + (/^Chưa/.test(ketLuan)
+          ? '<p style="' + TR + 'font-size:12pt;margin:0 0 5pt">Nhà trường chưa hoàn thành tự đánh giá năm học này — <b>chưa đủ căn cứ xếp mức</b>.</p>'
+          : '<p style="' + TR + 'font-size:12pt;margin:0 0 5pt">Cơ sở giáo dục <b>' + chan(ketLuan) + '</b>.</p>')
       + '<p style="' + TR + 'font-size:11.5pt;font-style:italic;margin:0 0 5pt;text-align:justify">Căn cứ khoản 3 Điều 5 Thông tư số 57/2026/TT-BGDĐT: đạt Mức 1 khi tất cả tiêu chí bắt buộc đạt Mức 1 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên; đạt Mức 2 khi tất cả tiêu chí bắt buộc đạt Mức 2 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1.</p>'
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 3pt">4. Đề xuất, kiến nghị</p>'
       + '<p style="' + AB + '">a) Với ' + chan(CAU_HINH.CO_QUAN_THUONG || '') + '</p>'
@@ -556,7 +608,7 @@
   }
 
   /* ---------------- Phần IV — Phụ lục ---------------- */
-  function phanIV(d) {
+  function phanIV(d, coBangSoLieu) {
     const ds = [];
     Object.keys(d.mcTheoTC).forEach(function (k) {
       d.mcTheoTC[k].forEach(function (h) {
@@ -572,8 +624,14 @@
     let h = '<p style="' + TR + 'text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 4pt">Phần IV. PHỤ LỤC</p>'
       + '<p style="' + TR + 'text-align:center;font-size:11.5pt;font-style:italic;margin:0 0 8pt">(Kèm theo báo cáo tự đánh giá)</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 4pt">Phụ lục kèm theo báo cáo tự đánh giá gồm có:</p>'
+      /* Chỉ hứa "in ở cuối báo cáo này" khi bảng số liệu THẬT SỰ được ghép vào
+         (hàm bangSoLieuTT57Word có mặt). Trước 24/8/2026 câu hứa in vô điều
+         kiện trong khi hàm đó chưa từng tồn tại — mọi bản nộp Sở đều thiếu
+         đúng biểu mà báo cáo tự khai là có kèm. */
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">1. Cơ sở dữ liệu — Phần I '
-        + '"Thông tin dữ liệu" (bảng số liệu 03 năm học, in ở cuối báo cáo này).</p>'
+        + '"Thông tin dữ liệu" (' + (coBangSoLieu
+          ? 'bảng số liệu 03 năm học, in ở cuối báo cáo này'
+          : 'bảng số liệu 03 năm học lập theo biểu mẫu Phụ lục V, nhà trường nộp kèm báo cáo') + ').</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt;text-align:justify">2. Các tư liệu, tài liệu liên quan: '
         + 'Quyết định thành lập Hội đồng tự đánh giá; kế hoạch tự đánh giá; các bảng biểu tổng hợp, thống kê.</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">3. Danh mục minh chứng (bảng dưới đây).</p>'
@@ -674,26 +732,27 @@
        và tên trường bên trái, Quốc hiệu — tiêu ngữ bên phải, dưới tiêu ngữ là
        địa danh và ngày tháng in nghiêng. Bản cũ không có Quốc hiệu nên khi in
        ra nộp Sở thì thiếu thành phần thể thức bắt buộc. */
-    const bia = ''
-      + '<table style="width:100%;border-collapse:collapse"><tr>'
-      + '<td style="' + TR + 'width:42%;text-align:center;font-size:13pt;vertical-align:top">'
-      // ⚠️ TRỐNG là đúng. Trước đây dự phòng bằng 'UBND XÃ YÊN THÀNH' — di sản
-      //    app THCS Bạch Liêu, không phải xã của trường nào ở đây. Đây là ô CHỦ
-      //    QUẢN trên BÌA Báo cáo tự đánh giá nộp Sở, văn bản có chữ ký và dấu:
-      //    in nhầm tên xã lên đó thì không sửa được nữa.
-      //    Nguyên tắc dự án: thà để TRỐNG cho thấy ngay mà điền, còn hơn ĐOÁN.
+    /* Khung thể thức đầu bìa: dùng NGUYÊN theThuc() của xuat-word.js — bộ thông
+       số đã kiểm bằng Word→PDF (ô trái 43%/phải 57%, chữ 12pt, Quốc hiệu nbsp
+       chống ngắt dòng, kẻ dưới bằng dấu cách gạch chân, địa danh + ngày trong ô).
+       Trước 24/8/2026 bìa tự dựng 42% + 13pt: Quốc hiệu 13pt rộng ~9,57cm trong
+       ô chỉ chứa ~9,19cm → Word bẻ "…VIỆT NAM" xuống dòng — đúng bẫy đã ghi ở
+       chú thích O_TRAI của xuat-word.js. Ô chủ quản: trống là đúng, thà trống
+       cho thấy ngay mà điền còn hơn đoán (nguyên tắc dự án). */
+    const Wt = window.WORD_TIEN_ICH;
+    const khungThe = (Wt && Wt.theThuc) ? Wt.theThuc()
+      : ('<table style="width:100%;border-collapse:collapse"><tr>'
+      + '<td style="' + TR + 'width:43%;text-align:center;font-size:12pt;vertical-align:top">'
       +   chan(CAU_HINH.DON_VI_CHU_QUAN || '')
       +   '<br><b>' + chan(tenTruong()).toUpperCase() + '</b>'
-      // Đường kẻ dưới tên trường / tiêu ngữ: DÃY DẤU CÁCH GẠCH CHÂN qua
-      // WORD_TIEN_ICH.gach — bẫy số 1 trong CLAUDE.md: <div width:58%> vào
-      // Word thành đoạn văn không có bề rộng, kẻ hết ô. Không có tiện ích
-      // (tệp nạp lẻ) thì mới lùi về <div> cũ.
       +   keDuoi(tenTruong(), true) + '</td>'
-      + '<td style="' + TR + 'text-align:center;font-size:13pt;vertical-align:top">'
-      +   '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
+      + '<td style="' + TR + 'text-align:center;font-size:12pt;vertical-align:top">'
+      +   '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b>'
+      +   '<br><b style="font-size:13pt">Độc lập - Tự do - Hạnh phúc</b>'
       +   keDuoi(null, false)
       +   '<p style="' + TR + 'font-size:13pt;font-style:italic;margin:8pt 0 0">'
-      +   ngayThang() + '</p></td></tr></table>'
+      +   ngayThang() + '</p></td></tr></table>');
+    const bia = khungThe
       + '<p style="' + TR + 'text-align:center;font-size:17pt;font-weight:bold;margin:60pt 0 6pt">BÁO CÁO TỰ ĐÁNH GIÁ</p>'
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-weight:bold;margin:0 0 4pt">Năm học '
       + chan(d.namHoc) + '</p>'
@@ -748,12 +807,15 @@
       /* Bảng tổng hợp tiêu chí dài hơn một trang; không có dòng này thì sang
          trang sau chỉ còn một rừng dấu × không biết thuộc cột nào. */
       + 'thead{display:table-header-group}'
-      + 'tr{page-break-inside:avoid}td,th{line-height:1.3}</style>'
+      + 'tr{page-break-inside:avoid}td,th{line-height:1.3}'
+      /* theThuc()/gach() của xuat-word.js dùng hai lớp này — khung tự dựng của
+         tệp này phải khai báo, không thì Quốc hiệu và đường kẻ hết canh giữa. */
+      + '.giua{text-align:center}.nghieng{font-style:italic}</style>'
       /* Chữ ký của Hiệu trưởng đứng NGAY SAU Phần IV, trước biểu mẫu số liệu:
          biểu mẫu là phụ lục đính kèm, không phải phần thân báo cáo — đặt sau chữ
          ký mới đúng lối văn bản hành chính. */
       + '</head><body><div class="Section1">' + bia + biaTrong + mucLuc(d)
-      + phanI(d, qm) + phanII(d) + phanIII(d) + phanIV(d) + cuoi
+      + phanI(d, qm) + phanII(d) + phanIII(d) + phanIV(d, !!bangSoLieu) + cuoi
       + bangSoLieu + '</div></body></html>';
 
     const blob = new Blob(['﻿' + html], { type: 'application/msword' });

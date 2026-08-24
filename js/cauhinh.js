@@ -140,7 +140,10 @@ window.TU_NGU_DANG = {
   },
   dang_bo: {
     nhan:     'Đảng bộ (có chi bộ trực thuộc)',
-    hop:      'Đảng ủy',
+    // Tên HỘP là "Đảng bộ" (TỔ CHỨC — đối xứng hộp "Chi bộ" của trường nhỏ,
+    // chốt của thầy Chung 24/8/2026). Các khoá dưới vẫn "Đảng ủy" vì đó là
+    // CƠ QUAN ban hành / chức danh — xem chú thích 🔴 phía trên.
+    hop:      'Đảng bộ',
     capUy:    'Ban Thường vụ Đảng ủy',
     biThu:    'Bí thư Đảng ủy',
     nghiQuyet:'Nghị quyết Đảng ủy',

@@ -240,7 +240,8 @@
       if (!window.confirm(
             'Chuyển tổ chức đảng của trường sang: ' + tn[moi].nhan + '?\n\n' +
             'Tên hộp và tên hồ sơ trong Bộ phận Đảng, đoàn thể sẽ đổi theo ' +
-            '(Chi bộ ↔ Đảng ủy, Bí thư Chi bộ ↔ Bí thư Đảng ủy…).\n' +
+            '(hộp Chi bộ ↔ Đảng bộ; văn bản Nghị quyết chi bộ ↔ Nghị quyết Đảng ủy, ' +
+            'Bí thư Chi bộ ↔ Bí thư Đảng ủy…).\n' +
             'Hồ sơ đã gắn tệp trên Drive không mất.')) return;
 
       nutDoi.disabled = true;

@@ -57,11 +57,14 @@
         'Điều 9 TT57 (tối thiểu 05 thành viên, số lẻ, đúng 01 Chủ tịch và 01 Thư ký) — nhà trường rà soát trước khi ban hành.</p>';
     }
     var than = W().theThuc() +
-      '<p class="giua" style="font-size:15pt;font-weight:bold;margin:0">DANH SÁCH HỘI ĐỒNG TỰ ĐÁNH GIÁ</p>' +
+      // Tên loại văn bản 14pt — thông số đã chốt của dự án (trước 24/8/2026 để 15pt)
+      '<p class="giua" style="font-size:14pt;font-weight:bold;margin:0">DANH SÁCH HỘI ĐỒNG TỰ ĐÁNH GIÁ</p>' +
       '<p class="giua nghieng" style="font-size:12pt;margin:2pt 0 4pt">Năm học ' + chan(d.namHoc) + '</p>' +
       '<p class="giua nghieng" style="font-size:12pt;margin:0 0 12pt">(Kèm theo Quyết định số ' +
       chan((d.hd && d.hd.so_quyet_dinh) || '……/QĐ-…') +
-      (d.hd && d.hd.ngay_quyet_dinh ? ' ngày ' + new Date(d.hd.ngay_quyet_dinh).toLocaleDateString('vi-VN') : ' ngày … tháng … năm …') +
+      // ngayBanHanh giữ đúng thể thức NĐ 30 (ngày đệm 0, tháng chỉ đệm với 1-2);
+      // toLocaleDateString ra "5/8/2026" — mất số 0 của ngày, sai thể thức.
+      ' ' + ngayBanHanh(d.hd && d.hd.ngay_quyet_dinh) +
       ' của Hiệu trưởng ' + chan(W().cauHinh('TEN_TRUONG')) + ')</p>' +
       '<table><thead><tr><th style="width:8%">TT</th><th style="width:30%">Họ và tên</th>' +
       '<th style="width:24%">Chức vụ</th><th style="width:22%">Vai trò trong Hội đồng</th><th style="width:16%">Ghi chú</th></tr></thead>' +
@@ -90,7 +93,7 @@
         '<td>' + chan(t.nhiem_vu || '') + '</td></tr>';
     }).join('');
     var than = W().theThuc() +
-      '<p class="giua" style="font-size:15pt;font-weight:bold;margin:0">BẢNG PHÂN CÔNG NHIỆM VỤ HỘI ĐỒNG TỰ ĐÁNH GIÁ</p>' +
+      '<p class="giua" style="font-size:14pt;font-weight:bold;margin:0">BẢNG PHÂN CÔNG NHIỆM VỤ HỘI ĐỒNG TỰ ĐÁNH GIÁ</p>' +
       '<p class="giua nghieng" style="font-size:12pt;margin:2pt 0 12pt">Năm học ' + chan(d.namHoc) +
       ' — theo điểm b khoản 3 Điều 9 Thông tư 57/2026/TT-BGDĐT</p>' +
       '<table><thead><tr><th style="width:5%">TT</th><th style="width:16%">Họ và tên</th><th style="width:13%">Chức vụ</th>' +
@@ -115,9 +118,12 @@
     });
     var ds = Object.keys(gom).sort(function (a, b) { return a.localeCompare(b, 'vi'); }).map(function (ma) { return gom[ma]; });
     if (!ds.length) { window.notify('Không có minh chứng nào thuộc phạm vi đã chọn.'); return; }
+    // Năm học của MÀN TCQG đang xem (có thể là năm cũ), không phải năm hiện hành
+    var namTCQG = (typeof window.duLieuTuDanhGia === 'function' && window.duLieuTuDanhGia().namHoc)
+      || W().cauHinh('NAM_HOC');
     var dem = { co: 0, dang: 0, chua: 0 };
     var dong = ds.map(function (x, i) {
-      dem[x.h.tt]++;
+      dem[x.h.tt] = (dem[x.h.tt] || 0) + 1;
       var banGhi = (window.HS_BAN_GHI && window.HS_BAN_GHI[x.h.ma]) || {};
       return '<tr><td class="giua">' + (i + 1) + '</td>' +
         '<td class="giua"><b>' + (x.h.link ? '<a href="' + chan(x.h.link) + '">' + chan(x.h.ma) + '</a>' : chan(x.h.ma)) + '</b></td>' +
@@ -128,8 +134,8 @@
         '<td class="giua">' + (TEN_TT[x.h.tt] || '') + '</td></tr>';
     }).join('');
     var than = W().theThuc() +
-      '<p class="giua" style="font-size:15pt;font-weight:bold;margin:0">DANH MỤC MÃ MINH CHỨNG</p>' +
-      '<p class="giua nghieng" style="font-size:12pt;margin:2pt 0 4pt">' + chan(nhan) + ' · Năm học ' + chan(W().cauHinh('NAM_HOC')) + '</p>' +
+      '<p class="giua" style="font-size:14pt;font-weight:bold;margin:0">DANH MỤC MÃ MINH CHỨNG</p>' +
+      '<p class="giua nghieng" style="font-size:12pt;margin:2pt 0 4pt">' + chan(nhan) + ' · Năm học ' + chan(namTCQG) + '</p>' +
       '<p class="giua nghieng" style="font-size:11pt;margin:0 0 12pt">(Bản dùng trong nội bộ nhà trường — bản nộp Sở theo đúng mẫu 05 cột ' +
       'tại mục II khoản 4 Phụ lục IV được kết xuất kèm Báo cáo tự đánh giá.)</p>' +
       // A4 ngang, bề ngang chữ 26,2cm — cột chia theo tỉ lệ dưới đây:
@@ -139,7 +145,7 @@
       '<th style="width:15%">Người phụ trách</th><th style="width:12%">Trạng thái</th></tr></thead><tbody>' + dong + '</tbody></table>' +
       '<p style="margin:8pt 0 0">Tổng: ' + ds.length + ' minh chứng — đã có ' + dem.co + ', đang cập nhật ' + dem.dang + ', chưa có ' + dem.chua + '.' +
       (dem.chua ? ' <span class="nghieng">Nhà trường bổ sung các minh chứng còn thiếu trước khi hoàn thiện báo cáo.</span>' : '') + '</p>';
-    W().taiVe(khungNgang('Danh mục minh chứng', than), 'danh-muc-minh-chung-' + W().cauHinh('NAM_HOC') + '.doc');
+    W().taiVe(khungNgang('Danh mục minh chứng', than), 'danh-muc-minh-chung-' + namTCQG + '.doc');
     window.notify('Đã tải danh mục ' + ds.length + ' minh chứng (' + nhan + ').');
   }
 
@@ -178,7 +184,7 @@
       td.forEach(function (r) { oTD[r.thoi_diem] = r; });
       var trong = '<span class="nghieng">(nhà trường bổ sung)</span>';
 
-      // Thể thức NĐ 30 — dùng chung thông số với xuat-word.js (ô 44/56, đường
+      // Thể thức NĐ 30 — dùng chung thông số với xuat-word.js (ô 43/57, đường
       // kẻ dựng bằng bảng đo bằng cm để Word không kéo dài hết ô).
       var theThuc = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
         '<td style="border:none;padding:0;width:' + W().O_TRAI + '%;text-align:center;vertical-align:top;font-size:12pt">' +
@@ -207,7 +213,7 @@
       }).join('');
 
       var than = theThuc +
-        '<p class="giua" style="font-size:15pt;font-weight:bold;margin:12pt 0 0">KẾ HOẠCH</p>' +
+        '<p class="giua" style="font-size:14pt;font-weight:bold;margin:12pt 0 0">KẾ HOẠCH</p>' +
         '<p class="giua" style="font-size:13pt;font-weight:bold;margin:2pt 0 14pt">Cải tiến chất lượng giáo dục năm học ' + chan(namHoc) + '</p>' +
 
         '<p><b>I. THÔNG TIN CHUNG</b></p>' +

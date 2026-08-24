@@ -338,7 +338,9 @@
     var W = window.WORD_TIEN_ICH;
     if (!W) { window.notify('Chưa tải được bộ xuất Word.'); return; }
     var than = W.theThuc() +
-      '<h2 class="giua" style="font-size:14pt">DANH SÁCH HỌC SINH LỚP ' + W.chan(lop.toUpperCase()) + '</h2>' +
+      // <p><b> chứ không phải <h2>: Word ánh xạ h2 vào kiểu "Heading 2"
+      // (Calibri Light xanh) — font khai ở body không đè được kiểu Heading.
+      '<p class="giua" style="margin:18pt 0 0"><b style="font-size:14pt">DANH SÁCH HỌC SINH LỚP ' + W.chan(lop.toUpperCase()) + '</b></p>' +
       '<p class="giua nghieng" style="margin-bottom:12pt">Năm học ' + W.chan(NAM) +
       ' · Giáo viên chủ nhiệm: ' + W.chan(CN[lop] || '……………………') + '</p>' +
       '<table><thead><tr><th style="width:6%">TT</th><th style="width:16%">Mã học sinh</th>' +

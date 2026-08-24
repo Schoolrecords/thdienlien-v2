@@ -248,7 +248,7 @@
     var nd = window.NGUOI_DUNG;
     if (!nd) {
       // Nút tròn trên màn rộng (CSS ẩn chữ, chỉ còn hình chìa khóa);
-      // trong bảng ☰ dưới 1360px vẫn là nút chữ đầy đủ.
+      // trong bảng ☰ dưới 1000px vẫn là nút chữ đầy đủ.
       khu.innerHTML = '<button class="nut-dang-nhap" id="nut-dang-nhap" title="Đăng nhập" aria-label="Đăng nhập">' +
         '<svg class="ic" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9-9"/><path d="m17 6 3 3"/></svg>' +
         '<span>Đăng nhập</span></button>';

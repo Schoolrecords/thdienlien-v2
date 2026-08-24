@@ -44,7 +44,7 @@
   }
   window.chuyenManHinh = chuyenManHinh;
 
-  // ── Nút ☰ (chỉ hiện dưới 1360px, CSS lo phần ẩn/hiện) ──
+  // ── Nút ☰ (chỉ hiện dưới 1000px, CSS lo phần ẩn/hiện) ──
   function dongBangMenu() {
     var khu = $('#khu-dieu-huong'), nut = $('#nut-menu');
     if (!khu || !nut) return;

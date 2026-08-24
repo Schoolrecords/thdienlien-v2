@@ -132,7 +132,7 @@
   }
 
   // ══════════ 3. BẢNG CƠ SỞ ══════════
-  function daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) {
+  function daiCoSo(dsCoSo, thongKe, dsTruong, dsGV, namDem) {
     var tk = {};
     (thongKe || []).forEach(function (t) { tk[t.ma] = t; });
     // Cột phu_trach_email do sql/20 thêm — CSDL chưa chạy sql/20 thì ẨN cột
@@ -155,7 +155,13 @@
     return '<div class="dau-muc" style="text-align:left;margin:22px 0 10px">' +
       '<div class="nhan-nho">Cơ sở · phân hiệu · điểm trường</div></div>' +
       '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-bottom:8px">' +
-      'Số lớp / học sinh đếm theo năm học ' + thoat(window.CAU_HINH.NAM_HOC || '') +
+      // namDem là năm ĐÓNG BĂNG mà v_co_so_thong_ke đếm — có thể KHÁC năm hiện
+      // hành nếu sau mốc đổi năm học chưa chạy tay sql/14. Ghi đúng năm được
+      // đếm và cảnh báo lệch, đừng dán nhãn năm mới lên số liệu năm cũ.
+      'Số lớp / học sinh đếm theo năm học ' + thoat(namDem || window.CAU_HINH.NAM_HOC || '') +
+      (namDem && window.CAU_HINH.NAM_HOC && namDem !== window.CAU_HINH.NAM_HOC
+        ? ' <b style="color:var(--canh,#a15c00)">⚠ khác năm hiện hành ' + thoat(window.CAU_HINH.NAM_HOC) +
+          ' — chạy sql/14 trên Supabase để cập nhật mốc đếm</b>' : '') +
       '. Cột CBGV đếm từ danh sách mời (bỏ tài khoản kỹ thuật) — đây là đội ngũ thật, ' +
       'khác với số người đã kích hoạt tài khoản ghi bên dưới. ' +
       '<b>Người phụ trách</b> là người báo cáo đầu buổi + An toàn xanh của điểm trường đó ' +
@@ -326,7 +332,11 @@
       may.from('truong_tien_than').select('*').order('ma'),
       may.from('moi_tai_khoan').select('email, ho_ten, chuc_vu')
         .eq('la_ky_thuat', false).order('ho_ten'),
-      Promise.resolve({ data: null, error: null }),   // chỗ trống, giữ chỉ số kq
+      // Năm học ĐÓNG BĂNG trong bảng cau_hinh — chính là năm mà view
+      // v_co_so_thong_ke đếm (sql/10 lọc theo cột này, chỉ đồng bộ khi chạy
+      // tay sql/14/39). Đọc về để tiêu đề bảng ghi ĐÚNG năm được đếm, không
+      // ghi năm tự tính rồi lệch nhau âm thầm sau mốc đổi năm học.
+      may.from('cau_hinh').select('gia_tri').eq('khoa', 'nam_hoc').maybeSingle(),
       may.from('lop_hoc').select('nam_hoc, lop, khoi, co_so_ma')
     ]).then(function (kq) {
       // Danh sách nhân sự (kq[5]) chỉ phục vụ ô chọn người phụ trách — lỗi
@@ -352,8 +362,12 @@
         return l.nam_hoc === namHoc;
       });
 
+      // Năm mà view thống kê THẬT SỰ đếm (cột đóng băng). Đọc lỗi thì để
+      // trống — tiêu đề sẽ lùi về năm hiện hành như cũ.
+      var namDem = (!kq[6].error && kq[6].data && kq[6].data.gia_tri) || '';
+
       hop.innerHTML = daiTrangThai(tt) + daiKhaiBao(sn) +
-        daiCoSo(dsCoSo, thongKe, dsTruong, dsGV) +
+        daiCoSo(dsCoSo, thongKe, dsTruong, dsGV, namDem) +
         daiPhanLop(dsLop, dsCoSo, namHoc) + daiTruong(dsTruong);
 
       // Lưu khai báo sáp nhập
