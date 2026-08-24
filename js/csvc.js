@@ -133,35 +133,82 @@
   }
 
   // ══════════ GHI ══════════
-  function luu(csMa, hm, thay) {
+  // Hàng đợi ghi: các lệnh nối đuôi nhau, lệnh lỗi không giết hàng. Cần vì
+  // gõ nhanh "Kiên cố = 3, Tab, Bán kiên cố = 2": lệnh ② phải chờ ① về mới
+  // chạy, để cột tổng của ② tính từ dòng máy chủ đã có kien_co = 3.
+  var HANG_GHI = Promise.resolve();
+  function xepHang(viec) {
+    var lui = HANG_GHI.then(viec, viec);
+    HANG_GHI = lui.then(function () {}, function () {});
+    return lui;
+  }
+
+  // Ghi MỘT dòng, CHỈ các cột trong `ban`. Dòng đã có id → update; chưa có →
+  // upsert lần đầu với khoá + cột đổi (cột số có default 0, còn lại null).
+  function ghiDong(csMa, hm, ban) {
     var cu = o(csMa, hm);
-    var ban = {
-      nam_hoc: nam(), co_so_ma: csMa, hang_muc: hm,
-      so_luong: cu.so_luong || 0,
-      kien_co: cu.kien_co || 0,
-      ban_kien_co: cu.ban_kien_co || 0,
-      tam: cu.tam || 0,
-      dat_yeu_cau: cu.dat_yeu_cau === undefined ? null : cu.dat_yeu_cau,
-      nhu_cau: cu.nhu_cau || 0,
-      ghi_chu: cu.ghi_chu || null
-    };
-    Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
-
-    // Hạng mục dạng phòng: tổng luôn bằng tổng ba cột, tính ở đây chứ không
-    // để người dùng gõ tay — gõ tay là sớm muộn cũng lệch.
-    var mm = TRA_MUC[hm] || {};
-    if (mm.kieu === 'phong') {
-      ban.so_luong = so(ban.kien_co) + so(ban.ban_kien_co) + so(ban.tam);
+    ban.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+    var lenh;
+    if (cu.id) {
+      lenh = may().from('csvc_kiem_ke').update(ban).eq('id', cu.id);
+    } else {
+      ban.nam_hoc = nam(); ban.co_so_ma = csMa; ban.hang_muc = hm;
+      lenh = may().from('csvc_kiem_ke').upsert(ban, { onConflict: 'nam_hoc,co_so_ma,hang_muc' });
     }
+    return lenh.select().maybeSingle().then(function (r) {
+      if (r.error) throw r.error;
+      // RLS chặn update thì không lỗi mà ghi 0 dòng — coi là chưa lưu.
+      if (!r.data) throw new Error('máy chủ không ghi dòng nào — có thể thầy cô không có ' +
+        'quyền, hoặc dòng đã bị xoá. Tải lại trang rồi thử lại.');
+      GHI[khoa(csMa, hm)] = r.data;
+      return r.data;
+    });
+  }
 
-    return may().from('csvc_kiem_ke')
-      .upsert(ban, { onConflict: 'nam_hoc,co_so_ma,hang_muc' })
-      .select().maybeSingle()
-      .then(function (r) {
-        if (r.error) throw r.error;
-        if (r.data) GHI[khoa(csMa, hm)] = r.data;
-        return r.data;
+  // Bản đầu gửi lại CẢ dòng lấy từ GHI (bản chụp lúc nạp) — hai lỗi một lúc:
+  //  · hai người cùng khai một địa điểm thì người rời ô sau đè số cũ lên cột
+  //    người kia vừa ghi, cả hai đều thấy lưu xong;
+  //  · một người gõ nhanh hai ô liền nhau, lệnh ② gửi đi khi ① chưa về nên
+  //    mang kien_co = 0 của bản chụp đè lên số 3 vừa gửi.
+  // Nay chỉ ghi đúng cột đổi, xếp hàng, và tổng so_luong của hạng mục dạng
+  // phòng tính từ DÒNG MÁY CHỦ TRẢ VỀ (đã có số người khác vừa ghi) rồi ghi
+  // thêm một lượt nếu lệch — không tính từ bộ đệm.
+  // Giá trị đã GỬI gần nhất của từng ô — kể cả lệnh còn đang bay. Dedup phải
+  // so với nó chứ không so với bộ đệm GHI: bộ đệm chỉ đổi khi máy chủ TRẢ VỀ,
+  // nên "gõ 3, Tab, nhận ra nhầm, sửa lại 0 trước khi phản hồi về" mà so bộ
+  // đệm là lệnh sửa bị nuốt — DB giữ 3, ô hiện 0, không báo gì.
+  var DA_GUI = {};
+  function daGui(csMa, hm, truong, macDinh) {
+    var k = khoa(csMa, hm) + '.' + truong;
+    return DA_GUI.hasOwnProperty(k) ? DA_GUI[k] : macDinh;
+  }
+
+  function luu(csMa, hm, thay) {
+    var cacCot = Object.keys(thay);
+    cacCot.forEach(function (k) { DA_GUI[khoa(csMa, hm) + '.' + k] = thay[k]; });
+    return xepHang(function () {
+      var ban = {};
+      cacCot.forEach(function (k) { ban[k] = thay[k]; });
+      return ghiDong(csMa, hm, ban).then(function (d) {
+        var mm = TRA_MUC[hm] || {};
+        if (mm.kieu !== 'phong') return d;
+        // Tổng luôn bằng tổng ba cột, không để người dùng gõ tay — gõ tay là
+        // sớm muộn cũng lệch.
+        var tongMoi = so(d.kien_co) + so(d.ban_kien_co) + so(d.tam);
+        if (tongMoi === so(d.so_luong)) return d;
+        return ghiDong(csMa, hm, { so_luong: tongMoi }).catch(function (e) {
+          // Lượt ghi tổng hỏng giữa chừng: cột thành phần đã vào máy chủ mà
+          // tổng thì chưa. Xoá bản đệm để lần gõ sau đi lại từ đầu và tự chữa
+          // tổng — không xoá thì dedup nuốt lệnh, tổng lệch vĩnh viễn.
+          delete GHI[khoa(csMa, hm)];
+          throw e;
+        });
       });
+    }).catch(function (e) {
+      // Lệnh hỏng thì xoá vết "đã gửi" để gõ lại đúng số ấy vẫn ghi được.
+      cacCot.forEach(function (k) { delete DA_GUI[khoa(csMa, hm) + '.' + k]; });
+      throw e;
+    });
   }
 
   // ══════════ TỔNG HỢP ══════════
@@ -309,7 +356,9 @@
       ? trong + trong + trong + trong
       : laPhong
         ? oSo('kien_co', d.kien_co) + oSo('ban_kien_co', d.ban_kien_co) + oSo('tam', d.tam) +
-          '<td style="text-align:center"><b>' + so(d.so_luong) + '</b></td>'
+          // data-csvc-tong: ô tổng được vá tại chỗ sau mỗi lần lưu, không vẽ lại bảng
+          '<td style="text-align:center"><b data-csvc-tong="' + thoat(m.ma) + '">' +
+          so(d.so_luong) + '</b></td>'
         : trong + trong + trong + oSo('so_luong', d.so_luong);
 
     var cotDat = sua
@@ -395,7 +444,8 @@
       thoat(nam()) + '</div><p>' + loiMo + ' Cột <b>Đạt yêu cầu</b> do nhà trường tự tích — ' +
       'app không tự kết luận thay hội đồng.</p></div>' +
 
-      oSoTong() + chipDiaDiem() +
+      // Bọc id để vá lại bốn ô số sau mỗi lần lưu mà không vẽ lại cả vùng.
+      '<div id="csvc-o-so">' + oSoTong() + '</div>' + chipDiaDiem() +
       (CS_CHON === null ? veTongHop() : veMotNoi(CS_CHON)) +
       (laQT() ? nutChep() : '');
   }
@@ -430,33 +480,63 @@
 
     if (CS_CHON === null) return;   // bảng tổng hợp không có ô nhập nào
 
+    // 🔴 KHÔNG gọi veLai() sau mỗi lần lưu. veLai là veDBCL — dựng lại cả
+    //    vùng, nên ô người dùng vừa Tab sang bị dựng lại giữa lúc đang gõ,
+    //    mất con trỏ và mất chữ. Chỉ vá ô tổng của dòng và bốn ô số đầu màn;
+    //    mọi thứ khác đã đúng tại chỗ vì chính người dùng vừa gõ vào.
+    // Ghim csMa lúc bấm: lệnh chạy sau trong hàng đợi, CS_CHON có thể đã đổi.
+    function vaTaiCho(csMa, hm) {
+      var d = o(csMa, hm);
+      var oTong = goc.querySelector('[data-csvc-tong="' + hm + '"]');
+      if (oTong && CS_CHON === csMa) oTong.textContent = so(d.so_luong);
+      var oSo = goc.querySelector('#csvc-o-so');
+      if (oSo) oSo.innerHTML = oSoTong();
+    }
+
     Array.prototype.slice.call(goc.querySelectorAll('[data-csvc-so]')).forEach(function (t) {
       t.addEventListener('change', function () {
+        var csMa = CS_CHON;
         var hm = t.getAttribute('data-csvc-so');
         var truong = t.getAttribute('data-csvc-truong');
         var moi = so(t.value);
-        if (so(o(CS_CHON, hm)[truong]) === moi) return;
+        t.value = moi;   // "3.7", "-1", chữ → về số nguyên không âm ngay trong ô
+        if (so(daGui(csMa, hm, truong, o(csMa, hm)[truong])) === moi) return;
         var thay = {}; thay[truong] = moi;
-        luu(CS_CHON, hm, thay).then(function () { veLai(); }).catch(bao);
+        luu(csMa, hm, thay)
+          .then(function () { vaTaiCho(csMa, hm); })
+          .catch(function (e) {
+            // Lỗi thì trả ô về số đang có trên máy chủ, không để số chưa ghi
+            // nằm trong ô trông như đã lưu.
+            t.value = so(o(csMa, hm)[truong]);
+            bao(e);
+          });
       });
     });
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-csvc-dat]')).forEach(function (s) {
       s.addEventListener('change', function () {
+        var csMa = CS_CHON;
         var hm = s.getAttribute('data-csvc-dat');
         var v = s.value === '' ? null : s.value === '1';
-        luu(CS_CHON, hm, { dat_yeu_cau: v }).then(function () { veLai(); }).catch(bao);
+        luu(csMa, hm, { dat_yeu_cau: v })
+          .then(function () { vaTaiCho(csMa, hm); })
+          .catch(function (e) {
+            var cu = o(csMa, hm).dat_yeu_cau;
+            s.value = cu === true ? '1' : cu === false ? '0' : '';
+            bao(e);
+          });
       });
     });
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-csvc-gc]')).forEach(function (t) {
       t.addEventListener('blur', function () {
+        var csMa = CS_CHON;
         var hm = t.getAttribute('data-csvc-gc');
-        var cu = o(CS_CHON, hm).ghi_chu || null;
+        var cu = daGui(csMa, hm, 'ghi_chu', o(csMa, hm).ghi_chu || null);
         var moi = t.value.trim() || null;
         if (cu === moi) return;
-        luu(CS_CHON, hm, { ghi_chu: moi }).then(function () { veLai(); }).catch(function (e) {
-          bao(e); t.value = cu || '';
+        luu(csMa, hm, { ghi_chu: moi }).catch(function (e) {
+          bao(e); t.value = o(csMa, hm).ghi_chu || '';
         });
       });
     });

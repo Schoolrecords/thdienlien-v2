@@ -269,7 +269,15 @@
       may.from('ke_hoach_cai_tien').select('*').eq('nam_hoc', namHoc).order('so_tt'),
       may.from('khct_theo_doi').select('*').eq('nam_hoc', namHoc),
       may.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', namHoc)
-    ]).then(function (kq) {
+    ]).catch(function (e) { return [{ error: e }]; }).then(function (kq) {
+      // Đọc lỗi thì nói lỗi, KHÔNG vẽ form trống: trước 24/8/2026 lỗi mạng/RLS
+      // vẫn ra một Biểu 2 rỗng, bấm Lưu là đè dữ liệu thật bằng ô trống.
+      var loiDoc = kq.filter(function (k) { return k && k.error; })[0];
+      if (loiDoc) {
+        hop.innerHTML = '<div class="hs-loi hien" style="margin:14px 0">Không tải được kế hoạch cải tiến: ' +
+          thoat(loiDoc.error.message || loiDoc.error) + ' — tải lại trang rồi thử lại.</div>';
+        return;
+      }
       var tt = kq[0].data || {}, vd = kq[1].data || [], kh = kq[2].data || [], td = kq[3].data || [], dgtc = kq[4].data || [];
       var oTD = {};
       td.forEach(function (r) { oTD[r.thoi_diem] = r; });
@@ -430,14 +438,25 @@
       may.rpc('dem_nam_du_lieu', { p_nam_hoc: namHoc }),
       may.from('cnqg_tu_danh_gia').select('*').eq('nam_hoc', namHoc),
       may.from('cnqg_bang').select('*').order('ngay_ky', { ascending: false })
-    ]).then(function (kq) {
+    ]).catch(function (e) { return [{ error: e }]; }).then(function (kq) {
+      // Lỗi đọc (RPC hỏng, RLS, mất mạng) thì nói lỗi — trước 24/8/2026 RPC
+      // xep_muc_nha_truong lỗi → xep = {} → in "✖ Chưa đủ điều kiện công nhận"
+      // cho trường đang giữ bằng Mức 2. Khẳng định sai còn tệ hơn báo lỗi.
+      var loiDoc = kq.filter(function (k) { return k && k.error; })[0];
+      if (loiDoc) {
+        hop.innerHTML = '<div class="hs-loi hien" style="margin:14px 0">Không tải được điều kiện công nhận: ' +
+          thoat(loiDoc.error.message || loiDoc.error) + ' — tải lại trang rồi thử lại.</div>';
+        return;
+      }
       var xep = (kq[0].data && kq[0].data[0]) || {};
       var dem = (kq[1].data && kq[1].data[0]) || {};
       var tdg = {};
       (kq[2].data || []).forEach(function (r) { tdg[r.ma_dk] = r; });
       var bang = kq[3].data || [];
 
-      var datC = /Đạt/.test(xep.ket_luan || '') && !/Không/.test(xep.ket_luan || '');
+      // RPC trả về nhưng không có dòng (chưa tự đánh giá năm này) → CHƯA XÉT
+      // (null), không phải "không đạt" (false).
+      var datC = xep.ket_luan ? (/Đạt/.test(xep.ket_luan) && !/Không/.test(xep.ket_luan)) : null;
       var datB = (dem.so_nam_lien_tiep || 0) >= 3;
 
       var DK = [

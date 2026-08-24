@@ -18,6 +18,7 @@
   });
 
   var daNap = false;
+  var DANG_CHAY = null;   // lời hứa của lượt nạp đang chạy dở (nếu có)
 
   // ══════════════════════════════════════════════════════════
   // QUY MÔ TRƯỜNG — số ĐẾM ĐƯỢC thắng số khai bằng tay
@@ -105,7 +106,7 @@
     // lúc đó window.thuLaiSQL đã có; vẫn để đường lùi cho chắc.
     var thuLai = window.thuLaiSQL || function (goi) { return goi(); };
     var daBaoCho = false;
-    return thuLai(function () {
+    var loiHua = thuLai(function () {
       return Promise.all([
       may.from('cau_hinh').select('khoa,gia_tri'),
       may.from('nhom_ho_so').select('id,so_tt,ten,mo_ta,bieu_tuong').order('so_tt'),
@@ -126,7 +127,7 @@
       if (loi.length) {
         console.error('Lỗi nạp dữ liệu:', loi[0].error);
         window.baoTrangThai && window.baoTrangThai('loi',
-          '⚠️ KHÔNG ĐỌC ĐƯỢC DỮ LIỆU CỦA NHÀ TRƯỜNG: ' + loi[0].error.message +
+          '⚠️ KHÔNG ĐỌC ĐƯỢC DỮ LIỆU CỦA NHÀ TRƯỜNG: ' + thoat(loi[0].error.message) +
           ' — <b>những con số đang hiện KHÔNG phải của trường</b>. Thầy cô tải lại trang.');
         daNap = false;
 
@@ -256,6 +257,40 @@
       window.DS_TAI_KHOAN = []; window.HOP = {}; window.HS_BAN_GHI = {};
       try { window.veTatCa && window.veTatCa(); } catch (e2) { /* băng đỏ vẫn còn */ }
     });
+    DANG_CHAY = loiHua.then(function () { DANG_CHAY = null; }, function () { DANG_CHAY = null; });
+    return loiHua;
+  };
+
+  // NẠP LẠI SAU KHI MÁY CHỦ ĐỔI DANH MỤC HÀNG LOẠT (chuyển mô hình đảng, sinh
+  // chi bộ theo điểm trường…). Cờ daNap chặn napDuLieuThat chạy lần hai — đúng
+  // cho lúc đăng nhập, nhưng nghĩa là mọi thẻ Quản trị gọi hàm RPC đổi tên hộp
+  // xong thì kho hồ sơ trên màn vẫn là bản cũ cho tới khi tải lại trang
+  // (link-cbgv.js đã phải dặn "Ctrl+F5"). Hàm này hạ cờ rồi nạp lại trọn bộ:
+  // cấu hình, bộ phận, hộp, hồ sơ, tiêu chí, danh bạ — đúng những gì một lần
+  // tải lại trang làm, nhưng không mất chỗ đang đứng.
+  // Đang có lượt nạp chạy dở thì trả về chính lượt đó, không mở lượt thứ hai
+  // chạy song song rồi hai lượt thay nhau ghi đè window.HO_SO.
+  // ⚠️ Đang có lượt chạy dở thì KHÔNG trả về chính lượt đó: lượt ấy có thể đã
+  // gửi truy vấn từ TRƯỚC khi RPC đổi danh mục xong — nơi gọi nhận nó về, coi
+  // như "đã nạp lại" mà dữ liệu là bản trước RPC, tên hộp trên màn vẫn cũ và
+  // không ai nạp nữa. Nối một lượt MỚI chạy sau khi lượt cũ về; các lần gọi
+  // trong lúc chờ dùng chung lượt nối ấy, không đẻ thêm.
+  var CHO_NAP_LAI = null;
+  window.napLaiDuLieuThat = function () {
+    if (DANG_CHAY) {
+      if (!CHO_NAP_LAI) {
+        CHO_NAP_LAI = DANG_CHAY.then(function () {
+          CHO_NAP_LAI = null;
+          if (!window.MAY_CHU) return;
+          daNap = false;
+          return window.napDuLieuThat() || Promise.resolve();
+        });
+      }
+      return CHO_NAP_LAI;
+    }
+    if (!window.MAY_CHU) return Promise.resolve();
+    daNap = false;
+    return window.napDuLieuThat() || Promise.resolve();
   };
 
   // Chữ tắt trên huy hiệu: chữ đầu của HỌ + chữ đầu của TÊN — "Nguyễn Phúc Lộc"

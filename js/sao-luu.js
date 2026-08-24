@@ -189,9 +189,39 @@
 
     function xong() {
       goi.tong_dong = tongDong;
-      taiVeMay(JSON.stringify(goi, null, 1), tenTep('json'));
+      // RLS không báo lỗi, chỉ lặng lẽ trả 0 dòng — tài khoản không đủ quyền
+      // thì mọi bảng đều "đọc được" mà rỗng, và trước đây màn này vẫn ✅ như
+      // thường. Bản sao lưu rỗng nguy hiểm hơn không có bản nào: đến ngày cần
+      // mới biết trong tệp không có gì. Bắt bằng các bảng KHÔNG THỂ rỗng ở
+      // một trường đang chạy (cấu hình, danh mục hộp, tài khoản, tiêu chí).
+      var bangPhaiCo = ['cau_hinh', 'nhom_ho_so', 'ho_so', 'nguoi_dung', 'tieu_chi'];
+      // Bảng bắt buộc mà ĐỌC LỖI (mạng đứt giữa chừng…) nguy hiểm y như rỗng:
+      // nó nằm ở goi.thieu chứ không nằm trong goi.bang, để lọt là tệp thiếu
+      // cấu hình/tài khoản vẫn ✅ kèm lời trấn an "bình thường".
+      var loiDoc = goi.thieu.filter(function (t) {
+        return bangPhaiCo.indexOf(t.bang) >= 0;
+      });
+      var rong = bangPhaiCo.filter(function (b) {
+        return goi.bang[b] ? !goi.bang[b].length : false;
+      });
       nut.disabled = false;
       nut.textContent = '💾 Tải bản sao lưu';
+      if (loiDoc.length || rong.length) {
+        // KHÔNG tải tệp về: một tệp rỗng nằm trong thư mục "Sao lưu hệ thống"
+        // trông y như bản thật, đến ngày cần phục hồi mới vỡ lẽ.
+        var lyDo = loiDoc.length
+          ? 'Một phần luôn phải có (như cấu hình trường, tài khoản) bị <b>lỗi khi đọc</b> — ' +
+            'thường do mạng chập chờn giữa chừng. Thầy cô bấm tải lại lần nữa.'
+          : 'Máy chủ trả về 0 dòng ở những phần luôn phải có (như cấu hình trường, danh mục hồ sơ). ' +
+            'Hoặc tài khoản của thầy cô không đủ quyền đọc toàn bộ dữ liệu — việc sao lưu nên do ' +
+            'Hiệu trưởng hoặc người phụ trách hệ thống làm; hoặc kho dữ liệu của trường chưa cài ' +
+            'xong phần danh mục.';
+        tt.innerHTML = '<div class="hd-kiem do"><b>⚠️ Chưa tải — bản sao lưu bị THIẾU dữ liệu.</b><br>' +
+          lyDo + ' Chưa có tệp nào được tải về máy.</div>';
+        if (window.notify) window.notify('⚠️ Bản sao lưu thiếu dữ liệu — chưa tải tệp.');
+        return;
+      }
+      taiVeMay(JSON.stringify(goi, null, 1), tenTep('json'));
       // Phần "thiếu" chỉ hiện cho người biết việc, và nói rõ là KHÔNG SAO —
       // không thì thầy cô thấy danh sách tên bảng lạ hoắc lại tưởng hỏng.
       var canhBaoThieu = goi.thieu.length
@@ -239,6 +269,14 @@
     'tieu_chuan', 'tieu_chi', 'noi_ham', 'mon_hoc', 'nl_pc_tieu_chi',
     'lop_hoc', 'hoc_sinh', 'hoc_sinh_lop', 'mon_hoc_khoi',
     'lich_tuan', 'ktnb_dot', 'hoi_dong_tdg', 'khct_thong_tin', 'cnqg_bang',
+    // Ba bảng cha bị SÓT (rà soát 24/8/2026): cong_viec (mau_id → cong_viec_mau),
+    // thong_bao_nhan (→ thong_bao), gv_vang (de_xuat_id → de_xuat). Không khai
+    // thì con rơi vào nhóm "còn lại" xếp ABC — 'cong_viec' đứng TRƯỚC
+    // 'cong_viec_mau' — mà SQL Editor chạy cả tệp trong MỘT giao dịch: lỗi
+    // khoá ngoại đầu tiên là rollback toàn bộ, lời nhắc "chạy lại lần 2" vô
+    // hiệu. Danh sách này lấy từ `grep references` trên sql/*.sql — thêm bảng
+    // có khoá ngoại mới thì thêm cha vào đây.
+    'cong_viec_mau', 'thong_bao', 'de_xuat',
     // to_dbcl phải đứng trước thanh_vien_to_dbcl. Không khai ở đây thì cả hai
     // rơi vào nhóm "còn lại" xếp theo bảng chữ cái — mà 'thanh_vien_to_dbcl'
     // đứng TRƯỚC 'to_dbcl', nên phục hồi là gãy khoá ngoại ngay bảng đầu.
@@ -276,8 +314,15 @@
       '-- An toàn: mọi lệnh đều "on conflict do nothing" — CHỈ chèn lại dòng đã',
       '-- mất, KHÔNG sửa và KHÔNG xoá dòng đang có. Chạy lại nhiều lần vô hại.',
       '--',
-      '-- Gặp lỗi khoá ngoại ở vài dòng: chạy lại tệp này LẦN THỨ HAI — lần đầu',
-      '-- đã chèn xong bảng cha nên lần sau các dòng đó vào được.',
+      '-- ⚠️ SQL Editor chạy CẢ TỆP TRONG MỘT GIAO DỊCH: gặp một lỗi là KHÔNG dòng',
+      '-- nào được chèn (rollback toàn bộ). Bảng cha đã xếp trước bảng con nên',
+      '-- bình thường không lỗi khoá ngoại. Nếu vẫn báo lỗi, đọc tên bảng trong',
+      '-- lời báo, sửa/bỏ đoạn đó rồi chạy lại — đừng chạy lại y nguyên.',
+      '--',
+      '-- ⚠️ Tệp này phục hồi vào CÙNG dự án Supabase (dữ liệu bị xoá nhầm).',
+      '-- Sang dự án MỚI thì CHƯA phục hồi trọn được: nguoi_dung.id trỏ tới',
+      '-- auth.users, mà tài khoản Google ở dự án mới mang id khác. Các dòng',
+      '-- nguoi_dung được bọc riêng để chỉ bỏ qua dòng vướng, không đổ cả tệp.',
       '-- ============================================================',
       ''
     ];
@@ -290,11 +335,22 @@
       // `overriding system value` chỉ hợp lệ với bảng có cột tự tăng. Bảng khoá
       // chữ (cau_hinh khoá 'khoa') mà thêm câu đó vào là Postgres báo lỗi.
       var deLen = cot.indexOf('id') >= 0 && typeof dong[0].id === 'number';
+      // nguoi_dung.id → auth.users(id): ở dự án khác (hoặc tài khoản đã bị xoá
+      // khỏi Authentication) là vướng khoá ngoại. Bọc từng dòng trong khối DO
+      // bắt đúng lỗi ấy → chỉ dòng đó bị bỏ (có RAISE NOTICE), các dòng khác
+      // và toàn bộ tệp vẫn chạy. Chỉ bọc bảng này: bọc hết thì tệp phình gấp
+      // ba và che luôn lỗi thật ở bảng khác.
+      var bocFK = ten === 'nguoi_dung';
       dong.forEach(function (d) {
         var gt = cot.map(function (c) { return sqlGiaTri(d[c]); });
-        ra.push('insert into ' + ten + ' (' + cot.join(', ') + ')' +
+        var lenh = 'insert into ' + ten + ' (' + cot.join(', ') + ')' +
           (deLen ? ' overriding system value' : '') +
-          ' values (' + gt.join(', ') + ') on conflict do nothing;');
+          ' values (' + gt.join(', ') + ') on conflict do nothing;';
+        ra.push(bocFK
+          ? 'do $$ begin ' + lenh + ' exception when foreign_key_violation then ' +
+            'raise notice \'bỏ qua nguoi_dung % — không có trong auth.users của dự án này\', ' +
+            sqlGiaTri(d.email || d.id) + '; end $$;'
+          : lenh);
       });
       if (deLen) {
         // Chèn số thứ tự cũ xong mà không kéo bộ đếm lên thì dòng thêm MỚI sau
@@ -372,8 +428,10 @@
           oKq.insertAdjacentHTML('beforeend',
             '<div class="the-thong-bao" style="margin-top:12px">✅ Đã tải tệp lệnh. ' +
             'Mở Supabase → SQL Editor → dán toàn bộ nội dung → Run.' +
-            '<div style="margin-top:6px;font-size:13.2px;color:var(--chu-mo)">Nếu báo lỗi khoá ngoại ở ' +
-            'vài dòng thì chạy lại tệp đó lần thứ hai — lần đầu đã chèn xong bảng cha.</div></div>');
+            '<div style="margin-top:6px;font-size:13.2px;color:var(--chu-mo)">SQL Editor chạy cả tệp trong ' +
+            'MỘT giao dịch: gặp lỗi là không dòng nào được chèn — đọc tên bảng trong lời báo, sửa đoạn đó rồi ' +
+            'chạy lại. Tệp dùng để phục hồi vào <b>cùng dự án</b> Supabase; sang dự án mới thì tài khoản ' +
+            '(nguoi_dung) chưa chuyển được vì gắn với auth.users.</div></div>');
         });
       };
       doc.onerror = function () { oKq.innerHTML = '<b style="color:#a5321f">Không đọc được tệp.</b>'; };

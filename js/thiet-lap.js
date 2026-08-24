@@ -246,7 +246,17 @@
       var dong = vb.split(/\r?\n/).map(function (d) { return d.trim(); }).filter(Boolean);
       if (!dong.length) { o.textContent = 'Chưa dán gì cả.'; return; }
 
-      var ban = [], hong = [];
+      // 🔑 KHÔNG upsert cả bảng nữa (rà soát 24/8/2026). Bản cũ gửi đủ sáu cột
+      //    cho MỌI dòng: ô trống thành null, vai trò trống thành 'giao_vien'
+      //    — với người ĐÃ CÓ trong danh sách thì đó là xoá link Drive vừa gán
+      //    (link-cbgv.js ghi vào đúng cột này) và HẠ VAI TRÒ Ban giám hiệu
+      //    chưa đăng nhập lần đầu (trigger xu_ly_nguoi_dung_moi chép vai trò
+      //    từ đây). Thầy cô dán "Email · Họ tên" theo đúng hướng dẫn "thiếu cột
+      //    nào cứ để trống" là dính. Nay: người MỚI thì thêm đủ cột (trống →
+      //    mặc định); người ĐÃ CÓ thì chỉ cập nhật NHỮNG Ô CÓ CHỮ, ô trống giữ
+      //    nguyên giá trị cũ. Vai trò ghi sai chữ (không có trong DS_VAI_TRO)
+      //    thì BÁO RA chứ không lặng lẽ hạ về Giáo viên (bẫy 63.3(3)).
+      var ban = [], hong = [], vaiTroLa = [];
       dong.forEach(function (d, i) {
         var c = d.split('\t');
         // Dán từ Word hay từ trang web thì có khi ra dấu chấm phẩy thay vì tab
@@ -254,35 +264,97 @@
         var email = String(c[0] || '').trim().toLowerCase();
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { hong.push('dòng ' + (i + 1) + ': "' + d.slice(0, 30) + '"'); return; }
         var vt = String(c[4] || '').trim();
-        if (DS_VAI_TRO.indexOf(vt) < 0) vt = 'giao_vien';
-        ban.push({
-          email: email,
-          ho_ten: String(c[1] || '').trim() || null,
-          chuc_vu: String(c[2] || '').trim() || null,
-          to_chuyen_mon: String(c[3] || '').trim() || null,
-          vai_tro: vt,
-          link_drive: String(c[5] || '').trim() || null
-        });
+        if (vt && DS_VAI_TRO.indexOf(vt) < 0) {
+          // Chấp nhận cả chữ tiếng Việt như trên màn hình ("Ban giám hiệu"…)
+          var khop = DS_VAI_TRO.filter(function (v) {
+            return String(TEN_VAI_TRO[v] || '').toLowerCase() === vt.toLowerCase();
+          })[0];
+          if (khop) vt = khop;
+          else { vaiTroLa.push('dòng ' + (i + 1) + ': "' + vt + '"'); vt = ''; }
+        }
+        var b = { email: email };
+        var hoTen = String(c[1] || '').trim(), chucVu = String(c[2] || '').trim(),
+            to = String(c[3] || '').trim(), link = String(c[5] || '').trim();
+        if (hoTen) b.ho_ten = hoTen;
+        if (chucVu) b.chuc_vu = chucVu;
+        if (to) b.to_chuyen_mon = to;
+        if (vt) b.vai_tro = vt;
+        if (link) b.link_drive = link;
+        ban.push(b);
+      });
+
+      // Hai dòng dán trùng email thì gộp làm một — ô có chữ của dòng SAU đè
+      // dòng trước. Không gộp thì cả hai cùng vào mẻ "người mới" và vướng
+      // unique(email), đổ cả mẻ.
+      var theoEmail = {};
+      ban = ban.filter(function (b) {
+        if (!theoEmail[b.email]) { theoEmail[b.email] = b; return true; }
+        Object.keys(b).forEach(function (k) { theoEmail[b.email][k] = b[k]; });
+        return false;
       });
 
       if (!ban.length) { o.textContent = '❌ Không dòng nào có email hợp lệ.'; return; }
       var nut = this; nut.disabled = true; o.textContent = 'Đang nạp ' + ban.length + ' dòng…';
-      may().from('moi_tai_khoan').upsert(ban, { onConflict: 'email' }).select()
+      var emails = ban.map(function (b) { return b.email; });
+      may().from('moi_tai_khoan').select('email').in('email', emails)
         .then(function (r) {
+          if (r.error) throw r.error;
+          var daCo = {};
+          (r.data || []).forEach(function (x) { daCo[String(x.email).toLowerCase()] = true; });
+          var moi = ban.filter(function (b) { return !daCo[b.email]; })
+            .map(function (b) { return Object.assign({ vai_tro: 'giao_vien' }, b); });
+          var cu = ban.filter(function (b) { return daCo[b.email]; });
+          var viec = [], loaiViec = [];   // 'moi' | 'cu', song song với viec
+          if (moi.length) {
+            // upsert bỏ-qua-trùng thay cho insert trần: giữa lúc SELECT "ai
+            // đã có" và lúc ghi, một quản trị khác có thể vừa chèn cùng email
+            // — insert trần vướng unique(email) là đổ cả mẻ người mới. Dòng
+            // trùng thì DO NOTHING: không đè, không hạ vai trò của ai.
+            viec.push(may().from('moi_tai_khoan')
+              .upsert(moi, { onConflict: 'email', ignoreDuplicates: true }).select('email'));
+            loaiViec.push('moi');
+          }
+          cu.forEach(function (b) {
+            var doi = Object.assign({}, b); delete doi.email;
+            if (!Object.keys(doi).length) return;  // chỉ có email → không có gì để cập nhật
+            viec.push(may().from('moi_tai_khoan').update(doi).eq('email', b.email).select('email'));
+            loaiViec.push('cu');
+          });
+          return Promise.all(viec).then(function (kq) {
+            var loi = kq.filter(function (k) { return k.error; })[0];
+            if (loi) throw loi.error;
+            // Đếm RIÊNG hai loại: RLS có thể cho chèn mà chặn sửa — gộp một
+            // tổng thì "thêm 1 người" che mất "0 dòng cập nhật nào ăn".
+            var ghiMoi = 0, ghiCu = 0, guiCu = 0;
+            kq.forEach(function (k, i) {
+              var n = (k.data || []).length;
+              if (loaiViec[i] === 'moi') ghiMoi += n; else { ghiCu += n; guiCu++; }
+            });
+            return { moi: moi.length, cu: cu.length, ghiMoi: ghiMoi, ghiCu: ghiCu,
+                     guiCu: guiCu, guiDi: viec.length, ghi: ghiMoi + ghiCu };
+          });
+        })
+        .then(function (t) {
           nut.disabled = false;
-          if (r.error) { o.textContent = '❌ ' + r.error.message; return; }
-          if (!r.data || !r.data.length) {
+          if (t.guiDi && !t.ghi) {
             o.textContent = '❌ Máy chủ nhận lệnh nhưng KHÔNG nạp được dòng nào — ' +
               'thường là do tài khoản không đủ quyền sửa danh sách mời. Danh sách chưa đổi.';
             return;
           }
-          bao('Đã nạp ' + r.data.length + ' người vào danh sách mời.' +
+          bao('Đã nạp: thêm mới ' + t.ghiMoi + ' người, cập nhật ' + t.ghiCu + ' người đã có ' +
+            '(chỉ những ô có chữ — ô trống giữ nguyên giá trị cũ).' +
+            (t.guiCu && !t.ghiCu
+              ? '\n\n⚠️ Phần CẬP NHẬT người đã có không ăn vào dòng nào — có thể tài khoản ' +
+                'không đủ quyền sửa; thông tin người cũ chưa đổi.'
+              : '') +
+            (vaiTroLa.length ? '\n\n⚠️ ' + vaiTroLa.length + ' dòng ghi vai trò không nhận ra, đã GIỮ NGUYÊN vai trò ' +
+              '(người mới thì là Giáo viên):\n' + vaiTroLa.join('\n') : '') +
             (hong.length ? '\n\nBỏ qua ' + hong.length + ' dòng không có email hợp lệ:\n' + hong.join('\n') : ''));
           veDanhSachMoi(document.getElementById('qt-than'));
         })
         .catch(function (e) {
           nut.disabled = false;
-          o.textContent = '❌ Không gọi được máy chủ: ' + ((e && e.message) || e);
+          o.textContent = '❌ ' + ((e && e.message) || e);
         });
     });
   }

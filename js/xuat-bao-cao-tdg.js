@@ -73,9 +73,22 @@
     return (typeof CAU_HINH !== 'undefined' && CAU_HINH.TEN_TRUONG) || '';
   }
   function ngayThang() {
-    const d = new Date();
-    return (CAU_HINH.DIA_DANH || '') + ', ngày ' + d.getDate()
-      + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
+    // Thể thức NĐ 30: ngày < 10 và THÁNG 1, 2 thêm số 0 ("ngày 05 tháng 02");
+    // các tháng khác KHÔNG đệm ("tháng 8", không phải "tháng 08") — bẫy số 2
+    // trong CLAUDE.md. Dùng chung với xuat-word.js nếu có, để một luật một chỗ.
+    const W = window.WORD_TIEN_ICH;
+    if (W && W.ngayVN && W.diaDanh) return W.diaDanh() + ', ' + W.ngayVN();
+    const d = new Date(), ng = d.getDate(), th = d.getMonth() + 1;
+    return (CAU_HINH.DIA_DANH || '') + ', ngày ' + (ng < 10 ? '0' + ng : ng)
+      + ' tháng ' + (th < 3 ? '0' + th : th) + ' năm ' + d.getFullYear();
+  }
+
+  // Kẻ dưới tên trường (1/3–1/2 dòng chữ, theo độ dài tên) hoặc dưới tiêu ngữ
+  // (4,4cm) bằng dấu cách gạch chân — xem chú thích ở khối bìa.
+  function keDuoi(ten, laTenTruong) {
+    const W = window.WORD_TIEN_ICH;
+    if (W && W.gach && W.gachTenTruong) return laTenTruong ? W.gachTenTruong(ten || '') : W.gach(4.4, 13);
+    return '<div style="border-top:1px solid #000;width:' + (laTenTruong ? 58 : 50) + '%;margin:2pt auto 0"></div>';
   }
 
   function layDuLieu() {
@@ -671,10 +684,14 @@
       //    Nguyên tắc dự án: thà để TRỐNG cho thấy ngay mà điền, còn hơn ĐOÁN.
       +   chan(CAU_HINH.DON_VI_CHU_QUAN || '')
       +   '<br><b>' + chan(tenTruong()).toUpperCase() + '</b>'
-      +   '<div style="border-top:1px solid #000;width:58%;margin:2pt auto 0"></div></td>'
+      // Đường kẻ dưới tên trường / tiêu ngữ: DÃY DẤU CÁCH GẠCH CHÂN qua
+      // WORD_TIEN_ICH.gach — bẫy số 1 trong CLAUDE.md: <div width:58%> vào
+      // Word thành đoạn văn không có bề rộng, kẻ hết ô. Không có tiện ích
+      // (tệp nạp lẻ) thì mới lùi về <div> cũ.
+      +   keDuoi(tenTruong(), true) + '</td>'
       + '<td style="' + TR + 'text-align:center;font-size:13pt;vertical-align:top">'
       +   '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
-      +   '<div style="border-top:1px solid #000;width:50%;margin:2pt auto 0"></div>'
+      +   keDuoi(null, false)
       +   '<p style="' + TR + 'font-size:13pt;font-style:italic;margin:8pt 0 0">'
       +   ngayThang() + '</p></td></tr></table>'
       + '<p style="' + TR + 'text-align:center;font-size:17pt;font-weight:bold;margin:60pt 0 6pt">BÁO CÁO TỰ ĐÁNH GIÁ</p>'
@@ -721,7 +738,11 @@
       + '<head><meta charset="utf-8"><title>Báo cáo tự đánh giá ' + chan(d.namHoc) + '</title>'
       + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom>'
       + '</w:WordDocument></xml><![endif]-->'
-      + '<style>@page{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}'
+      /* Word BỎ QUA "@page{…}" không tên — phải là section có tên (@page
+         Section1) và bọc thân bài trong <div class="Section1"> thì Word mới
+         dựng đúng khổ và lề (cùng cách với khungWord() trong xuat-word.js;
+         rà soát 24/8/2026 phát hiện tệp này còn khai kiểu cũ). */
+      + '<style>@page Section1{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.Section1{page:Section1}'
       + 'body{font-family:"Times New Roman",serif;font-size:13pt;line-height:1.5;color:#000}'
       + 'table{page-break-inside:auto;border-collapse:collapse}'
       /* Bảng tổng hợp tiêu chí dài hơn một trang; không có dòng này thì sang
@@ -731,9 +752,9 @@
       /* Chữ ký của Hiệu trưởng đứng NGAY SAU Phần IV, trước biểu mẫu số liệu:
          biểu mẫu là phụ lục đính kèm, không phải phần thân báo cáo — đặt sau chữ
          ký mới đúng lối văn bản hành chính. */
-      + '</head><body>' + bia + biaTrong + mucLuc(d)
+      + '</head><body><div class="Section1">' + bia + biaTrong + mucLuc(d)
       + phanI(d, qm) + phanII(d) + phanIII(d) + phanIV(d) + cuoi
-      + bangSoLieu + '</body></html>';
+      + bangSoLieu + '</div></body></html>';
 
     const blob = new Blob(['﻿' + html], { type: 'application/msword' });
     const a = document.createElement('a');

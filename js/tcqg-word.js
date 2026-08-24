@@ -163,7 +163,16 @@
       may.from('khct_van_de').select('*').eq('nam_hoc', namHoc).order('so_tt'),
       may.from('ke_hoach_cai_tien').select('*').eq('nam_hoc', namHoc).order('so_tt'),
       may.from('khct_theo_doi').select('*').eq('nam_hoc', namHoc)
-    ]).then(function (kq) {
+    ]).catch(function (e) { return [{ error: e }]; }).then(function (kq) {
+      // Đọc lỗi (mất mạng, RLS, cột chưa có) thì KHÔNG tải tệp: trước 24/8/2026
+      // vẫn tải một Biểu 2 trống rồi báo "Đã tải Biểu 2: 0 vấn đề" — người
+      // đọc tưởng trường chưa nhập gì.
+      var loi = kq.filter(function (k) { return k && k.error; })[0];
+      if (loi) {
+        window.notify('Không đọc được dữ liệu kế hoạch cải tiến nên chưa xuất Biểu 2: ' +
+          (loi.error.message || loi.error));
+        return;
+      }
       var tt = kq[0].data || {}, vd = kq[1].data || [], kh = kq[2].data || [], td = kq[3].data || [];
       var oTD = {};
       td.forEach(function (r) { oTD[r.thoi_diem] = r; });
@@ -173,7 +182,10 @@
       // kẻ dựng bằng bảng đo bằng cm để Word không kéo dài hết ô).
       var theThuc = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
         '<td style="border:none;padding:0;width:' + W().O_TRAI + '%;text-align:center;vertical-align:top;font-size:12pt">' +
-        chan(W().cauHinh('CO_QUAN_QUAN_LY').toUpperCase()) + '<br>' +
+        // Ô trái là CƠ QUAN CHỦ QUẢN (UBND xã) — cùng khoá với theThuc() của
+        // xuat-word.js và bìa Báo cáo TĐG. Trước 24/8/2026 in CO_QUAN_QUAN_LY
+        // (Sở) — lệch với mọi bản Word khác của cùng trường.
+        chan(W().cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br>' +
         '<b>' + chan(W().cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
         W().gachTenTruong(W().cauHinh('TEN_TRUONG')) +
         // 'THDL' = Tiểu Học Diễn Liên — chữ tắt của MỘT trường, không được làm

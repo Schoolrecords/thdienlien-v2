@@ -100,10 +100,26 @@
         if (r[1].error) throw r[1].error;
         BO_PHAN = r[1].data || [];
         veLai();
+        veNeuDangMo();
       })
       .catch(function (e) {
         DANG_TAI = false; LOI = e.message || String(e); veLai();
+        veNeuDangMo();
       });
+  }
+
+  // Lượt nạp NGẦM (lamTuoiKho của thẻ khác gọi, callback không vẽ) về đúng
+  // lúc người dùng đang mở thẻ này: nap() đặt DA_NAP = true NGAY nên ve() đã
+  // bày "chưa có đầu hồ sơ nào" từ DS rỗng — dữ liệu về mà không vẽ lại thì
+  // màn cứ sai cho tới khi bấm lại thẻ. Vẽ lại, TRỪ khi đang gõ dở một ô
+  // trong thẻ (dựng lại innerHTML là mất chữ và con trỏ).
+  function veNeuDangMo() {
+    var than = document.getElementById('qt-than');
+    if (!than || !dangMoTheNay()) return;
+    var act = document.activeElement;
+    if (act && than.contains(act) &&
+        (act.tagName === 'INPUT' || act.tagName === 'TEXTAREA' || act.tagName === 'SELECT')) return;
+    ve(than);
   }
 
   function tenHop(id) {
@@ -113,19 +129,39 @@
 
   // ══════════ VẼ ══════════
   function ve(hop) {
-    if (!DA_NAP) { nap(function () { ve(hop); }, true); return; }
+    if (!DA_NAP) {
+      // 🔴 KHÔNG GIỮ THAM CHIẾU `hop` QUA LƯỢT CHỜ MÁY CHỦ. quan-tri.js dựng
+      //    lại toàn bộ #qt-than mỗi lần bấm thẻ (vung.innerHTML = …): thầy cô
+      //    mở thẻ này, chờ nửa giây thấy lâu, bấm sang thẻ khác rồi bấm lại —
+      //    lần bấm lại tạo #qt-than MỚI và vẽ "Đang tải…" vào đó, còn dữ liệu
+      //    về thì vẽ vào phần tử CŨ đã bị gỡ khỏi trang. Kết quả: kẹt "Đang
+      //    tải danh mục…" mãi, dù dữ liệu đã về từ lâu. Lúc phản hồi về phải
+      //    tra lại phần tử theo id; chỉ khi thẻ được vẽ vào một hộp khác
+      //    (không phải #qt-than) mà hộp ấy còn trên trang thì mới dùng `hop`.
+      nap(function () {
+        var than = document.getElementById('qt-than');
+        if (than && dangMoTheNay()) ve(than);
+        else if (hop.isConnected) ve(hop);
+      }, true);
+      return;
+    }
     if (DANG_TAI) { hop.innerHTML = '<div class="the-thong-bao">Đang tải danh mục…</div>'; return; }
 
     if (LOI === 'chua_ket_noi') {
       hop.innerHTML = '<div class="the-thong-bao" style="text-align:center;padding:24px">' +
         '<p><b>Bản xem thử chưa nối cơ sở dữ liệu.</b></p></div>';
+      DA_NAP = false;   // nối được sau thì lần mở thẻ tới đọc lại
       return;
     }
     if (LOI) {
       hop.innerHTML = '<div class="hd-kiem do"><b>Chưa mở được danh mục.</b><br>' +
         'Nếu đây là lần đầu dùng mục này, nhà trường cần cài đặt bổ sung một lần ' +
-        '(tệp <code>sql/49</code>) — báo người phụ trách hệ thống.' +
+        '(tệp <code>sql/49</code>) — báo người phụ trách hệ thống. ' +
+        'Nếu chỉ là mất mạng, bấm lại thẻ này để đọc lại.' +
         '<div style="margin-top:6px;font-size:13px;opacity:.8">' + thoat(LOI) + '</div></div>';
+      // Hạ cờ để lần mở thẻ tới nạp lại. Không hạ thì đứt mạng một lần là màn
+      // này chết tới khi tải lại trang — trong khi lỗi có thể đã qua.
+      DA_NAP = false;
       return;
     }
 
@@ -235,6 +271,11 @@
       '</div></div>';
   }
 
+  // Ô sửa TẠI CHỖ trong bảng mang lớp `dm-o`, còn khối "Thêm một đầu hồ sơ" và
+  // các ô thêm hộp / bộ phận mang `dm-o-nhap` — hai lớp CỐ Ý khác nhau, không
+  // phải sót hậu tố. `.dm-o-nhap` là khuôn to (đệm 10px, bo 10px) cho biểu
+  // mẫu; nhét vào ô bảng `.nho` thì mỗi dòng cao gấp rưỡi. `.dm-o` là khuôn
+  // nhỏ vừa ô bảng, luật nằm cạnh `.dm-o-nhap` trong style.css.
   function bangDanhMuc(ds) {
     if (!ds.length) {
       return '<div class="the-thong-bao" style="text-align:center;padding:22px">' +

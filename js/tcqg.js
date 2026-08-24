@@ -4,7 +4,8 @@
 // Nguyên tắc giữ nguyên từ bản gốc:
 //  · Người chấm 2 nút Đạt/Không đạt từng mức — máy KHÔNG suy mức từ nội hàm
 //  · Khóa tuần tự: chưa đạt Mức 1 thì không chấm Mức 2
-//  · Hàng đợi ghi (2 lệnh không chen nhau); upsert ĐỦ CỘT; đếm dòng sau ghi
+//  · Hàng đợi ghi (2 lệnh không chen nhau); CHỈ ghi cột vừa đổi (ghiMotDong);
+//    đếm dòng sau ghi — bản gốc upsert đủ cột, đã bỏ vì hai người đè nhau
 //  · Không re-render khi đang gõ — đếm lại chỉ vá tại chỗ
 // du-lieu-sql.js gọi window.khoiDongTCQG() sau khi đăng nhập + nạp kho hồ sơ.
 // ============================================================
@@ -14,7 +15,12 @@
   var $ = function (s) { return document.querySelector(s); };
   var thoat = function (s) { return window.thoatHTML(s); };
 
-  var NAM = '';            // năm học đang xem
+  var NAM = '';            // năm học người dùng CHỌN ở ô lọc
+  // Năm học của dữ liệu ĐANG HIỂN THỊ. Khác NAM trong khoảng từ lúc đổi ô
+  // chọn năm đến lúc dữ liệu năm mới về: màn vẫn bày dữ liệu năm cũ, nên mọi
+  // lệnh ghi phải dùng NAM_DL — bấm Đạt trên màn năm cũ mà ghi vào năm mới
+  // là sai lặng lẽ, không ai phát hiện cho tới khi in báo cáo.
+  var NAM_DL = '';
   var TC = [];             // 15 tiêu chí + kết quả chấm
   var NOI_HAM = {};        // 'ma|muc' -> [rows noi_ham]
   var HT_NH = {};          // noi_ham_id -> row tdg_noi_ham
@@ -28,7 +34,10 @@
   var DANG_SUA = false;
   var TAI_HONG = false;
 
-  var COT_BC = [
+  // Là HÀM chứ không phải hằng: hai nhãn "Kiến nghị với …" lấy tên cơ quan từ
+  // CAU_HINH, mà cấu hình trường về SAU khi tệp này nạp — chụp lúc nạp tệp thì
+  // nhãn mãi mãi là chữ chung "cơ quan quản lý ngành". Đọc lúc vẽ mới đúng.
+  function cotBC() { return [
     { nhom: 'Phần I — Thông tin chung', muc: [
       ['nam_thanh_lap', 'Năm thành lập trường', 1],
       ['kt_xh', 'Điều kiện kinh tế - xã hội của địa phương', 0],
@@ -45,7 +54,7 @@
       ['kn_so', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành'), 0],
       ['kn_ubnd', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản'), 0],
       ['kn_khac', 'Kiến nghị khác (nếu có — trống thì báo cáo không in mục này)', 0]] }
-  ];
+  ]; }
   var MUC_DGTC = [
     ['diem_manh', '1. Điểm mạnh nổi bật'],
     ['han_che_nguyen_nhan', '2. Điểm hạn chế trọng tâm và nguyên nhân cốt lõi'],
@@ -65,10 +74,53 @@
 
   // ── Hàng đợi ghi: các lệnh nối đuôi nhau, lệnh lỗi không giết hàng ──
   var HANG_GHI = Promise.resolve();
+  // Đếm lệnh đang xếp hàng/đang bay. Các chỗ "không đổi thì khỏi ghi" phải
+  // hỏi nó: bộ đệm chỉ đổi khi máy chủ TRẢ VỀ, nên "gõ, blur, sửa lại như cũ,
+  // blur trước khi phản hồi về" mà chỉ so bộ đệm là lệnh sửa bị nuốt — DB giữ
+  // bản nhầm, màn hiện bản đúng, không báo gì. Đang có lệnh bay thì cứ ghi:
+  // thừa một lệnh cùng giá trị vô hại, nuốt một lệnh sửa thì không.
+  var DEM_CHO = 0;
+  function dangGhiDo() { return DEM_CHO > 0; }
   function xepHang(viec) {
+    DEM_CHO++;
+    var giam = function () { DEM_CHO--; };
     var lui = HANG_GHI.then(viec, viec);
-    HANG_GHI = lui.then(function () {}, function () {});
+    HANG_GHI = lui.then(giam, giam);
     return lui;
+  }
+
+  // ── Ghi MỘT dòng, CHỈ những cột vừa đổi ──
+  // Dòng đã có (biết id / khoá) → update đúng cột đó. Dòng chưa có → upsert
+  // lần đầu chỉ với cột khoá + cột đổi (cột còn lại có default hoặc null).
+  // Tuyệt đối KHÔNG gửi lại cả bản ghi lấy từ bản chụp lúc mở trang: hai
+  // người cùng sửa thì người bấm sau đè bản chụp cũ lên bài của người trước,
+  // mà cả hai đều thấy "✓ đã lưu".
+  //   dieuKien: {id: 5} hoặc {nam_hoc: '…'} — null nếu dòng chưa có
+  //   khoa    : các cột khoá để upsert lần đầu
+  // Trả về dòng máy chủ trả lại (đã qua trigger), hoặc ném lỗi. Ném cả khi
+  // máy chủ KHÔNG trả dòng nào: RLS chặn update thì không báo lỗi mà lặng lẽ
+  // ghi 0 dòng — không bắt ca này thì lại hiện "✓ đã lưu" khi chưa ghi.
+  function ghiMotDong(bang, dieuKien, khoa, thayDoi, onConflict) {
+    var ban = {};
+    Object.keys(thayDoi).forEach(function (k) { ban[k] = thayDoi[k]; });
+    ban.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+    var lenh;
+    if (dieuKien) {
+      lenh = window.MAY_CHU.from(bang).update(ban).match(dieuKien);
+    } else {
+      Object.keys(khoa).forEach(function (k) { ban[k] = khoa[k]; });
+      lenh = window.MAY_CHU.from(bang).upsert(ban, { onConflict: onConflict });
+    }
+    return lenh.select().maybeSingle().then(function (r) {
+      if (r.error) throw r.error;
+      if (!r.data) throw new Error('máy chủ không ghi dòng nào — thầy cô có thể không có quyền, ' +
+        'hoặc dòng đã bị người khác xoá. Tải lại trang rồi thử lại.');
+      return r.data;
+    });
+  }
+  function baoKhongLuu(viec, e) {
+    window.notify('Không lưu được ' + viec + ': ' + ((e && e.message) || e) +
+      ' Nội dung vừa gõ vẫn còn trong ô — chưa được ghi.');
   }
 
   function nhayDaLuu(id) {
@@ -87,14 +139,18 @@
 
   function taiTCQG() {
     var may = window.MAY_CHU;
+    // Ghim năm lúc GỬI. Đổi năm hai lần liền thì hai phản hồi về không theo
+    // thứ tự gửi — phản hồi nào không còn khớp NAM thì bỏ, không vẽ.
+    var namTai = NAM;
     Promise.all([
       may.from('tieu_chi').select('*').order('so_tt'),
       may.from('noi_ham').select('*').order('so_tt'),
-      may.from('tu_danh_gia').select('*').eq('nam_hoc', NAM),
-      may.from('tdg_noi_ham').select('*').eq('nam_hoc', NAM),
-      may.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM),
-      may.from('bao_cao_tdg').select('*').eq('nam_hoc', NAM).maybeSingle()
+      may.from('tu_danh_gia').select('*').eq('nam_hoc', namTai),
+      may.from('tdg_noi_ham').select('*').eq('nam_hoc', namTai),
+      may.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', namTai),
+      may.from('bao_cao_tdg').select('*').eq('nam_hoc', namTai).maybeSingle()
     ]).then(function (kq) {
+      if (namTai !== NAM) return;   // người dùng đã chọn năm khác trong lúc chờ
       var loi = kq.filter(function (r) { return r.error; })[0];
       if (loi) {
         TAI_HONG = true;
@@ -106,11 +162,14 @@
         return;
       }
       TAI_HONG = false;
+      NAM_DL = namTai;
       var tdg = {};
       kq[2].data.forEach(function (r) { tdg[r.tieu_chi_ma] = r; });
       TC = kq[0].data.map(function (t) {
         var r = tdg[t.ma] || {};
         return {
+          // id + nam gắn CHẶT vào dòng: lệnh ghi đọc từ đây, không đọc NAM.
+          id: r.id || null, nam: namTai,
           ma: t.ma, ten: t.ten, tieuChuan: t.tieu_chuan, batBuoc: t.bat_buoc,
           m1: t.muc_1, m2: t.muc_2,
           // Cột của sql/41: tiêu chí có điều kiện khác nhau giữa các địa điểm
@@ -142,7 +201,9 @@
       // trả về lỗi — xem chú thích trong tệp đó.
       veManTCQG();
       if (window.TCQG_CO_SO) {
-        window.TCQG_CO_SO.nap(NAM).then(function (duoc) { if (duoc) veManTCQG(); });
+        window.TCQG_CO_SO.nap(namTai).then(function (duoc) {
+          if (duoc && namTai === NAM) veManTCQG();
+        });
       }
     });
   }
@@ -165,7 +226,7 @@
       mcTheoTC[k].sort(function (a, b) { return a.ma.localeCompare(b.ma, 'vi'); });
     });
     return {
-      namHoc: NAM,
+      namHoc: NAM_DL || NAM,   // năm của dữ liệu đang có, không phải năm vừa chọn
       tieuChi: TC.map(function (t) {
         return { code: t.ma, std: t.tieuChuan, bb: t.batBuoc, name: t.ten,
                  m1: t.m1, m2: t.m2, self: t.self, htM1: t.htM1, htM2: t.htM2 };
@@ -252,7 +313,7 @@
       $('#kd-nut-hd').style.display = '';
       $('#kd-nut-kh').style.display = '';
     }
-    window.veHoiDongTCQG && window.veHoiDongTCQG(NAM);
+    window.veHoiDongTCQG && window.veHoiDongTCQG(NAM_DL || NAM);
   }
 
   function veThanh() {
@@ -600,27 +661,26 @@
   // bản chụp TC nạp lúc mở trang, nên hai người cùng chấm một tiêu chí thì
   // người bấm sau ghi đè bản chụp cũ lên bài của người bấm trước (mất trắng
   // hiện trạng + tụt muc_dat). Hội đồng 7 người ngồi chấm cùng buổi là gặp.
+  // Lấy dòng TC ngay lúc BẤM (ngoài hàng đợi): năm học ghi vào là c.nam — năm
+  // của dữ liệu đang bày trên màn — chứ không phải NAM lúc lệnh tới lượt chạy.
   function luuTDG(ma, thayDoi, sauKhi) {
+    var c = TC.filter(function (t) { return t.ma === ma; })[0];
+    if (!c) return;
     xepHang(function () {
-      var c = TC.filter(function (t) { return t.ma === ma; })[0];
-      var banGhi = {
-        nam_hoc: NAM, tieu_chi_ma: ma,
-        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
-      };
-      Object.keys(thayDoi).forEach(function (k) { banGhi[k] = thayDoi[k]; });
-      return window.MAY_CHU.from('tu_danh_gia')
-        .upsert(banGhi, { onConflict: 'nam_hoc,tieu_chi_ma' }).select().single()
-        .then(function (r) {
-          if (r.error || !r.data) {
-            window.notify('Không lưu được: ' + (r.error ? r.error.message : 'máy chủ không trả dòng nào (kiểm tra quyền).'));
-            return;
-          }
-          c.datM1 = !!r.data.dat_m1; c.datM2 = !!r.data.dat_m2;
-          c.self = r.data.muc_dat || 0;
-          c.htM1 = r.data.hien_trang_m1 || ''; c.htM2 = r.data.hien_trang_m2 || '';
-          c.ghiChu = r.data.ghi_chu || ''; c.capNhatLuc = r.data.cap_nhat_luc;
-          if (sauKhi) sauKhi();
-        });
+      return ghiMotDong('tu_danh_gia',
+        c.id ? { id: c.id } : null,
+        { nam_hoc: c.nam, tieu_chi_ma: ma },
+        thayDoi, 'nam_hoc,tieu_chi_ma'
+      ).then(function (d) {
+        // Cập nhật bộ đệm bằng dòng máy chủ trả về (muc_dat do trigger tính),
+        // không dùng bản chụp cũ.
+        c.id = d.id;
+        c.datM1 = !!d.dat_m1; c.datM2 = !!d.dat_m2;
+        c.self = d.muc_dat || 0;
+        c.htM1 = d.hien_trang_m1 || ''; c.htM2 = d.hien_trang_m2 || '';
+        c.ghiChu = d.ghi_chu || ''; c.capNhatLuc = d.cap_nhat_luc;
+        if (sauKhi) sauKhi();
+      }, function (e) { baoKhongLuu('tiêu chí ' + ma, e); });
     });
   }
 
@@ -642,7 +702,7 @@
   window.tcqgLuuVanXuoi = function (ma, muc, chu) {
     var c = TC.filter(function (t) { return t.ma === ma; })[0];
     var cu = muc === 1 ? c.htM1 : c.htM2;
-    if ((chu || '').trim() === (cu || '').trim()) return;
+    if (!dangGhiDo() && (chu || '').trim() === (cu || '').trim()) return;
     var thayDoi = {};
     thayDoi[muc === 1 ? 'hien_trang_m1' : 'hien_trang_m2'] = chu.trim() || null;
     luuTDG(ma, thayDoi, function () { nhayDaLuu('luu-vx-' + ma + '-' + muc); });
@@ -650,36 +710,38 @@
 
   window.tcqgLuuGhiChu = function (ma, chu) {
     var c = TC.filter(function (t) { return t.ma === ma; })[0];
-    if ((chu || '').trim() === (c.ghiChu || '').trim()) return;
+    if (!dangGhiDo() && (chu || '').trim() === (c.ghiChu || '').trim()) return;
     luuTDG(ma, { ghi_chu: chu.trim() || null }, function () { nhayDaLuu('luu-gc-' + ma); });
   };
 
+  // Trước đây gửi kèm hien_trang + ma_minh_chung lấy từ HT_NH (bản chụp):
+  // người A đang gõ hiện trạng, người B bấm chip minh chứng → lệnh của B mang
+  // hien_trang cũ đè lên đoạn A vừa lưu. Nay chỉ gửi đúng cột đổi.
   function luuNH(id, thayDoi, sauKhi) {
+    var nam = NAM_DL;   // ghim lúc bấm — năm của dữ liệu đang bày
+    // Ghim `cu` ngay lúc gọi, KHÔNG đọc trong hàng đợi: hàng đợi bận mà người
+    // dùng đổi năm thì HT_NH đã bị taiTCQG thay bằng năm khác — cu.id lúc đó
+    // là dòng năm B, nhánh update theo id đè nội dung năm A lên dòng năm B.
+    // Ghim sớm thì hai lệnh liên tiếp cùng nội hàm chỉ thành hai upsert,
+    // onConflict vẫn gộp đúng. (luuTDG đã né đúng bẫy này bằng cách ghim `c`.)
+    var cu = HT_NH[id];
     xepHang(function () {
-      var cu = HT_NH[id] || {};
-      var banGhi = {
-        nam_hoc: NAM, noi_ham_id: id,
-        hien_trang: cu.hien_trang || null,
-        ma_minh_chung: cu.ma_minh_chung || [],
-        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
-      };
-      Object.keys(thayDoi).forEach(function (k) { banGhi[k] = thayDoi[k]; });
-      return window.MAY_CHU.from('tdg_noi_ham')
-        .upsert(banGhi, { onConflict: 'nam_hoc,noi_ham_id' }).select().single()
-        .then(function (r) {
-          if (r.error || !r.data) {
-            window.notify('Không lưu được nội hàm: ' + (r.error ? r.error.message : 'máy chủ không trả dòng nào.'));
-            return;
-          }
-          HT_NH[id] = r.data;
-          if (sauKhi) sauKhi();
-        });
+      return ghiMotDong('tdg_noi_ham',
+        cu && cu.id ? { id: cu.id } : null,
+        { nam_hoc: nam, noi_ham_id: id },
+        thayDoi, 'nam_hoc,noi_ham_id'
+      ).then(function (d) {
+        // Chỉ ghi ngược bộ đệm khi màn vẫn đang bày đúng năm ấy — phản hồi
+        // năm A về sau khi đã chuyển sang năm B mà gán vào là ô nhiễm chéo năm.
+        if (nam === NAM_DL) HT_NH[id] = d;
+        if (sauKhi) sauKhi();
+      }, function (e) { baoKhongLuu('nội hàm', e); });
     });
   }
 
   window.tcqgLuuNoiHam = function (id, chu) {
     var cu = (HT_NH[id] && HT_NH[id].hien_trang) || '';
-    if ((chu || '').trim() === cu.trim()) return;
+    if (!dangGhiDo() && (chu || '').trim() === cu.trim()) return;
     luuNH(id, { hien_trang: chu.trim() || null }, function () {
       nhayDaLuu('luu-nh-' + id);
       var o = document.querySelector('[data-nh-o="' + id + '"]');
@@ -743,23 +805,25 @@
 
   window.tcqgLuuDGTC = function (cot, chu) {
     var r = DGTC[STD] || {};
-    if ((chu || '').trim() === (r[cot] || '').trim()) return;
-    var std = STD;
+    if (!dangGhiDo() && (chu || '').trim() === (r[cot] || '').trim()) return;
+    var std = STD, nam = NAM_DL;
+    var thayDoi = {};
+    thayDoi[cot] = chu.trim() || null;
+    // Bảng này KHÔNG có trigger chấm giờ (sql/05) nên gửi cap_nhat_luc từ đây.
+    thayDoi.cap_nhat_luc = new Date().toISOString();
     xepHang(function () {
-      var banGhi = {
-        nam_hoc: NAM, tieu_chuan: std,
-        diem_manh: r.diem_manh || null, han_che_nguyen_nhan: r.han_che_nguyen_nhan || null,
-        xu_huong_3_nam: r.xu_huong_3_nam || null, van_de_uu_tien: r.van_de_uu_tien || null,
-        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
-      };
-      banGhi[cot] = chu.trim() || null;
-      return window.MAY_CHU.from('danh_gia_tieu_chuan')
-        .upsert(banGhi, { onConflict: 'nam_hoc,tieu_chuan' }).select().single()
-        .then(function (x) {
-          if (x.error || !x.data) { window.notify('Không lưu được: ' + (x.error ? x.error.message : 'không có quyền.')); return; }
-          DGTC[std] = x.data;
-          nhayDaLuu('luu-dgtc');
-        });
+      // Bốn ô văn xuôi của một tiêu chuẩn là bốn cột cùng dòng — chỉ ghi cột
+      // vừa rời khỏi, ba cột kia có thể đang do người khác gõ.
+      return ghiMotDong('danh_gia_tieu_chuan',
+        r.id ? { id: r.id } : null,
+        { nam_hoc: nam, tieu_chuan: std },
+        thayDoi, 'nam_hoc,tieu_chuan'
+      ).then(function (d) {
+        // Chắn chéo năm như luuNH: phản hồi của năm cũ không được gán vào
+        // bộ đệm đang bày năm khác.
+        if (nam === NAM_DL) DGTC[std] = d;
+        nhayDaLuu('luu-dgtc');
+      }, function (e) { baoKhongLuu('đánh giá chung', e); });
     });
   };
 
@@ -773,7 +837,7 @@
       '<b>Các mục viết bằng lời của Báo cáo tự đánh giá (Phần I và Phần III)</b>' +
       '<span class="tdg-luu" id="luu-bc">✓ đã lưu</span><span class="sub-arrow">▶</span></div>' +
       '<div class="sub-body" style="padding:14px 16px">' +
-      COT_BC.map(function (nh) {
+      cotBC().map(function (nh) {
         return '<div class="nhan-nho" style="margin:12px 0 8px">' + nh.nhom + '</div>' +
           nh.muc.map(function (m) {
             return '<div class="hs-o"><label>' + m[1] + '</label>' +
@@ -789,20 +853,25 @@
 
   window.tcqgLuuBC = function (cot, chu) {
     var cu = (BC && BC[cot]) || '';
-    if ((chu || '').trim() === cu.trim()) return;
+    if (!dangGhiDo() && (chu || '').trim() === cu.trim()) return;
+    var nam = NAM_DL;
+    var thayDoi = {};
+    thayDoi[cot] = chu.trim() || null;
     xepHang(function () {
-      var banGhi = BC ? JSON.parse(JSON.stringify(BC)) : {};
-      delete banGhi.cap_nhat_luc;
-      banGhi.nam_hoc = NAM;
-      banGhi[cot] = chu.trim() || null;
-      banGhi.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
-      return window.MAY_CHU.from('bao_cao_tdg')
-        .upsert(banGhi, { onConflict: 'nam_hoc' }).select().single()
-        .then(function (x) {
-          if (x.error || !x.data) { window.notify('Không lưu được: ' + (x.error ? x.error.message : 'không có quyền.')); return; }
-          BC = x.data;
-          nhayDaLuu('luu-bc');
-        });
+      // bao_cao_tdg khoá chính là nam_hoc, không có id → dòng đã có thì
+      // update theo nam_hoc. 13 ô văn xuôi cùng một dòng, chỉ ghi ô vừa rời.
+      // Trước đây sao chép nguyên BC (bản chụp) rồi upsert cả 13 cột.
+      return ghiMotDong('bao_cao_tdg',
+        BC && BC.nam_hoc === nam ? { nam_hoc: nam } : null,
+        { nam_hoc: nam },
+        thayDoi, 'nam_hoc'
+      ).then(function (d) {
+        // Chắn chéo năm (L4): năm ghi vào máy chủ vẫn đúng vì `nam` ghim lúc
+        // blur, nhưng gán dòng năm A đè bộ đệm đang bày năm B là lần blur kế
+        // so nhầm giá trị.
+        if (nam === NAM_DL) BC = d;
+        nhayDaLuu('luu-bc');
+      }, function (e) { baoKhongLuu('mục báo cáo', e); });
     });
   };
 

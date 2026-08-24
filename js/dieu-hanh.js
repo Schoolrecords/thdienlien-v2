@@ -2430,8 +2430,12 @@
       // Lịch tuần ở tệp riêng (js/lich-tuan.js); thiếu tệp thì vẫn còn phần
       // Dạy thay chứ không để màn trắng trơn
       TAB === 'lichtuan' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
-      // 'homnay' và 'daythay' là mã màn CŨ — ai còn giữ trạng thái cũ thì đưa
-      // về đúng màn mới, đừng để lạc sang chỗ không mục nào sáng
+      // Ba nhánh 'diemdanh' / 'daythay' / 'dugio' là NHÁNH CHẾT có chủ ý:
+      // MAN_CU (áp ở đầu veDieuHanh) đã đưa mã màn cũ về màn mới TRƯỚC khi
+      // tới đây, nên TAB không bao giờ còn mang các giá trị này. Giữ lại để
+      // bật lại màn Điểm danh HS / Dự giờ chỉ cần bỏ dòng tương ứng khỏi
+      // MAN_CU và trả mục vào DS_NHOM (mục 11.2, 15/8 sổ dự án). Chú thích cũ
+      // nói "đưa về đúng màn mới" ở đây là sai — việc đó do MAN_CU làm.
       TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       TAB === 'thongbao' ? veThongBao() :

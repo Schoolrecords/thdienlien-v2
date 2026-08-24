@@ -36,6 +36,11 @@
 
   var KQ = null;         // kết quả soi thử của lần chọn tệp gần nhất
   var DANG_GHI = false;
+  // Số lượt soi thử. Đổi năm hai lần liên tiếp là hai lượt đối chiếu cùng
+  // chạy; lượt cũ về SAU sẽ vẽ đè kết quả của lượt mới — bảng nói năm 2025
+  // trong khi ô chọn ghi 2026. Mỗi lượt mang số của mình, về mà số đã lệch
+  // thì bỏ, không vẽ.
+  var LUOT_SOI = 0;
   var thuVien = null;    // Promise nạp SheetJS
 
   // ── SheetJS 930 KB: chỉ tải khi thầy cô thật sự chọn tệp ──
@@ -876,6 +881,22 @@
       veTab(hop);
     });
 
+    // 🔴 ĐỔI NĂM SAU KHI ĐÃ SOI THỬ thì phải soi lại. Bản đầu không bắt sự
+    //    kiện này: thầy cô soi xong, thấy máy nhắc "kiểm lại năm học", đổi ô
+    //    năm rồi bấm Ghi — hộp xác nhận ghi năm mới, nhưng KQ.nam, bảng lớp
+    //    mới, danh sách đổi lớp vẫn là của năm cũ. Đối chiếu một năm, ghi năm
+    //    khác, mà màn hình không nói gì. Nay đổi năm là đối chiếu lại từ đầu
+    //    (lớp và sĩ số mỗi năm mỗi khác); đang ghi dở thì không cho đổi.
+    var oNamChon = document.getElementById('nap-nam');
+    if (oNamChon) oNamChon.addEventListener('change', function () {
+      if (DANG_GHI) {
+        if (KQ && KQ.nam) oNamChon.value = KQ.nam;
+        if (window.notify) window.notify('Đang ghi dở — không đổi năm học lúc này.');
+        return;
+      }
+      if (KQ && KQ.em && KQ.em.length) veSoiThu();
+    });
+
     var oTep = document.getElementById('nap-tep');
     oTep.addEventListener('change', function () {
       var tep = oTep.files && oTep.files[0];
@@ -922,9 +943,13 @@
       return;
     }
     KQ.nam = nam;
+    KQ.soi = null;    // kết quả cũ thuộc năm cũ — xoá ngay, kẻo bamGhi dùng nhầm
     ket.innerHTML = '<div class="the-thong-bao">Đang đối chiếu với dữ liệu đang có…</div>';
 
+    var luot = ++LUOT_SOI, kqCuaLuot = KQ;
     doiChieu(KQ, nam).then(function (soi) {
+      // Đã có lượt soi mới hơn, hoặc tệp đã bị thay / huỷ trong lúc chờ.
+      if (luot !== LUOT_SOI || KQ !== kqCuaLuot) return;
       KQ.soi = soi;
       if (LOAI === 'gv') return veSoiThuGV(ket, soi);
 
@@ -1029,6 +1054,7 @@
         KQ = null; window.veQuanTri();
       });
     }).catch(function (e) {
+      if (luot !== LUOT_SOI || KQ !== kqCuaLuot) return;
       ket.innerHTML = '<div class="hd-kiem do"><b>Không đối chiếu được với máy chủ.</b><br>' +
         thoat((e && e.message) || e) + '<br><br>Chưa có gì được ghi. Kiểm tra mạng rồi chọn lại tệp.</div>';
     });
@@ -1104,6 +1130,16 @@
   function bamGhi() {
     if (DANG_GHI || !KQ || !KQ.soi) return;
     var nam = KQ.nam;
+    // Chốt chặn cuối: năm đã đối chiếu phải TRÙNG năm đang chọn trên ô. Lệch
+    // là có ai đổi ô mà lượt soi lại chưa kịp về (hoặc bị lỗi) — không ghi,
+    // soi lại rồi mới hỏi tiếp. Ghi năm khác năm đã đối chiếu là tạo lớp
+    // thừa và xếp lớp sai năm mà hộp xác nhận vẫn nói đúng số.
+    var oNamHienTai = document.getElementById('nap-nam');
+    if (bo().coNam && oNamHienTai && String(oNamHienTai.value || '').trim() !== String(nam || '')) {
+      if (window.notify) window.notify('Ô năm học đã đổi sau khi soi thử — máy đối chiếu lại rồi mới ghi.');
+      veSoiThu();
+      return;
+    }
     var oDD = document.getElementById('nap-dinh-danh');
     var keDinhDanh = !!(oDD && oDD.checked);
     var tien = document.getElementById('nap-tien');

@@ -365,11 +365,20 @@
         may.from('nguoi_dung').update({ lan_vao_cuoi: new Date().toISOString() }).eq('id', r.data.id).then(function () {});
         // Chờ dữ liệu thật nạp xong mới mở khóa. Nạp lỗi cũng mở — thà vào được
         // trang và thấy báo lỗi còn hơn kẹt mãi ở cổng.
+        // Sự kiện 'dangnhap-xong' (cho các file bê từ Bạch Liêu sang, hocsinh.js,
+        // dieu-hanh.js, dbcl-chi-tieu.js) phát SAU khi nạp xong — rà soát
+        // 24/8/2026: trước đây phát ngay, trước khi bảng `cau_hinh` về, nên
+        // hocsinh.js chọn năm từ CAU_HINH.NAM_HOC lúc còn là giá trị tính cục
+        // bộ; trường khoá tay `nam_hoc` trong cau_hinh thì màn Học sinh mở
+        // nhầm năm rồi băng vàng lại nói năm khác. Nạp lỗi vẫn phát — các màn
+        // đó tự báo lỗi của mình, không nên kẹt vì cổng.
         var dangNap = window.napDuLieuThat && window.napDuLieuThat();
-        if (dangNap && dangNap.then) dangNap.then(moKhoa, moKhoa);
-        else moKhoa();
-        // Cho các file bê nguyên từ Bạch Liêu sang (bach-lieu-shim.js)
-        document.dispatchEvent(new Event('dangnhap-xong'));
+        function xongNap() {
+          moKhoa();
+          document.dispatchEvent(new Event('dangnhap-xong'));
+        }
+        if (dangNap && dangNap.then) dangNap.then(xongNap, xongNap);
+        else xongNap();
         if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
           window.veQuanTri && window.veQuanTri();
         }

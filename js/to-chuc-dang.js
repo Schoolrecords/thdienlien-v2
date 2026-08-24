@@ -55,6 +55,18 @@
           '<br><br>Thường là do chưa chạy <b>sql/54-to-chuc-dang.sql</b> trên cơ sở dữ liệu của trường.</div>';
         return;
       }
+      // 🔴 LỖI ĐỌC HỘP PHẢI NÓI LÀ LỖI ĐỌC. Bản đầu không xét kq[1].error:
+      //    mất mạng giữa chừng hay RLS chặn (tài khoản chưa được duyệt) thì
+      //    data rỗng, và màn hình kết luận "Không thấy hộp H04 — chạy sql/46"
+      //    trong khi hộp vẫn nằm nguyên trong cơ sở dữ liệu. Chẩn đoán sai
+      //    thì người ta đi chạy lại SQL cho một lỗi mạng.
+      if (kq[1].error) {
+        hop.innerHTML = '<div class="hd-kiem do"><b>Chưa đọc được danh mục hộp hồ sơ.</b><br>' +
+          thoat(kq[1].error.message) +
+          '<br><br>Thường là lỗi mạng hoặc tài khoản chưa đủ quyền đọc — kiểm tra rồi bấm lại thẻ này. ' +
+          'KHÔNG phải do thiếu hộp H04.</div>';
+        return;
+      }
       var gt = {};
       (kq[0].data || []).forEach(function (d) { gt[d.khoa] = d.gia_tri || ''; });
       var cheDo = CHE_DO.indexOf(gt.to_chuc_dang) >= 0 ? gt.to_chuc_dang : 'chi_bo';
@@ -64,6 +76,15 @@
       // là chi bộ trực thuộc. Dò theo bộ phận của H04 chứ không theo tên hộp:
       // trường được phép đổi tên hộp, không được phép đổi việc H04 nằm ở đâu.
       var dsHop = (kq[1].data || []);
+      // Không lỗi mà KHÔNG có hộp nào: gần như chắc chắn RLS lọc sạch (RLS
+      // không báo lỗi, chỉ trả rỗng) — kho nào cũng có ít nhất hộp H01.
+      if (!dsHop.length) {
+        hop.innerHTML = '<div class="hd-kiem do"><b>Máy chủ trả về 0 hộp hồ sơ.</b><br>' +
+          'Kho hồ sơ nào cũng có hộp, nên đây thường là tài khoản chưa được cấp quyền đọc danh mục ' +
+          '(RLS trả rỗng chứ không báo lỗi). Kiểm tra vai trò ở thẻ 👥 Tài khoản, ' +
+          'hoặc chạy <b>sql/46-danh-muc-2026.sql</b> nếu kho thật sự còn trống.</div>';
+        return;
+      }
       var h04 = dsHop.filter(function (h) { return h.ma === 'H04'; })[0];
       var chiBo = h04
         ? dsHop.filter(function (h) { return h.nhom_id === h04.nhom_id && h.ma !== 'H04' && h.ma !== 'H05'; })
@@ -183,6 +204,27 @@
   // ══════════════════════════════════════════════════════════
   // SỰ KIỆN
   // ══════════════════════════════════════════════════════════
+
+  // 🔴 SAU KHI MÁY CHỦ ĐỔI DANH MỤC PHẢI NẠP LẠI KHO TRÊN MÀN. Ba hàm RPC ở
+  //    đây (chuyen_mo_hinh_dang, sinh_chi_bo_theo_co_so, them_chi_bo_truc_thuoc)
+  //    đổi tên hộp H04, đổi tên hồ sơ, thêm hộp mới — nhưng window.HOP /
+  //    window.HO_SO / window.BO_PHAN trên trình duyệt vẫn là bản đọc lúc đăng
+  //    nhập. Bản đầu chỉ vẽ lại thẻ này: thẻ nói "đảng bộ", màn Quản lý Hồ sơ
+  //    ngay bên cạnh vẫn ghi "Chi bộ" cho tới khi tải lại trang — chính kiểu
+  //    lỗi mà khối chú thích đầu tệp cảnh báo. Nạp lại trọn bộ qua
+  //    du-lieu-sql.js, và hạ luôn bộ nhớ đệm của thẻ Danh mục hồ sơ.
+  function lamTuoiKho() {
+    if (window.DANH_MUC_SUA && window.DANH_MUC_SUA.nap) {
+      try { window.DANH_MUC_SUA.nap(function () {}); } catch (e) { /* thẻ ấy tự báo lỗi của nó */ }
+    }
+    if (!window.napLaiDuLieuThat) return Promise.resolve();
+    return window.napLaiDuLieuThat().then(null, function (e) {
+      // du-lieu-sql.js đã treo băng đỏ; ở đây chỉ nhắc thêm cho khỏi im lặng.
+      bao('Đã đổi trên máy chủ nhưng chưa nạp lại được kho hồ sơ: ' +
+        ((e && e.message) || e) + '. Tải lại trang để thấy tên mới.');
+    });
+  }
+
   function noiSuKien(hop, cheDoDang) {
     var nutDoi = hop.querySelector('#tcd-doi');
     if (nutDoi) nutDoi.addEventListener('click', function () {
@@ -208,6 +250,7 @@
         if (r.error) { bang.textContent = ''; bao('Không chuyển được: ' + r.error.message); return; }
         bao(r.data || 'Đã chuyển mô hình.');
         window.CAU_HINH.TO_CHUC_DANG = moi;
+        lamTuoiKho();                  // kho hồ sơ trên màn phải đổi tên theo
         ve(hop);                       // vẽ lại để hiện/ẩn khối chi bộ
       }).catch(function (e) {
         nutDoi.disabled = false; bang.textContent = '';
@@ -224,6 +267,7 @@
         nutSinh.disabled = false;
         if (r.error) { bang.textContent = ''; bao('Không sinh được: ' + r.error.message); return; }
         bao(r.data || 'Đã sinh chi bộ.');
+        lamTuoiKho();                  // hộp mới phải xuất hiện ở kho hồ sơ
         ve(hop);
       }).catch(function (e) {
         nutSinh.disabled = false; bang.textContent = '';
@@ -244,6 +288,7 @@
         nutThem.disabled = false;
         if (r.error) { bang.textContent = ''; bao('Không tạo được: ' + r.error.message); return; }
         bao(r.data || 'Đã thêm chi bộ.');
+        lamTuoiKho();
         ve(hop);
       }).catch(function (e) {
         nutThem.disabled = false; bang.textContent = '';

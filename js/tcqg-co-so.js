@@ -28,16 +28,24 @@
   var GHI = {};       // 'tieuChiMa|coSoMa' → bản ghi tdg_co_so
   var LECH = [];      // kết quả hàm tdg_chenh_lech
   var TIEU_CHI = [];  // các tiêu chí có theo_dia_diem (cho bản phụ biểu)
-  var NAM = null;
+  var NAM = null;         // năm học của dữ liệu ĐANG có trong GHI
+  var NAM_YEU_CAU = null; // năm của lần nạp gần nhất — để bỏ phản hồi đến muộn
   var SAN_SANG = false;
 
   function khoa(tcMa, csMa) { return tcMa + '|' + csMa; }
 
+  function bao(viec, e) {
+    var b = window.notify || window.hopHoi || window.alert;
+    b('Không lưu được ' + viec + ': ' + ((e && e.message) || e));
+  }
+
   // ══════════ NẠP ══════════
   // Trả về Promise LUÔN thành công: phần soi địa điểm là lớp thêm, hỏng thì
   // ẩn đi chứ tuyệt đối không được kéo sập cả màn Trường chuẩn Quốc gia.
+  // NAM chỉ đổi khi dữ liệu năm mới ĐÃ về — trong lúc chờ, GHI vẫn là của
+  // năm cũ, đặt NAM = năm mới sớm là mọi lệnh ghi lúc đó ghi nhầm năm.
   function nap(namHoc) {
-    NAM = namHoc;
+    NAM_YEU_CAU = namHoc;
     SAN_SANG = false;
     if (!may()) return Promise.resolve(false);
 
@@ -49,7 +57,9 @@
       // cần tên của MỌI tiêu chí soi địa điểm, không chỉ tiêu chí đang mở.
       may().from('tieu_chi').select('ma, ten, theo_dia_diem').order('so_tt')
     ]).then(function (r) {
+      if (NAM_YEU_CAU !== namHoc) return false;   // đã có lần nạp mới hơn
       if (r[0].error || r[1].error) return false;
+      NAM = namHoc;
       CO_SO = r[0].data || [];
       GHI = {};
       (r[1].data || []).forEach(function (d) { GHI[khoa(d.tieu_chi_ma, d.co_so_ma)] = d; });
@@ -154,28 +164,51 @@
   }
 
   // ══════════ GHI ══════════
-  function luu(tcMa, csMa, thay) {
-    var cu = GHI[khoa(tcMa, csMa)] || {};
-    var ban = {
-      nam_hoc: NAM, tieu_chi_ma: tcMa, co_so_ma: csMa,
-      dat_m1: cu.dat_m1 === undefined ? null : cu.dat_m1,
-      dat_m2: cu.dat_m2 === undefined ? null : cu.dat_m2,
-      hien_trang: cu.hien_trang || null,
-      han_che: cu.han_che || null,
-      cap_nhat_luc: new Date().toISOString()
-    };
-    Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
+  // CHỈ ghi cột vừa đổi. Bản đầu gửi lại cả dat_m1/dat_m2/hien_trang/han_che
+  // lấy từ GHI (bản chụp lúc nạp): hai người cùng soi một địa điểm thì người
+  // bấm sau đè bản chụp cũ lên phần người trước vừa ghi, cả hai đều thấy lưu.
+  // Hàng đợi ghi — cùng khuôn csvc/tcqg: hai lệnh đi song song thì bản thắng
+  // là bản ĐẾN SAU ở máy chủ, không phải bản bấm sau; nối đuôi thì thứ tự về
+  // đúng thứ tự bấm. DEM_CHO cho dedup biết đang có lệnh bay.
+  var HANG_GHI = Promise.resolve(), DEM_CHO = 0;
+  function dangGhiDo() { return DEM_CHO > 0; }
+  function xepHang(viec) {
+    DEM_CHO++;
+    var giam = function () { DEM_CHO--; };
+    var lui = HANG_GHI.then(viec, viec);
+    HANG_GHI = lui.then(giam, giam);
+    return lui;
+  }
 
-    // upsert theo đúng khoá duy nhất của sql/41 — không tự đếm id, không xoá
-    // rồi chèn lại (xoá rồi chèn thì mất luôn phần người khác vừa ghi).
-    return may().from('tdg_co_so')
-      .upsert(ban, { onConflict: 'nam_hoc,tieu_chi_ma,co_so_ma' })
-      .select().maybeSingle()
-      .then(function (r) {
-        if (r.error) throw r.error;
-        if (r.data) GHI[khoa(tcMa, csMa)] = r.data;
-        return r.data;
-      });
+  function luu(tcMa, csMa, thay) {
+    return xepHang(function () { return luuNgay(tcMa, csMa, thay); });
+  }
+  function luuNgay(tcMa, csMa, thay) {
+    var cu = GHI[khoa(tcMa, csMa)];
+    var ban = {};
+    Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
+    // sql/41 không có trigger chấm giờ → gửi từ đây, kèm người sửa.
+    ban.cap_nhat_luc = new Date().toISOString();
+    ban.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+
+    var lenh;
+    if (cu && cu.id) {
+      lenh = may().from('tdg_co_so').update(ban).eq('id', cu.id);
+    } else {
+      // Dòng chưa có: upsert lần đầu theo đúng khoá duy nhất của sql/41 —
+      // không tự đếm id, không xoá rồi chèn lại. Hai người cùng tạo dòng
+      // này một lúc thì upsert gộp lại, mỗi bên chỉ đặt cột của mình.
+      ban.nam_hoc = NAM; ban.tieu_chi_ma = tcMa; ban.co_so_ma = csMa;
+      lenh = may().from('tdg_co_so').upsert(ban, { onConflict: 'nam_hoc,tieu_chi_ma,co_so_ma' });
+    }
+    return lenh.select().maybeSingle().then(function (r) {
+      if (r.error) throw r.error;
+      // RLS chặn update thì không lỗi mà ghi 0 dòng — phải coi là chưa lưu.
+      if (!r.data) throw new Error('máy chủ không ghi dòng nào — có thể thầy cô không có ' +
+        'quyền, hoặc dòng đã bị xoá. Tải lại trang rồi thử lại.');
+      GHI[khoa(tcMa, csMa)] = r.data;
+      return r.data;
+    });
   }
 
   // Nối sự kiện sau mỗi lần vẽ. tcqg.js vẽ lại cả khối nên phải nối lại,
@@ -186,20 +219,54 @@
     var nutW = goc.querySelector('#cs-word');
     if (nutW) nutW.addEventListener('click', xuatPhuBieu);
 
+    // Trạng thái mức đã GỬI mà chưa về — bấm hai lần nhanh cùng nút (định bỏ
+    // chọn) mà đọc GHI thì lần hai thấy trạng thái cũ, tính ra đúng giá trị
+    // vừa gửi → ghi lại true thay vì null, không bỏ chọn được.
+    var MUC_DANG_GUI = {};
+
+    // Vá tại chỗ bốn nút mức của một dòng theo dòng máy chủ trả về — dùng khi
+    // không vẽ lại được cả khối vì người dùng đang gõ ô khác.
+    function vaNutMuc(tc, cs, d) {
+      [['1', d.dat_m1], ['2', d.dat_m2]].forEach(function (m) {
+        var nDat = goc.querySelector('[data-cs-muc="' + tc + '|' + cs + '|' + m[0] + '|1"]');
+        var nKhong = goc.querySelector('[data-cs-muc="' + tc + '|' + cs + '|' + m[0] + '|0"]');
+        if (nDat) nDat.classList.toggle('on', m[1] === true);
+        if (nKhong) nKhong.classList.toggle('on', m[1] === false);
+      });
+    }
+
     Array.prototype.slice.call(goc.querySelectorAll('[data-cs-muc]')).forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-cs-muc').split('|');   // tc|cs|muc|dat
         var thay = {};
         var dat = p[3] === '1';
+        var kk = khoa(p[0], p[1]);
         // Bấm lại đúng nút đang sáng = bỏ chọn, quay về "chưa xét". Không có
-        // đường này thì lỡ tay bấm nhầm là không gỡ ra được.
-        var g = GHI[khoa(p[0], p[1])] || {};
+        // đường này thì lỡ tay bấm nhầm là không gỡ ra được. Trạng thái nền
+        // lấy từ bản ĐÃ GỬI gần nhất nếu còn lệnh đang bay.
+        var g = MUC_DANG_GUI[kk] || GHI[kk] || {};
         var hienTai = p[2] === '1' ? g.dat_m1 : g.dat_m2;
         thay[p[2] === '1' ? 'dat_m1' : 'dat_m2'] = (hienTai === dat) ? null : dat;
         // Mức 1 chuyển sang chưa đạt thì mức 2 không còn nghĩa — xoá theo,
         // đúng luật Biểu 1: chỉ xét Mức 2 khi Mức 1 đã đạt.
         if (p[2] === '1' && thay.dat_m1 !== true) thay.dat_m2 = null;
-        luu(p[0], p[1], thay).then(function () { if (veLai) veLai(); });
+        MUC_DANG_GUI[kk] = {
+          dat_m1: 'dat_m1' in thay ? thay.dat_m1 : g.dat_m1,
+          dat_m2: 'dat_m2' in thay ? thay.dat_m2 : g.dat_m2
+        };
+        // Lỗi thì KHÔNG vẽ lại: nút vẫn ở trạng thái cũ, đúng với CSDL.
+        luu(p[0], p[1], thay)
+          .then(function (d) {
+            delete MUC_DANG_GUI[kk];
+            // Đang gõ textarea nào đó thì KHÔNG dựng lại cả khối — mất chữ
+            // và con trỏ. Chỉ vá bốn nút của dòng vừa bấm.
+            var act = document.activeElement;
+            var dangGo = act && goc.contains(act) &&
+              (act.tagName === 'TEXTAREA' || act.tagName === 'INPUT');
+            if (dangGo) vaNutMuc(p[0], p[1], d);
+            else if (veLai) veLai();
+          })
+          .catch(function (e) { delete MUC_DANG_GUI[kk]; bao('mức tại địa điểm', e); });
       });
     });
 
@@ -210,9 +277,20 @@
           var g = GHI[khoa(p[0], p[1])] || {};
           var truong = o === 'ht' ? 'hien_trang' : 'han_che';
           var moi = t.value.trim() || null;
-          if ((g[truong] || null) === moi) return;   // không ghi khi không đổi
+          // Không đổi thì khỏi ghi — trừ khi đang có lệnh bay: lúc đó bộ đệm
+          // chưa phản ánh lệnh vừa gửi, so nó là nuốt lệnh "sửa lại như cũ".
+          if (!dangGhiDo() && (g[truong] || null) === moi) return;
           var thay = {}; thay[truong] = moi;
-          luu(p[0], p[1], thay);
+          luu(p[0], p[1], thay)
+            .then(function () { t.style.borderColor = ''; t.title = ''; })
+            .catch(function (e) {
+              // Trước đây không bắt lỗi: RLS chặn thì chữ vẫn nằm yên trong ô
+              // trông y như đã lưu. Giữ chữ lại (xoá là mất công gõ) nhưng
+              // viền đỏ + báo rõ, để người dùng chép ra trước khi tải lại.
+              t.style.borderColor = 'var(--thieu)';
+              t.title = 'Chưa lưu được — nội dung này chưa có trên máy chủ.';
+              bao('điều kiện tại địa điểm', e);
+            });
         });
       });
     });

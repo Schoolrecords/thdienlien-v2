@@ -713,6 +713,48 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 }
 select.dm-o-nhap { width: auto; min-width: 168px; cursor: pointer; }
 
+/* Ô sửa TẠI CHỖ trong bảng danh mục (tên hồ sơ, tầng, tên hộp, biểu tượng bộ
+   phận) — lớp `dm-o`, khuôn nhỏ vừa ô bảng .nho. Cố ý không dùng .dm-o-nhap:
+   đệm 10px + bo 10px của nó là cho biểu mẫu, vào ô bảng thì dòng cao gấp rưỡi.
+   Trước đây lớp này KHÔNG có luật nào, ô chỉ đẹp nhờ .bang-quan-tri input /
+   select đỡ hộ — ai sửa hai luật bảng đó là ô danh mục vỡ theo mà không biết
+   vì sao. Khai rõ ở đây; luật bảng vẫn thắng về đặc hiệu, nhưng viền khi bấm
+   vào thì theo cùng kiểu với .dm-o-nhap để cả màn nhìn một giọng. */
+.dm-o {
+  font: inherit; font-size: 12.8px; box-sizing: border-box;
+  color: var(--chu); background: #fff;
+  border: 1px solid var(--vien); border-radius: 7px; padding: 6px 8px;
+}
+.dm-o:focus {
+  outline: none; border-color: var(--chinh);
+  box-shadow: 0 0 0 3px rgba(51, 65, 143, .12);
+}
+select.dm-o { cursor: pointer; }
+
+/* Ô nhập trong bảng kiểm kê cơ sở vật chất (js/csvc.js, lớp `csvc-o`) — cùng
+   khuôn với .dm-o vì cũng nằm trong bảng .bang-quan-tri.nho. Trước đây lớp này
+   không có luật nào, ô chỉ đẹp nhờ luật bảng đỡ hộ (đúng bẫy đã ghi ở .dm-o).
+   Chiều rộng do inline style của từng ô đặt (64px cho ô số, 100% cho ghi chú). */
+.csvc-o {
+  font: inherit; font-size: 12.8px; box-sizing: border-box;
+  color: var(--chu); background: #fff;
+  border: 1px solid var(--vien); border-radius: 7px; padding: 6px 8px;
+}
+.csvc-o:hover { border-color: var(--chinh); }
+.csvc-o:focus {
+  outline: none; border-color: var(--chinh);
+  box-shadow: 0 0 0 3px rgba(51, 65, 143, .12);
+}
+select.csvc-o { cursor: pointer; }
+/* Luật chung .bang-quan-tri input (dòng ~1344) đặt min-width: 90px và thắng
+   về đặc hiệu, nên ô số 64px của bảng này bị nong ra 90px — gỡ riêng ở đây. */
+.bang-quan-tri input.csvc-o { min-width: 0; }
+/* Ẩn nút tăng giảm của ô số — cùng lý do với .ct-o: lăn chuột hay bấm nhầm
+   một cái là đổi số phòng học mà không ai để ý. */
+.csvc-o[type="number"]::-webkit-outer-spin-button,
+.csvc-o[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.csvc-o[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
 /* Nhãn nhỏ trên mỗi ô. Chỉ dựa vào placeholder thì gõ xong là mất, người
    dùng nhìn lại không biết ô ấy hỏi gì. */
 .dm-nhan-o {
@@ -3114,7 +3156,9 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tc-tren { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; }
 
 /* -- Khoi lich -- */
-.tc-lich { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; padding-right: 20px; }
+/* gap 14 -> 22: hinh lich va cum ngay thang dinh sat nhau, tach xa them
+   mot chut cho can doi (thay Chung 24/8/2026) */
+.tc-lich { display: flex; align-items: center; gap: 22px; flex: 0 0 auto; padding-right: 20px; }
 @media (min-width: 1000px) { .tc-lich { border-right: 1px solid var(--ke); } }
 .tc-hinh { width: 100px; height: auto; flex: none; }
 .tc-ngay { text-align: center; line-height: 1.12; }
@@ -3208,7 +3252,7 @@ textarea.ht-o { min-height: 116px; display: block; }
      ben, thua mot mang trong ben phai, nhin lech. Thay Chung goi y 23/8. */
   .tc-lich {
     padding-right: 0; border-bottom: 1px solid var(--ke); padding-bottom: 14px;
-    width: 100%; justify-content: center; gap: 18px;
+    width: 100%; justify-content: center; gap: 24px;
   }
   .tc-hinh { width: 79px; }
   .tc-so { font-size: 40px; }

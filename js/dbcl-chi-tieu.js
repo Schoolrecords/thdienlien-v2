@@ -65,25 +65,48 @@
   }
 
   // ══════════ GHI ══════════
-  function luu(dt, ma, thay) {
-    var cu = CT[khoa(dt, ma)] || {};
-    var ban = {
-      nam_hoc: nam(), khoi: null, doi_tuong: dt, ma: ma || null,
-      ti_le_tot:  cu.ti_le_tot  === undefined ? null : cu.ti_le_tot,
-      ti_le_dat:  cu.ti_le_dat  === undefined ? null : cu.ti_le_dat,
-      ti_le_chua: cu.ti_le_chua === undefined ? null : cu.ti_le_chua,
-      diem_tb:    cu.diem_tb    === undefined ? null : cu.diem_tb
-    };
-    Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
+  // CHỈ ghi cột vừa đổi. Bản đầu gửi lại cả bốn tỉ lệ lấy từ CT (bản chụp lúc
+  // nạp): Hiệu trưởng và Phó cùng mở bảng, mỗi người sửa một cột của cùng
+  // một môn thì người rời ô sau đè số cũ lên cột người kia vừa ghi.
+  // Hàng đợi ghi — cùng khuôn csvc/tcqg: hai lệnh cùng cột đi song song thì
+  // bản thắng là bản ĐẾN SAU ở máy chủ, không phải bản bấm sau; nối đuôi thì
+  // thứ tự về đúng thứ tự bấm. DEM_CHO cho dedup biết đang có lệnh bay.
+  var HANG_GHI = Promise.resolve(), DEM_CHO = 0;
+  function dangGhiDo() { return DEM_CHO > 0; }
+  function xepHang(viec) {
+    DEM_CHO++;
+    var giam = function () { DEM_CHO--; };
+    var lui = HANG_GHI.then(viec, viec);
+    HANG_GHI = lui.then(giam, giam);
+    return lui;
+  }
 
-    return may().from('chi_tieu_chat_luong')
-      .upsert(ban, { onConflict: 'nam_hoc,khoi,doi_tuong,ma' })
-      .select().maybeSingle()
-      .then(function (r) {
-        if (r.error) throw r.error;
-        if (r.data) CT[khoa(dt, ma)] = r.data;
-        return r.data;
-      });
+  function luu(dt, ma, thay) {
+    return xepHang(function () { return luuNgay(dt, ma, thay); });
+  }
+  function luuNgay(dt, ma, thay) {
+    var cu = CT[khoa(dt, ma)];
+    var ban = {};
+    Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
+    ban.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+
+    var lenh;
+    if (cu && cu.id) {
+      lenh = may().from('chi_tieu_chat_luong').update(ban).eq('id', cu.id);
+    } else {
+      // Dòng chưa có: upsert lần đầu chỉ với cột khoá + cột đổi, cột kia null.
+      ban.nam_hoc = nam(); ban.khoi = null; ban.doi_tuong = dt; ban.ma = ma || null;
+      lenh = may().from('chi_tieu_chat_luong').upsert(ban, { onConflict: 'nam_hoc,khoi,doi_tuong,ma' });
+    }
+    return lenh.select().maybeSingle().then(function (r) {
+      if (r.error) throw r.error;
+      // RLS chặn update thì không lỗi mà ghi 0 dòng — phải coi là chưa lưu,
+      // nơi gọi sẽ trả ô về số cũ và báo.
+      if (!r.data) throw new Error('máy chủ không ghi dòng nào — có thể thầy cô không có ' +
+        'quyền, hoặc dòng đã bị xoá. Tải lại trang rồi thử lại.');
+      CT[khoa(dt, ma)] = r.data;
+      return r.data;
+    });
   }
 
   // ══════════ VẼ ══════════
@@ -196,7 +219,10 @@
         var moi = chu === '' ? null : Math.round(parseFloat(chu.replace(',', '.')) * 100) / 100;
         if (moi != null && isNaN(moi)) { t.value = c[p[2]] == null ? '' : c[p[2]]; return; }
         var cuGT = c[p[2]] == null ? null : +c[p[2]];
-        if (cuGT === moi) return;                       // không đổi thì không ghi
+        // "Không đổi thì không ghi" — nhưng đang có lệnh bay thì bộ đệm chưa
+        // phản ánh lệnh vừa gửi, cứ ghi cho chắc (thừa một lệnh cùng giá trị
+        // vô hại, nuốt lệnh "sửa lại về số cũ" thì DB giữ số nhầm).
+        if (!dangGhiDo() && cuGT === moi) return;
         var thay = {}; thay[p[2]] = moi;
         luu(p[0], p[1] || null, thay).catch(function (e) {
           window.hopHoi('Không lưu được chỉ tiêu: ' + (e.message || e));

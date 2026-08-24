@@ -186,9 +186,12 @@
       KHOI_MO = null;
       veTatCaHS();
     }).catch(function (err) {
-      // Trả CẢ biến năm LẪN ô chọn về như cũ
+      // Trả CẢ biến năm LẪN ô chọn về như cũ — nhưng lời báo phải nêu năm
+      // VỪA CHỌN HỎNG, không phải năm cũ (trước đây gán o.value = cu rồi mới
+      // đọc o.value nên báo sai năm).
+      var hong = o.value;
       NAM = cu; o.value = cu; o.disabled = false;
-      window.notify('Không đọc được dữ liệu năm ' + thoat(o.value) + ': ' + (err.message || err));
+      window.notify('Không đọc được dữ liệu năm ' + thoat(hong) + ': ' + (err.message || err));
     });
   }
 

@@ -30,18 +30,60 @@
   var LA_EMAIL = /[\w.+-]+@[\w-]+\.[\w.-]+/;
   var LA_LINK  = /https?:\/\/\S+/i;
 
-  var DS = [];        // danh sách moi_tai_khoan
+  var DS = [];        // danh sách NGƯỜI (đã gộp các dòng cùng email_chinh)
   var XEM_TRUOC = null; // kết quả phân tích ô dán, chờ xác nhận
 
+  // Cột email_chinh chỉ có ở trường đã chạy sql/55. Hỏi cột không tồn tại là
+  // PostgREST trả lỗi cho CẢ câu → hỏi lần hai bỏ cột đó ra (cùng cách
+  // docDanhSachMoi trong du-lieu-sql.js), đừng bắt mọi trường di trú trước.
+  var COT = 'email,ho_ten,chuc_vu,vai_tro,link_drive,la_ky_thuat';
   function taiDS() {
-    return window.MAY_CHU.from('moi_tai_khoan')
-      .select('email,ho_ten,chuc_vu,vai_tro,link_drive,la_ky_thuat')
-      .order('ho_ten')
+    var may = window.MAY_CHU;
+    return may.from('moi_tai_khoan').select(COT + ',email_chinh').order('ho_ten')
+      .then(function (r) {
+        if (!r.error) return r;
+        // Chỉ lùi khi đúng là thiếu cột; lỗi khác để nổi lên.
+        if (!/column .* does not exist/i.test(r.error.message || '')) return r;
+        return may.from('moi_tai_khoan').select(COT).order('ho_ten');
+      })
       .then(function (r) {
         if (r.error) throw r.error;
-        DS = (r.data || []).filter(function (m) { return !m.la_ky_thuat; });
+        DS = gopNguoi((r.data || []).filter(function (m) { return !m.la_ky_thuat; }));
         return DS;
       });
+  }
+
+  // 🔴 GỘP DÒNG PHỤ VÀO DÒNG CHÍNH theo email_chinh — CÙNG CÁCH với napCBGV ở
+  //    du-lieu-sql.js. Một người hai địa chỉ (thầy Chung: gmail + nghean.edu.vn)
+  //    là HAI dòng trong moi_tai_khoan. Bản đầu đếm và hiện thành hai người:
+  //    băng đầu thẻ báo "38/39 đã có link" trong khi ai cũng có rồi; tệ hơn,
+  //    hai dòng cùng họ tên bị coi là "trùng tên" nên dán theo tên KHÔNG nhận
+  //    ra chính người đó. Chỉ gộp khi nhà trường KHAI RÕ email_chinh, tuyệt
+  //    đối không đoán theo họ tên (Châu Đình có hai cô Nguyễn Thị Hà).
+  //    Mỗi người mang `emails` — ghi link là ghi cho TẤT CẢ địa chỉ, vì
+  //    napCBGV lấy link của dòng nào có trước, không biết dòng nào là chính.
+  function gopNguoi(ds) {
+    var theoKhoa = {}, ra = [];
+    ds.forEach(function (m) {
+      // `emails` giữ NGUYÊN chữ hoa/thường như trong bảng: chúng được đem đi
+      // ghi bằng `.in('email', …)` mà Postgres so `=` phân biệt hoa thường —
+      // hạ thường ở đây là dòng seed tay có chữ hoa ghi trượt (0 dòng đổi).
+      // Chữ thường CHỈ dùng làm khoá gộp và khoá tra cứu.
+      var email = String(m.email || '').trim();
+      var k = String(m.email_chinh || m.email || '').trim().toLowerCase();
+      var g = theoKhoa[k];
+      if (!g) {
+        g = theoKhoa[k] = { khoa: k, ho_ten: m.ho_ten, chuc_vu: m.chuc_vu, vai_tro: m.vai_tro,
+                            link_drive: m.link_drive || '', emails: [] };
+        ra.push(g);
+      }
+      // Địa chỉ chính đứng đầu danh sách để hiện lên trước.
+      if (email.toLowerCase() === k) g.emails.unshift(email); else g.emails.push(email);
+      if (!g.link_drive) g.link_drive = m.link_drive || '';
+      if (!g.chuc_vu)    g.chuc_vu    = m.chuc_vu;
+      if (!g.ho_ten)     g.ho_ten     = m.ho_ten;
+    });
+    return ra;
   }
 
   // ── Phân tích ô dán: mỗi dòng tìm 1 email (hoặc họ tên) + 1 link ──
@@ -49,7 +91,7 @@
     var khop = [], hong = [];
     var theoEmail = {}, theoTen = {}, tenTrung = {};
     DS.forEach(function (m) {
-      theoEmail[String(m.email || '').toLowerCase()] = m;
+      m.emails.forEach(function (e) { theoEmail[e.toLowerCase()] = m; });
       var t = khongDau(m.ho_ten);
       // 🔴 Hai người TRÙNG HỌ TÊN thì không được khớp theo tên: trước đây dòng
       //    sau đè dòng trước, nên link thư mục của cô này lặng lẽ gán cho cô kia.
@@ -84,8 +126,8 @@
         return;
       }
       // Dòng sau đè dòng trước nếu trùng người
-      khop = khop.filter(function (k) { return k.email !== nguoi.email; });
-      khop.push({ email: nguoi.email, ho_ten: nguoi.ho_ten, link: link, cu: nguoi.link_drive || '' });
+      khop = khop.filter(function (k) { return k.khoa !== nguoi.khoa; });
+      khop.push({ khoa: nguoi.khoa, emails: nguoi.emails, ho_ten: nguoi.ho_ten, link: link, cu: nguoi.link_drive || '' });
     });
 
     return { khop: khop, hong: hong };
@@ -129,9 +171,9 @@
         '<th>Họ và tên</th><th>Chức vụ</th><th>Đường dẫn thư mục Drive</th><th></th>' +
         '</tr></thead><tbody>' +
         DS.map(function (m) {
-          return '<tr data-email="' + thoat(m.email) + '">' +
+          return '<tr data-khoa="' + thoat(m.khoa) + '">' +
             '<td><b>' + thoat(m.ho_ten) + '</b><br><small style="color:var(--chu-mo)">' +
-            thoat(m.email) + '</small></td>' +
+            thoat(m.emails.join(' · ')) + '</small></td>' +
             '<td>' + thoat(m.chuc_vu || '') + '</td>' +
             '<td><input data-link type="url" style="min-width:260px" value="' +
             thoat(m.link_drive || '') + '" placeholder="https://drive.google.com/drive/folders/…"></td>' +
@@ -143,7 +185,7 @@
 
       gan(hop);
     }).catch(function (e) {
-      hop.innerHTML = '<div class="the-thong-bao">Không đọc được danh sách mời: ' + thoat(e.message) + '</div>';
+      hop.innerHTML = '<div class="the-thong-bao">Không đọc được danh sách mời: ' + thoat((e && e.message) || e) + '</div>';
     });
   }
 
@@ -197,14 +239,19 @@
     Array.prototype.slice.call(hop.querySelectorAll('.lc-luu')).forEach(function (nut) {
       nut.addEventListener('click', function () {
         var dong = nut.closest('tr');
-        var email = dong.getAttribute('data-email');
+        var khoa = dong.getAttribute('data-khoa');
+        var nguoi = DS.filter(function (m) { return m.khoa === khoa; })[0];
+        if (!nguoi) { batLoi(new Error('không tìm thấy người này trong danh sách')); return; }
         var link = dong.querySelector('[data-link]').value.trim() || null;
         nut.textContent = '…';
+        // Ghi cho MỌI địa chỉ của người này (xem gopNguoi). RLS chặn thì
+        // update trả 0 dòng mà không lỗi — phải coi data rỗng là thất bại.
         window.MAY_CHU.from('moi_tai_khoan').update({ link_drive: link })
-          .eq('email', email).select()
+          .in('email', nguoi.emails).select()
           .then(function (r) {
-            if (r.error || !r.data.length) throw (r.error || new Error('không dòng nào đổi'));
+            if (r.error || !(r.data || []).length) throw (r.error || new Error('không dòng nào đổi — có thể không đủ quyền'));
             nut.textContent = 'Đã lưu ✓';
+            lamTuoiDanhBa();
             setTimeout(function () { veTab(hop); }, 800);
           })
           .catch(function (e) { nut.textContent = 'Lưu'; batLoi(e); });
@@ -223,25 +270,39 @@
     var lanLuot = canGhi.reduce(function (chuoi, x) {
       return chuoi.then(function () {
         return window.MAY_CHU.from('moi_tai_khoan').update({ link_drive: x.link })
-          .eq('email', x.email).select()
+          .in('email', x.emails).select()
           .then(function (r) {
-            if (r.error || !r.data.length) loi.push(x.ho_ten);
+            if (r.error || !(r.data || []).length) loi.push(x.ho_ten);
             else xong++;
+            nut.textContent = 'Đang ghi… ' + (xong + loi.length) + '/' + canGhi.length;
+          }, function () {
+            // Lời hứa bị từ chối (đứt mạng) — không có r để đọc, ghi nhận lỗi
+            // rồi đi tiếp, đừng để cả chuỗi dừng mà nút kẹt ở "Đang ghi…".
+            loi.push(x.ho_ten);
             nut.textContent = 'Đang ghi… ' + (xong + loi.length) + '/' + canGhi.length;
           });
       });
     }, Promise.resolve());
 
     lanLuot.then(function () {
-      // napDuLieuThat() có cờ chặn chạy lại nên gọi ở đây KHÔNG có tác dụng —
-      // màn Hồ sơ CBGV chỉ hiện nút 📁 sau khi tải lại trang. Nói thẳng ra
-      // thay vì để thầy cô bấm xong rồi thắc mắc sao chưa thấy gì.
       window.notify('Đã ghi ' + xong + ' đường dẫn' +
-        (loi.length ? ' · ' + loi.length + ' dòng lỗi' : '') +
-        '. Tải lại trang (Ctrl+F5) để màn Hồ sơ CBGV hiện nút 📁.');
+        (loi.length ? ' · ' + loi.length + ' dòng lỗi: ' + loi.slice(0, 5).join(', ') +
+          (loi.length > 5 ? '…' : '') : '') + '.');
       XEM_TRUOC = null;
+      lamTuoiDanhBa();
       veTab(hop);
     });
+  }
+
+  // Trước đây phải dặn "Tải lại trang (Ctrl+F5)" vì napDuLieuThat() có cờ chặn
+  // chạy lại. Nay du-lieu-sql.js có napLaiDuLieuThat() — gọi nó để màn Hồ sơ
+  // CBGV hiện nút 📁 ngay. Không có (bản web cũ) thì nhắc như trước.
+  function lamTuoiDanhBa() {
+    if (window.napLaiDuLieuThat) {
+      window.napLaiDuLieuThat().then(null, function () { /* du-lieu-sql.js đã treo băng đỏ */ });
+      return;
+    }
+    window.notify('Tải lại trang (Ctrl+F5) để màn Hồ sơ CBGV hiện nút 📁.');
   }
 
   window.qtTabPhu = window.qtTabPhu || [];

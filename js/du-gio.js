@@ -118,8 +118,34 @@
     }
 
     var may = window.MAY_CHU;
+
+    // Đọc phiếu dự giờ THEO TRANG 1000 dòng. Bản đầu .limit(1000): trường 40
+    // giáo viên × định mức 18 tiết/năm + Ban giám hiệu là hơn 1000 phiếu một
+    // năm học, PostgREST cắt im lặng ở dòng 1000 — bảng tổng hợp đếm THIẾU mà
+    // không báo, cô nào có phiếu cũ nhất bị tính là chưa đủ định mức.
+    // Sắp theo ngày rồi theo id để ranh giới trang ổn định: hai phiếu cùng
+    // ngày mà chỉ sắp theo ngày thì thứ tự giữa hai lần hỏi có thể đảo,
+    // một phiếu rơi vào cả hai trang hoặc rớt khỏi cả hai.
+    function docHetDuGio() {
+      var ra = [], tu = 0;
+      function trang() {
+        return may.from('du_gio').select('*').eq('nam_hoc', nam)
+          .order('ngay', { ascending: false }).order('id', { ascending: false })
+          .range(tu, tu + 999)
+          .then(function (r) {
+            if (r.error) return r;          // trả nguyên để nhánh dưới ném lỗi như cũ
+            var d = r.data || [];
+            ra = ra.concat(d);
+            if (d.length < 1000) return { data: ra };
+            tu += 1000;
+            return trang();
+          });
+      }
+      return trang();
+    }
+
     Promise.all([
-      may.from('du_gio').select('*').eq('nam_hoc', nam).order('ngay', { ascending: false }).limit(1000),
+      docHetDuGio(),
       // Ban giám hiệu đọc bảng gốc (có kết luận, kiến nghị); người khác đọc
       // KHUNG NHÌN đã bỏ hai cột đó — kết luận về một tổ/cá nhân không phải
       // thứ cả trường đọc. Hàng rào thật nằm ở RLS, đây chỉ là chọn nguồn.

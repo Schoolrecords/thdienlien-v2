@@ -86,23 +86,62 @@
       });
   }
 
+  // CHỈ ghi cột vừa đổi. Bản đầu gửi lại cả trang_thai + link_drive + ghi_chu
+  // từ PL (bản chụp lúc nạp): người này đổi trạng thái, người kia dán link cùng
+  // phụ lục thì lệnh sau đè bản chụp cũ lên cột người trước vừa ghi.
+  // Hàng đợi ghi — cùng khuôn csvc/tcqg: hai lệnh cùng CỘT bấm nhanh mà đi
+  // song song thì bản thắng là bản ĐẾN SAU ở máy chủ, không phải bản bấm sau
+  // (đổi trạng thái chua→dang→co hai nhịp nhanh là DB có thể còn 'dang').
+  // Nối đuôi thì thứ tự về đúng thứ tự bấm. DEM_CHO cho dedup biết đang có
+  // lệnh bay — lúc đó bộ đệm chưa phản ánh lệnh vừa gửi, so nó là nuốt lệnh.
+  var HANG_GHI = Promise.resolve(), DEM_CHO = 0;
+  function dangGhiDo() { return DEM_CHO > 0; }
+  function xepHang(viec) {
+    DEM_CHO++;
+    var giam = function () { DEM_CHO--; };
+    var lui = HANG_GHI.then(viec, viec);
+    HANG_GHI = lui.then(giam, giam);
+    return lui;
+  }
+
   function luuPhuLuc(so, thay) {
-    var cu = PL[so] || {};
-    var ban = {
-      nam_hoc: nam(), so: so,
-      trang_thai: cu.trang_thai || 'chua',
-      link_drive: cu.link_drive || null,
-      ghi_chu: cu.ghi_chu || null
-    };
+    return xepHang(function () { return luuPhuLucNgay(so, thay); });
+  }
+  function luuPhuLucNgay(so, thay) {
+    var cu = PL[so];
+    var ban = {};
     Object.keys(thay).forEach(function (k) { ban[k] = thay[k]; });
-    return may().from('phu_luc_dbcl')
-      .upsert(ban, { onConflict: 'nam_hoc,so' })
-      .select().maybeSingle()
-      .then(function (r) {
-        if (r.error) throw r.error;
-        if (r.data) PL[so] = r.data;
-        return r.data;
-      });
+    ban.cap_nhat_boi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+
+    var lenh;
+    if (cu && cu.id) {
+      lenh = may().from('phu_luc_dbcl').update(ban).eq('id', cu.id);
+    } else {
+      // Dòng chưa có: upsert lần đầu với khoá + cột đổi (trang_thai có default).
+      ban.nam_hoc = nam(); ban.so = so;
+      lenh = may().from('phu_luc_dbcl').upsert(ban, { onConflict: 'nam_hoc,so' });
+    }
+    return lenh.select().maybeSingle().then(function (r) {
+      if (r.error) throw r.error;
+      // RLS chặn update thì không lỗi mà ghi 0 dòng — coi là chưa lưu.
+      if (!r.data) throw new Error('máy chủ không ghi dòng nào — có thể thầy cô không có ' +
+        'quyền, hoặc dòng đã bị xoá. Tải lại trang rồi thử lại.');
+      PL[so] = r.data;
+      return r.data;
+    });
+  }
+
+  // Sau khi lưu một ô: nếu người dùng đã Tab sang ô khác trong cùng bảng thì
+  // KHÔNG vẽ lại (vẽ lại là dựng lại ô đang gõ, mất con trỏ); chỉ vá tại chỗ
+  // ô trạng thái. Không ô nào đang gõ thì vẽ lại bình thường cho số đếm đúng.
+  function veLaiNheNhang(goc, veLai, so) {
+    var d = PL[so] || {};
+    var chon = goc.querySelector('[data-pl-tt="' + so + '"]');
+    if (chon) chon.value = d.trang_thai || 'chua';
+    var dangGo = document.activeElement;
+    if (dangGo && dangGo !== goc && goc.contains(dangGo) &&
+        /^(INPUT|SELECT|TEXTAREA)$/.test(dangGo.tagName)) return;
+    veLai();
   }
 
   // ══════════ VẼ ══════════
@@ -286,9 +325,14 @@
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-pl-tt]')).forEach(function (s) {
       s.addEventListener('change', function () {
-        luuPhuLuc(+s.getAttribute('data-pl-tt'), { trang_thai: s.value })
-          .then(function () { veLai(); })
-          .catch(function (e) { window.hopHoi('Không lưu được: ' + (e.message || e)); });
+        var so = +s.getAttribute('data-pl-tt');
+        var cu = (PL[so] || {}).trang_thai || 'chua';
+        luuPhuLuc(so, { trang_thai: s.value })
+          .then(function () { veLaiNheNhang(goc, veLai, so); })
+          .catch(function (e) {
+            s.value = cu;   // trả ô chọn về đúng trạng thái trên máy chủ
+            window.hopHoi('Không lưu được: ' + (e.message || e));
+          });
       });
     });
 
@@ -297,13 +341,13 @@
         var so = +t.getAttribute('data-pl-link');
         var cu = (PL[so] || {}).link_drive || null;
         var moi = t.value.trim() || null;
-        if (cu === moi) return;
+        if (!dangGhiDo() && cu === moi) return;
         // Dán được link nghĩa là hồ sơ đã có — tự chuyển trạng thái, đỡ cho
         // người dùng một thao tác mà ai cũng quên.
         var thay = { link_drive: moi };
         if (moi && (PL[so] || {}).trang_thai !== 'co') thay.trang_thai = 'co';
         luuPhuLuc(so, thay)
-          .then(function () { veLai(); })
+          .then(function () { veLaiNheNhang(goc, veLai, so); })
           .catch(function (e) {
             window.hopHoi('Không lưu được: ' + (e.message || e));
             t.value = cu || '';
