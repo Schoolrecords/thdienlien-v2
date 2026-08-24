@@ -9,41 +9,119 @@
 <!-- ⚠️ TRANG CÔNG KHAI DÙNG CHUNG cho mọi trường — như index.html, KHÔNG được
      nêu tên một trường cụ thể nào (kể cả trong ví dụ). Bản đầy đủ dạng Word để
      gửi Zalo nằm ở repo tài liệu: quan-tri/HUONG-DAN-SU-DUNG-CHO-TRUONG.doc —
-     sửa nội dung thì sửa CẢ HAI cho khớp. -->
+     sửa nội dung thì sửa CẢ HAI cho khớp.
+     Viết lại 24/8/2026: nội dung cập nhật theo app (ô Thời khóa biểu trên trang
+     chủ, danh sách vắng chuyển tự động, màn Sao lưu, dán danh sách mời từ Excel);
+     giao diện hai cột có mục lục dính — bản cũ bó 860px giữa màn hình rộng. -->
 <style>
   * { box-sizing: border-box; margin: 0; }
+  :root {
+    --navy: #062d72; --navy-2: #0b4bb3; --navy-nhat: #eef3fc;
+    --chu: #1c2b46; --chu-mo: #5a6478; --ke: #d3dae8; --nen: #f2f5fa;
+    --xanh: #2c7a39; --xanh-nen: #eef7ef; --vang: #b47708; --vang-nen: #fdf6e7;
+  }
+  html { scroll-behavior: smooth; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-         background: #eef1f6; color: #1c2b46; line-height: 1.6; }
-  .dau { background: #062d72; color: #fff; padding: 18px 16px 16px; }
-  .dau .khung { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
-  .dau img { width: 44px; height: 44px; }
-  .dau h1 { font-size: 1.15rem; line-height: 1.3; }
-  .dau small { opacity: .85; display: block; font-weight: normal; }
-  main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
-  h2 { color: #062d72; font-size: 1.08rem; margin: 26px 0 8px; padding-bottom: 4px;
-       border-bottom: 2px solid #c9d4ea; }
-  h3 { font-size: 1rem; margin: 14px 0 6px; }
-  p, li { margin-bottom: 6px; }
-  ol, ul { padding-left: 22px; margin-bottom: 8px; }
-  table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; background: #fff;
-          font-size: .95rem; }
-  th, td { border: 1px solid #b9c4d8; padding: 7px 9px; text-align: left; vertical-align: top; }
-  th { background: #e3e9f5; }
-  .khung-cuon { overflow-x: auto; }
+         background: var(--nen); color: var(--chu); line-height: 1.65;
+         font-size: 16px; }
+
+  /* ── Đầu trang ── */
+  .dau { background: linear-gradient(120deg, #041f52 0%, var(--navy) 55%, #0a3f9e 100%);
+         color: #fff; padding: 30px 20px 26px; }
+  .dau .khung { max-width: 1160px; margin: 0 auto; display: flex; align-items: center;
+                gap: 18px; flex-wrap: wrap; }
+  .dau img { width: 58px; height: 58px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+  .dau h1 { font-size: 1.5rem; line-height: 1.25; letter-spacing: .01em; }
+  .dau small { opacity: .82; display: block; font-weight: normal; font-size: .98rem;
+               margin-top: 2px; }
+  .dau .nhan-nho { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .dau .hieu { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.28);
+               border-radius: 999px; padding: 4px 13px; font-size: .82rem; white-space: nowrap; }
+
+  /* ── Khung hai cột: mục lục dính + nội dung ── */
+  .trang { max-width: 1160px; margin: 0 auto; padding: 26px 20px 50px;
+           display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 34px;
+           align-items: start; }
+  nav.muc-luc { position: sticky; top: 18px; background: #fff; border: 1px solid var(--ke);
+                border-radius: 12px; padding: 14px 6px 10px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+  nav.muc-luc .tieu { font-size: .78rem; font-weight: 800; letter-spacing: .08em;
+                      color: var(--chu-mo); padding: 0 12px 8px; text-transform: uppercase; }
+  nav.muc-luc a { display: block; padding: 7px 12px; border-radius: 8px; color: var(--chu);
+                  text-decoration: none; font-size: .92rem; line-height: 1.35;
+                  border-left: 3px solid transparent; }
+  nav.muc-luc a:hover { background: var(--navy-nhat); }
+  nav.muc-luc a.on { background: var(--navy-nhat); border-left-color: var(--navy-2);
+                     color: var(--navy); font-weight: 700; }
+  nav.muc-luc .ve { display: block; margin: 10px 12px 4px; text-align: center;
+                    background: var(--navy); color: #fff; padding: 9px 10px;
+                    border-radius: 8px; text-decoration: none; font-size: .9rem; }
+
+  main { min-width: 0; }
+  main > .mo-dau { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
+                   padding: 16px 20px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+
+  /* ── Tiêu đề mục đánh số ── */
+  h2 { display: flex; align-items: center; gap: 12px; color: var(--navy);
+       font-size: 1.22rem; margin: 40px 0 14px; scroll-margin-top: 16px; }
+  h2 .so { flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--navy);
+           color: #fff; font-size: .95rem; display: flex; align-items: center;
+           justify-content: center; box-shadow: 0 2px 5px rgba(6,45,114,.3); }
+  h3 { font-size: 1.02rem; margin: 16px 0 6px; color: var(--navy); }
+  p, li { margin-bottom: 7px; }
+  ol, ul { padding-left: 24px; margin-bottom: 10px; }
+  a { color: var(--navy-2); }
+
+  /* ── Bảng: bọc thẻ trắng bo góc, đầu bảng navy ── */
+  .khung-cuon { overflow-x: auto; background: #fff; border: 1px solid var(--ke);
+                border-radius: 12px; margin: 10px 0 16px;
+                box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  th, td { padding: 10px 14px; text-align: left; vertical-align: top;
+           border-bottom: 1px solid var(--ke); }
+  td + td, th + th { border-left: 1px solid var(--ke); }
+  tr:last-child td { border-bottom: none; }
+  th { background: var(--navy); color: #fff; font-weight: 700; letter-spacing: .01em; }
+  tbody tr:nth-child(even) td, tr:nth-child(odd) td { background: #fff; }
+  table tr:nth-child(even) td { background: #f7f9fd; }
+
   .nut { display: inline-block; border: 1px solid #97a6c4; background: #f0f2f6;
-         padding: 0 6px; border-radius: 4px; white-space: nowrap; font-size: .92em; }
-  .ma { font-family: Consolas, Menlo, monospace; font-size: .95em; background: #edf0f7;
-        padding: 0 4px; border-radius: 3px; }
-  .diemdung { border: 1px solid #2c7a39; background: #eef7ef; border-radius: 8px;
-              padding: 10px 12px; margin: 10px 0; }
-  .luuy { border: 1px solid #8b93a5; background: #f4f5f8; border-radius: 8px;
-          padding: 10px 12px; margin: 10px 0; }
-  .the { background: #fff; border: 1px solid #d3dae8; border-radius: 10px;
-         padding: 12px 14px; margin: 10px 0; }
-  a { color: #0b4bb3; }
-  .ve-cong { display: inline-block; margin-top: 18px; background: #062d72; color: #fff;
-             padding: 10px 18px; border-radius: 8px; text-decoration: none; }
-  footer { text-align: center; color: #5a6478; font-size: .85rem; padding: 0 16px 30px; }
+         padding: 0 7px; border-radius: 5px; white-space: nowrap; font-size: .9em;
+         box-shadow: 0 1px 0 #d8deea; }
+  .ma { font-family: Consolas, Menlo, monospace; font-size: .95em; background: #e9edf6;
+        padding: 1px 6px; border-radius: 4px; }
+
+  /* ── Hộp ghi chú ── */
+  .diemdung, .luuy, .the { border-radius: 12px; padding: 13px 16px; margin: 12px 0;
+                           box-shadow: 0 1px 3px rgba(16,35,70,.05); }
+  .diemdung { border: 1px solid #bcd9c1; border-left: 5px solid var(--xanh);
+              background: var(--xanh-nen); }
+  .luuy { border: 1px solid #e2d3ae; border-left: 5px solid var(--vang);
+          background: var(--vang-nen); }
+  .the { background: #fff; border: 1px solid var(--ke); border-left: 5px solid var(--navy-2); }
+
+  footer { text-align: center; color: var(--chu-mo); font-size: .88rem; padding: 0 16px 34px; }
+
+  /* ── Màn hẹp: một cột, mục lục thành dải nút cuộn ngang ── */
+  @media (max-width: 980px) {
+    body { font-size: 15.5px; }
+    .trang { grid-template-columns: 1fr; gap: 14px; padding: 16px 14px 40px; }
+    nav.muc-luc { position: static; display: flex; overflow-x: auto; gap: 6px;
+                  padding: 10px; border-radius: 10px; -webkit-overflow-scrolling: touch; }
+    nav.muc-luc .tieu, nav.muc-luc .ve { display: none; }
+    nav.muc-luc a { flex: none; border: 1px solid var(--ke); border-left-width: 1px;
+                    border-radius: 999px; padding: 6px 13px; font-size: .86rem; }
+    nav.muc-luc a.on { border-color: var(--navy-2); }
+    .dau { padding: 20px 16px 18px; }
+    .dau h1 { font-size: 1.2rem; }
+    .dau .nhan-nho { display: none; }
+    h2 { font-size: 1.12rem; margin-top: 30px; }
+  }
+  @media print {
+    nav.muc-luc, .ve-cong, .dau .nhan-nho { display: none !important; }
+    .trang { display: block; max-width: none; }
+    body { background: #fff; }
+    .khung-cuon, .diemdung, .luuy, .the, main > .mo-dau { box-shadow: none; }
+  }
 </style>
 </head>
 <body>
@@ -51,35 +129,63 @@
 <div class="dau"><div class="khung">
   <img src="img/he-thong.svg" alt="">
   <h1>Hướng dẫn sử dụng<small>Hệ thống Quản trị số Trường học</small></h1>
+  <div class="nhan-nho">
+    <span class="hieu">🌐 Chạy trên trình duyệt</span>
+    <span class="hieu">💰 Chi phí 0 đồng</span>
+    <span class="hieu">🗓 Cập nhật 8/2026</span>
+  </div>
 </div></div>
+
+<div class="trang">
+
+<nav class="muc-luc" id="muc-luc">
+  <div class="tieu">Trên trang này</div>
+  <a href="#lam-duoc-gi">I. Hệ thống làm được gì</a>
+  <a href="#vao-lan-dau">II. Vào lần đầu bằng mã trường</a>
+  <a href="#tham-quan">III. Tham quan bản xem thử</a>
+  <a href="#dang-ky">IV. Đăng ký sử dụng chính thức</a>
+  <a href="#dang-nhap-that">V. Đăng nhập dùng thật</a>
+  <a href="#nap-du-lieu">VI. Nạp học sinh và đội ngũ</a>
+  <a href="#sao-luu">VII. Sao lưu dữ liệu hằng tháng</a>
+  <a href="#hoi-dap">VIII. Câu hỏi thường gặp</a>
+  <a class="ve" href="./">↩ Về trang đăng nhập</a>
+</nav>
 
 <main>
 
-<p><b>Tài liệu này dành cho:</b> Ban giám hiệu và thầy cô các trường tiểu học muốn xem
-hệ thống, dùng thử với chính tên trường mình và đăng ký sử dụng chính thức.
+<div class="mo-dau">
+<p style="margin-bottom:0"><b>Tài liệu này dành cho:</b> Ban giám hiệu và thầy cô các trường
+tiểu học muốn xem hệ thống, dùng thử với chính tên trường mình và đăng ký sử dụng chính thức.
 Mỗi trường có một <b>mã trường 5 chữ số</b> do người phụ trách hệ thống cấp —
 gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường của mình.</p>
+</div>
 
-<h2>I. Hệ thống làm được gì</h2>
+<h2 id="lam-duoc-gi"><span class="so">I</span>Hệ thống làm được gì</h2>
 <div class="khung-cuon"><table>
-<tr><th style="width:30%">Khối việc</th><th>Nội dung</th></tr>
+<tr><th style="width:26%">Khối việc</th><th>Nội dung</th></tr>
+<tr><td><b>Điều hành nhà trường</b></td><td>Bàn làm việc mỗi sáng của Ban giám hiệu: bảng
+tổng quan hôm nay (CBGV có mặt, học sinh, an toàn từng điểm trường), điểm danh &amp; chấm công,
+báo việc, <b>đề xuất – duyệt</b> (nghỉ phép, công tác, mua sắm… duyệt ngay trên điện thoại),
+giao việc, <b>lịch công tác tuần</b> kèm phân công trực từng điểm trường, thông báo có
+xác nhận đã đọc.</td></tr>
 <tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng điện tử của toàn trường: hồ sơ chia theo
 bộ phận và hộp hồ sơ, mỗi đầu hồ sơ gắn một thư mục Google Drive chứa file minh chứng.
 Danh mục dựng sẵn theo Điều lệ trường tiểu học mới (2026) — nhà trường <b>tự thêm, sửa,
-xoá</b> được cho khớp thực tế trường mình.</td></tr>
-<tr><td><b>Trường chuẩn Quốc gia</b></td><td>Tự đánh giá 4 tiêu chuẩn, 15 tiêu chí, 2 mức độ;
-hội đồng tự đánh giá; tự tổng hợp Biểu 1, Biểu 2 và xuất báo cáo ra Word đúng thể thức
-Nghị định 30/2020/NĐ-CP.</td></tr>
+xoá</b> được cho khớp thực tế trường mình; xuất <b>phiếu giao việc</b> từng hộp ra Word.</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>Tự đánh giá 4 tiêu chuẩn, 15 tiêu chí, 2 mức độ
+theo Thông tư 57; hội đồng tự đánh giá phân công đến từng người; theo dõi <b>điều kiện tại
+từng điểm trường</b> (trường sáp nhập nhiều địa điểm); tự tổng hợp Biểu 1, Biểu 2 và xuất
+báo cáo kèm phụ biểu ra Word đúng thể thức Nghị định 30/2020/NĐ-CP.</td></tr>
 <tr><td><b>Đảm bảo chất lượng</b></td><td>Chu trình PDCA; chỉ tiêu chất lượng theo Thông tư
-27/2020 (có nút chép chỉ tiêu năm trước); màn Cơ sở vật chất theo dõi phòng học, thiết bị
-theo từng điểm trường.</td></tr>
+27/2020 (có nút chép chỉ tiêu năm trước); tổ Đảm bảo chất lượng và các phụ lục minh chứng;
+màn Cơ sở vật chất theo dõi phòng học, thiết bị <b>theo từng điểm trường</b>.</td></tr>
 </table></div>
-<p>Ngoài ra có màn <b>Điều hành</b> (lịch tuần, phân công, dự giờ…), <b>Quản lý học sinh</b>
-theo năm học và từng điểm trường, <b>Hồ sơ CBGV–NV</b>. Mỗi trường một cơ sở dữ liệu
-<b>riêng biệt</b> — trường này không nhìn thấy dữ liệu của trường khác. Đăng nhập bằng
-Gmail sẵn có, việc xác thực do Google thực hiện, dữ liệu cá nhân được bảo vệ theo
-Luật Bảo vệ dữ liệu cá nhân năm 2025. Hệ thống hỗ trợ đầy đủ <b>trường nhiều điểm
-trường sau sáp nhập</b>.</p>
+<p>Ngoài ra có <b>Quản lý học sinh</b> theo năm học và từng điểm trường (kèm quy trình
+<b>lên lớp</b> chuyển cả trường sang năm học mới), <b>Hồ sơ CBGV–NV</b>, <b>Tổ chức đảng</b>.
+Mỗi trường một cơ sở dữ liệu <b>riêng biệt</b> — trường này không nhìn thấy dữ liệu của trường
+khác. Đăng nhập bằng Gmail sẵn có, việc xác thực do Google thực hiện, dữ liệu cá nhân được
+bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025. Hệ thống hỗ trợ đầy đủ <b>trường nhiều
+điểm trường sau sáp nhập</b>.</p>
 
 <div class="the">
 <p style="margin-bottom:4px">🗓️ <b>Kèm miễn phí: App Thời khóa biểu.</b> Trường đăng ký
@@ -88,14 +194,16 @@ sử dụng Quản trị số được dùng <b>miễn phí</b> app Thời khóa
 <li><b>Xếp thời khóa biểu tự động</b> bằng thuật toán tối ưu — khai phân công là máy tự xếp,
 hết cảnh xếp tay cả tuần đầu năm;</li>
 <li>Xếp riêng cho <b>từng phân hiệu, điểm trường</b> của trường sau sáp nhập;</li>
-<li><b>Phân công dạy thay thông minh bằng AI</b>: danh sách thầy cô vắng khai bên Quản trị số
-được <b>chuyển sang tự động</b>, app dựa vào thời khóa biểu tự đề xuất phương án dạy thay
-để Hiệu trưởng duyệt — không phải khai lại, không phải dò tay từng tiết;</li>
-<li>Mở từ nút <span class="nut">🗓️ Thời khóa biểu</span> ngay trong màn Điều hành.</li>
+<li><b>Phân công dạy thay thông minh</b>: danh sách thầy cô vắng khai bên Quản trị số được
+<b>chuyển sang tự động</b> — kể cả khi phải đăng nhập Google giữa chừng cũng không mất —
+app dựa vào thời khóa biểu tự đề xuất phương án dạy thay để Hiệu trưởng duyệt, không phải
+khai lại, không phải dò tay từng tiết;</li>
+<li>Mở từ ô <span class="nut">🗓️ Thời khóa biểu</span> ngay trên <b>trang chủ</b> (và trong
+màn Điều hành khi bố trí dạy thay).</li>
 </ul>
 </div>
 
-<h2>II. Vào hệ thống lần đầu bằng mã trường</h2>
+<h2 id="vao-lan-dau"><span class="so">II</span>Vào hệ thống lần đầu bằng mã trường</h2>
 <ol>
 <li>Mở trình duyệt (máy tính hoặc điện thoại), vào <span class="ma">quantrisotruonghoc.com</span>.</li>
 <li>Ở ô <b>Mã trường</b>, gõ mã <b>5 chữ số</b> của trường mình — mã do người phụ trách
@@ -123,29 +231,31 @@ trên băng vàng.</li>
 <p>Chưa muốn gõ mã? Bấm <span class="nut">👁 Xem thử hệ thống</span> — hệ thống chạy với
 «Trường Tiểu học Minh Họa», một trường không có thật dựng riêng cho việc tham quan.</p>
 
-<h2>III. Tham quan bản xem thử — đi từng màn</h2>
+<h2 id="tham-quan"><span class="so">III</span>Tham quan bản xem thử — đi từng màn</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:26%">Màn</th><th>Xem gì ở đó</th></tr>
-<tr><td><b>Trang chủ</b></td><td>Bảng tổng quan: tổng số đầu hồ sơ, tỉ lệ đã có minh chứng,
-tiến độ từng bộ phận.</td></tr>
-<tr><td><b>Điều hành</b></td><td>Lịch công tác tuần, phân công nhiệm vụ, dự giờ, bảng công;
-nút <span class="nut">🗓️ Thời khóa biểu</span> mở sang app Thời khóa biểu, và khi có người
-vắng thì hiện nút <span class="nut">👨‍🏫 Bố trí dạy thay</span> chuyển sẵn danh sách vắng sang
-app đó.</td></tr>
+<tr><td><b>Trang chủ</b></td><td>Khối lịch hôm nay + dãy số liệu nhanh (CBGV có mặt, học sinh,
+điểm trường an toàn) và ô <span class="nut">🗓️ Thời khóa biểu</span> mở sang app Thời khóa
+biểu; bảng tổng quan hồ sơ: tổng số đầu hồ sơ, tỉ lệ đã có minh chứng, tiến độ từng bộ phận.</td></tr>
+<tr><td><b>Điều hành</b></td><td>Tổng quan hôm nay, điểm danh &amp; chấm công, báo việc,
+đề xuất – duyệt, giao việc, <b>lịch công tác tuần</b> (kèm phân công trực và bố trí
+<b>dạy thay</b> khi có người vắng — danh sách vắng chuyển sẵn sang app Thời khóa biểu),
+thông báo.</td></tr>
 <tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng: bộ phận → hộp hồ sơ → đầu hồ sơ, mỗi đầu
 có nút mở thẳng thư mục Drive; ô tìm kiếm theo tên/mã; màn <b>📋 Danh mục hồ sơ</b> cho
 trường tự thêm/sửa/xoá; xuất <b>phiếu giao việc</b> từng hộp ra Word đúng thể thức, in ký
 được ngay.</td></tr>
 <tr><td><b>Quản lý học sinh</b></td><td>Danh sách lớp theo năm học và từng điểm trường; tổng
 hợp sĩ số, nữ, dân tộc, khuyết tật…</td></tr>
-<tr><td><b>Trường chuẩn Quốc gia</b></td><td>15 thẻ tiêu chí — mức đạt, điểm mạnh, điểm yếu,
-kế hoạch cải tiến; minh chứng gắn thẳng từ kho hồ sơ, <b>không phải kê hai lần</b>; xuất
-Biểu 1, Biểu 2 và báo cáo tự đánh giá ra Word.</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>15 thẻ tiêu chí — mức đạt, hiện trạng từng nội hàm,
+minh chứng gắn thẳng từ kho hồ sơ (<b>không phải kê hai lần</b>); hội đồng tự đánh giá;
+điều kiện tại từng điểm trường; xuất Biểu 1, Biểu 2 và báo cáo tự đánh giá ra Word.</td></tr>
 <tr><td><b>Đảm bảo chất lượng</b></td><td>Chuẩn đầu ra &amp; Cam kết (chỉ tiêu từng khối, có nút
-«Lấy lại chỉ tiêu năm trước»), Kế hoạch cải tiến PDCA, Cơ sở vật chất theo điểm trường.</td></tr>
+«Lấy lại chỉ tiêu năm trước»), Kế hoạch cải tiến PDCA, tổ Đảm bảo chất lượng, các phụ lục
+minh chứng, Cơ sở vật chất theo điểm trường.</td></tr>
 </table></div>
 
-<h2>IV. Đăng ký sử dụng chính thức</h2>
+<h2 id="dang-ky"><span class="so">IV</span>Đăng ký sử dụng chính thức</h2>
 <ol>
 <li>Về màn nhập mã, bấm <span class="nut">✍ Đăng ký sử dụng</span>.</li>
 <li>Điền biểu 9 ô (ô đánh dấu * là bắt buộc). Quan trọng nhất là ô <b>Địa chỉ Gmail của
@@ -163,7 +273,7 @@ thông tin trường, điểm trường và lớp, email đăng nhập từng th
 hộp hồ sơ, số liệu 3 năm; kèm hai tệp xuất từ CSDL ngành (hướng dẫn ngay trong biểu).
 Chi phí vận hành <b>0 đồng</b>; nhà trường <b>không phải đưa mật khẩu Gmail</b> của bất kỳ ai.</p>
 
-<h2>V. Khi trường đã được cấp quyền — đăng nhập dùng thật</h2>
+<h2 id="dang-nhap-that"><span class="so">V</span>Khi trường đã được cấp quyền — đăng nhập dùng thật</h2>
 <ol>
 <li>Vào trang của trường (gõ mã, hoặc bấm nút <span class="nut">↪ Vào lại [tên trường]</span>).</li>
 <li>Bấm <span class="nut">Đăng nhập bằng Google</span>, chọn đúng Gmail đã đăng ký với nhà trường.</li>
@@ -176,11 +286,22 @@ báo người quản trị của trường thêm vào.</td></tr>
 <tr><td><i>«Chưa mở đăng nhập — Trường đang trong quá trình cài đặt»</i></td>
 <td>Cơ sở dữ liệu của trường đang được dựng — chờ người phụ trách báo xong.</td></tr>
 </table></div>
-<p><b>Việc đầu tiên của người quản trị:</b> vào <b>⚙️ Thông tin trường</b> khai tên hiệu
-trưởng, quy mô; soát danh sách tài khoản; mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp
-trường mình rồi mới phân công các bộ phận nhập minh chứng.</p>
+<h3>Việc đầu tiên của người quản trị</h3>
+<ol>
+<li>Mở <b>Quản trị → 🚀 Cài đặt</b>: bảng này liệt kê từng bước còn thiếu của trường mình —
+làm theo đúng thứ tự trong đó là xong phần dựng nền.</li>
+<li>Vào <b>⚙️ Thông tin trường</b> khai tên hiệu trưởng, quy mô, khẩu hiệu.</li>
+<li>Soát <b>✉️ Danh sách mời</b> — ai có tên (đúng Gmail) mới đăng nhập được. Có thể
+<b>dán cả bảng từ Excel</b> (Email · Họ tên · Chức vụ · Tổ · Vai trò · Link): người mới được
+thêm, người đã có <b>chỉ cập nhật những ô có chữ</b>, ô trống giữ nguyên — không sợ dán đè
+mất thông tin cũ.</li>
+<li>Vào <b>🔗 Link hồ sơ CBGV</b> dán hàng loạt đường dẫn thư mục Drive hồ sơ cá nhân
+của từng thầy cô — máy tự nhận ra ai là ai theo email hoặc họ tên.</li>
+<li>Mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp trường mình rồi mới phân công các bộ phận
+nhập minh chứng.</li>
+</ol>
 
-<h2>VI. Nạp danh sách học sinh và đội ngũ vào hệ thống</h2>
+<h2 id="nap-du-lieu"><span class="so">VI</span>Nạp danh sách học sinh và đội ngũ vào hệ thống</h2>
 <p>Nhà trường <b>tự nạp</b>, không phải gửi dữ liệu đi đâu cả. Vào <b>Quản trị →
 <span class="nut">📥 Nạp dữ liệu</span></b>.</p>
 <ol>
@@ -218,8 +339,32 @@ thấy đủ khối, đủ lớp, đúng sĩ số là được.</div>
 ⚠️ Email trong CSDL ngành hay là email công vụ hoặc khai nhầm sang người khác — máy sẽ
 chỉ ra từng dòng đáng ngờ, nhà trường soát rồi sửa lại cho đúng <b>Gmail thầy cô dùng thật</b>,
 vì đăng nhập hệ thống là đăng nhập bằng Google.</p>
+<p><b>Cuối năm học:</b> dùng thẻ <b>🎓 Lên lớp</b> trong Quản trị — máy chuyển cả trường sang
+năm học mới theo đúng quy trình (khối 5 ra trường, các khối còn lại lên lớp), nhà trường
+xác nhận từng lớp, không phải nạp lại từ đầu.</p>
 
-<h2>VII. Câu hỏi thường gặp</h2>
+<h2 id="sao-luu"><span class="so">VII</span>Sao lưu dữ liệu hằng tháng</h2>
+<p>Dữ liệu của trường nằm trên máy chủ, nhưng <b>bản sao lưu do chính nhà trường giữ</b>
+mới là bảo hiểm cuối cùng. Mỗi tháng một lần, người quản trị vào <b>Quản trị →
+<span class="nut">💾 Sao lưu</span></b>:</p>
+<ol>
+<li>Bấm <span class="nut">💾 Tải bản sao lưu</span> — máy gói toàn bộ dữ liệu của trường
+thành một tệp rồi tải về, mất khoảng nửa phút.</li>
+<li>Chuyển tệp vừa tải vào <b>Google Drive của trường</b> (thư mục «Sao lưu hệ thống»),
+xoá bản cũ hơn một năm.</li>
+</ol>
+<div class="luuy"><b>Ba điều cần biết:</b>
+<ul style="margin-bottom:0">
+<li>Việc sao lưu nên do <b>Hiệu trưởng hoặc người phụ trách hệ thống</b> làm — tài khoản
+không đủ quyền đọc toàn bộ dữ liệu thì máy sẽ <b>chặn lại và báo rõ</b>, không tải về một
+tệp thiếu ruột trông y như bản thật.</li>
+<li>Mặc định tệp <b>không kèm</b> số định danh cá nhân của học sinh; chọn kèm thì phải giữ
+tệp như hồ sơ mật.</li>
+<li>Cần phục hồi thì đưa tệp cho người phụ trách hệ thống — <b>không tự nạp lại được</b>
+bằng cách kéo thả, đây là chủ ý để không ai lỡ tay ghi đè dữ liệu đang dùng.</li>
+</ul></div>
+
+<h2 id="hoi-dap"><span class="so">VIII</span>Câu hỏi thường gặp</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
 <tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),
@@ -234,14 +379,48 @@ dụng. Nhập liệu nhiều thì máy tính thuận tay hơn.</td></tr>
 <tr><td>Dữ liệu trường có ai khác xem được không?</td><td>Không. Mỗi trường một cơ sở dữ liệu
 riêng, quyền đặt đến từng tài khoản Gmail; file minh chứng nằm trên Google Drive của chính
 nhà trường.</td></tr>
+<tr><td>Hai người cùng sửa một bảng có đè mất của nhau không?</td><td>Không. Hệ thống chỉ ghi
+đúng ô vừa sửa, người này đổi ô nào thì ô đó thay đổi — hai người cùng nhập một màn (ví dụ
+hội đồng cùng chấm tiêu chí) là cách dùng bình thường.</td></tr>
 <tr><td>Xem thử có làm hỏng gì, có mất phí không?</td><td>Không và không. Bản xem thử chỉ chạy
 dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
 </table></div>
 
-<a class="ve-cong" href="./">↩ Về trang đăng nhập</a>
+<a class="ve-cong" href="./" style="display:inline-block;margin-top:18px;background:var(--navy);color:#fff;padding:11px 22px;border-radius:9px;text-decoration:none">↩ Về trang đăng nhập</a>
 
 </main>
+</div>
+
 <footer>Hệ thống Quản trị số Trường học — quản trị trường tiểu học trong giai đoạn mới.</footer>
+
+<script>
+// Đánh dấu mục đang đọc trên mục lục: mục được tô là tiêu đề GẦN NHẤT phía
+// trên mép màn. Không dùng IntersectionObserver quan sát riêng các tiêu đề —
+// tiêu đề mỏng, cuộn tới giữa một mục dài là không có tiêu đề nào trong dải
+// quan sát và đèn không bao giờ sáng. Không có JS thì trang vẫn đọc bình
+// thường — đây chỉ là lớp phủ tiện dùng.
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('#muc-luc a[href^="#"]'));
+  var muc = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+                 .filter(Boolean);
+  if (!muc.length) return;
+  var cho = null;
+  function capNhat() {
+    var y = window.scrollY + 130;
+    var dau = muc[0];
+    muc.forEach(function (m) { if (m.offsetTop <= y) dau = m; });
+    links.forEach(function (a) {
+      a.classList.toggle('on', a.getAttribute('href') === '#' + dau.id);
+    });
+  }
+  window.addEventListener('scroll', function () {
+    // Gom về một lần mỗi khung hình — cuộn nhanh không giật.
+    if (cho) return;
+    cho = requestAnimationFrame(function () { cho = null; capNhat(); });
+  }, { passive: true });
+  capNhat();
+})();
+</script>
 
 </body>
 </html>

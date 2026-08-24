@@ -416,6 +416,13 @@
     document.title = 'Quản trị số — ' + (C.TEN_TRUONG || '');
     $$('.dien-ten-truong').forEach(function (e) { e.textContent = C.TEN_TRUONG || ''; });
     $$('.dien-dia-chi').forEach(function (e) { e.textContent = C.DIA_CHI_TRUONG || ''; });
+    // Chân trang: bản xem thử rút gọn thành "Bản xem thử. Năm học …" (thầy
+    // Chung 24/8/2026) — nhãn đầy đủ "không phải trường có thật" vẫn giữ ở
+    // đầu trang làm chốt an toàn chống ảnh chụp số liệu mẫu lan đi như thật.
+    $$('.chan-dia-chi').forEach(function (e) {
+      var dc = C.DIA_CHI_TRUONG || '';
+      e.textContent = /^Bản xem thử/.test(dc) ? 'Bản xem thử. ' : (dc ? dc + ' · ' : '');
+    });
     $$('.dien-chu-quan').forEach(function (e) { e.textContent = C.DON_VI_CHU_QUAN || ''; });
     var oMuc = document.getElementById('tk-muc-cqg');
     if (oMuc) oMuc.textContent = C.MUC_CHUAN_QG || '–';
