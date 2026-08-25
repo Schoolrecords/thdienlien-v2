@@ -32,6 +32,14 @@
     '<div class="hs-hop">' +
     '<div class="hs-dau"><span class="ma" id="hsMa"></span><h3 id="hsTen"></h3><button id="hsDong" title="Đóng">✕</button></div>' +
     '<div class="hs-than">' +
+    // Ô sửa TÊN (thầy Chung yêu cầu 27/8): danh mục là khung mẫu, trường sửa
+    // tên cho hợp đơn vị mình ngay tại bút chì. Chỉ BGH/quản trị thấy ô này —
+    // máy chủ (trigger sql/49) vốn chỉ cho admin sửa cột cấu trúc, bày cho
+    // giáo viên chỉ tổ bấm rồi bị từ chối. MÃ hồ sơ không cho sửa (đã in
+    // trong báo cáo + đặt tên thư mục Drive — quy tắc Bạch Liêu).
+    '<div class="hs-o" id="hsOTen"><label>Tên hồ sơ</label>' +
+    '<input id="hsTenMoi" placeholder="Tên đầu hồ sơ trong danh mục">' +
+    '<div class="goi-y">Sửa cho khớp cách gọi của trường mình. Tên thư mục trên Drive không tự đổi theo — link vẫn đúng, muốn khớp tên thì nhờ quản trị chạy đồng bộ tên Drive.</div></div>' +
     '<div class="hs-o"><label>Trạng thái hồ sơ</label>' +
     '<div class="hs-tt" id="hsTt">' +
     '<button type="button" data-tt="co">Đã có</button>' +
@@ -88,6 +96,9 @@
     $('hsGhiChu').value = hs.ghi_chu || '';
     veNutTrangThai();
 
+    $('hsTenMoi').value = hs.ten || '';
+    $('hsOTen').style.display = laQuanTri() ? '' : 'none';
+
     var oTk = $('hsOTaiKhoan');
     if (laQuanTri()) {
       oTk.style.display = '';
@@ -124,6 +135,11 @@
       hienLoi('Đường dẫn Drive phải bắt đầu bằng http:// hoặc https://');
       return;
     }
+    var tenMoi = $('hsTenMoi').value.trim();
+    if (laQuanTri() && !tenMoi) {
+      hienLoi('Tên hồ sơ không được để trống.');
+      return;
+    }
     nut.disabled = true;
     nut.textContent = 'Đang lưu…';
     $('hsLoi').classList.remove('hien');
@@ -136,7 +152,12 @@
       cap_nhat_luc: new Date().toISOString(),
       cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
     };
-    if (laQuanTri()) thayDoi.phu_trach_id = $('hsTaiKhoan').value || null;
+    if (laQuanTri()) {
+      thayDoi.phu_trach_id = $('hsTaiKhoan').value || null;
+      // Chỉ quản trị mới gửi cột tên — người khác gửi là trigger chặn cột
+      // cấu trúc (sql/49) từ chối cả câu update.
+      thayDoi.ten = tenMoi;
+    }
 
     window.MAY_CHU.from('ho_so').update(thayDoi).eq('ma', maDangSua).select().single()
       .then(function (r) {

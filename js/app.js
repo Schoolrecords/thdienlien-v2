@@ -310,7 +310,7 @@
     if (!window.DA_NOI || !diaChi || !cacMa.length) {
       var d = demTrangThai(ds);
       toMau(null);
-      dong('📂 Theo trạng thái đã lưu: <b>' + d.co + '/' + d.tong + '</b> hồ sơ có tệp — icon thư mục xám là hồ sơ chưa có.' + duoiChu +
+      dong('📂 Theo trạng thái đã lưu: <b>' + d.co + '/' + d.tong + '</b> đã có hồ sơ — icon thư mục xám là hồ sơ chưa có.' + duoiChu +
         (!window.DA_NOI ? '<br><i>Đang xem dữ liệu mẫu nên không quét Drive thật.</i>'
           : (!diaChi ? '<br><i>Muốn đếm tệp thật trên Drive: triển khai dịch vụ quét (quan-tri/kiem-tra-tep-drive.gs) rồi lưu URL vào cấu hình <code>link_kiem_tra_drive</code>.</i>' : '')));
       return;
@@ -357,20 +357,20 @@
 
     function hoanTat() {
       khoaNut(false);
-      var coTep = 0, soTrong = 0, soHong = 0;
+      var coTep = 0, soHong = 0;
       cacMa.forEach(function (ma) {
         var n = Number(kqGop[ma]);   // thiếu trong trả lời (lượt quét bị cắt) → NaN → hỏng
         if (n > 0) coTep++;
-        else if (n === 0) soTrong++;
-        else { soHong++; if (kqGop[ma] == null) kqGop[ma] = -1; }
+        else if (n !== 0) { soHong++; if (kqGop[ma] == null) kqGop[ma] = -1; }
       });
       toMau(kqGop);
-      // Kết quả gọn MỘT câu — thư mục nào trống đã có icon 📂 xám từng dòng
-      // nói thay, liệt kê mã ra đây chỉ thành bức tường chữ (thầy Chung, 26/8).
+      // Kết quả gọn MỘT câu, chữ nghĩa thầy Chung chốt 27/8: "Kiểm tra lúc
+      // HH:MM: X/Y đã có hồ sơ". Số thư mục trống KHÔNG nhắc lại — icon 📂
+      // xám từng dòng đã nói thay; chỉ nêu phần KHÔNG kiểm được (hiếm, cần
+      // biết vì trạng thái các dòng ấy giữ nguyên).
       var gio = new Date();
       var luc = ('0' + gio.getHours()).slice(-2) + ':' + ('0' + gio.getMinutes()).slice(-2);
-      dong('🗂 Kiểm tra trên Drive lúc ' + luc + ': <b>' + coTep + '/' + cacMa.length + '</b> hồ sơ có tệp' +
-        (soTrong ? ' · ' + soTrong + ' thư mục trống (icon 📂 xám)' : '') +
+      dong('Kiểm tra lúc ' + luc + ': <b>' + coTep + '/' + cacMa.length + '</b> đã có hồ sơ' +
         (soHong ? ' · ' + soHong + ' thư mục không kiểm được — giữ nguyên trạng thái' : '') +
         duoiChu);
 
