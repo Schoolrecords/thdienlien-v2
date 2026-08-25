@@ -333,6 +333,11 @@
 
     var bangHop = '<div class="dau-muc" style="text-align:left;margin:6px 0 8px">' +
       '<div class="nhan-nho">Hộp hồ sơ · ' + HOP.length + '</div></div>' +
+      // Không có nút Lưu riêng nên phải NÓI cách lưu — thầy Chung 27/8: gõ
+      // xong không thấy động tĩnh, tưởng chưa sửa được.
+      (sua ? '<div style="font-size:13.2px;color:var(--chu-mo);margin:0 0 8px">' +
+        '✏ Sửa tên ngay trong ô — gõ xong nhấn <b>Enter</b> (hoặc bấm ra ngoài ô) là lưu, ' +
+        'có dòng báo xanh xác nhận.</div>' : '') +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th style="width:64px">Mã</th><th>Tên hộp</th><th>Thuộc bộ phận</th>' +
       '<th style="text-align:center">Số hồ sơ</th>' + (sua ? '<th></th>' : '') +
@@ -567,27 +572,40 @@
 
   // ══════════ SỰ KIỆN — HỘP VÀ BỘ PHẬN ══════════
   function noiCauTruc(goc) {
-    function luuHop(ma, thay, oNhap, giaTriCu) {
+    // Ô sửa tại chỗ lưu khi rời ô — thêm: Enter cũng lưu (ép blur), và lưu
+    // xong BÁO RÕ bằng notify. Trước đây lưu trong im lặng, người sửa không
+    // biết đã ăn hay chưa (thầy Chung vấp 27/8 khi đổi tên H04.1).
+    function enterLaLuu(o) {
+      o.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); o.blur(); }
+      });
+    }
+
+    function luuHop(ma, thay, oNhap, giaTriCu, loiBao) {
       may().from('nhom_con').update(thay).eq('ma', ma).then(function (r) {
         if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu || ''; return; }
+        if (loiBao && window.notify) window.notify(loiBao);
         nap(veLai);
       }).catch(function (e) { bao(e); if (oNhap) oNhap.value = giaTriCu || ''; });
     }
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-hop-ten]')).forEach(function (o) {
+      enterLaLuu(o);
       o.addEventListener('blur', function () {
         var ma = o.getAttribute('data-hop-ten');
         var cu = (HOP.filter(function (x) { return x.ma === ma; })[0] || {}).ten;
         var moi = o.value.trim();
         if (!moi) { o.value = cu; return; }
         if (moi === cu) return;
-        luuHop(ma, { ten: moi }, o, cu);
+        luuHop(ma, { ten: moi }, o, cu, 'Đã lưu tên hộp ' + ma + ': ' + moi);
       });
     });
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-hop-bp]')).forEach(function (s) {
       s.addEventListener('change', function () {
-        luuHop(s.getAttribute('data-hop-bp'), { nhom_id: +s.value });
+        var ma = s.getAttribute('data-hop-bp');
+        luuHop(ma, { nhom_id: +s.value }, null, null,
+          'Đã chuyển hộp ' + ma + ' sang bộ phận khác.');
       });
     });
 
@@ -667,31 +685,34 @@
         .catch(function (e) { themHop.disabled = false; bao(e); });
     });
 
-    function luuBP(soTT, thay, oNhap, giaTriCu) {
+    function luuBP(soTT, thay, oNhap, giaTriCu, loiBao) {
       may().from('nhom_ho_so').update(thay).eq('so_tt', soTT).then(function (r) {
         if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu || ''; return; }
+        if (loiBao && window.notify) window.notify(loiBao);
         nap(veLai);
       }).catch(function (e) { bao(e); if (oNhap) oNhap.value = giaTriCu || ''; });
     }
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-bp-ten]')).forEach(function (o) {
+      enterLaLuu(o);
       o.addEventListener('blur', function () {
         var tt = +o.getAttribute('data-bp-ten');
         var cu = (BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {}).ten;
         var moi = o.value.trim();
         if (!moi) { o.value = cu; return; }
         if (moi === cu) return;
-        luuBP(tt, { ten: moi }, o, cu);
+        luuBP(tt, { ten: moi }, o, cu, 'Đã lưu tên bộ phận: ' + moi);
       });
     });
 
     Array.prototype.slice.call(goc.querySelectorAll('[data-bp-icon]')).forEach(function (o) {
+      enterLaLuu(o);
       o.addEventListener('blur', function () {
         var tt = +o.getAttribute('data-bp-icon');
         var cu = (BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {}).bieu_tuong || '';
         var moi = o.value.trim();
         if (moi === cu) return;
-        luuBP(tt, { bieu_tuong: moi || null }, o, cu);
+        luuBP(tt, { bieu_tuong: moi || null }, o, cu, 'Đã lưu biểu tượng bộ phận.');
       });
     });
 
