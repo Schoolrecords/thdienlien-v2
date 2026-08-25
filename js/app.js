@@ -17,7 +17,10 @@
   window.boDau = boDau;
   window.thoatHTML = thoatHTML;
 
-  var ST_LABEL = { co: 'Đã có', dang: 'Đang cập nhật', chua: 'Chưa có' };
+  // da_dong: hồ sơ ĐÃ ĐÓNG theo Luật 123/2025 (sql/46 cho phép, sql/48 di trú
+  // đặt) — không có nhãn thì badge in "undefined". Máy quét Drive không được
+  // đụng vào trạng thái này theo cả hai chiều.
+  var ST_LABEL = { co: 'Đã có', dang: 'Đang cập nhật', chua: 'Chưa có', da_dong: 'Đã đóng' };
   window.ST_LABEL = ST_LABEL;
 
   // ── Thông báo nổi (toast) ──
@@ -206,9 +209,13 @@
   // ở cau_hinh.link_kiem_tra_drive), nhận về {mã: số tệp}, rồi:
   //   · báo bao nhiêu hồ sơ CÓ TỆP ngay dưới dải tổng
   //   · icon 📂 từng dòng: SÁNG = có tệp · XÁM = thư mục trống / không kiểm được
-  //   · gọi RPC cap_nhat_tu_drive nâng 'chua'/'dang' → 'co' (chỉ NÂNG, không
-  //     hạ — trạng thái người đặt tay không bị máy ghi đè; RPC chỉ admin/BGH
-  //     chạy được, người khác bấm vẫn xem kết quả, chỉ không nâng trạng thái)
+  //   · gọi RPC cap_nhat_tu_drive (sql/62) đồng bộ trạng thái HAI CHIỀU —
+  //     "DRIVE LÀ CHUẨN", thầy Chung chốt 26/8/2026: có tệp → 'co', thư mục
+  //     trống → HẠ về 'chua' (kể cả từ 'dang'); không kiểm được thì giữ nguyên.
+  //     Nhờ vậy con số x/y, badge "Đã có/Chưa có" và icon vàng/xám kể CÙNG một
+  //     câu chuyện — hết cảnh "44/57 đã khai" đứng cạnh "1/57 trên Drive" như
+  //     bài nghiệm thu Châu Đình. RPC chỉ admin/BGH chạy được; người khác bấm
+  //     vẫn xem kết quả đếm, app nói rõ là trạng thái chưa được ghi lại.
   // Gọi theo LÔ 20 thư mục: mỗi thư mục ngốn 1-2 giây Drive API phía dịch vụ,
   // gửi cả bộ phận một gói là chạm trần 6 phút Apps Script và mất trắng kết
   // quả (soát đối kháng 26/8). ⚠️ fetch KHÔNG đặt header Content-Type — đặt
@@ -286,6 +293,10 @@
       vung.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     function khoaNut(khoa) {
+      // Lượt CHẾT không được MỞ khoá: callback lượt cũ về muộn mà mở khoá là
+      // bật lại nút của lượt đang chạy — bấm được lần nữa thành hai chuỗi
+      // quét song song (soát đối kháng 26/8).
+      if (!khoa && luot !== luotKiemTra) return;
       var nut = $('.sheet-sum .nut-kiem-tra');
       if (nut) nut.disabled = !!khoa;
     }
@@ -346,51 +357,89 @@
 
     function hoanTat() {
       khoaNut(false);
-      var coTep = 0, trong = [], hong = [];
+      var coTep = 0, soTrong = 0, soHong = 0;
       cacMa.forEach(function (ma) {
-        var n = Number(kqGop[ma]);   // thiếu trong trả lời (lượt quét bị cắt) → NaN → hong
+        var n = Number(kqGop[ma]);   // thiếu trong trả lời (lượt quét bị cắt) → NaN → hỏng
         if (n > 0) coTep++;
-        else if (n === 0) trong.push(ma);
-        else { hong.push(ma); if (kqGop[ma] == null) kqGop[ma] = -1; }
+        else if (n === 0) soTrong++;
+        else { soHong++; if (kqGop[ma] == null) kqGop[ma] = -1; }
       });
       toMau(kqGop);
-      dong('🗂 Kiểm tra trên Drive: <b>' + coTep + '/' + cacMa.length + '</b> thư mục có tệp' +
-        (trong.length ? ' · <b>' + trong.length + '</b> thư mục trống (icon xám): ' + thoatHTML(trong.join(' · ')) : '') +
-        (hong.length ? ' · <b>' + hong.length + '</b> thư mục không kiểm được: ' + thoatHTML(hong.join(' · ')) : '') +
+      // Kết quả gọn MỘT câu — thư mục nào trống đã có icon 📂 xám từng dòng
+      // nói thay, liệt kê mã ra đây chỉ thành bức tường chữ (thầy Chung, 26/8).
+      var gio = new Date();
+      var luc = ('0' + gio.getHours()).slice(-2) + ':' + ('0' + gio.getMinutes()).slice(-2);
+      dong('🗂 Kiểm tra trên Drive lúc ' + luc + ': <b>' + coTep + '/' + cacMa.length + '</b> hồ sơ có tệp' +
+        (soTrong ? ' · ' + soTrong + ' thư mục trống (icon 📂 xám)' : '') +
+        (soHong ? ' · ' + soHong + ' thư mục không kiểm được — giữ nguyên trạng thái' : '') +
         duoiChu);
 
-      // Nâng trạng thái → 'co' cho hồ sơ quét ra tệp (chỉ admin/BGH được —
-      // người khác thì RPC từ chối, bỏ qua trong im lặng).
-      var nang = {}, demNang = 0;
+      // ── DRIVE LÀ CHUẨN: đồng bộ trạng thái HAI CHIỀU theo kết quả đếm ──
+      // Có tệp → 'co'; 0 tệp → 'chua'; không kiểm được (-1/NaN) KHÔNG gửi lên.
+      // Gửi TOÀN BỘ kết quả đếm được, KHÔNG lọc theo trạng thái trên máy: bộ
+      // nhớ máy có thể lệch CSDL (người khác vừa sửa tay ở máy họ), lọc theo
+      // nó là bỏ sót đúng dòng đang lệch mà vẫn báo "đã cập nhật". RPC có sẵn
+      // where <> nên gửi thừa vô hại (soát đối kháng 26/8). Hồ sơ ĐÃ ĐÓNG
+      // (da_dong, Luật 123/2025) đứng ngoài mọi chiều — SQL cũng tự chặn,
+      // đây là lớp một.
+      var doi = {}, demDoi = 0;
       ds.forEach(function (h) {
-        if (h.tt !== 'co' && Number(kqGop[h.ma]) > 0) { nang[h.ma] = Number(kqGop[h.ma]); demNang++; }
+        var n = Number(kqGop[h.ma]);
+        if (h.tt === 'da_dong') return;
+        if (n >= 0) { doi[h.ma] = n; demDoi++; }
       });
-      if (!demNang || !window.MAY_CHU) return;
-      window.MAY_CHU.rpc('cap_nhat_tu_drive', { du_lieu: nang }).then(function (r) {
-        if (r.error || !r.data) return;
+      if (!demDoi || !window.MAY_CHU) return;
+      window.MAY_CHU.rpc('cap_nhat_tu_drive', { du_lieu: doi }).then(function (r) {
+        if (r.error) {
+          // Giáo viên bấm: vẫn được xem kết quả đếm, chỉ không được ghi.
+          // Nói rõ thay vì im lặng — không nói thì badge với icon lệch nhau
+          // mà người bấm không hiểu vì sao.
+          if (conSong()) {
+            var nhan = $('#kq-kiem-tra .nhan-nho');
+            if (nhan) nhan.innerHTML += '<br><i>Trạng thái "Đã có / Chưa có" chỉ được ghi lại khi Ban giám hiệu hoặc quản trị bấm kiểm tra.</i>';
+          }
+          return;
+        }
+        // CSDL chưa chạy sql/62: RPC cũ chỉ nâng và trả về MỘT CON SỐ. Khi đó
+        // KHÔNG hạ badge trên màn (màn phải khớp CSDL) và nói thật là đang lùi.
+        var cuKy = (typeof r.data === 'number');
+        var soNang = cuKy ? Number(r.data) : Number((r.data && r.data.nang) || 0);
+        var soHa = cuKy ? 0 : Number((r.data && r.data.ha) || 0);
         // Dữ liệu trên máy cập nhật KHÔNG cần chốt conSong: máy chủ đã ghi
         // thật rồi, bộ nhớ phải khớp theo dù người dùng đã mở màn khác.
         ds.forEach(function (h) {
-          if (nang[h.ma] != null) {
-            h.tt = 'co';
-            if (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) window.HS_BAN_GHI[h.ma].trang_thai = 'co';
-          }
+          if (doi[h.ma] == null) return;
+          var ttMoi = doi[h.ma] > 0 ? 'co' : 'chua';
+          if (cuKy && ttMoi === 'chua') return;   // RPC cũ không hạ
+          h.tt = ttMoi;
+          if (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) window.HS_BAN_GHI[h.ma].trang_thai = ttMoi;
         });
         // Nhãn trạng thái từng dòng khớp theo data-ma nên tự an toàn; riêng
         // dải tổng là ô dùng chung giữa các bộ phận — phải còn sống mới ghi.
         $$('#lp-than tr[data-ma]').forEach(function (tr) {
-          if (nang[tr.getAttribute('data-ma')] == null) return;
+          var ma = tr.getAttribute('data-ma');
+          if (doi[ma] == null) return;
+          if (cuKy && doi[ma] === 0) return;
+          var tt = doi[ma] > 0 ? 'co' : 'chua';
           var st = $('.st', tr);
-          if (st) { st.className = 'st st-co'; st.textContent = ST_LABEL.co; }
+          if (st) { st.className = 'st st-' + tt; st.textContent = ST_LABEL[tt]; }
         });
         if (conSong()) {
           var d2 = demTrangThai(ds);
           var big = $('.sheet-sum .big');
           if (big) big.textContent = d2.co + '/' + d2.tong + ' hồ sơ đã có tệp';
         }
+        // Vẽ lại CẢ lưới 5 thẻ bộ phận, không chỉ trang chủ — đóng lớp phủ mà
+        // thẻ phía sau còn khoe con số cũ là lại "hai con số kể hai chuyện",
+        // đúng cái cảnh thay đổi này sinh ra để diệt (soát đối kháng 26/8).
         veThongKe();
-        window.notify('Đã nâng trạng thái ' + r.data + ' hồ sơ thành "Đã có" theo kết quả quét Drive.');
-      }).catch(function () { /* lỗi mạng lúc nâng — kết quả quét vẫn nguyên trên màn */ });
+        veHoSo();
+        var cau = [];
+        if (soNang) cau.push('nâng ' + soNang + ' hồ sơ thành "Đã có"');
+        if (soHa) cau.push('hạ ' + soHa + ' hồ sơ về "Chưa có" vì thư mục trống');
+        if (cau.length) window.notify('Đã cập nhật theo Drive: ' + cau.join(' · ') + '.');
+        if (cuKy) window.notify('CSDL của trường chưa chạy sql/62 nên chưa hạ được trạng thái theo Drive — lời khai cũ vẫn giữ.');
+      }).catch(function () { /* lỗi mạng lúc ghi — kết quả quét vẫn nguyên trên màn */ });
     }
 
     goiLo(0);

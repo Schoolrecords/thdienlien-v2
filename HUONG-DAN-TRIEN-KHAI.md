@@ -23,6 +23,14 @@
    Xem cấu hình DNS ở mục cuối tài liệu này.
 
 ## Bước 2 — Tạo dự án Supabase (10 phút)
+
+> ⚠️ **MỤC NÀY LÀ LỊCH SỬ dựng Diễn Liên lần đầu (dải 01→19).** Từ 8/2026,
+> dựng trường MỚI thì **đừng dán từng tệp** — dùng bộ lõi gộp
+> `thdienlien-v2-tailieu/sql/trien-khai/00-LOI-TRUONG-MOI.sql` (dán MỘT lần,
+> đã gồm tới sql/62) theo đúng bảng bước trong `DA-CHAY-O-DAU.md` cùng thư mục.
+> Kho SQL nay đã vượt xa 19 tệp; riêng `07` chạy LẺ trên CSDL đã vá `62` sẽ
+> báo lỗi kiểu trả về — đó là chủ ý, xem đầu hai tệp ấy.
+
 1. Vào supabase.com → đăng nhập bằng Gmail trường → **New project**: tên `th-dien-lien`, region **Singapore**, gói **Free**.
 2. Vào **SQL Editor**, dán và chạy LẦN LƯỢT TỪNG FILE (mỗi lượt một file, **đúng thứ tự số**) trong thư mục `thdienlien-v2-tailieu/sql/`.
    **Chạy đủ cả 19 file** — app phụ thuộc bắt buộc vào 10 (cơ sở, sáp nhập), 14 (năm học tự động), 15 (mức chuẩn QG), 16–17 (bảo mật), 19 (số liệu 3 năm):
