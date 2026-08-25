@@ -44,7 +44,8 @@
   // Trường nào tên dài hơn thì nới ô trái, đừng để Word tự ngắt.
   var O_TRAI = 43, O_PHAI = 57;
 
-  // So khớp chức vụ không phân biệt hoa/thường và dấu
+  // So khớp chức vụ không phân biệt hoa/thường và dấu (khớp mềm theo lớp
+  // đồng nghĩa nằm ở DONG_NGHIA_CHUC_VU + tenTheoChucVu bên dưới)
   function boDau(s) {
     return String(s || '').toLowerCase().normalize('NFD')
       .replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').trim();
@@ -148,16 +149,49 @@
       '</tr></table>';
   }
 
+  // Các cách gọi khác nhau của CÙNG một chức danh: danh bạ và danh mục hồ sơ
+  // mỗi bên một kiểu ("Nhân viên kế toán" ↔ "Kế toán"), trường chuyển mô hình
+  // đảng thì hồ sơ đổi chữ trước danh bạ ("Bí thư Chi bộ" ↔ "Bí thư Đảng ủy").
+  // Mỗi dòng một lớp tương đương, viết KHÔNG DẤU (so sau khi qua boDau).
+  // "Bí thư Chi bộ 1/2/3" (chi bộ trực thuộc đảng bộ) CỐ Ý đứng ngoài: mỗi chi
+  // bộ một người khác nhau, khớp bừa là phiếu in sai người — không tra được thì
+  // phiếu in nguyên chức vụ, vẫn đúng như trước.
+  var DONG_NGHIA_CHUC_VU = [
+    ['bi thu chi bo', 'bi thu dang uy', 'bi thu dang bo'],
+    ['ke toan', 'nhan vien ke toan'],
+    ['thu thu', 'nhan vien thu vien'],
+    ['van thu', 'nhan vien van thu'],
+    ['can bo thiet bi', 'nhan vien thiet bi'],
+  ];
+  function chuanChucVu(s) {
+    var can = boDau(s).replace(/\s+/g, ' ');
+    for (var i = 0; i < DONG_NGHIA_CHUC_VU.length; i++) {
+      if (DONG_NGHIA_CHUC_VU[i].indexOf(can) >= 0) return DONG_NGHIA_CHUC_VU[i][0];
+    }
+    return can;
+  }
+
   // Chức vụ → họ tên thật. Danh bạ tài khoản trên CSDL là nguồn chính,
   // cấu hình trường là chỗ dựa khi chưa nối CSDL. Trả '' nếu không tra được
   // (lúc đó chỗ gọi in nguyên chuỗi đang có — có thể vốn đã là họ tên).
+  // Hai tầng: khớp ĐÚNG CHUỖI trước — hai người mang hai chức danh gần nhau
+  // ("Bí thư Đảng ủy" và "Bí thư Chi bộ" ở trường đảng bộ) không lẫn vào
+  // nhau; lớp đồng nghĩa chỉ dùng đến khi khớp đúng không ra, và chỉ nhận
+  // khi cả danh bạ có ĐÚNG MỘT người thuộc lớp — hai người trở lên thì thà
+  // in chức vụ còn hơn in bừa tên một trong hai (soát đối kháng 25/8/2026).
   function tenTheoChucVu(chucVu) {
-    var can = boDau(chucVu);
+    var can = boDau(chucVu).replace(/\s+/g, ' ');
     if (!can) return '';
     var ds = window.DS_TAI_KHOAN || [];
-    for (var i = 0; i < ds.length; i++) {
-      if (boDau(ds[i].chuc_vu) === can) return ds[i].ho_ten || '';
+    var i, ung = [];
+    for (i = 0; i < ds.length; i++) {
+      if (boDau(ds[i].chuc_vu).replace(/\s+/g, ' ') === can) return ds[i].ho_ten || '';
     }
+    var lop = chuanChucVu(can);
+    for (i = 0; i < ds.length; i++) {
+      if (chuanChucVu(ds[i].chuc_vu) === lop) ung.push(ds[i]);
+    }
+    if (ung.length === 1) return ung[0].ho_ten || '';
     if (can === 'pho hieu truong') return cauHinh('PHO_HIEU_TRUONG');
     if (can === 'hieu truong') return cauHinh('HIEU_TRUONG');
     return '';

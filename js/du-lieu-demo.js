@@ -9,8 +9,8 @@
 //        node quan-tri/sinh-sql-danh-muc.js    (danh mục trong CSDL)
 //
 // Nguồn: Điều lệ Thông tư 15/2026/TT-BGDĐT (Điều 21), TT 57/2026 (Phụ lục III,
-// IV), CV 5555/BGDĐT-GDPT. 125 đầu hồ sơ · 16 hộp · 5 bộ phận.
-// Tầng: A bắt buộc theo văn bản (90) · B minh chứng TT57 (25) · C nội bộ (10).
+// IV), CV 5555/BGDĐT-GDPT. 133 đầu hồ sơ · 17 hộp · 5 bộ phận.
+// Tầng: A bắt buộc theo văn bản (98) · B minh chứng TT57 (25) · C nội bộ (10).
 //
 // Khi nối Supabase, các file *-sql.js GHI ĐÈ các mảng này rồi gọi lại hàm vẽ.
 // tc: tiêu chí TT57 mà hồ sơ làm minh chứng · maCu: mã hồ sơ app cũ (rỗng =
@@ -21,7 +21,7 @@
 // ============================================================
 
 window.BO_PHAN = [
-  { soTT: 1, ten: "Bộ phận Lãnh đạo, quản lý", icon: "🏛", hop: ["H01", "H02", "H03"] },
+  { soTT: 1, ten: "Bộ phận Lãnh đạo, quản lý", icon: "🏛", hop: ["H01", "H02", "H03", "H15"] },
   { soTT: 2, ten: "Bộ phận Đảng, đoàn thể", icon: "🚩", hop: ["H04", "H04.1", "H04.2", "H04.3", "H05"] },
   { soTT: 3, ten: "Bộ phận Chuyên môn", icon: "📚", hop: ["H06", "H08"] },
   { soTT: 4, ten: "Bộ phận Văn phòng", icon: "🗄", hop: ["H09", "H10", "H11", "H12"] },
@@ -32,6 +32,7 @@ window.HOP = {
   "H01": { ten: "Hiệu trưởng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ chỉ đạo, điều hành và quản lý chung của người đứng đầu nhà trường." },
   "H02": { ten: "Phó Hiệu trưởng", phuTrach: "Phó Hiệu trưởng", moTa: "Hồ sơ quản lý chuyên môn, hoạt động dạy học, phổ cập và chất lượng giáo dục." },
   "H03": { ten: "Các hội đồng", phuTrach: "Hiệu trưởng", moTa: "Hồ sơ các hội đồng theo Điều lệ: thi đua khen thưởng, kỉ luật, tư vấn, tự đánh giá." },
+  "H15": { ten: "Bàn giao sáp nhập", phuTrach: "Hiệu trưởng", moTa: "Giấy tờ tổ chức lại trường theo QĐ 3805: kiểm kê, khóa sổ kế toán, bàn giao hồ sơ - tài sản - đội ngũ, đất đai, con dấu." },
   "H04": { ten: "Đảng bộ", phuTrach: "Bí thư Đảng ủy", moTa: "Hồ sơ lãnh đạo, chỉ đạo của Đảng ủy nhà trường và công tác tổ chức, đảng viên." },
   "H04.1": { ten: "Chi bộ 1 — điểm trường trung tâm", phuTrach: "Bí thư Chi bộ 1", moTa: "Chi bộ 1 — điểm trường trung tâm" },
   "H04.2": { ten: "Chi bộ 2 — điểm trường phía Bắc", phuTrach: "Bí thư Chi bộ 2", moTa: "Chi bộ 2 — điểm trường phía Bắc" },
@@ -47,7 +48,7 @@ window.HOP = {
   "H14": { ten: "Ban an ninh - an toàn trường học", phuTrach: "Ban an ninh - an toàn", moTa: "An ninh trật tự, an toàn trường học, phòng chống bạo lực và xử lý sự cố." },
 };
 
-// 125 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
+// 133 đầu hồ sơ. Mã MC lấy thẳng từ danh mục đã duyệt — KHÔNG tự sinh lại,
 // vì tự sinh là ra mã khác mã trong cơ sở dữ liệu.
 window.HO_SO = [
   // ── H01 · Hiệu trưởng (26)
@@ -109,6 +110,15 @@ window.HO_SO = [
   { hop: "H03", ma: "MC.1.2.12", maCu: "1.2.1→1.2.4", ten: "Hồ sơ Hội đồng trường (nghị quyết, biên bản, giám sát)", tc: ["1.2"], tt: "co", phuTrach: "Hiệu trưởng", tang: "A" },
   { hop: "H03", ma: "MC.1.4.05", maCu: "—", ten: "Hồ sơ Hội đồng tự đánh giá", tc: ["1.4"], tt: "co", phuTrach: "Hiệu trưởng", tang: "A" },
   { hop: "H03", ma: "MC.1.2.13", maCu: "", ten: "Biên bản bàn giao hồ sơ, tài liệu của Hội đồng trường cho Hiệu trưởng", tc: ["1.2"], tt: "chua", phuTrach: "Hiệu trưởng", tang: "A" },
+  // ── H15 · Bàn giao sáp nhập (8)
+  { hop: "H15", ma: "MC.1.3.15", maCu: "", ten: "Quyết định sáp nhập và đề án, phương án tổ chức lại trường", tc: ["1.3"], tt: "co", phuTrach: "Hiệu trưởng", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.16", maCu: "", ten: "Biên bản kiểm kê tài sản, tài chính tại thời điểm tổ chức lại (từng trường trước sắp xếp)", tc: ["1.3", "4.1"], tt: "co", phuTrach: "Kế toán", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.17", maCu: "", ten: "Hồ sơ khóa sổ kế toán và báo cáo quyết toán đến thời điểm tổ chức lại", tc: ["1.3", "4.1"], tt: "dang", phuTrach: "Kế toán", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.18", maCu: "", ten: "Biên bản bàn giao hồ sơ, sổ sách giáo dục (học bạ, sổ đăng bộ, hồ sơ phổ cập)", tc: ["1.3"], tt: "co", phuTrach: "Văn thư", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.19", maCu: "", ten: "Biên bản bàn giao tài sản, cơ sở vật chất từng điểm trường", tc: ["1.3", "4.1"], tt: "dang", phuTrach: "Kế toán", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.20", maCu: "", ten: "Biên bản bàn giao đội ngũ và hồ sơ viên chức, người lao động chuyển giao", tc: ["1.3"], tt: "chua", phuTrach: "Hiệu trưởng", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.21", maCu: "", ten: "Hồ sơ đất đai từng điểm trường (giấy chứng nhận quyền sử dụng đất, bản đồ)", tc: ["1.3", "4.1"], tt: "chua", phuTrach: "Hiệu trưởng", tang: "A" },
+  { hop: "H15", ma: "MC.1.3.22", maCu: "", ten: "Hồ sơ con dấu: thu hồi con dấu cũ, đăng ký và quản lý con dấu mới", tc: ["1.3"], tt: "co", phuTrach: "Văn thư", tang: "A" },
   // ── H04 · Đảng bộ (8)
   { hop: "H04", ma: "MC.1.2.14", maCu: "6.1", ten: "Nghị quyết Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },
   { hop: "H04", ma: "MC.1.2.15", maCu: "6.2", ten: "Quyết định của Đảng ủy", tc: ["1.2"], tt: "co", phuTrach: "Bí thư Đảng ủy", tang: "A" },

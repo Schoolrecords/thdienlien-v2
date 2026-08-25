@@ -29,6 +29,36 @@
   function ngayVN(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
 
   var TEN_LOAI = { chinh: 'Cơ sở chính', phan_hieu: 'Phân hiệu', diem_truong: 'Điểm trường' };
+
+  // ── Chuẩn hoá nhãn cơ sở (thầy Chung duyệt 25/8/2026, mục 67.4-5 sổ dự án) ──
+  // Tên cơ sở do trường tự gõ nên lệch kiểu: "Điểm Trường Diễn Đồng" (hoa sai),
+  // "Quì Hợp" (chính tả cũ), khoảng trắng thừa. Máy chỉ sửa ba thứ CHẮC ĐÚNG:
+  //   1. gom khoảng trắng, đưa về dạng dựng sẵn NFC (chuỗi trên CSDL có thể ở
+  //      dạng tổ hợp — bài học NFD mục 58 sổ dự án);
+  //   2. CỤM LOẠI đứng đầu ("điểm trường / phân hiệu / cơ sở…") về đúng chữ hoa
+  //      — xếp cụm dài trước cụm ngắn kẻo "Cơ sở chính" bị "Cơ sở" chộp mất;
+  //   3. i → y sau "Qu" ở từ viết hoa (Quì Hợp → Quỳ Hợp — chuẩn chính tả).
+  // Phần TÊN RIÊNG còn lại giữ nguyên như trường gõ — máy không đoán hộ.
+  var CUM_LOAI = ['Cơ sở chính', 'Cơ sở', 'Phân hiệu', 'Điểm trường', 'Điểm chính',
+    'Điểm lẻ', 'Trường chính'];
+  var QU_Y = { 'Quì': 'Quỳ', 'Quí': 'Quý', 'Quỉ': 'Quỷ', 'Quĩ': 'Quỹ', 'Quị': 'Quỵ', 'Qui': 'Quy' };
+  function chuanNhanCoSo(ten) {
+    var t = String(ten || '').normalize('NFC').replace(/\s+/g, ' ').trim();
+    if (!t) return t;
+    // Trường CỐ Ý viết hoa toàn bộ ("ĐIỂM TRƯỜNG DIỄN ĐỒNG") là một kiểu trình
+    // bày — tôn trọng, chỉ gom khoảng trắng. Sửa nửa vời thành
+    // "Điểm trường DIỄN ĐỒNG" còn xấu hơn cả hai đầu.
+    if (t !== t.toLowerCase() && t === t.toUpperCase()) return t;
+    var thap = t.toLowerCase();
+    for (var i = 0; i < CUM_LOAI.length; i++) {
+      var cum = CUM_LOAI[i].toLowerCase();
+      if (thap === cum || thap.indexOf(cum + ' ') === 0) {
+        t = CUM_LOAI[i] + t.slice(cum.length);
+        break;
+      }
+    }
+    return t.split(' ').map(function (w) { return QU_Y[w] || w; }).join(' ');
+  }
   var TRANG_THAI_TTT = [
     { ma: 'hien_tai', ten: 'Trường mình' },
     { ma: 'du_kien',  ten: 'Dự kiến sáp nhập' },
@@ -198,7 +228,8 @@
           '<td><button class="nut-luu-cs">Lưu</button></td></tr>';
       }).join('') +
       '</tbody></table></div>' +
-      '<div style="margin-top:10px"><button class="nut-them-cs">+ Thêm cơ sở</button></div>';
+      '<div style="margin-top:10px"><button class="nut-them-cs">+ Thêm cơ sở</button> ' +
+      '<button class="nut-chuan-nhan" title="Sửa chữ hoa cụm loại, khoảng trắng thừa, Quì → Quỳ — liệt kê thay đổi rồi mới hỏi">✨ Chuẩn hoá nhãn</button></div>';
   }
 
   // ══════════ 4. BẢNG TRƯỜNG TIỀN THÂN ══════════
@@ -386,10 +417,16 @@
         nut.addEventListener('click', function () {
           var dong = nut.closest('tr');
           var ban = gomO(dong);
+          // Nhãn gõ tay đi qua máy chuẩn hoá — lưu là sạch, khỏi phải dọn sau
+          if (ban.ten) ban.ten = chuanNhanCoSo(ban.ten);
           nut.textContent = '…';
           may.from('co_so').update(ban).eq('ma', dong.getAttribute('data-ma')).select()
             .then(function (r) {
               if (r.error || !r.data.length) throw (r.error || new Error('không dòng nào đổi'));
+              // Ô trên màn phải hiện đúng chữ đã ghi vào CSDL — không thì
+              // nhãn vừa chuẩn hoá mà mắt vẫn thấy bản gõ thô, tưởng chưa lưu
+              var oTen = dong.querySelector('[data-c="ten"]');
+              if (oTen && ban.ten) oTen.value = ban.ten;
               nut.textContent = 'Đã lưu ✓';
               setTimeout(function () { nut.textContent = 'Lưu'; }, 2500);
             })
@@ -469,9 +506,45 @@
         var ten = window.prompt('Tên cơ sở mới (ví dụ: Phân hiệu Diễn Xuân):', '');
         if (!ten || !ten.trim()) return;
         ghi('co_so', {
-          ma: maKeTiep(dsCoSo, 'CS'), ten: ten.trim(), loai: 'phan_hieu',
+          ma: maKeTiep(dsCoSo, 'CS'), ten: chuanNhanCoSo(ten), loai: 'phan_hieu',
           so_tt: dsCoSo.length + 1
         }).then(function () { veTabCS(hop); }).catch(batLoi);
+      });
+
+      // Chuẩn hoá nhãn mọi cơ sở đang có — liệt kê từng thay đổi rồi mới hỏi,
+      // không đổi gì thì cũng nói (quy tắc "không còn lượt bấm im lặng", mục 69)
+      var nutChuan = hop.querySelector('.nut-chuan-nhan');
+      if (nutChuan) nutChuan.addEventListener('click', function () {
+        // 🔴 ĐỌC LẠI từ CSDL ngay lúc bấm, đừng dùng dsCoSo chụp lúc vẽ:
+        // ai vừa bấm Lưu một dòng là bản chụp cũ, chuẩn hoá theo bản cũ sẽ
+        // ghi đè lượt sửa vừa xong mà lời hỏi trông vẫn hợp lý (soát 25/8).
+        may.from('co_so').select('ma, ten').order('so_tt').then(function (r0) {
+          if (r0.error) { batLoi(r0.error); return; }
+          var doi = (r0.data || []).filter(function (c) { return chuanNhanCoSo(c.ten) !== c.ten; });
+          if (!doi.length) { window.notify('Nhãn các cơ sở đã chuẩn cả, không có gì phải sửa.'); return; }
+          var loi = doi.map(function (c) {
+            var m = chuanNhanCoSo(c.ten);
+            // Khác dạng ghi dấu (NFC/NFD) hay chỉ gọn khoảng trắng thì hai bản
+            // TRÔNG y hệt nhau — phải nói rõ kẻo tưởng máy đòi đổi X thành X
+            return '· ' + c.ten + (c.ten.normalize('NFC').replace(/\s+/g, ' ').trim() === m
+              ? '   (chỉ gọn khoảng trắng / cách ghi dấu)' : '  →  ' + m);
+          }).join('\n');
+          if (!window.confirm('Chuẩn hoá ' + doi.length + ' nhãn cơ sở?\n\n' + loi)) return;
+          var hong = [];
+          Promise.all(doi.map(function (c) {
+            return may.from('co_so').update({ ten: chuanNhanCoSo(c.ten) }).eq('ma', c.ma).select()
+              .then(function (r) {
+                if (r.error || !r.data.length) hong.push(c.ma);
+              }, function () { hong.push(c.ma); });
+          })).then(function () {
+            // Kết quả nói thật từng phần; vẽ lại LUÔN để bảng khớp CSDL
+            window.notify(hong.length
+              ? 'Chuẩn hoá được ' + (doi.length - hong.length) + '/' + doi.length +
+                ' nhãn — không ghi được: ' + hong.join(', ')
+              : '✅ Đã chuẩn hoá ' + doi.length + ' nhãn cơ sở.');
+            veTabCS(hop);
+          });
+        });
       });
 
       // Thêm trường tiền thân
