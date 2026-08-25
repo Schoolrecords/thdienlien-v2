@@ -3298,39 +3298,6 @@ textarea.ht-o { min-height: 116px; display: block; }
   .tc-con { font-size: 27px; }
 }
 
-/* -- Hang "📅 Hom nay" (khoiHomNay) — HANG RIENG duoi .tc-tren, KHONG phai o
-   thu sau cua .tc-luoi: luoi ay dong khung 4/5 mang cung (bai hoc 64.2),
-   nhet them o la vo dai 720-1099px. Ba cot mem: lich · truc · thong bao. */
-.tc-hnay {
-  display: flex; flex-wrap: wrap; gap: 10px 22px;
-  border-top: 1px solid var(--ke); margin-top: 14px; padding-top: 12px;
-}
-.tc-hn-cot { flex: 1 1 220px; min-width: 0; }
-.tc-hn-cot.chinh { flex: 2 1 320px; }
-.tc-hn-nhan { font-size: 13px; font-weight: 800; color: var(--dam); margin-bottom: 4px; }
-.tc-hn-muc { font-size: 13.5px; line-height: 1.45; padding: 2px 0; color: var(--chu); }
-.tc-hn-mo { color: var(--chu-mo); }
-.tc-hn-yen { font-size: 13.5px; color: var(--chu-mo); }
-/* Nut dang chu — cung ho voi lien ket, khong doi khuon nut day */
-.tc-hn-link {
-  background: none; border: 0; padding: 2px 0; cursor: pointer;
-  font: inherit; font-size: 13.5px; font-weight: 700; color: var(--chinh);
-}
-.tc-hn-link:hover { text-decoration: underline; }
-/* Thong bao bam duoc: van la dong chu, ca dong an duoc.
-   `font: inherit` xoa ca co chu cua .tc-hn-muc (cung do uu tien, khai sau) —
-   phai khai lai size/leading NGAY SAU shorthand, nhu .tc-hn-link da lam. */
-.tc-hn-bam {
-  display: block; width: 100%; text-align: left; background: none; border: 0;
-  cursor: pointer; font: inherit; font-size: 13.5px; line-height: 1.45;
-}
-.tc-hn-bam:hover b { text-decoration: underline; }
-.tc-hn-cxn {
-  display: inline-block; background: #fdf6e7; color: var(--vang-sam);
-  border: 1px solid #f0dcb4; border-radius: 999px;
-  font-size: 11px; font-weight: 800; padding: 1px 8px; vertical-align: 1px;
-}
-
 /* Hàng xác nhận hàng loạt của màn Lên lớp — ô tích ở cột cuối bảng, một nút
    duy nhất ở đây. Trước 22/8/2026 mỗi lớp một nút riêng: 20 lớp là 40 cú bấm
    (nút + hộp xác nhận), thầy Chung góp ý đổi. */

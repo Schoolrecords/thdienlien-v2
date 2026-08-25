@@ -528,15 +528,7 @@
   // ════════════════════════════════════════════════════════════
   // THAO TÁC
   // ════════════════════════════════════════════════════════════
-  // Sau mỗi thao tác ghi: xoá bộ nhớ đệm tuần rồi ĐỌC LẠI dữ liệu hôm nay của
-  // Điều hành (K().taiLai) chứ không chỉ vẽ lại — khối "📅 Hôm nay" trên trang
-  // chủ đọc lich_tuan qua đường riêng của dieu-hanh.js, chỉ veLai thì vừa BAN
-  // HÀNH xong trang chủ vẫn nói "còn là bản nháp" (soát đối kháng 25/8/2026).
-  // Bản dieu-hanh.js cũ chưa có taiLai thì lùi về veLai như trước.
-  function lamMoi() {
-    DA_NAP = ''; TUAN = null; LOI = '';
-    if (K().taiLai) { K().taiLai(); } else { K().veLai(); }
-  }
+  function lamMoi() { DA_NAP = ''; TUAN = null; LOI = ''; K().veLai(); }
   function soTtKe() {
     var m = 0;
     (TUAN.muc || []).forEach(function (x) { if (x.soTt > m) m = x.soTt; });

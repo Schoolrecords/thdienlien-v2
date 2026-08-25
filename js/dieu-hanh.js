@@ -46,14 +46,6 @@
     var d = new Date(); d.setDate(d.getDate() + soNgay);
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
-  // Thứ Hai của tuần chứa hôm nay — khớp cột lich_tuan.tu_ngay (sql/32 bắt
-  // tu_ngay phải là thứ Hai). Và thứ hôm nay theo quy ước của lich_tuan_muc:
-  // 2 = Thứ Hai … 7 = Thứ Bảy, 8 = Chủ nhật (getDay: CN = 0).
-  function thuHaiTuanNay() {
-    var d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7);
-    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-  }
-  function thuHomNayLT() { var g = new Date().getDay(); return g === 0 ? 8 : g + 1; }
   function gioPhut() {
     var d = new Date();
     return d.getHours() + ':' + pad2(d.getMinutes());
@@ -269,22 +261,6 @@
           soXacNhan: 5, toiDaXacNhan: false, toiDaXem: true }
       ],
       tbCoBang: true,
-      // Lịch hôm nay (mẫu) cho khối 📅 trang chủ — tên đều là chức danh (mẫu),
-      // KHÔNG tên thật (repo công khai, cùng luật với lich-tuan.js)
-      ltCoBang: true,
-      lichHomNay: {
-        trangThai: 'ban_hanh',
-        muc: [
-          { buoi: 'sang', gio: '7:30', noi_dung: 'Chào cờ, triển khai công tác tuần',
-            co_so_ma: null, nguoi_ct_ten: 'Hiệu trưởng (mẫu)', so_tt: 1 },
-          { buoi: 'chieu', gio: '14:00', noi_dung: 'Sinh hoạt chuyên môn tổ 4+5',
-            co_so_ma: 'CS01', nguoi_ct_ten: 'Tổ trưởng (mẫu)', so_tt: 2 }
-        ],
-        truc: [
-          { nguoi_ten: 'Hiệu trưởng (mẫu)', co_so_ma: 'CS01', loai: 'lanh_dao' },
-          { nguoi_ten: 'Phó Hiệu trưởng (mẫu)', co_so_ma: 'CS02', loai: 'lanh_dao' }
-        ]
-      },
       viecMau: [
         { id: 1, noiDung: 'Báo cáo chuyên cần tháng', nguoiTen: 'Cô Bùi Thị K.', nguoiEmail: '',
           coSo: null, muc: 'binh_thuong', chuKy: 'thang', thu: null, ngay: 28, thang: null,
@@ -457,12 +433,7 @@
       may.from('cau_hinh').select('khoa, gia_tri')
         .in('khoa', ['gio_bao_cao_sang', 'gio_bao_cao_chieu', 'ngay_lam_viec', 'bao_cao_co_so_chinh']),
       // hôm nay có trong bảng ngày nghỉ không (sql/30) — bảng có thể chưa có
-      may.from('ngay_nghi').select('ngay, loai').eq('ngay', homNayISO()).limit(1),
-      // lịch tuần chứa hôm nay (sql/32) — nuôi khối "📅 Hôm nay" trên trang
-      // chủ. TÙY CHỌN như 5 nguồn sql/25; RLS đã che bản nháp với giáo viên
-      may.from('lich_tuan')
-        .select('trang_thai, tu_ngay, lich_tuan_muc(*), truc_tuan(*)')
-        .eq('tu_ngay', thuHaiTuanNay()).limit(1)
+      may.from('ngay_nghi').select('ngay, loai').eq('ngay', homNayISO()).limit(1)
     ]).then(function (kq) {
       kq.slice(0, 6).forEach(function (r) { if (r.error) throw r.error; });
       // Nguồn tùy chọn: thiếu bảng (chưa chạy sql/25) → trả null; lỗi khác vẫn ném
@@ -614,38 +585,6 @@
       // Trường chưa chạy sql/30 (thiếu bảng ngay_nghi) thì coi như không có
       // ngày nghỉ khai báo — laNgayHoc vẫn xét được thứ trong tuần.
       NGHI_HOM_NAY = (kq[13] && !kq[13].error && (kq[13].data || [])[0]) || null;
-      // ── Lịch tuần → phần "hôm nay" (khối 📅 trên trang chủ) ──
-      // Giữ NGUYÊN trang_thai: bản nháp chỉ BGH đọc được (RLS), và khối trang
-      // chủ phải NÓI RÕ đó là nháp chứ không trưng ra như lịch đã ban hành.
-      // ⚠️ Nguồn TRANG TRÍ: lỗi GÌ cũng chỉ được ẩn khối, không được ném —
-      // ném là cả module rơi về bản mẫu (napThat bắt lỗi thì THAT = false).
-      // tuyChon() không đủ: bảng có mà QUAN HỆ lồng chưa vào schema cache
-      // (sql/32 dán dở) thì PostgREST trả PGRST200, loiThieuBang không nhận.
-      var dLT = (kq[14] && !kq[14].error) ? (kq[14].data || []) : null;
-      moi.ltCoBang = dLT !== null;
-      moi.lichHomNay = null;
-      if (dLT && dLT[0]) {
-        var lt0 = dLT[0], thuNay = thuHomNayLT();
-        // Xếp CÙNG thứ tự với màn Lịch tuần (lich-tuan.js BUOI_TT + phutCua):
-        // buổi → giờ → thứ tự nhập. Xếp theo mỗi so_tt là theo thứ tự NHẬP —
-        // ai nhập "Chiều 14:00" trước "Sáng 7:15" là trang chủ đảo buổi.
-        var BUOI_TT2 = { ca_ngay: 0, sang: 1, chieu: 2, toi: 3 };
-        function phut2(g) {
-          var m3 = /^(\d{1,2})\s*[:hH]\s*(\d{0,2})/.exec(String(g || ''));
-          return m3 ? (+m3[1]) * 60 + (+(m3[2] || 0)) : 9999;
-        }
-        moi.lichHomNay = {
-          trangThai: lt0.trang_thai,
-          muc: (lt0.lich_tuan_muc || [])
-            .filter(function (m2) { return m2.thu === thuNay; })
-            .sort(function (a, b) {
-              return (BUOI_TT2[a.buoi] || 0) - (BUOI_TT2[b.buoi] || 0) ||
-                phut2(a.gio) - phut2(b.gio) || (a.so_tt || 0) - (b.so_tt || 0);
-            }),
-          truc: (lt0.truc_tuan || [])
-            .filter(function (m2) { return m2.thu === thuNay; })
-        };
-      }
       moi.nhatKy.sort(function (a, b) { return String(b.khi).localeCompare(String(a.khi)); });
       moi.nhatKy = moi.nhatKy.map(function (n) { return { luc: gioTu(n.khi), chu: n.chu }; });
       return moi;
@@ -2753,84 +2692,6 @@
       : '<div class="tc-canh yen"><span class="bi">✓</span>' +
         '<span class="chu">Không có việc nào chờ xử lý</span></div>';
 
-    // ── Hàng "📅 Hôm nay" — thầy Chung duyệt 25/8/2026 (mục 67.3 sổ dự án):
-    // CBGV mở app phải thấy ngay hôm nay trường có gì, không phải đi hai lần
-    // bấm vào Điều hành → Lịch tuần. Toàn dữ liệu CÓ SẴN: lịch tuần đã ban
-    // hành + phân công trực (sql/32), thông báo (sql/25) — không thêm bảng,
-    // không ai phải nhập gì mới.
-    // Nằm NGOÀI .tc-luoi thành HÀNG riêng dưới .tc-tren: lưới ấy đóng khung
-    // 4/5 mảng cứng (bài học 64.2), nhét thêm ô là vỡ dải 720–1099px.
-    function khoiHomNay() {
-      var TEN_BUOI_LT = { sang: 'Sáng', chieu: 'Chiều', toi: 'Tối', ca_ngay: 'Cả ngày' };
-      var nghi = !xemThu && !laNgayHoc();
-      var lich = DL.lichHomNay, phanLich;
-      var moLT = 'onclick="DH.moTab(\'lichtuan\')"';
-      var daBH = !!(lich && lich.trangThai === 'ban_hanh');
-      // Ngày nghỉ vẫn có thể CÓ lịch, có trực — thứ Bảy họp hội đồng, trực lễ
-      // 2/9 (sql/32 cho thu 2..8, và dòng trực là dòng quý nhất của tờ lịch).
-      // Có mục đã ban hành thì cứ hiện, kèm ghi chú nghỉ; chỉ khi trống hẳn
-      // mới thay bằng câu "trường nghỉ".
-      var coGi = daBH && ((lich.muc || []).length || (lich.truc || []).length);
-      if (nghi && !coGi) {
-        phanLich = '<span class="tc-hn-yen">Hôm nay không phải ngày học — trường nghỉ.</span>';
-      } else if (DL.ltCoBang === false) {
-        // trường chưa chạy sql/32 — không trưng chữ lỗi kỹ thuật ra trang chủ
-        phanLich = '<button class="tc-hn-link" ' + moLT + '>Mở Lịch tuần ›</button>';
-      } else if (!lich || (!daBH && !qt)) {
-        // GV không đọc được bản nháp (RLS) — với họ "nháp" và "chưa có" là một
-        phanLich = '<span class="tc-hn-yen">Tuần này chưa có lịch công tác.</span> ' +
-          (qt ? '<button class="tc-hn-link" ' + moLT + '>Lập lịch ›</button>' : '');
-      } else if (!daBH) {
-        phanLich = '<span class="tc-hn-yen">Lịch tuần này còn là 🟡 bản nháp — ban hành thì cả trường mới thấy.</span> ' +
-          '<button class="tc-hn-link" ' + moLT + '>Mở Lịch tuần ›</button>';
-      } else if (!lich.muc.length) {
-        phanLich = '<span class="tc-hn-yen">' +
-          (nghi ? 'Hôm nay trường nghỉ — không có mục lịch riêng.'
-                : 'Hôm nay không có mục lịch riêng.') + '</span> ' +
-          '<button class="tc-hn-link" ' + moLT + '>Xem cả tuần ›</button>';
-      } else {
-        phanLich = (nghi
-          ? '<div class="tc-hn-yen">Hôm nay trường nghỉ — vẫn có lịch:</div>' : '') +
-        lich.muc.slice(0, 4).map(function (m2) {
-          return '<div class="tc-hn-muc"><b>' + (TEN_BUOI_LT[m2.buoi] || '') +
-            (m2.gio ? ' ' + thoat(m2.gio) : '') + '</b> · ' + thoat(m2.noi_dung || '') +
-            '<span class="tc-hn-mo">' +
-            (m2.co_so_ma ? ' — ' + thoat(tenCoSo(m2.co_so_ma)) : '') +
-            (m2.nguoi_ct_ten ? ' · ' + thoat(m2.nguoi_ct_ten) : '') + '</span></div>';
-        }).join('') +
-        (lich.muc.length > 4
-          ? '<button class="tc-hn-link" ' + moLT + '>… và ' + (lich.muc.length - 4) + ' mục nữa ›</button>'
-          : '');
-      }
-      // Trực hôm nay — chỉ khi lịch đã ban hành và có phân công.
-      // KHÔNG gác theo `nghi`: trực ngày lễ/cuối tuần chính là lúc câu hỏi
-      // "hôm nay ai ở điểm lẻ" cần trả lời nhất.
-      var phanTruc = '';
-      if (daBH && (lich.truc || []).length) {
-        phanTruc = '<div class="tc-hn-cot"><div class="tc-hn-nhan">🧭 Trực hôm nay</div>' +
-          lich.truc.map(function (t2) {
-            return '<div class="tc-hn-muc"><b>' + thoat(t2.nguoi_ten) + '</b><span class="tc-hn-mo">' +
-              (t2.co_so_ma ? ' — ' + thoat(tenCoSo(t2.co_so_ma)) : '') +
-              (t2.loai === 'ban' ? ' (trực ban)' : '') + '</span></div>';
-          }).join('') + '</div>';
-      }
-      // Thông báo gần nhất — cái nào cần TÔI xác nhận thì nói thẳng
-      var phanTB = '';
-      if (DL.tbCoBang) {
-        var tb2 = (DL.thongBao || []).filter(tbChoToi).slice(0, 2);
-        phanTB = '<div class="tc-hn-cot"><div class="tc-hn-nhan">📢 Thông báo</div>' +
-          (tb2.length ? tb2.map(function (x) {
-            return '<button class="tc-hn-muc tc-hn-bam" onclick="DH.moTab(\'thongbao\')">' +
-              (tbCanToiXN(x) ? '<span class="tc-hn-cxn">cần xác nhận</span> ' : '') +
-              '<b>' + thoat(x.tieuDe) + '</b><span class="tc-hn-mo"> · ' +
-              (x.ngay === homNayISO() ? thoat(x.luc) : ngayVN(x.ngay)) + '</span></button>';
-          }).join('') : '<span class="tc-hn-yen">Chưa có thông báo nào.</span>') + '</div>';
-      }
-      return '<div class="tc-hnay">' +
-        '<div class="tc-hn-cot chinh"><div class="tc-hn-nhan">📅 Hôm nay</div>' + phanLich + '</div>' +
-        phanTruc + phanTB + '</div>';
-    }
-
     var d = new Date();
     var THU = ['CHỦ NHẬT', 'THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY'];
 
@@ -2865,7 +2726,7 @@
             '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' + khoiHomNay() + '</div>';
+      '</div></div>';
   }
 
   // Hình lịch để bàn — ảnh 3D do thầy Chung gửi 23/8/2026 (nguồn: tệp
@@ -2896,10 +2757,6 @@
     thoat: thoat, nhay: nhay, ngayVN: ngayVN, homNayISO: homNayISO, pad2: pad2,
     loiThieuBang: loiThieuBang, TEN_THU: TEN_THU,
     veLai: function () { veGiu(); },
-    // Cho module con ĐỌC LẠI dữ liệu hôm nay rồi mới vẽ — veLai chỉ vẽ lại từ
-    // bộ nhớ, nên Lịch tuần vừa BAN HÀNH xong mà gọi veLai thì khối 📅 trang
-    // chủ vẫn nói "còn là bản nháp" đến tận lượt tải trang sau (soát 25/8).
-    taiLai: function () { return taiLai(); },
     baoLoi: function (e) { baoLoi(e); }
   };
 
