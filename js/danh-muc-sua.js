@@ -313,13 +313,15 @@
             ? '<a href="' + thoat(h.link_drive) + '" target="_blank" rel="noopener" title="Mở thư mục">📂</a>'
             : '<span style="color:var(--chu-mo)">—</span>') + '</td>' +
           (sua
-            ? '<td style="text-align:center"><button class="nut-xoa-nd" data-dm-xoa="' + thoat(h.ma) +
+            ? '<td style="text-align:center;white-space:nowrap">' +
+              '<button class="nut-luu-nd" data-dm-luu="' + thoat(h.ma) + '" style="padding:4px 10px;font-size:12.6px" title="Lưu tên vừa sửa">💾 Lưu</button> ' +
+              '<button class="nut-xoa-nd" data-dm-xoa="' + thoat(h.ma) +
               '" title="Gỡ khỏi danh mục">Gỡ</button></td>'
             : '') +
           '</tr>';
       }).join('') + '</tbody></table></div>' +
       '<div class="nhan-nho" style="text-transform:none;letter-spacing:0;color:var(--chu-mo);margin-top:10px">' +
-      'Sửa tên xong thì bấm ra ngoài ô là lưu. Trạng thái, link Drive và người phụ trách sửa ở ' +
+      'Sửa tên rồi bấm 💾 Lưu (nhấn Enter hoặc bấm ra ngoài ô cũng lưu). Trạng thái, link Drive và người phụ trách sửa ở ' +
       'màn <b>Quản lý Hồ sơ</b> — nơi người được giao cũng tự cập nhật được.</div>';
   }
 
@@ -333,10 +335,8 @@
 
     var bangHop = '<div class="dau-muc" style="text-align:left;margin:6px 0 8px">' +
       '<div class="nhan-nho">Hộp hồ sơ · ' + HOP.length + '</div></div>' +
-      // Không có nút Lưu riêng nên phải NÓI cách lưu — thầy Chung 27/8: gõ
-      // xong không thấy động tĩnh, tưởng chưa sửa được.
       (sua ? '<div style="font-size:13.2px;color:var(--chu-mo);margin:0 0 8px">' +
-        '✏ Sửa tên ngay trong ô — gõ xong nhấn <b>Enter</b> (hoặc bấm ra ngoài ô) là lưu, ' +
+        '✏ Sửa ngay trong ô rồi bấm <b>💾 Lưu</b> (nhấn Enter hoặc bấm ra ngoài ô cũng lưu) — ' +
         'có dòng báo xanh xác nhận.</div>' : '') +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th style="width:64px">Mã</th><th>Tên hộp</th><th>Thuộc bộ phận</th>' +
@@ -359,10 +359,13 @@
           '<td style="text-align:center">' + (n
             ? '<b>' + n + '</b>'
             : '<span style="color:var(--chu-mo)">rỗng</span>') + '</td>' +
+          // Nút Lưu và Xoá HIỆN RÕ ở mọi dòng (thầy Chung yêu cầu 27/8 —
+          // trước đây Xoá chỉ hiện khi hộp rỗng, người dùng tìm không thấy).
+          // Hộp còn hồ sơ thì bấm Xoá sẽ DẪN ĐƯỜNG chứ không giấu nút.
           (sua
-            ? '<td style="text-align:center">' + (n
-                ? '<span style="color:var(--chu-mo);font-size:12.6px" title="Chuyển hồ sơ đi nơi khác trước">còn hồ sơ</span>'
-                : '<button class="nut-xoa-nd" data-hop-xoa="' + thoat(h.ma) + '">Xoá</button>') + '</td>'
+            ? '<td style="text-align:center;white-space:nowrap">' +
+              '<button class="nut-luu-nd" data-hop-luu="' + thoat(h.ma) + '" style="padding:4px 10px;font-size:12.6px">💾 Lưu</button> ' +
+              '<button class="nut-xoa-nd" data-hop-xoa="' + thoat(h.ma) + '">Xoá</button></td>'
             : '') +
           '</tr>';
       }).join('') + '</tbody></table></div>' +
@@ -396,9 +399,9 @@
             ? '<b>' + soHop + '</b>'
             : '<span style="color:var(--chu-mo)">rỗng</span>') + '</td>' +
           (sua
-            ? '<td style="text-align:center">' + (soHop
-                ? '<span style="color:var(--chu-mo);font-size:12.6px">còn hộp</span>'
-                : '<button class="nut-xoa-nd" data-bp-xoa="' + b.so_tt + '">Xoá</button>') + '</td>'
+            ? '<td style="text-align:center;white-space:nowrap">' +
+              '<button class="nut-luu-nd" data-bp-luu="' + b.so_tt + '" style="padding:4px 10px;font-size:12.6px">💾 Lưu</button> ' +
+              '<button class="nut-xoa-nd" data-bp-xoa="' + b.so_tt + '">Xoá</button></td>'
             : '') +
           '</tr>';
       }).join('') + '</tbody></table></div>' +
@@ -440,6 +443,13 @@
 
   function bao(e) { window.hopHoi('Không lưu được: ' + ((e && e.message) || e)); }
 
+  // Enter trong ô sửa tại chỗ = lưu (ép blur). Dùng chung cho mọi bảng của tab.
+  function enterLaLuu(o) {
+    o.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); o.blur(); }
+    });
+  }
+
   function noiSuKien(goc) {
     Array.prototype.slice.call(goc.querySelectorAll('[data-dm-muc]')).forEach(function (b) {
       b.addEventListener('click', function () {
@@ -461,17 +471,38 @@
     var luuThem = goc.querySelector('#dm-luu-them');
     if (luuThem) luuThem.addEventListener('click', function () { themHoSo(goc, luuThem); });
 
+    function luuTenHoSo(ma, o) {
+      var cu = (DS.filter(function (x) { return x.ma === ma; })[0] || {}).ten;
+      var moi = o.value.trim();
+      if (!moi) { o.value = cu; return; }
+      if (moi === cu) {
+        if (window.notify) window.notify(ma + ' không có gì thay đổi để lưu.');
+        return;
+      }
+      may().from('ho_so').update({ ten: moi }).eq('ma', ma).then(function (r) {
+        if (r.error) { bao(r.error); o.value = cu || ''; return; }
+        if (window.notify) window.notify('Đã lưu tên ' + ma + ': ' + moi);
+        nap(veLai);
+      }).catch(function (e) { bao(e); o.value = cu || ''; });
+    }
+
     Array.prototype.slice.call(goc.querySelectorAll('[data-dm-ten]')).forEach(function (o) {
+      enterLaLuu(o);
       o.addEventListener('blur', function () {
         var ma = o.getAttribute('data-dm-ten');
         var cu = (DS.filter(function (x) { return x.ma === ma; })[0] || {}).ten;
-        var moi = o.value.trim();
-        if (!moi) { o.value = cu; return; }
-        if (moi === cu) return;
-        may().from('ho_so').update({ ten: moi }).eq('ma', ma).then(function (r) {
-          if (r.error) { bao(r.error); o.value = cu || ''; return; }
-          nap(veLai);
-        }).catch(function (e) { bao(e); o.value = cu || ''; });
+        // Rời ô mà không đổi gì thì im lặng (khác nút Lưu — bấm nút phải có
+        // tiếng vọng); có đổi mới lưu + báo.
+        if (o.value.trim() === cu) return;
+        luuTenHoSo(ma, o);
+      });
+    });
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-dm-luu]')).forEach(function (nut) {
+      nut.addEventListener('click', function () {
+        var ma = nut.getAttribute('data-dm-luu');
+        var o = goc.querySelector('[data-dm-ten="' + ma + '"]');
+        if (o) luuTenHoSo(ma, o);
       });
     });
 
@@ -480,6 +511,7 @@
         var ma = s.getAttribute('data-dm-tang');
         may().from('ho_so').update({ tang: s.value }).eq('ma', ma).then(function (r) {
           if (r.error) { bao(r.error); return; }
+          if (window.notify) window.notify('Đã lưu tầng của ' + ma + ': ' + s.value);
           nap(veLai);
         }).catch(bao);
       });
@@ -572,15 +604,9 @@
 
   // ══════════ SỰ KIỆN — HỘP VÀ BỘ PHẬN ══════════
   function noiCauTruc(goc) {
-    // Ô sửa tại chỗ lưu khi rời ô — thêm: Enter cũng lưu (ép blur), và lưu
-    // xong BÁO RÕ bằng notify. Trước đây lưu trong im lặng, người sửa không
-    // biết đã ăn hay chưa (thầy Chung vấp 27/8 khi đổi tên H04.1).
-    function enterLaLuu(o) {
-      o.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); o.blur(); }
-      });
-    }
-
+    // Ô sửa tại chỗ lưu khi rời ô; Enter cũng lưu; nút 💾 Lưu ép lưu tường
+    // minh; lưu xong BÁO RÕ bằng notify. Trước đây lưu trong im lặng, người
+    // sửa không biết đã ăn hay chưa (thầy Chung vấp 27/8 khi đổi tên H04.1).
     function luuHop(ma, thay, oNhap, giaTriCu, loiBao) {
       may().from('nhom_con').update(thay).eq('ma', ma).then(function (r) {
         if (r.error) { bao(r.error); if (oNhap) oNhap.value = giaTriCu || ''; return; }
@@ -609,10 +635,37 @@
       });
     });
 
-    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-xoa]')).forEach(function (b) {
-      b.addEventListener('click', function () {
-        var ma = b.getAttribute('data-hop-xoa');
+    // Nút 💾 Lưu của dòng hộp: gom tên + bộ phận đang chọn trên dòng, lưu một
+    // lượt. Không có gì đổi thì nói vậy — bấm Lưu mà im lặng là lại mơ hồ.
+    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-luu]')).forEach(function (nut) {
+      nut.addEventListener('click', function () {
+        var ma = nut.getAttribute('data-hop-luu');
         var h = HOP.filter(function (x) { return x.ma === ma; })[0] || {};
+        var oTen = goc.querySelector('[data-hop-ten="' + ma + '"]');
+        var oBp = goc.querySelector('[data-hop-bp="' + ma + '"]');
+        var thay = {};
+        var ten = oTen ? oTen.value.trim() : '';
+        if (oTen && !ten) { window.hopHoi('Tên hộp không được để trống.'); oTen.value = h.ten; return; }
+        if (oTen && ten !== h.ten) thay.ten = ten;
+        if (oBp && +oBp.value !== h.nhom_id) thay.nhom_id = +oBp.value;
+        if (!Object.keys(thay).length) {
+          if (window.notify) window.notify('Hộp ' + ma + ' không có gì thay đổi để lưu.');
+          return;
+        }
+        luuHop(ma, thay, oTen, h.ten, 'Đã lưu hộp ' + ma + '.');
+      });
+    });
+
+    // Nút Xoá hộp — LUÔN hiện. Hộp rỗng: xoá thẳng (máy chủ kiểm lại lần
+    // nữa). Hộp còn hồ sơ: KHÔNG giấu nút nữa mà dẫn đường — hỏi xác nhận rõ
+    // số hồ sơ, rồi gỡ lần lượt từng hồ sơ qua xoa_ho_so_an_toan (hồ sơ có
+    // link Drive được CẤT LINK vào kho lưu trữ trước khi xoá dòng — thư mục
+    // trên Drive không bị đụng), xong mới xoá hộp.
+    function xoaHop(ma, nut) {
+      var h = HOP.filter(function (x) { return x.ma === ma; })[0] || {};
+      var ds = DS.filter(function (x) { return x.nhom_con_id === h.id; });
+
+      if (!ds.length) {
         window.hopHoi({
           tieuDe: 'Xoá hộp ' + ma + '?',
           noiDung: h.ten + '\n\nHộp này đang rỗng nên xoá được. Máy chủ sẽ kiểm lại một lần nữa ' +
@@ -620,15 +673,60 @@
           nutOK: 'Xoá hộp', nguyHiem: true
         }).then(function (dongY) {
           if (!dongY) return;
-          b.disabled = true;
+          nut.disabled = true;
           may().rpc('xoa_hop_an_toan', { p_ma: ma }).then(function (r) {
-            b.disabled = false;
+            nut.disabled = false;
             if (r.error) { bao(r.error); return; }
             window.hopHoi(r.data || 'Đã xoá.');
             nap(veLai);
-          }).catch(function (e) { b.disabled = false; bao(e); });
+          }).catch(function (e) { nut.disabled = false; bao(e); });
         });
+        return;
+      }
+
+      var coLink = ds.filter(function (x) { return x.link_drive; }).length;
+      window.hopHoi({
+        tieuDe: 'Xoá hộp ' + ma + ' cùng ' + ds.length + ' hồ sơ bên trong?',
+        noiDung: h.ten + '\n\nHộp còn ' + ds.length + ' hồ sơ:\n· ' +
+          ds.map(function (x) { return x.ma + ' — ' + x.ten; }).join('\n· ') +
+          (coLink
+            ? '\n\n' + coLink + ' hồ sơ đang giữ link Drive — link sẽ được cất vào KHO LƯU TRỮ ' +
+              'trước khi gỡ, và thư mục trên Drive KHÔNG bị xoá.'
+            : '') +
+          '\n\nBấm nút dưới là gỡ lần lượt từng hồ sơ khỏi danh mục rồi xoá hộp. Không hoàn tác được.',
+        nutOK: 'Gỡ ' + ds.length + ' hồ sơ rồi xoá hộp', nguyHiem: true
+      }).then(function (dongY) {
+        if (!dongY) return;
+        nut.disabled = true;
+        (function goTiep(i) {
+          if (i >= ds.length) {
+            may().rpc('xoa_hop_an_toan', { p_ma: ma }).then(function (r) {
+              nut.disabled = false;
+              if (r.error) { bao(r.error); nap(veLai); return; }
+              window.hopHoi('Đã xoá hộp ' + ma + ' cùng ' + ds.length + ' hồ sơ.' +
+                (coLink ? ' Link Drive của ' + coLink + ' hồ sơ đã cất vào kho lưu trữ.' : ''));
+              nap(veLai);
+            }).catch(function (e) { nut.disabled = false; bao(e); nap(veLai); });
+            return;
+          }
+          may().rpc('xoa_ho_so_an_toan', { p_ma: ds[i].ma, p_ly_do: 'Xoá cùng hộp ' + ma })
+            .then(function (r) {
+              if (r.error) {
+                nut.disabled = false;
+                bao({ message: 'dừng ở ' + ds[i].ma + ' — ' + r.error.message +
+                  ' (các hồ sơ đã gỡ trước đó vẫn gỡ rồi, hộp chưa xoá)' });
+                nap(veLai);
+                return;
+              }
+              goTiep(i + 1);
+            })
+            .catch(function (e) { nut.disabled = false; bao(e); nap(veLai); });
+        })(0);
       });
+    }
+
+    Array.prototype.slice.call(goc.querySelectorAll('[data-hop-xoa]')).forEach(function (b) {
+      b.addEventListener('click', function () { xoaHop(b.getAttribute('data-hop-xoa'), b); });
     });
 
     var themBP = goc.querySelector('#bp-them');
@@ -716,10 +814,42 @@
       });
     });
 
+    // Nút 💾 Lưu của dòng bộ phận: gom tên + biểu tượng, lưu một lượt.
+    Array.prototype.slice.call(goc.querySelectorAll('[data-bp-luu]')).forEach(function (nut) {
+      nut.addEventListener('click', function () {
+        var tt = +nut.getAttribute('data-bp-luu');
+        var bp = BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {};
+        var oTen = goc.querySelector('[data-bp-ten="' + tt + '"]');
+        var oIcon = goc.querySelector('[data-bp-icon="' + tt + '"]');
+        var thay = {};
+        var ten = oTen ? oTen.value.trim() : '';
+        if (oTen && !ten) { window.hopHoi('Tên bộ phận không được để trống.'); oTen.value = bp.ten; return; }
+        if (oTen && ten !== bp.ten) thay.ten = ten;
+        var icon = oIcon ? oIcon.value.trim() : null;
+        if (oIcon && icon !== (bp.bieu_tuong || '')) thay.bieu_tuong = icon || null;
+        if (!Object.keys(thay).length) {
+          if (window.notify) window.notify('Bộ phận này không có gì thay đổi để lưu.');
+          return;
+        }
+        luuBP(tt, thay, oTen, bp.ten, 'Đã lưu bộ phận: ' + (thay.ten || bp.ten));
+      });
+    });
+
+    // Nút Xoá bộ phận — LUÔN hiện. Còn hộp thì KHÔNG xoá dây chuyền (xoá bộ
+    // phận kéo theo hộp, hộp kéo theo hồ sơ — quá tay cho một cú bấm), chỉ
+    // dẫn đường: chuyển hoặc xoá các hộp trước.
     Array.prototype.slice.call(goc.querySelectorAll('[data-bp-xoa]')).forEach(function (b) {
       b.addEventListener('click', function () {
         var tt = +b.getAttribute('data-bp-xoa');
         var bp = BO_PHAN.filter(function (x) { return x.so_tt === tt; })[0] || {};
+        var soHop = HOP.filter(function (h) { return h.nhom_id === bp.id; }).length;
+        if (soHop) {
+          window.hopHoi(bp.ten + ' còn ' + soHop + ' hộp bên trong.\n\n' +
+            'Chuyển các hộp ấy sang bộ phận khác (ô "Thuộc bộ phận" ở bảng trên) ' +
+            'hoặc xoá từng hộp trước, rồi mới xoá được bộ phận. Xoá cả cây bằng ' +
+            'một cú bấm là quá nguy hiểm nên hệ thống không làm.');
+          return;
+        }
         window.hopHoi({
           tieuDe: 'Xoá bộ phận này?',
           noiDung: bp.ten + '\n\nBộ phận này không còn hộp nào nên xoá được.',
