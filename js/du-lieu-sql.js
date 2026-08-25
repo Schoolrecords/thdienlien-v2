@@ -357,21 +357,10 @@
       function khoaNguoi(m) {
         return String(m.email_chinh || m.email || '').trim().toLowerCase();
       }
-      // Hai người khác nhau mà trùng họ tên thì thẻ nào cũng chỉ ghi "Nguyễn Thị
-      // Hà", nhìn vào không biết ai với ai. Ghi thêm phần đầu địa chỉ thư — đúng
-      // cách script Drive đặt tên thư mục cá nhân cho hai cô.
-      var tenTrung = {};
-      (function () {
-        var thay = {};
-        moi.forEach(function (m) {
-          if (m.la_ky_thuat) return;
-          var t = String(m.ho_ten || '').trim();
-          (thay[t] = thay[t] || {})[khoaNguoi(m)] = 1;
-        });
-        Object.keys(thay).forEach(function (t) {
-          if (Object.keys(thay[t]).length > 1) tenTrung[t] = 1;
-        });
-      })();
+      // (Trước đây có khối dò "trùng họ tên" để ghi thêm phần đầu địa chỉ thư
+      //  cho hai người cùng tên. Từ 25/8/2026 thẻ hiện HẲN viên email của từng
+      //  người — mẫu thầy Chung chọn — nên hai cô Nguyễn Thị Hà tự phân biệt
+      //  được, khối dò gỡ đi cho gọn.)
 
       var daVe = {};
       var html = '';
@@ -427,25 +416,29 @@
           });
           // Chỉ nhận đường dẫn http(s) — ô link nhập tay có thể chứa 'javascript:'
           var link = /^https?:\/\//i.test(m.link_drive || '') ? m.link_drive : '';
-          // Thẻ NẰM NGANG: ảnh · (tên / chức vụ / trạng thái) · nút thư mục.
-          // Trạng thái rút gọn còn "Đã kích hoạt" / "Chưa đăng nhập", câu đầy đủ
-          // để trong title — dòng dài làm thẻ phải nới ngang, mà nới ngang thì
-          // mỗi hàng bớt một thẻ.
+          // Thẻ theo mẫu thầy Chung chọn 25/8/2026: ảnh tròn gradient xanh ·
+          // tên đậm navy · chức vụ xanh lá · VIÊN EMAIL · nút thư mục góc phải.
+          // Trạng thái kích hoạt không còn là một DÒNG chữ — thành CHẤM màu ở
+          // góc ảnh (xanh = đã đăng nhập, xám = chưa), câu đầy đủ trong title.
           var tenDayDu = thoat(m.ho_ten);
           return '<div class="the-cbgv">' +
+            '<span class="anh-bao ' + (daVao ? 'da-vao' : 'chua-vao') + '"' +
+            ' title="' + (daVao ? 'Đã đăng nhập vào hệ thống ít nhất một lần'
+                                : 'Người này chưa đăng nhập lần nào') + '">' +
             (u && u.anh_dai_dien
               ? '<img class="anh" src="' + thoat(u.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">'
               : '<span class="anh chu-tat">' + thoat(chuTat(m.ho_ten)) + '</span>') +
+            '</span>' +
             '<div class="than">' +
             '<b title="' + tenDayDu + '">' + tenDayDu + '</b>' +
             '<small class="vt">' + thoat(m.chuc_vu || TEN_VAI_TRO[m.vai_tro]) +
-            (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') +
-            (tenTrung[String(m.ho_ten || '').trim()]
-              ? ' · ' + thoat(String(m.emails[0] || '').split('@')[0]) : '') + '</small>' +
-            '<small class="tt ' + (daVao ? 'da-vao' : 'chua-vao') + '"' +
-            ' title="' + (daVao ? 'Đã đăng nhập vào hệ thống ít nhất một lần'
-                                : 'Người này chưa đăng nhập lần nào') + '">' +
-            (daVao ? '● Đã kích hoạt' : '○ Chưa đăng nhập') + '</small>' +
+            (m.to_chuyen_mon ? ' · ' + thoat(m.to_chuyen_mon) : '') + '</small>' +
+            // Viên email: hiện địa chỉ CHÍNH; người hai địa chỉ xem đủ trong
+            // title. Nhờ nó hai người trùng họ tên tự phân biệt được.
+            (m.emails[0]
+              ? '<span class="mail" title="' + thoat(m.emails.join(' · ')) + '">✉ ' +
+                thoat(m.emails[0]) + '</span>'
+              : '') +
             '</div>' +
             // Nút chỉ còn biểu tượng — đúng kiểu nút 📂 ở bảng danh mục hồ sơ,
             // nên thầy cô đã quen. Tên người nằm trong aria-label để trình đọc

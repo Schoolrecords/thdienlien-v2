@@ -618,50 +618,64 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
        quét dọc theo cột tên là đọc được cả nhóm, không phải nhảy zíc-zắc.
    Ô lưới nới từ 212px lên 240px: thẻ ngang cần chỗ, nhưng mỗi hàng bớt một
    thẻ vẫn lãi to vì chiều cao giảm hơn một nửa. */
-.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.luoi-cbgv { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
 /* Lưới thẻ nằm trong khối xếp gọn (.sub) thì phải có lề trong: sát mép nhìn
    chật, mà thẻ lại nhấc lên 2px lúc rê chuột nên không có lề là bị cắt bóng. */
 .sub-body > .luoi-cbgv { padding: 13px; }
+/* Thẻ theo bản mẫu thầy Chung chọn 25/8/2026: vạch nhấn xanh lá bên trái ·
+   ảnh tròn gradient xanh (chấm trạng thái đăng nhập ở góc ảnh) · tên đậm navy ·
+   chức vụ XANH LÁ · viên email · nút thư mục góc trên phải. */
 .the-cbgv {
-  background: var(--the); border: 1px solid var(--vien); border-radius: 12px;
-  display: flex; align-items: center; gap: 11px; padding: 11px 12px;
+  position: relative; overflow: hidden;
+  background: var(--the); border: 1px solid var(--vien); border-radius: 16px;
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 13px 14px 19px;
   transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.the-cbgv::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+  background: linear-gradient(180deg, #4cbf8b, #1f8a5f);
 }
 .the-cbgv:hover {
   transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20, 48, 107, .12);
-  border-color: #c9d6ea;
+  border-color: #bfe3d2;
 }
-/* Navy nhạt đi 30% (#14306b → #5a6e97, pha 30% trắng). Một màn 39 thẻ mà mỗi
-   thẻ có hai khối navy đặc thì cả trang nặng như bảng biểu; nhạt xuống thì tên
-   người nổi lên, ảnh và nút lùi về đúng vai phụ.
-   #5a6e97 với chữ trắng đạt 5,11:1 — vẫn qua chuẩn AA (4,5:1). Đừng nhạt thêm:
-   nhạt nữa là chữ tắt trên ảnh đại diện tụt xuống dưới ngưỡng đọc được. */
+.the-cbgv .anh-bao { position: relative; flex: 0 0 auto; }
 .the-cbgv .anh {
-  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
-  background: #5a6e97;
-  color: #fff; font-size: 13.5px; font-weight: 800; letter-spacing: .02em;
-  display: grid; place-items: center;
+  width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid;
+  place-items: center; color: #fff; font-size: 16.5px; font-weight: 800;
+  letter-spacing: .02em;
+  /* Gradient xanh của bản mẫu; chữ trắng trên #2ba070 đạt ~4,6:1 — qua AA */
+  background: linear-gradient(135deg, #4cbf8b, #1f8a5f);
 }
+/* Chấm trạng thái ở góc ảnh thay cho dòng chữ "Đã kích hoạt / Chưa đăng nhập"
+   bản cũ — thẻ theo mẫu chỉ có 3 dòng, câu đầy đủ vẫn còn trong title. */
+.the-cbgv .anh-bao::after {
+  content: ''; position: absolute; right: -1px; bottom: 1px;
+  width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid #fff;
+}
+.the-cbgv .anh-bao.da-vao::after  { background: #22a06b; }
+.the-cbgv .anh-bao.chua-vao::after { background: #cfd6e2; }
 /* min-width:0 là thứ giữ cho tên dài không đẩy nút thư mục tràn khỏi thẻ —
    ô flex mặc định không co nhỏ hơn nội dung của nó. */
-.the-cbgv .than { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.the-cbgv .than b { font-size: 14px; color: var(--dam); line-height: 1.25; }
+.the-cbgv .than { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.the-cbgv .than b { font-size: 15.5px; font-weight: 800; color: var(--dam); line-height: 1.25; }
 .the-cbgv .vt {
-  font-size: 11.8px; color: var(--chu-mo); line-height: 1.3;
+  font-size: 12.5px; font-weight: 700; color: #1f8a5f; line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.the-cbgv .tt { font-size: 11.2px; line-height: 1.3; }
-.the-cbgv .da-vao  { color: #1f7a5e; }
-.the-cbgv .chua-vao { color: #8b93a3; }
-.the-cbgv .nut-hs {
-  flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center;
-  text-decoration: none; font-size: 16px; line-height: 1;
-  border: 0; border-radius: 9px; background: #5a6e97; color: #fff;
+.the-cbgv .mail {
+  align-self: flex-start; max-width: 100%; margin-top: 3px;
+  background: #f1f4fa; border-radius: 999px; padding: 3px 11px;
+  font-size: 12px; color: var(--chu); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-/* Rê chuột thì ĐẬM lên chứ không nhạt đi như các nút navy khác của app: nền đã
-   nhạt sẵn, nhạt thêm nữa là mất hẳn cảm giác bấm được. */
-.the-cbgv .nut-hs:hover { background: #46598a; }
-.the-cbgv .nut-hs.trong { background: #eef2f8; cursor: default; filter: grayscale(1); opacity: .55; }
+.the-cbgv .nut-hs {
+  flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center;
+  text-decoration: none; font-size: 17px; line-height: 1;
+  border: 1.5px solid #bfe3d2; border-radius: 11px; background: #fff;
+}
+.the-cbgv .nut-hs:hover { background: #e7f6ef; border-color: #7fcdaa; }
+.the-cbgv .nut-hs.trong { border-color: var(--vien); cursor: default; filter: grayscale(1); opacity: .55; }
 
 .the-cbgv .than b, .the-cbgv .than small { display: block; }
 .nut-drive { margin-left: auto; text-decoration: none; font-size: 18px; flex: 0 0 auto; }
