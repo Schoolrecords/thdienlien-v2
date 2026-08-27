@@ -158,15 +158,21 @@ header.dau-trang {
     flex-direction: column; gap: 6px; overflow: visible; padding: 0; max-width: none;
   }
   .khu-dieu-huong nav.menu button { width: 100%; text-align: left; }
+  /* ⚠ PHẢI đổi sang display:block. Khai báo gốc .khu-tai-khoan là display:flex
+     (xếp NGANG cho đầu trang màn rộng). Trong bảng ☰ thì hộp tài khoản được
+     hạ xuống position:static — thành ra nó là ô flex thứ hai nằm CẠNH chip,
+     mỗi thứ chiếm nửa bề ngang: chip bị bóp lệch sang trái, hộp thành cột hẹp
+     bên phải chữ rơi mỗi dòng một hai từ (ảnh cô gửi 27/8/2026). */
   .khu-dieu-huong .khu-tai-khoan {
-    margin: 10px 0 0; padding-top: 10px;
+    display: block; margin: 10px 0 0; padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, .16);
   }
   .khu-dieu-huong .chip-nguoi,
-  .khu-dieu-huong .nut-dang-nhap { width: 100%; }
+  .khu-dieu-huong .nut-dang-nhap { display: flex; width: 100%; }
   /* Hộp tài khoản nằm trong bảng thì trải thẳng ra, không xổ đè lên trang */
   .khu-dieu-huong .hop-tai-khoan {
-    position: static; margin-top: 8px; min-width: 0; box-shadow: none;
+    position: static; margin-top: 8px; min-width: 0; width: 100%;
+    box-shadow: none;
   }
 }
 /* Bo GÓC chứ không cắt tròn. Trước 20/8/2026 logo là con dấu tròn của trường
