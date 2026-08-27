@@ -793,6 +793,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     datNhanDienTruong();
     $('#dien-nam-hoc').textContent = window.CAU_HINH.NAM_HOC;
+    // Năm bản quyền chân trang: chỉ phụ thuộc lịch, không phụ thuộc cấu hình
+    // trường — nên điền MỘT lần ở đây, không vẽ lại trong veLaiTheoCauHinh.
+    var oBQ = $('#dien-nam-ban-quyen');
+    if (oBQ && window.namBanQuyen) oBQ.textContent = window.namBanQuyen();
     if (window.DA_NOI) {
       $('#bang-xem-thu').style.display = 'none';
     }

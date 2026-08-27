@@ -438,11 +438,21 @@ dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
 
 </main>
 
-<footer>Hệ thống Quản trị số Trường học — quản trị trường tiểu học trong giai đoạn mới.</footer>
+<footer>© <span id="dien-nam-ban-quyen">2026</span> Hệ thống quản trị số - Thiết kế ChungTran</footer>
 
 <button id="len-dau" title="Về mục lục" aria-label="Về mục lục">↑</button>
 
 <script>
+// Năm bản quyền chân trang — xem window.namBanQuyen trong js/cauhinh.js.
+// Ở đây phải chép lại phép tính vì trang hướng dẫn là trang TĨNH, cố ý
+// KHÔNG nạp trọn cấu hình Supabase chỉ để lấy một con số. Sửa năm phát
+// hành thì sửa CẢ HAI nơi.
+(function () {
+  var o = document.getElementById('dien-nam-ban-quyen');
+  var nay = new Date().getFullYear();
+  if (o && nay > 2026) o.textContent = '2026–' + nay;
+})();
+
 // Nút nổi quay về mục lục — chỉ hiện khi đã cuộn qua hộp mục lục. Không có
 // JS thì trang vẫn đọc bình thường, chỉ thiếu nút tắt này.
 (function () {

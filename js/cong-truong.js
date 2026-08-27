@@ -47,7 +47,8 @@
   }
 
   function chanCong() {
-    return '<div class="chan"><b>Hệ thống quản trị Trường tiểu học trong giai đoạn mới.</b> ' +
+    var namBQ = window.namBanQuyen ? window.namBanQuyen() : '2026';
+    return '<div class="chan"><b>© ' + namBQ + ' Hệ thống quản trị số - Thiết kế ChungTran</b> ' +
       'Việc xác thực do Google thực hiện. Dữ liệu cá nhân được bảo vệ theo ' +
       'Luật Bảo vệ dữ liệu cá nhân năm 2025.</div>';
   }

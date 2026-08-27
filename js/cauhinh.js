@@ -190,6 +190,26 @@ window.tinhNamHoc = function (moc, ngay) {
 };
 
 // ============================================================
+// NĂM BẢN QUYỀN CHÂN TRANG — ra "2026" rồi "2026–2027", "2026–2028"…
+//
+// Cùng một cái bẫy với tinhNamHoc, chỉ khác chỗ nó nằm: ghi cứng "© 2026"
+// trong HTML thì sang 1/1/2027 chân trang của MỌI trường vẫn ghi 2026, mà
+// chân trang là thứ không ai nghĩ tới lúc sang năm mới.
+//
+// Giữ 2026 làm mốc gốc vì đó là năm phát hành thật — lối ghi bản quyền là
+// "từ năm phát hành đến năm cập nhật gần nhất", nên chỉ NỐI THÊM năm nay
+// chứ không thay. Chưa qua năm mới thì chỉ một số cho gọn.
+//
+// Gạch nối dùng dấu gạch ngang ngắn "–" (en dash), lối ghi khoảng thời gian.
+// ============================================================
+window.NAM_PHAT_HANH = 2026;
+window.namBanQuyen = function (ngay) {
+  var nay = (ngay || new Date()).getFullYear();
+  if (!(nay > window.NAM_PHAT_HANH)) return String(window.NAM_PHAT_HANH);
+  return window.NAM_PHAT_HANH + '–' + nay;
+};
+
+// ============================================================
 // BA NĂM HỌC: NĂM TRƯỚC · NĂM NAY · NĂM SAU
 //
 // Vì sao KHÔNG chỉ đưa năm hiện hành: phần lớn việc của nhà trường bắc cầu qua
