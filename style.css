@@ -177,7 +177,11 @@ header.dau-trang {
   }
   .khu-dieu-huong .chip-nguoi,
   .khu-dieu-huong .nut-dang-nhap { display: flex; width: 100%; }
-  /* Hộp tài khoản nằm trong bảng thì trải thẳng ra, không xổ đè lên trang */
+  /* Hộp tài khoản nằm trong bảng thì trải thẳng ra, không xổ đè lên trang.
+     72.1-DA-SOI (28/8/2026): cha RUỘT là .khu-tai-khoan (#khu-tai-khoan trong
+     index.html) — khai báo gốc `.khu-tai-khoan { display: flex }`, và ĐÃ hạ về
+     block ngay trên đây. An toàn. Hộp này do JS sinh (supabase-ket-noi.js) nên
+     dò cây DOM trong index.html KHÔNG thấy — phải soi tay. */
   .khu-dieu-huong .hop-tai-khoan {
     position: static; margin-top: 8px; min-width: 0; width: 100%;
     box-shadow: none;
@@ -1164,6 +1168,24 @@ td.tdst { white-space: nowrap; text-align: right; }
 
 /* ════════════════════════════════════════════════════════════
    MÀN TRƯỜNG CHUẨN QUỐC GIA (TT57) — kế thừa Bạch Liêu
+
+   🔴 ĐỌC TRƯỚC KHI SỬA BẤT KỲ DÒNG NÀO DƯỚI ĐÂY (đo ngày 28/8/2026)
+
+   Khối này bị khối "TCQG — CSS GỐC BẠCH LIÊU" ở dưới (tìm chuỗi đó, cách
+   đây khoảng 230 dòng) đè lên. Đo cụ thể: trong 395 khai báo của khối này,
+   **201 cái (51%) đã CHẾT** — bị khai lại nguyên xi ở khối dưới, mà @media
+   không cộng độ đặc hiệu nên khối đứng SAU luôn thắng.
+
+   ⇒ Sửa một giá trị ở đây rồi mở trang thấy KHÔNG ĐỔI GÌ là chuyện bình
+     thường, không phải thầy sửa nhầm tệp hay trình duyệt còn nhớ bản cũ.
+     Tìm cùng bộ chọn ấy ở khối dưới rồi sửa ở đó.
+
+   ⇒ Nhưng ĐỪNG XOÁ khối này cho gọn: 194 khai báo còn lại (49%) vẫn đang
+     giữ giao diện, khối dưới không có (.the-kd, .nut-vien, .kd-nut,
+     .tc-ma, .tc-ten, .kd-thanh, #kd-list…). Xoá cả khối là vỡ màn TCQG.
+
+   Muốn biết chính xác bộ chọn nào bị đè: chạy `node quet-css.js` bên repo
+   tài liệu, mục "Bộ chọn khai trùng mà THẬT SỰ đè nhau".
    ════════════════════════════════════════════════════════════ */
 .kd-dau { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
 .kd-dau-phai { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
@@ -1682,6 +1704,10 @@ td.tdst { white-space: nowrap; text-align: right; }
   header.dau-trang, nav.menu, .hero, .hs-hero, footer,
   .bang-xem-thu, .bang-trang-thai, .toast, .sheet-x, .nut-kiem-tra { display: none !important; }
 
+  /* 72.1-DA-SOI (28/8/2026): cả hai đều là con TRỰC TIẾP của <body>
+     (.overlay khai trong index.html; .hs-lop do hoso-sua.js gắn bằng
+     document.body.appendChild). <body> không có display:flex/grid nên hạ
+     fixed → static ở đây không rơi vào luồng flex nào. An toàn. */
   .overlay, .hs-lop {
     position: static !important;
     overflow: visible !important;
