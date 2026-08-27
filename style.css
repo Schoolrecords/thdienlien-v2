@@ -136,7 +136,15 @@ header.dau-trang {
    hàng riêng — xem khối "MÁY TÍNH PHÓNG TO" ở CUỐI TỆP. */
 @media (max-width: 999px) {
   .dau-trang .khung { position: relative; flex-wrap: nowrap; }
-  .ten-khu { margin-right: auto; min-width: 0; }
+  /* Tên trường CANH GIỮA trên điện thoại (27/8/2026). Phải là flex:1 1 auto
+     chứ không phải margin-right:auto: margin-auto chỉ đẩy khoảng trống sang
+     phải, khối tên vẫn co đúng bề rộng chữ nên text-align:center chẳng có chỗ
+     nào mà căn. Cho khối chiếm trọn quãng giữa logo và nút ☰ thì hai dòng
+     (tên trường · địa chỉ) mới nằm chính giữa được. Logo 46px và nút ☰ 44px
+     gần bằng nhau nên tâm khối cũng gần đúng tâm màn hình.
+     ⚠ KHÔNG thu nhỏ cỡ chữ để ép một dòng — thầy đã chốt: trường nào tên dài
+     thì cứ để rơi xuống hai dòng, bóp chữ nữa thì đọc không ra. */
+  .ten-khu { flex: 1 1 auto; margin-right: 0; min-width: 0; text-align: center; }
   .ten-khu .ten { font-size: 15.5px; }
   .nut-menu {
     display: grid; place-items: center; flex: 0 0 auto;
