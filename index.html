@@ -59,9 +59,14 @@
   <meta property="og:locale" content="vi_VN">
   <meta property="og:title" content="Hệ thống Quản trị số Trường học">
   <!-- Không khai og:description — xem chú thích ở đầu tệp. -->
-  <!-- ?v=2: đổi nền navy → xanh nhạt 25/8/2026; đổi số này mỗi lần thay ảnh
-       để Zalo/Facebook bỏ bản cũ trong bộ nhớ đệm mà tải bản mới. -->
-  <meta property="og:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png?v=2">
+  <!-- ⚠️ Thay ảnh thì phải ĐỔI TÊN TỆP, KHÔNG thêm ?v= vào sau đuôi ảnh.
+       29/8/2026: Zalo bỏ hẳn ảnh xem trước (chỉ còn dòng chữ). Nguyên nhân là
+       ảnh cũ he-thong-og.png?v=2 — PNG 477 KB có kênh trong suốt, lại kèm
+       query. Bọ đọc thẻ của Zalo đọc hụt một lần là ghi luôn "không ảnh" vào
+       bộ nhớ đệm của nó, mà bộ nhớ đệm đó khoá theo URL nên ?v= đổi cũng
+       không cứu được trang. Bản thay: JPG phẳng, nền đặc, 58 KB, tên tệp mới. -->
+  <meta property="og:image" content="https://quantrisotruonghoc.com/img/xem-truoc.jpg">
+  <meta property="og:image:type" content="image/jpeg">
   <!-- Số đo phải KHỚP tệp thật (1200x630 từ 20/8/2026). Khai sai thì Zalo cắt
        ảnh theo số đo khai chứ không theo ảnh, logo mất một góc. -->
   <meta property="og:image:width" content="1200">
@@ -70,7 +75,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Hệ thống Quản trị số Trường học">
   <!-- Không khai twitter:description — xem chú thích ở đầu tệp. -->
-  <meta name="twitter:image" content="https://quantrisotruonghoc.com/img/he-thong-og.png?v=2">
+  <meta name="twitter:image" content="https://quantrisotruonghoc.com/img/xem-truoc.jpg">
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
