@@ -1,7 +1,7 @@
 {
   "_doc": "Trường ĐÃ ĐĂNG KÝ dùng hệ thống (22/8/2026). DIA_CHI/KHOA_CONG_KHAI còn trống → đang ở CHẾ ĐỘ XEM THỬ: vào được, mang đúng tên trường mình, dữ liệu là dữ liệu mẫu. Dựng xong CSDL Supabase thì quan-tri/dung-truong-moi.js tự điền hai chuỗi này.",
   "_ten_moi": "ĐÃ CÓ TÊN CHÍNH THỨC 29/8/2026 (thầy Chung báo): Trường Tiểu học Nghi Đồng + Trường Tiểu học Nghi Hưng gộp thành TRƯỜNG TIỂU HỌC THẦN LĨNH 1, hai phân hiệu: Phân hiệu Nghi Đồng · Phân hiệu Nghi Hưng. Phụ lục 1 QĐ 3805/QĐ-UBND 20/8/2026 ghi tên đích cụm là 'Tiểu học Nghi Hưng' — tên đó ĐÃ CŨ, đừng lấy lại từ Excel nữa. Mã Sở giữ nguyên 10918 (mã là danh tính, tên miền chỉ là lối vào); 10921 Nghi Hưng nay là bí danh trỏ về đây. Lưu ý: Tiểu học Nghi Phương (10912) cùng xã Thần Lĩnh nhưng phụ lục ghi 'Giữ nguyên' — KHÔNG thuộc cụm này.",
-  "_phan_hieu": "Khi dựng CSDL phải khai HAI cơ sở trong bảng co_so: Nghi Đồng và Nghi Hưng. Nhớ luật co_so_ma NULL = phạm vi toàn trường, và lop_hoc là nơi DUY NHẤT ánh xạ (năm học, lớp) → cơ sở.",
+  "_phan_hieu": "HAI phân hiệu (thầy Chung chốt 29/8/2026): Phân hiệu Nghi Đồng = ĐIỂM CHÍNH (loai 'chinh', mã Sở cũ 10918) · Phân hiệu Nghi Hưng (loai 'phan_hieu', mã Sở cũ 10921). Khi dựng CSDL chạy sql/trien-khai/10918-thanlinh1-co-so.sql để khai sẵn. Nhớ luật co_so_ma NULL = phạm vi toàn trường, và lop_hoc là nơi DUY NHẤT ánh xạ (năm học, lớp) → cơ sở.",
   "MA": "10918",
   "MA_SO": "10918",
   "MA_MOET": "",
