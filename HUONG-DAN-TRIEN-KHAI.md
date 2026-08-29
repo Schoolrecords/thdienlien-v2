@@ -1,14 +1,18 @@
 # HƯỚNG DẪN TRIỂN KHAI — thdienlien-v2
 
-> ⚠️ **CẬP NHẬT 22/8/2026 — thầy Chung bỏ hẳn tên miền `tieuhocdienlien.com`.**
-> Địa chỉ chính thức nay là **https://dienlien.quantrisotruonghoc.com** (mỗi trường một
-> tên miền con của cổng chung). Các đoạn dưới đây nhắc `tieuhocdienlien.com` là lịch sử
-> triển khai cũ, giữ để tra ngược; đừng làm theo cho trường mới.
+> ⚠️ **CẬP NHẬT 29/8/2026 — địa chỉ duy nhất là `quantrisotruonghoc.com`.**
+> Mỗi trường một tên miền con của cổng chung: `dienlien.` · `chaudinh.` · `thanlinh1.` …
+> Phát hành qua **Cloudflare Pages** (dự án `quantriso`), mở tên miền bằng lệnh —
+> xem `quan-tri/MO-TRUONG-MOI.md` mục B5, KHÔNG bấm tay nữa.
+>
+> Tên miền `tieuhocdienlien.com` đã thôi dùng, mọi chỗ hướng dẫn đã gỡ.
+> Chỗ duy nhất còn nhắc nó là mục **Di sản** ở cuối tài liệu — đọc trước khi
+> đụng vào tệp `CNAME`.
 
 > Dành cho thầy Chung. Toàn bộ 0 đồng, không cần thẻ ngân hàng. Khoảng 30 phút.
 > Chưa làm các bước dưới thì trang vẫn chạy **chế độ xem thử** với dữ liệu mẫu — dùng để duyệt giao diện.
 
-## Bước 1 — Đưa trang lên GitHub Pages (5 phút)
+## Bước 1 — Đưa trang lên mạng (5 phút)
 1. Đăng nhập GitHub tài khoản `Schoolrecords` → **New repository** → tên `thdienlien-v2` → Public → Create.
 2. Trên máy, mở thư mục `thdienlien-v2` này, chạy:
    ```
@@ -16,11 +20,17 @@
    git push -u origin main
    ```
    (Hoặc nhờ Claude đẩy giúp sau khi repo đã tạo.)
-3. Vào repo → Settings → Pages → Source: `main`, thư mục `/ (root)` → Save.
-4. Sau 1-2 phút, trang chạy tại: `https://schoolrecords.github.io/thdienlien-v2/`
-5. **Tên miền riêng (đã làm 11/8/2026)** — địa chỉ chính thức là **https://tieuhocdienlien.com**
-   Địa chỉ `schoolrecords.github.io/thdienlien-v2/` vẫn chạy, tự chuyển hướng về tên miền riêng.
-   Xem cấu hình DNS ở mục cuối tài liệu này.
+3. Kho mã nối sẵn với **Cloudflare Pages** (dự án `quantriso`) — `git push` xong là Pages
+   tự dựng lại, khoảng một phút sau trang mới lên sóng.
+4. Địa chỉ chung: **https://quantrisotruonghoc.com**
+5. **Tên miền con của từng trường** mở bằng lệnh, không bấm tay:
+   ```
+   node quan-tri/cloudflare-ten-mien.js --nhan <nhãn>            # soi
+   node quan-tri/cloudflare-ten-mien.js --nhan <nhãn> --dong-y   # làm thật
+   ```
+   Token Cloudflare đã khai sẵn ở biến môi trường `CLOUDFLARE_API_TOKEN` (hạn 28/2/2027).
+   Thêm xong tên miền trả `522` vài chục giây là bình thường — Cloudflare chưa cấp xong
+   chứng chỉ, đợi rồi thử lại, đừng chạy lại lệnh.
 
 ## Bước 2 — Tạo dự án Supabase (10 phút)
 
@@ -54,13 +64,15 @@
 
 ## Bước 3 — Bật đăng nhập Google (10 phút)
 1. Supabase → Authentication → Sign In / Up → Google → bật, chép **Callback URL**.
-2. console.cloud.google.com → tạo OAuth Client (Web): JavaScript origins gồm **cả ba**
-   `https://tieuhocdienlien.com`, `https://www.tieuhocdienlien.com`, `https://schoolrecords.github.io`;
-   Redirect URI = Callback URL vừa chép.
-3. Dán Client ID + Secret về Supabase; đặt Site URL = `https://tieuhocdienlien.com`.
+2. console.cloud.google.com → OAuth Client (Web): JavaScript origins
+   `https://quantrisotruonghoc.com`; Redirect URI = Callback URL vừa chép.
+   🔴 **Đây là việc tay DUY NHẤT còn lại khi mở một trường** — Google không cho làm bằng lệnh.
+   Client secret thì lấy bằng nút **Reveal** ở một trường đang chạy, **đừng Add secret**:
+   Google chỉ cho 2 secret và không cho xem lại.
+3. Dán Client ID + Secret về Supabase; đặt Site URL = `https://quantrisotruonghoc.com`.
 4. Supabase → Authentication → URL Configuration → **Redirect URLs** thêm:
-   `https://tieuhocdienlien.com/**`, `https://www.tieuhocdienlien.com/**`,
-   `https://schoolrecords.github.io/thdienlien-v2/**`.
+   `https://quantrisotruonghoc.com/**` và tên miền con của trường,
+   ví dụ `https://thanlinh1.quantrisotruonghoc.com/**`.
    Thiếu bước này thì nút đăng nhập Google báo `redirect_uri_mismatch`.
 
 ## Bước 4 — Danh sách mời
@@ -79,38 +91,23 @@ cron-job.org → tạo job mỗi ngày 1 lần, POST tới:
 `https://<mã-dự-án>.supabase.co/rest/v1/rpc/con_song`
 Headers: `apikey: <anon key>` và `Authorization: Bearer <anon key>`.
 
-## Tên miền riêng — cấu hình DNS (làm 11/8/2026, KHÔNG PHÁT TRIỂN THÊM từ 22/8/2026)
+## Di sản — vì sao repo còn tệp `CNAME` (đọc trước khi xoá)
 
-> ⚠️ **Mục này là lịch sử, nhưng tên miền vẫn sống.** Địa chỉ đang dùng là
-> **https://dienlien.quantrisotruonghoc.com** trên Cloudflare Pages. Thầy Chung chốt
-> 22/8/2026: **giữ nguyên `CNAME` và bản ghi DNS cũ**, không đụng tới nữa — bookmark của
-> 37 thầy cô vẫn mở được, và không phải đặt luật chuyển hướng nào. Trường mới thì tuyệt
-> đối không khai tên miền này ở đâu cả.
+Tên miền cũ `tieuhocdienlien.com` đã **thôi dùng**: không khai ở đâu nữa, không dạy trong
+tài liệu nữa, trường mới tuyệt đối không dùng.
 
-Địa chỉ cũ, vẫn phát: **https://tieuhocdienlien.com**
-Nhà đăng ký: **Mắt Bão** (ns1/ns2.matbao.com) — hết hạn 05/01/2027.
+> 🔴 **Nhưng nó VẪN ĐANG PHÁT, và đó là chủ ý.** Kiểm 29/8/2026: trả `200`, chạy trên
+> **GitHub Pages** (`Server: GitHub.com`), nội dung **trùng khít từng byte** với
+> `quantrisotruonghoc.com` — cùng một kho mã phát ra hai nơi. Giữ nó sống chỉ để
+> **bookmark của 37 thầy cô Diễn Liên không chết**.
 
-Bản ghi DNS đang đặt (Chi tiết dịch vụ → Bản ghi DNS):
+Cái giữ nó sống là tệp **`CNAME`** ở gốc repo (đúng một dòng `tieuhocdienlien.com`) cộng
+với bản ghi DNS bên Mắt Bão (hết hạn 05/01/2027).
 
-| Host | Loại | Giá trị | TTL |
-|---|---|---|---|
-| `@` | A | `185.199.108.153` `185.199.109.153` `185.199.110.153` `185.199.111.153` | 3600 |
-| `www` | CNAME | `schoolrecords.github.io.` | 3600 |
-| `@` | TXT | `google-site-verification=Tu95Tg...` (di sản Google Sites, để nguyên) | 3600 |
-
-Phía GitHub: file **`CNAME`** ở gốc repo chứa đúng một dòng `tieuhocdienlien.com`,
-Settings → Pages tự nhận, **Enforce HTTPS đã bật**, chứng chỉ cấp cho cả apex lẫn `www`.
-
-⚠️ **Đừng xóa file `CNAME`** — xóa là tên miền cũ thành 404 và bookmark của 37 thầy cô chết.
-Cứ để nguyên: hai bản cùng phát từ một kho mã, bản Cloudflare Pages mới là bản đang phát triển.
-
-Ba lối vào đều dẫn về một chỗ:
-- `http://tieuhocdienlien.com` → 301 → `https://tieuhocdienlien.com` ✅
-- `https://www.tieuhocdienlien.com` → 301 → apex ✅
-- `https://schoolrecords.github.io/thdienlien-v2/` → 301 → apex ✅
-
-`www` trước đây trỏ về Google Sites `sites.google.com/view/tieuhocdienlien` — bản ghi đó
-đã xóa. Trang Google Sites cũ vẫn còn, truy cập thẳng bằng địa chỉ sites.google.com.
+⚠️ **Xoá `CNAME` là tắt tên miền cũ ngay lập tức** — ai còn bookmark sẽ gặp 404, không có
+lối chuyển hướng nào đỡ. Muốn tắt thì **báo thầy cô Diễn Liên chuyển sang**
+`https://dienlien.quantrisotruonghoc.com` trước, đợi một thời gian rồi mới xoá.
+Chừng nào chưa làm việc đó thì **để nguyên tệp này**, đừng thấy nó lạc lõng mà dọn.
 
 ## ⚠️ Quy tắc an toàn (bài học 10/8/2026)
 - Repo này **tuyệt đối không chứa**: file Excel dữ liệu, ảnh chữ ký/dấu, mật khẩu, danh sách học sinh, link Drive nội bộ.
