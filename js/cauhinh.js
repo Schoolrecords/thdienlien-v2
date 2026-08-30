@@ -33,8 +33,8 @@ window.CHUNG = {
   // làm sâu hơn. Ở đây chỉ có lối mở sang đó. Xem mục 13.7 sổ dự án.
   //
   // ⚠️ App TKB là MỘT TRƯỜNG MỘT DỰ ÁN (Supabase riêng), không đa trường như
-  //    Quản trị số. Địa chỉ dưới đây là app của Diễn Liên, mà khoá này nằm ở
-  //    CHUNG nên MỌI trường đều mở vào đó. Trường nào có app thời khóa biểu
+  //    Quản trị số. Địa chỉ dưới đây là app của MỘT trường cụ thể, mà khoá này
+  //    nằm ở CHUNG nên MỌI trường đều mở vào đó. Trường nào có app thời khóa biểu
   //    riêng thì khai đè `"URL_TKB": "…"` trong cau-hinh/ma/<mã>.json — khoá
   //    khai trong tệp trường luôn thắng khoá ở CHUNG (window.apDungCauHinh).
   //    Khai chuỗi rỗng thì ô Thời khóa biểu ở trang chủ KHÔNG hiện.

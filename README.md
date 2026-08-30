@@ -1,6 +1,12 @@
-# Quản trị số v2 — Trường Tiểu học Diễn Liên
+# Quản trị số v2 — hệ thống nhiều trường
 
-🔗 **https://dienlien.quantrisotruonghoc.com**
+🔗 **https://quantrisotruonghoc.com** — cổng chung, mỗi trường một tên miền con
+(`quangchau1.` · `chaudinh.` · `thanlinh1.` · `hoahieu1.` …).
+
+> Kho mã này KHÔNG thuộc trường nào. Trước đây tiêu đề đề tên Trường Tiểu học
+> Diễn Liên vì đó là trường đầu tiên; nay một mã nguồn phục vụ nhiều trường, và
+> chính Diễn Liên cũng đã sáp nhập thành **Trường Tiểu học Quảng Châu 1**
+> (30/8/2026). Cấu hình từng trường nằm ở `cau-hinh/`, không ở đây.
 
 Hệ thống Quản trị số nhà trường theo **Thông tư 57/2026/TT-BGDĐT**, gồm 3 module:
 
