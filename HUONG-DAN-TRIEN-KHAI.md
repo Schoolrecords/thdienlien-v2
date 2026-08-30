@@ -5,9 +5,9 @@
 > Phát hành qua **Cloudflare Pages** (dự án `quantriso`), mở tên miền bằng lệnh —
 > xem `quan-tri/MO-TRUONG-MOI.md` mục B5, KHÔNG bấm tay nữa.
 >
-> Tên miền `tieuhocdienlien.com` đã thôi dùng, mọi chỗ hướng dẫn đã gỡ.
-> Chỗ duy nhất còn nhắc nó là mục **Di sản** ở cuối tài liệu — đọc trước khi
-> đụng vào tệp `CNAME`.
+> Địa chỉ của trường nay chỉ còn MỘT: **`quangchau1.quantrisotruonghoc.com`**.
+> Hai địa chỉ cũ `dienlien.quantrisotruonghoc.com` và `tieuhocdienlien.com` đã gỡ
+> ngày 30/8/2026 — xem mục **Địa chỉ của trường** ở cuối tài liệu.
 
 > Dành cho thầy Chung. Toàn bộ 0 đồng, không cần thẻ ngân hàng. Khoảng 30 phút.
 > Chưa làm các bước dưới thì trang vẫn chạy **chế độ xem thử** với dữ liệu mẫu — dùng để duyệt giao diện.
@@ -91,28 +91,28 @@ cron-job.org → tạo job mỗi ngày 1 lần, POST tới:
 `https://<mã-dự-án>.supabase.co/rest/v1/rpc/con_song`
 Headers: `apikey: <anon key>` và `Authorization: Bearer <anon key>`.
 
-## Di sản — vì sao repo còn tệp `CNAME` (đọc trước khi xoá)
+## Địa chỉ của trường — chỉ còn MỘT
 
-Tên miền cũ `tieuhocdienlien.com` đã **thôi dùng**: không khai ở đâu nữa, không dạy trong
-tài liệu nữa, trường mới tuyệt đối không dùng.
+> ✅ **`https://quangchau1.quantrisotruonghoc.com`** — địa chỉ duy nhất, từ 30/8/2026.
 
-> 🔴 **Nhưng nó VẪN ĐANG PHÁT, và đó là chủ ý.** Kiểm 29/8/2026: trả `200`, chạy trên
-> **GitHub Pages** (`Server: GitHub.com`), nội dung **trùng khít từng byte** với
-> `quantrisotruonghoc.com` — cùng một kho mã phát ra hai nơi. Giữ nó sống chỉ để
-> **bookmark của 37 thầy cô Diễn Liên không chết**.
+Trường thành **Trường Tiểu học Quảng Châu 1** (Diễn Đồng + Diễn Liên + Diễn Thái). Thầy Chung
+chốt gỡ hết địa chỉ cũ để khỏi lẫn lộn, chấp nhận việc ai còn lối tắt cũ sẽ gặp trang lỗi.
 
-Cái giữ nó sống là tệp **`CNAME`** ở gốc repo (đúng một dòng `tieuhocdienlien.com`) cộng
-với bản ghi DNS bên Mắt Bão (hết hạn 05/01/2027).
+| Địa chỉ cũ | Đã gỡ gì | Còn lại |
+|---|---|---|
+| `dienlien.quantrisotruonghoc.com` | bản ghi DNS · custom domain bên Cloudflare Pages · tệp `cau-hinh/ten-mien/…json` | không còn gì |
+| `tieuhocdienlien.com` | tệp **`CNAME`** ở gốc repo → GitHub Pages thôi nhận tên miền này | **bản ghi DNS bên Mắt Bão vẫn còn**, tên miền hết hạn 05/01/2027 |
 
-⚠️ **Xoá `CNAME` là tắt tên miền cũ ngay lập tức** — ai còn bookmark sẽ gặp 404, không có
-lối chuyển hướng nào đỡ. Muốn tắt thì **báo thầy cô chuyển sang**
-`https://quangchau1.quantrisotruonghoc.com` trước, đợi một thời gian rồi mới xoá.
-Chừng nào chưa làm việc đó thì **để nguyên tệp này**, đừng thấy nó lạc lõng mà dọn.
+⚠️ **`tieuhocdienlien.com` gỡ chưa dứt điểm.** Xoá `CNAME` chỉ tắt phía GitHub; DNS bên Mắt Bão
+vẫn trỏ tới đó nên địa chỉ sẽ ra **404 của GitHub** chứ chưa phải lỗi DNS. Muốn dứt hẳn: gỡ bản
+ghi DNS bên Mắt Bão, hoặc cứ để tên miền hết hạn.
 
-> 🔴 **Cập nhật 30/8/2026 — `dienlien.quantrisotruonghoc.com` KHÔNG CÒN.** Thầy Chung chốt
-> gỡ hẳn để khỏi lẫn lộn sau khi trường thành Quảng Châu 1: đã xoá bản ghi DNS, custom
-> domain bên Pages và tệp nhãn trong `cau-hinh/ten-mien/`. Địa chỉ duy nhất của trường nay
-> là **`quangchau1.quantrisotruonghoc.com`**. Đừng lấy `dienlien…` làm đích chuyển sang nữa.
+> 🔑 **HAI THỨ TÊN GIỐNG NHAU, ĐỪNG DỌN NHẦM.** `cau-hinh/ma/dienlien.json` là **mã ngắn**,
+> KHÔNG phải nhãn tên miền — đó là giá trị `localStorage.ma_truong` đang nằm trên máy thầy cô
+> và là khoá `CAU_HINH.MA` hiện hành. **Giữ nguyên**, xoá là cả trường ra màn khai mã.
+
+> 🔑 App CŨ tại `schoolrecords.github.io/tieuhocdienlien` là **chuyện khác**, không dính tên
+> miền này và **vẫn đang chạy thật** — xem `_luu-tru-app-cu/DOC-TRUOC.txt` trước khi đụng vào.
 
 ## ⚠️ Quy tắc an toàn (bài học 10/8/2026)
 - Repo này **tuyệt đối không chứa**: file Excel dữ liệu, ảnh chữ ký/dấu, mật khẩu, danh sách học sinh, link Drive nội bộ.
