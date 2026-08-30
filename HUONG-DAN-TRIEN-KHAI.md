@@ -105,9 +105,14 @@ Cái giữ nó sống là tệp **`CNAME`** ở gốc repo (đúng một dòng `
 với bản ghi DNS bên Mắt Bão (hết hạn 05/01/2027).
 
 ⚠️ **Xoá `CNAME` là tắt tên miền cũ ngay lập tức** — ai còn bookmark sẽ gặp 404, không có
-lối chuyển hướng nào đỡ. Muốn tắt thì **báo thầy cô Diễn Liên chuyển sang**
-`https://dienlien.quantrisotruonghoc.com` trước, đợi một thời gian rồi mới xoá.
+lối chuyển hướng nào đỡ. Muốn tắt thì **báo thầy cô chuyển sang**
+`https://quangchau1.quantrisotruonghoc.com` trước, đợi một thời gian rồi mới xoá.
 Chừng nào chưa làm việc đó thì **để nguyên tệp này**, đừng thấy nó lạc lõng mà dọn.
+
+> 🔴 **Cập nhật 30/8/2026 — `dienlien.quantrisotruonghoc.com` KHÔNG CÒN.** Thầy Chung chốt
+> gỡ hẳn để khỏi lẫn lộn sau khi trường thành Quảng Châu 1: đã xoá bản ghi DNS, custom
+> domain bên Pages và tệp nhãn trong `cau-hinh/ten-mien/`. Địa chỉ duy nhất của trường nay
+> là **`quangchau1.quantrisotruonghoc.com`**. Đừng lấy `dienlien…` làm đích chuyển sang nữa.
 
 ## ⚠️ Quy tắc an toàn (bài học 10/8/2026)
 - Repo này **tuyệt đối không chứa**: file Excel dữ liệu, ảnh chữ ký/dấu, mật khẩu, danh sách học sinh, link Drive nội bộ.
