@@ -1,7 +1,7 @@
 # Quản trị số v2 — hệ thống nhiều trường
 
 🔗 **https://quantrisotruonghoc.com** — cổng chung, mỗi trường một tên miền con
-(`quangchau1.` · `chaudinh.` · `thanlinh1.` · `hoahieu1.` …).
+(`quangchau1.` · `quyhop2.` · `thanlinh1.` · `hoahieu1.` …).
 
 > Kho mã này KHÔNG thuộc trường nào. Trước đây tiêu đề đề tên Trường Tiểu học
 > Diễn Liên vì đó là trường đầu tiên; nay một mã nguồn phục vụ nhiều trường, và

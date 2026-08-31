@@ -1,7 +1,7 @@
 # HƯỚNG DẪN TRIỂN KHAI — thdienlien-v2
 
 > ⚠️ **CẬP NHẬT 29/8/2026 — địa chỉ duy nhất là `quantrisotruonghoc.com`.**
-> Mỗi trường một tên miền con của cổng chung: `dienlien.` · `chaudinh.` · `thanlinh1.` …
+> Mỗi trường một tên miền con của cổng chung: `quangchau1.` · `quyhop2.` · `thanlinh1.` …
 > Phát hành qua **Cloudflare Pages** (dự án `quantriso`), mở tên miền bằng lệnh —
 > xem `quan-tri/MO-TRUONG-MOI.md` mục B5, KHÔNG bấm tay nữa.
 >
