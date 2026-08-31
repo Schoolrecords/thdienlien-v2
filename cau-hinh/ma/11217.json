@@ -8,8 +8,8 @@
   "DIA_CHI": "https://cnszujoekqxuvshnphhv.supabase.co",
   "KHOA_CONG_KHAI": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuc3p1am9la3F4dXZzaG5waGh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMzY1NjgsImV4cCI6MjEwMjgxMjU2OH0.RMw4k8kjckOZ557psVmdfZRuzmwn6OJt_glfYOrcJ0E",
   "TEN_TRUONG": "Trường Tiểu học Quỳ Hợp 2",
-  "DIA_CHI_TRUONG": "Xóm Châu Đình, xã Quỳ Hợp, tỉnh Nghệ An",
-  "_dia_chi": "Lấy theo Điều 1.3 QĐ 1944 (trụ sở chính: Xóm Châu Đình). Biểu mẫu nhà trường gửi 30/8/2026 khai 'Xóm Mới' — địa chỉ trên quyết định thành lập được ưu tiên; nhà trường xác nhận lại thì sửa cả ở đây và bảng cau_hinh.",
+  "DIA_CHI_TRUONG": "Xã Quỳ Hợp, Tỉnh Nghệ An",
+  "_dia_chi": "Thầy Chung chốt 31/8/2026: BỎ cấp xóm, chỉ để xã và tỉnh. Trường mới có hai địa điểm (trụ sở chính Xóm Châu Đình, phân hiệu Xóm Quang Trung — Điều 1.3 QĐ 1944) nên ghi tên một xóm vào dòng địa chỉ trường là chỉ đúng một nửa; địa chỉ từng cơ sở nằm ở bảng co_so. Cùng lối viết với Quảng Châu 1.",
   "DIA_DANH": "Quỳ Hợp",
   "DON_VI_CHU_QUAN": "UBND XÃ QUỲ HỢP",
   "CO_QUAN_QUAN_LY": "SỞ GIÁO DỤC VÀ ĐÀO TẠO NGHỆ AN",
@@ -28,6 +28,6 @@
   "THU_MUC_ANH": "img/chaudinh/",
   "SO_LOP": 0,
   "SO_HOC_SINH": 0,
-  "SO_CBGV": 0,
-  "_quy_mo": "Về 0 vì ba số cũ (20 lớp · 566 học sinh · 38 CBGV) là của riêng Châu Đình, nay không còn là quy mô trường. Số lớp trên màn hình ĐẾM THẬT từ lop_hoc nên không sai; điền lại khi đã nhập lớp và CBGV của phân hiệu Quang Trung."
+  "SO_CBGV": 88,
+  "_quy_mo": "SO_CBGV = 88 là số của TRƯỜNG MỚI, đếm từ biểu mẫu 30/8/2026 trang 'Email đăng nhập': 38 người ở cơ sở Châu Đình + 50 người ở phân hiệu Quang Trung. Còn lớp và học sinh về 0 vì hai số cũ (20 lớp · 566 học sinh) là của riêng Châu Đình, chưa có số của Quang Trung — số lớp trên màn hình ĐẾM THẬT từ lop_hoc nên không sai, điền lại khi nhà trường gửi danh sách lớp phân hiệu."
 }
