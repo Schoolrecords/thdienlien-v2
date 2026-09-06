@@ -111,7 +111,9 @@
     { co: 9,  mau: 'FF5A6B8C' },                         // 6 rất nhỏ
     { co: 11, nghieng: 1 }                               // 7 nghiêng
   ];
-  var NEN = ['none', 'gray125', 'FF14306B', 'FFDDE5F0', 'FFEEF2F9', 'FFF7F9FC'];
+  // Nền 6 = VÀNG NHẠT: ô nhà trường phải điền trong các tệp mẫu (cùng màu với
+  // phiếu cung cấp dữ liệu, thầy cô đã quen "chỉ điền ô nền vàng").
+  var NEN = ['none', 'gray125', 'FF14306B', 'FFDDE5F0', 'FFEEF2F9', 'FFF7F9FC', 'FFFFF9C4'];
   // cellXfs: [phông, nền, có viền, canh ngang, xuống dòng]
   var KIEU = {
     thuong:  [0, 0, 0, '', 0],
@@ -131,7 +133,12 @@
     oB:      [4, 0, 1, 'left', 0],
     ky:      [7, 0, 0, 'right', 0],
     hd:      [0, 0, 0, 'left', 1],
-    hdb:     [4, 0, 0, 'left', 1]
+    hdb:     [4, 0, 0, 'left', 1],
+    // Ba kiểu thêm 06/9/2026 cho tệp mẫu nhập dữ liệu — CHỈ THÊM VÀO CUỐI,
+    // chèn giữa là lệch chỉ số cellXfs của mọi tệp đã xuất trước đó.
+    nhapV:   [0, 6, 1, 'left', 1],      // ô điền nền vàng, canh trái
+    nhapVG:  [0, 6, 1, 'center', 0],    // ô điền nền vàng, canh giữa
+    vd:      [3, 0, 1, 'left', 1]       // dòng ví dụ: nghiêng, xám, có viền
   };
   var THU_TU_KIEU = Object.keys(KIEU);
   function soKieu(ten) {
@@ -171,7 +178,7 @@
       '</styleSheet>';
   }
 
-  // sheet: { ten, cols:[rộng], rows:[{cao, o:[{v, k, so, gopN, gopD, bo}]}], in:{...} }
+  // sheet: { ten, cols:[rộng], rows:[{cao, o:[{v, k, so, gopN, gopD, bo}]}], in:{...}, kiemTra:[...] }
   function xmlSheet(s) {
     var gop = [];
     var rows = s.rows.map(function (r, ri) {
@@ -184,12 +191,14 @@
         }
         var k = soKieu((c && c.k) || 'thuong');
         var noi = '';
+        // Ô "số" mà không phải số (NaN, Infinity) thì ghi chữ — <v>NaN</v> là Excel đòi sửa tệp.
+        var laSo = !!(c && c.so && isFinite(Number(c.v)));
         if (c && c.v !== '' && c.v != null) {
-          noi = c.so
+          noi = laSo
             ? '<v>' + Number(c.v) + '</v>'
             : '<is><t xml:space="preserve">' + esc(c.v) + '</t></is>';
         }
-        var x = '<c r="' + dc + '" s="' + k + '"' + (c && c.so ? '' : ' t="inlineStr"') + '>' + noi + '</c>';
+        var x = '<c r="' + dc + '" s="' + k + '"' + (laSo ? '' : ' t="inlineStr"') + '>' + noi + '</c>';
         cot += 1 + ((c && c.gopN) || 0);
         return x;
       }).join('');
@@ -215,12 +224,31 @@
       '<sheetData>' + rows + '</sheetData>' +
       (gop.length ? '<mergeCells count="' + gop.length + '">' +
         gop.map(function (g) { return '<mergeCell ref="' + g + '"/>'; }).join('') + '</mergeCells>' : '') +
+      // Danh sách chọn (ô xổ xuống). s.kiemTra = [{ vung: 'F5:F64', ds: 'DM!$A$1:$A$5' }]
+      // hoặc { vung, ds: ['Nam','Nữ'] } — chuỗi thẳng thì Excel giới hạn 255 ký tự.
+      // { canhBao: true } → chỉ nhắc, vẫn cho gõ giá trị ngoài danh sách (cột Mã lớp:
+      // lớp mới chưa có trong hệ thống vẫn phải gõ được, máy sẽ tạo lớp).
+      // Thứ tự thẻ trong worksheet là BẮT BUỘC: dataValidations phải đứng SAU
+      // mergeCells và TRƯỚC pageMargins, sai chỗ là Excel đòi "sửa chữa" tệp.
+      (s.kiemTra && s.kiemTra.length
+        ? '<dataValidations count="' + s.kiemTra.length + '">' + s.kiemTra.map(function (k) {
+            var ct = Array.isArray(k.ds) ? '"' + k.ds.join(',') + '"' : k.ds;
+            return '<dataValidation type="list"' + (k.canhBao ? ' errorStyle="warning"' : '') +
+              ' allowBlank="1" showInputMessage="1" showErrorMessage="1"' +
+              (k.canhBao
+                ? ' errorTitle="Không có trong danh sách" error="Giá trị này chưa có trong danh sách. Bấm Yes nếu đúng là muốn ghi giá trị mới."'
+                : ' errorTitle="Chọn trong danh sách" error="Chỉ chọn một giá trị có sẵn trong danh sách."') +
+              ' sqref="' + esc(k.vung) + '">' +
+              '<formula1>' + esc(ct) + '</formula1></dataValidation>';
+          }).join('') + '</dataValidations>'
+        : '') +
       '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>' +
       '<pageSetup paperSize="9" orientation="' + (i.doc ? 'portrait' : 'landscape') + '"' +
         (i.vuaTrang ? ' fitToWidth="1" fitToHeight="1"' : ' fitToWidth="1" fitToHeight="0"') + '/>' +
+      // Trong đầu/chân trang, dấu & là mã điều khiển của Excel — tên trường có & phải viết &&.
       (i.dauTrang || i.chanTrang
-        ? '<headerFooter><oddHeader>&amp;R&amp;9' + esc(i.dauTrang || '') + '</oddHeader>' +
-          '<oddFooter>' + esc(i.chanTrang || '') + '</oddFooter></headerFooter>'
+        ? '<headerFooter><oddHeader>&amp;R&amp;9' + esc(String(i.dauTrang || '').replace(/&/g, '&&')) + '</oddHeader>' +
+          '<oddFooter>' + esc(String(i.chanTrang || '').replace(/&/g, '&&')) + '</oddFooter></headerFooter>'
         : '') +
       '</worksheet>';
   }

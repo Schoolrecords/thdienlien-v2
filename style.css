@@ -3204,11 +3204,23 @@ textarea.ht-o { min-height: 116px; display: block; }
   font-size: 14px; word-break: break-all;
 }
 .nap-mach { margin-top: 9px; font-size: 13.5px; color: var(--chu-mo); line-height: 1.5; }
+/* Nút "Tải mẫu Excel để điền" — nút phụ đứng cạnh nút chọn tệp, cùng khổ chữ
+   nhưng viền mờ để không tranh với nút chính. Là <button> thật nên phải
+   font: inherit, kẻo trình duyệt ép phông hệ thống 13px. */
+.nap-nut-mau {
+  font: inherit; font-weight: 600; font-size: 14.5px; cursor: pointer;
+  padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--vien-dam);
+  color: var(--chu); background: var(--the);
+}
+.nap-nut-mau:hover { background: var(--kem); border-color: var(--chinh); color: var(--chinh); }
+.nap-nut-mau:disabled { opacity: .55; cursor: default; }
 @media (max-width: 560px) {
   .nap-buoc { padding: 12px 13px; gap: 11px; }
   .nap-chon { min-width: 0; width: 100%; }
   .nap-nut-tep { display: block; text-align: center; }
   .nap-ten-tep { display: block; margin: 8px 0 0; }
+  .nap-nut-mau { display: block; width: 100%; }
+  .nap-hanh-dong .nap-mach { flex: 1 1 100%; }
 }
 /* Hàng nút Ghi / Huỷ của màn Nạp dữ liệu. Không cho nút co lại: để mặc thì
    nút "Huỷ" bị nút chính (chữ dài, có số) bóp còn hai dòng. */
