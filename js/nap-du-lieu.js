@@ -943,7 +943,8 @@
       'Nạp ' + bo().tenDai.toLowerCase() + ' từ tệp Excel tải về ở <b>CSDL ngành</b> ' +
       '(truong.csdl.moet.gov.vn → ' + bo().duong + ', tệp mẫu <i>' + bo().tepMau + '</i>), ' +
       'hoặc từ <b>tệp mẫu của hệ thống</b> (nút Tải mẫu ở bước chọn tệp, điền ô nền vàng). ' +
-      'Máy <b>xem trước</b> và báo rõ sẽ ghi những gì, rồi mới hỏi có ghi hay không.</div>' +
+      'Máy <b>xem trước</b> và báo rõ sẽ ghi những gì, rồi mới hỏi có ghi hay không. ' +
+      '<a href="huong-dan.html#nap-du-lieu" target="_blank" rel="noopener">📖 Hướng dẫn chi tiết (mục VI)</a></div>' +
 
       '<div class="hd-kiem vang" style="margin-bottom:16px">' +
       (laGV

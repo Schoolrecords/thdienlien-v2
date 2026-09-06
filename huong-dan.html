@@ -299,7 +299,10 @@ nhập minh chứng.</li>
 <span class="nut">📥 Nạp dữ liệu</span></b>.</p>
 <ol>
 <li><b>Chuẩn bị tệp.</b> Vào <b>truong.csdl.moet.gov.vn</b> → Học sinh → <b>Xuất Excel</b>
-(tệp mẫu <i>C1-HocSinh</i>). Giữ nguyên hàng tiêu đề, đừng xoá hay đổi tên cột.</li>
+(tệp mẫu <i>C1-HocSinh</i>). Giữ nguyên hàng tiêu đề, đừng xoá hay đổi tên cột.
+Chưa có tệp của CSDL ngành? Bấm <span class="nut">⬇️ Tải mẫu Excel để điền</span> ngay dưới nút
+chọn tệp — máy đưa ra tệp mẫu đúng loại đang chọn, điền vào các ô <b>nền vàng</b> rồi chọn lại
+chính tệp đó (xem bảng ba loại tệp mẫu ở cuối mục).</li>
 <li><b>Chọn năm học.</b> Ô chọn có ba năm: năm trước, năm nay, năm sau. Tệp tải từ CSDL ngành
 thường là dữ liệu <b>năm vừa xong</b> — chọn đúng năm của tệp.</li>
 <li><b>Chọn tệp</b> rồi chờ vài giây.</li>
@@ -326,12 +329,31 @@ trường có phân hiệu thì bước này bắt buộc, không thì mọi bá
 </table></div>
 <div class="diemdung">✅ Nạp xong mở <b>Quản lý học sinh</b>, chọn đúng năm học vừa nạp:
 thấy đủ khối, đủ lớp, đúng sĩ số là được.</div>
-<p><b>Đội ngũ CBGV</b> nạp cùng chỗ, chọn loại dữ liệu <i>Đội ngũ CBGV</i> rồi chọn tệp
-<i>CSDL_GiaoVien</i> xuất từ CSDL ngành. Máy đọc họ tên, email, chức vụ để dựng
+<p><b>Đội ngũ CBGV</b> nạp cùng chỗ, chọn loại dữ liệu <i>Đội ngũ CBGV</i>. Tệp có thể là
+<i>CSDL_GiaoVien</i> xuất từ CSDL ngành, hoặc <b>tệp mẫu CBGV</b> tải từ nút Tải mẫu (thêm được
+ba cột <b>Tổ chuyên môn · Vai trò trên hệ thống · Cơ sở công tác</b>, vai trò và cơ sở chọn trong
+ô xổ xuống). Máy đọc họ tên, email, chức vụ, tổ, vai trò, cơ sở để dựng
 <b>danh sách được phép đăng nhập</b>.
 ⚠️ Email trong CSDL ngành hay là email công vụ hoặc khai nhầm sang người khác — máy sẽ
 chỉ ra từng dòng đáng ngờ, nhà trường soát rồi sửa lại cho đúng <b>Gmail thầy cô dùng thật</b>,
-vì đăng nhập hệ thống là đăng nhập bằng Google.</p>
+vì đăng nhập hệ thống là đăng nhập bằng Google. Nạp lại <b>không hạ quyền</b> ai đã có trong
+danh sách và ô trống trong tệp không xoá thông tin đang có; ai được ghi <i>Quản trị hệ thống</i>
+ở cột Vai trò thì màn xem trước báo đỏ đích danh trước khi ghi.</p>
+<div class="khung-cuon"><table>
+<tr><th style="width:26%">Loại dữ liệu</th><th style="width:37%">Tệp mẫu tải từ nút Tải mẫu</th><th>Dùng khi</th></tr>
+<tr><td><b>Học sinh</b></td><td><i>MAU-NHAP-HOC-SINH-…xlsx</i> — Mã lớp · Mã học sinh · Họ tên ·
+Ngày sinh · Giới tính · Dân tộc · Khuyết tật · Trạng thái · Số định danh</td>
+<td>Trường muốn tự lập danh sách hoặc nạp bổ sung vài lớp. Cần <b>mã học sinh</b> của CSDL ngành —
+có tệp <i>C1-HocSinh</i> thì nạp thẳng tệp đó, nhanh hơn.</td></tr>
+<tr><td><b>Tuyển sinh lớp 1</b></td><td><i>MAU-CHIA-LOP-TUYEN-SINH-…xlsx</i> — mỗi lớp một khối
+«LỚP 1A», cột Họ và tên · Ngày sinh · Nữ · Dân tộc · Số CCCD · K.tật</td>
+<td>Đã chia lớp nhưng Bộ <b>chưa cấp mã</b>. Máy nạp với <b>mã tạm</b>; khi có tệp của Bộ, nạp lại
+loại Học sinh là máy đối chiếu theo số căn cước và đổi sang mã chính thức, không tạo bản ghi thứ hai.</td></tr>
+<tr><td><b>Đội ngũ CBGV</b></td><td><i>MAU-NHAP-CBGV-…xlsx</i> — Họ và tên · Email Google ·
+Chức vụ · Tổ chuyên môn · Vai trò · Cơ sở công tác</td>
+<td>Mở tài khoản cho cả trường một lần; hoặc bổ sung người mới. Mỗi tệp mẫu đều có trang
+<b>Hướng dẫn</b> ở đầu và dòng <i>Ví dụ</i> (máy tự bỏ qua).</td></tr>
+</table></div>
 <p><b>Cuối năm học:</b> dùng thẻ <b>🎓 Lên lớp</b> trong Quản trị — máy chuyển cả trường sang
 năm học mới theo đúng quy trình (khối 5 ra trường, các khối còn lại lên lớp), nhà trường
 xác nhận từng lớp, không phải nạp lại từ đầu.</p>

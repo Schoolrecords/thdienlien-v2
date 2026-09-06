@@ -616,6 +616,17 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   color: var(--chu);
 }
 .hop-tai-khoan .muc-menu:last-child { border-bottom: 0; }
+/* Mục "Hướng dẫn sử dụng" là thẻ <a> mở trang mới — cùng dáng với các <button> trong hộp */
+.hop-tai-khoan a.muc-menu { display: block; text-decoration: none; color: inherit; }
+.nut-huong-dan {
+  display: inline-flex; align-items: center; gap: 4px; margin-right: 8px;
+  font-size: 14px; font-weight: 700; color: #fff; text-decoration: none;
+  padding: 6px 10px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,.55);
+}
+.nut-huong-dan:hover { background: rgba(255,255,255,.14); }
+@media (max-width: 999px) {
+  .khu-dieu-huong .nut-huong-dan { display: flex; width: 100%; margin: 0 0 8px; justify-content: center; }
+}
 .hop-tai-khoan .muc-menu:hover { background: var(--kem); }
 .hop-tai-khoan .muc-menu.thoat { color: #c0392b; }
 

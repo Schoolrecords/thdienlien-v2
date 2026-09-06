@@ -408,7 +408,9 @@
                  (trangThai === 'da-biet' && !window.DA_NOI && window.THEO_TEN_MIEN !== true);
     if (canLui) {
       var b = document.getElementById('bang-xem-thu');
-      if (b) b.innerHTML += ' · <a href="?doitruong=1">↩ Về cổng đăng nhập</a>';
+      // Người xem thử không có khu tài khoản → đường vào Hướng dẫn đặt ngay trên băng vàng.
+      if (b) b.innerHTML += ' · <a href="?doitruong=1">↩ Về cổng đăng nhập</a>' +
+        ' · <a href="huong-dan.html" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng</a>';
     }
     // 'da-biet' và 'xem-thu' → nhường việc cho supabase-ket-noi.js
   });

@@ -249,7 +249,10 @@
     if (!nd) {
       // Nút tròn trên màn rộng (CSS ẩn chữ, chỉ còn hình chìa khóa);
       // trong bảng ☰ dưới 1000px vẫn là nút chữ đầy đủ.
-      khu.innerHTML = '<button class="nut-dang-nhap" id="nut-dang-nhap" title="Đăng nhập" aria-label="Đăng nhập">' +
+      // Hướng dẫn sử dụng (huong-dan.html) đặt ngay cạnh nút Đăng nhập — người xem thử
+      // cũng phải tìm thấy, không chỉ ở cổng khai mã (thầy Chung yêu cầu 06/9/2026).
+      khu.innerHTML = '<a class="nut-huong-dan" href="huong-dan.html" target="_blank" rel="noopener" title="Hướng dẫn sử dụng">📖<span> Hướng dẫn</span></a>' +
+        '<button class="nut-dang-nhap" id="nut-dang-nhap" title="Đăng nhập" aria-label="Đăng nhập">' +
         '<svg class="ic" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9-9"/><path d="m17 6 3 3"/></svg>' +
         '<span>Đăng nhập</span></button>';
       document.getElementById('nut-dang-nhap').addEventListener('click', dangNhap);
@@ -266,6 +269,7 @@
       '<div class="email">' + thoat(nd.email) + '</div>' +
       '<span class="the-vai-tro">' + (TEN_VAI_TRO[nd.vai_tro] || '') + '</span></div>' +
       (laQT ? '<button class="muc-menu" id="muc-quan-tri">⚙️ Quản trị hệ thống</button>' : '') +
+      '<a class="muc-menu" href="huong-dan.html" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng</a>' +
       '<button class="muc-menu thoat" id="muc-dang-xuat">↩ Đăng xuất</button></div>';
 
     var hop = document.getElementById('hop-tai-khoan');
