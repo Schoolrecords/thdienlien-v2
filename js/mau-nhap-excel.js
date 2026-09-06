@@ -133,15 +133,18 @@
       ]
     };
 
+    // Tiêu đề tách HAI dòng (tên biểu · tên trường): gộp một dòng thì tên trường
+    // dài tràn khỏi trang in và Excel không xuống dòng ô tiêu đề 16pt.
     var rows = [
-      { cao: 30, o: [o('DANH SÁCH CÁN BỘ, GIÁO VIÊN, NHÂN VIÊN — ' + tenTruong.toUpperCase(), 'tt', { gopN: N - 1 })] },
-      dongChu('Điền vào ô NỀN VÀNG, mỗi người một dòng. Giữ nguyên hàng tiêu đề màu xanh. Dòng "Ví dụ" chỉ để xem cách ghi, máy bỏ qua.', N, 'tt3', 20),
+      { cao: 28, o: [o('DANH SÁCH CÁN BỘ, GIÁO VIÊN, NHÂN VIÊN', 'tt', { gopN: N - 1 })] },
+      { cao: 20, o: [o(tenTruong.toUpperCase(), 'ttTruong', { gopN: N - 1 })] },
+      dongChu('Điền vào ô NỀN VÀNG, mỗi người một dòng. Giữ nguyên hàng tiêu đề màu xanh. Dòng "Ví dụ" chỉ để xem cách ghi, máy bỏ qua.', N, 'tt3w', 22),
       { cao: 20, o: [
-        o('Ví dụ →', 'vd'), o('Nguyễn Văn A', 'vd'), o('nguyenvana@example.com', 'vd'),
+        o('Ví dụ', 'vd'), o('Nguyễn Văn A', 'vd'), o('nguyenvana@example.com', 'vd'),
         o('GV - Tổ trưởng tổ 1', 'vd'), o('Tổ 1', 'vd'), o('Tổ trưởng chuyên môn', 'vd'),
         o(coNhieuCoSo ? (coSo[0].ma + ' - ' + coSo[0].ten) : '', 'vd'), o('Kiêm Bí thư chi bộ', 'vd')
       ] },
-      { cao: 32, o: TIEU_DE.map(function (t) { return o(t, 'dau'); }) }
+      { cao: 34, o: TIEU_DE.map(function (t) { return o(t, 'dauW'); }) }
     ];
     var dauDuLieu = rows.length + 1;       // số hàng Excel của dòng dữ liệu đầu tiên
     for (var i = 1; i <= soDong; i++) {
@@ -156,8 +159,8 @@
       ten: 'MAU-NHAP-CBGV-' + khongDau(tenTruong) + '.xlsx',
       sheets: [
         huongDan,
-        { ten: 'CBGV', cols: [7, 26, 32, 24, 16, 22, 26, 24], rows: rows,
-          in: { dongBang: 4, cotBang: 2, dauTrang: tenTruong }, kiemTra: kiemTra },
+        { ten: 'CBGV', cols: [8, 26, 32, 24, 16, 22, 26, 22], rows: rows,
+          in: { dongBang: 5, cotBang: 2, dauTrang: tenTruong, vuaNgang: true }, kiemTra: kiemTra },
         DM.sheet
       ]
     };
@@ -193,7 +196,9 @@
         hdRow('2', 'Lưu tệp (giữ đuôi .xlsx). Vào hệ thống → Quản trị → thẻ Nạp dữ liệu → Loại dữ liệu "Học sinh" → chọn đúng NĂM HỌC → Chọn tệp → xem bảng soi thử → bấm Ghi.'),
         { o: [o('', 'thuong'), o('', 'thuong')] },
         { cao: 20, o: [o('', 'thuong'), o('TỪNG CỘT', 'hdb')] },
-        hdRow('B', 'Cột "Mã lớp": tên lớp như 1A, 2B, 5C — máy suy khối từ chữ số đầu tiên. Ô xổ xuống gợi ý các lớp đã có; lớp mới cứ gõ tay (Excel hỏi lại thì bấm Yes) — máy sẽ tạo lớp mới (chưa gắn điểm trường, vào thẻ Cơ sở & Sáp nhập gán sau).'),
+        hdRow('B', 'Cột "Mã lớp": tên lớp như 1A, 2B, 5C — máy suy khối từ chữ số đầu tiên. ' +
+          (lop.length ? 'Ô xổ xuống gợi ý các lớp đã có; lớp mới cứ gõ tay (Excel hỏi lại thì bấm Yes) — ' : 'Lớp chưa có trong hệ thống ') +
+          'máy sẽ tạo lớp mới (chưa gắn điểm trường, vào thẻ Cơ sở & Sáp nhập gán sau).'),
         hdRow('C', 'Cột "Mã học sinh" BẮT BUỘC và phải là mã của cơ sở dữ liệu ngành (mỗi em một mã, dùng suốt cấp học). Không có mã thì máy không phân biệt được hai em trùng tên. Em chưa có mã (mới tuyển sinh) thì dùng mẫu "Chia lớp tuyển sinh" — máy cấp mã tạm.'),
         hdRow('E', 'Cột "Ngày sinh" ghi dạng ngày/tháng/năm, ví dụ 05/09/2019. Cột "Giới tính" chọn Nam/Nữ. Cột "Dân tộc" ghi Kinh, Thái, Thổ… (không có thì để trống).'),
         hdRow('H', 'Cột "Loại khuyết tật" chỉ ghi với em học hoà nhập có hồ sơ (ví dụ: Trí tuệ, Vận động). Cột "Trạng thái HS" để trống là Đang học; em đã chuyển đi / thôi học thì chọn tương ứng.'),
@@ -204,13 +209,14 @@
     };
 
     var rows = [
-      { cao: 30, o: [o('DANH SÁCH HỌC SINH' + (namHoc ? ' NĂM HỌC ' + namHoc : '') + ' — ' + tenTruong.toUpperCase(), 'tt', { gopN: N - 1 })] },
-      dongChu('Điền vào ô NỀN VÀNG, mỗi em một dòng. Mã học sinh lấy từ cơ sở dữ liệu ngành. Dòng "Ví dụ" chỉ để xem cách ghi, máy bỏ qua.', N, 'tt3', 20),
+      { cao: 28, o: [o('DANH SÁCH HỌC SINH' + (namHoc ? ' NĂM HỌC ' + namHoc : ''), 'tt', { gopN: N - 1 })] },
+      { cao: 20, o: [o(tenTruong.toUpperCase(), 'ttTruong', { gopN: N - 1 })] },
+      dongChu('Điền vào ô NỀN VÀNG, mỗi em một dòng. Mã học sinh lấy từ cơ sở dữ liệu ngành. Dòng "Ví dụ" chỉ để xem cách ghi, máy bỏ qua.', N, 'tt3w', 22),
       { cao: 20, o: [
-        o('Ví dụ →', 'vd'), o('3A', 'vd'), o('1234567890', 'vd'), o('Trần Văn Bình', 'vd'), o('05/09/2018', 'vd'),
+        o('Ví dụ', 'vd'), o('3A', 'vd'), o('1234567890', 'vd'), o('Trần Văn Bình', 'vd'), o('05/09/2018', 'vd'),
         o('Nam', 'vd'), o('Kinh', 'vd'), o('', 'vd'), o('Đang học', 'vd'), o('', 'vd'), o('', 'vd')
       ] },
-      { cao: 32, o: TIEU_DE.map(function (t) { return o(t, 'dau'); }) }
+      { cao: 34, o: TIEU_DE.map(function (t) { return o(t, 'dauW'); }) }
     ];
     var dauDuLieu = rows.length + 1;
     for (var i = 1; i <= soDong; i++) {
@@ -230,8 +236,8 @@
       ten: 'MAU-NHAP-HOC-SINH-' + khongDau(tenTruong) + (namHoc ? '-' + namHoc.replace(/\D/g, '') : '') + '.xlsx',
       sheets: [
         huongDan,
-        { ten: 'HocSinh', cols: [6, 9, 14, 26, 12, 10, 10, 14, 13, 18, 20], rows: rows,
-          in: { dongBang: 4, cotBang: 4, dauTrang: tenTruong }, kiemTra: kiemTra },
+        { ten: 'HocSinh', cols: [7, 9, 14, 28, 12, 10, 11, 15, 13, 17, 18], rows: rows,
+          in: { dongBang: 5, cotBang: 4, dauTrang: tenTruong, vuaNgang: true }, kiemTra: kiemTra },
         DM.sheet
       ]
     };
@@ -271,17 +277,21 @@
     };
 
     var rows = [
-      { cao: 44, o: [o('DANH SÁCH TUYỂN SINH LỚP 1' + (namHoc ? ' NĂM HỌC ' + namHoc : '') + '\n' + tenTruong.toUpperCase(), 'tt', { gopN: N - 1 })] },
-      dongChu('Mỗi lớp một khối: dòng "LỚP …" → hàng tiêu đề → các em. Điền ô NỀN VÀNG. Ngày sinh ghi ngày/tháng/năm.', N, 'tt3', 20),
+      { cao: 28, o: [o('DANH SÁCH TUYỂN SINH LỚP 1' + (namHoc ? ' NĂM HỌC ' + namHoc : ''), 'tt', { gopN: N - 1 })] },
+      { cao: 20, o: [o(tenTruong.toUpperCase(), 'ttTruong', { gopN: N - 1 })] },
+      dongChu('Mỗi lớp một khối: dòng "LỚP …" → hàng tiêu đề → các em. Điền ô NỀN VÀNG. Ngày sinh ghi ngày/tháng/năm.', N, 'tt3w', 22),
       { cao: 20, o: [
-        o('Ví dụ →', 'vd'), o('Lê Thị Mai', 'vd'), o('12/03/2020', 'vd'), o('x', 'vd'),
+        o('Ví dụ', 'vd'), o('Lê Thị Mai', 'vd'), o('12/03/2020', 'vd'), o('x', 'vd'),
         o('Kinh', 'vd'), o('040320xxxxxx', 'vd'), o('', 'vd'), o('', 'vd')
       ] }
     ];
-    dsLop.forEach(function (lop) {
+    // Mỗi lớp in một trang riêng: ngắt trang ngay trước dòng "LỚP …" (trừ lớp đầu).
+    var ngatTrang = [];
+    dsLop.forEach(function (lop, i) {
       rows.push({ o: trong(N, 'thuong') });
+      if (i > 0) ngatTrang.push(rows.length + 1);
       rows.push({ cao: 24, o: [o('LỚP ' + String(lop).toUpperCase(), 'oB', { gopN: N - 1 })] });
-      rows.push({ cao: 32, o: TIEU_DE.map(function (t) { return o(t, 'dau'); }) });
+      rows.push({ cao: 30, o: TIEU_DE.map(function (t) { return o(t, 'dauW'); }) });
       for (var i = 1; i <= moiLop; i++) {
         rows.push({ cao: 18, o: [o(i, 'oG', { so: 1 }), o('', 'nhapV'), o('', 'nhapVG'), o('', 'nhapVG'),
           o('', 'nhapV'), o('', 'nhapV'), o('', 'nhapVG'), o('', 'nhapV')] });
@@ -292,7 +302,8 @@
       ten: 'MAU-CHIA-LOP-TUYEN-SINH-' + khongDau(tenTruong) + (namHoc ? '-' + namHoc.replace(/\D/g, '') : '') + '.xlsx',
       sheets: [
         huongDan,
-        { ten: 'ChiaLop', cols: [6, 28, 13, 6, 12, 18, 7, 22], rows: rows, in: { doc: true, dauTrang: tenTruong } }
+        { ten: 'ChiaLop', cols: [7, 28, 13, 6, 12, 18, 7, 20], rows: rows, ngatTrang: ngatTrang,
+          in: { doc: true, dauTrang: tenTruong, vuaNgang: true } }
       ]
     };
   }

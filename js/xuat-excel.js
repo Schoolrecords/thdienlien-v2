@@ -138,7 +138,10 @@
     // chèn giữa là lệch chỉ số cellXfs của mọi tệp đã xuất trước đó.
     nhapV:   [0, 6, 1, 'left', 1],      // ô điền nền vàng, canh trái
     nhapVG:  [0, 6, 1, 'center', 0],    // ô điền nền vàng, canh giữa
-    vd:      [3, 0, 1, 'left', 1]       // dòng ví dụ: nghiêng, xám, có viền
+    vd:      [3, 0, 1, 'left', 1],      // dòng ví dụ: nghiêng, xám, có viền
+    dauW:    [1, 2, 1, 'center', 1],    // tiêu đề bảng có XUỐNG DÒNG (tên cột dài không bị cắt)
+    tt3w:    [3, 0, 0, 'center', 1],    // chú thích nghiêng, xuống dòng
+    ttTruong: [4, 0, 0, 'center', 0]    // dòng tên trường dưới tiêu đề lớn
   };
   var THU_TU_KIEU = Object.keys(KIEU);
   function soKieu(ten) {
@@ -213,7 +216,9 @@
 
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-      (i.vuaTrang ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '') +
+      // fitToWidth/fitToHeight ở pageSetup CHỈ có tác dụng khi có cờ fitToPage ở
+      // đây — thiếu cờ này là Excel in tràn cột sang trang khác (đã thấy ở mẫu CBGV).
+      ((i.vuaTrang || i.vuaNgang) ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '') +
       '<sheetViews><sheetView workbookViewId="0" showGridLines="0">' + dongBang + '</sheetView></sheetViews>' +
       '<sheetFormatPr defaultRowHeight="15"/>' +
       (s.cols && s.cols.length
@@ -249,6 +254,12 @@
       (i.dauTrang || i.chanTrang
         ? '<headerFooter><oddHeader>&amp;R&amp;9' + esc(String(i.dauTrang || '').replace(/&/g, '&&')) + '</oddHeader>' +
           '<oddFooter>' + esc(String(i.chanTrang || '').replace(/&/g, '&&')) + '</oddFooter></headerFooter>'
+        : '') +
+      // Ngắt trang tay: s.ngatTrang = [số hàng Excel mà TRANG MỚI bắt đầu]. Đứng SAU headerFooter.
+      (s.ngatTrang && s.ngatTrang.length
+        ? '<rowBreaks count="' + s.ngatTrang.length + '" manualBreakCount="' + s.ngatTrang.length + '">' +
+          s.ngatTrang.map(function (h) { return '<brk id="' + (h - 1) + '" max="16383" man="1"/>'; }).join('') +
+          '</rowBreaks>'
         : '') +
       '</worksheet>';
   }
