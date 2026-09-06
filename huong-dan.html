@@ -149,7 +149,8 @@ gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường
     <li><a href="#nap-du-lieu"><b>VI.</b> Nạp học sinh và đội ngũ</a></li>
     <li><a href="#len-drive"><b>VII.</b> Đưa hồ sơ lên Google Drive</a></li>
     <li><a href="#sao-luu"><b>VIII.</b> Sao lưu dữ liệu hằng tháng</a></li>
-    <li><a href="#hoi-dap"><b>IX.</b> Câu hỏi thường gặp</a></li>
+    <li><a href="#quan-tri"><b>IX.</b> Quản trị hệ thống — tài khoản, phân quyền</a></li>
+    <li><a href="#hoi-dap"><b>X.</b> Câu hỏi thường gặp</a></li>
   </ol>
 </div>
 
@@ -434,7 +435,85 @@ tệp như hồ sơ mật.</li>
 bằng cách kéo thả, đây là chủ ý để không ai lỡ tay ghi đè dữ liệu đang dùng.</li>
 </ul></div>
 
-<h2 id="hoi-dap"><span class="so">IX</span>Câu hỏi thường gặp</h2>
+<h2 id="quan-tri"><span class="so">IX</span>Quản trị hệ thống — tài khoản và phân quyền</h2>
+<p>Chỉ người có vai trò <b>Quản trị hệ thống</b> hoặc <b>Ban giám hiệu</b> mới thấy màn này
+(mở từ hộp tài khoản góc phải → <span class="nut">⚙️ Quản trị hệ thống</span>). Đó là hàng rào đặt ở
+máy chủ, không phải chỉ giấu trên màn hình. Không cần biết một dòng lệnh nào — mọi việc dưới đây làm
+bằng chuột và bàn phím, trên điện thoại cũng được (bảng nhiều cột thì vuốt ngang trong lòng bảng).</p>
+<div class="khung-cuon"><table>
+<tr><th style="width:30%">Thẻ trong màn Quản trị</th><th>Dùng để</th></tr>
+<tr><td>🚀 Cài đặt</td><td>Bảng liệt kê từng bước còn thiếu của trường mình — làm theo đúng thứ tự là xong phần dựng nền.</td></tr>
+<tr><td>👥 Tài khoản</td><td>Những người <b>đã đăng nhập</b> ít nhất một lần: duyệt người chờ, đổi vai trò, khoá / mở khoá, xoá.</td></tr>
+<tr><td>✉️ Danh sách mời</td><td>Danh sách <b>được phép vào</b> do nhà trường khai: email, họ tên, chức vụ, tổ, vai trò, link Drive; dán cả bảng từ Excel.</td></tr>
+<tr><td>📥 Nạp dữ liệu</td><td>Nạp học sinh, tuyển sinh lớp 1, đội ngũ CBGV từ tệp Excel (mục VI).</td></tr>
+<tr><td>🔗 Link hồ sơ CBGV</td><td>Dán hàng loạt đường dẫn thư mục hồ sơ cá nhân — máy tự nhận ra ai là ai theo email hoặc họ tên.</td></tr>
+<tr><td>⚙️ Thông tin trường · 🏫 Cơ sở &amp; Sáp nhập · 📋 Danh mục hồ sơ</td><td>Khai tên hiệu trưởng, quy mô, khẩu hiệu; điểm trường và lớp thuộc điểm nào; chỉnh danh mục hồ sơ cho khớp trường mình.</td></tr>
+<tr><td>🎓 Lên lớp · 💾 Sao lưu · 📒 Sổ nhật ký</td><td>Chuyển cả trường sang năm học mới; tải bản sao lưu hằng tháng (mục VIII); tra ai làm gì, lúc nào.</td></tr>
+</table></div>
+
+<h3>Điều quan trọng nhất: hai bảng khác nhau</h3>
+<p>Gần như mọi nhầm lẫn về tài khoản đều bắt nguồn từ chỗ này. <b>Danh sách mời là tấm thiệp mời;
+Tài khoản là người đã bước vào cửa.</b> Thu lại tấm thiệp không đuổi được người đã ngồi trong phòng —
+muốn cắt hẳn một người thì phải làm cả hai bên.</p>
+<div class="khung-cuon"><table>
+<tr><th style="width:22%"></th><th>✉️ Danh sách mời</th><th>👥 Tài khoản</th></tr>
+<tr><td>Là gì</td><td>Danh sách được phép vào. Nhà trường tự khai.</td><td>Những người đã thật sự đăng nhập ít nhất một lần.</td></tr>
+<tr><td>Ai tạo ra dòng</td><td>Quản trị viên gõ vào (hoặc nạp từ tệp).</td><td>Máy tự tạo khi người đó đăng nhập Google lần đầu.</td></tr>
+<tr><td>Sửa được gì</td><td>Email, họ tên, chức vụ, tổ, vai trò, link Drive, cột Gộp vào.</td><td>Chỉ vai trò và trạng thái. Không sửa được email.</td></tr>
+<tr><td>Vai trò có tác dụng với</td><td>Người <b>chưa</b> đăng nhập lần nào (quyết định vai lúc bước vào).</td><td>Người <b>đã</b> đăng nhập — muốn nâng / hạ quyền phải sửa ở đây.</td></tr>
+<tr><td>Xoá dòng nghĩa là</td><td>Không được mời nữa, nhưng tài khoản đã tạo vẫn còn.</td><td>Xoá hẳn tài khoản khỏi hệ thống.</td></tr>
+</table></div>
+<p>Người có tên trong Danh sách mời thì lần đầu đăng nhập là vào thẳng, đúng vai trò đã ghi. Người
+không có tên mà vẫn đăng nhập được thì rơi vào trạng thái <b>🟡 Chờ duyệt</b>, chưa xem được gì cho tới
+khi quản trị viên đổi sang <b>🟢 Hoạt động</b> ở thẻ 👥 Tài khoản.</p>
+
+<h3>Tờ tra nhanh — tình huống nào làm ở đâu</h3>
+<div class="khung-cuon"><table>
+<tr><th style="width:38%">Tình huống</th><th>Làm gì</th></tr>
+<tr><td>Trường có thầy cô mới về</td><td>✉️ Danh sách mời → <span class="nut">➕ Thêm một dòng</span> → Lưu → báo họ đăng nhập Google bằng đúng địa chỉ vừa ghi.</td></tr>
+<tr><td>Đầu năm học, thay cả danh sách</td><td>📥 Nạp dữ liệu → loại <i>Đội ngũ CBGV</i> (tệp mẫu hoặc tệp CSDL ngành), hoặc ✉️ Danh sách mời → <span class="nut">📋 Dán cả danh sách từ Excel</span> (6 cột: Email · Họ tên · Chức vụ · Tổ · Vai trò · Link Drive; vai trò ghi mã hay chữ tiếng Việt đều được).</td></tr>
+<tr><td>Thầy cô đổi Gmail, <b>chưa</b> từng đăng nhập</td><td>✉️ Danh sách mời → sửa ô Email → Lưu. Xong.</td></tr>
+<tr><td>Thầy cô đổi Gmail, <b>đã</b> từng đăng nhập</td><td>Ba việc đúng thứ tự: ✉️ sửa Email → họ đăng nhập lại bằng địa chỉ mới → 👥 Tài khoản xoá dòng địa chỉ cũ. <b>Đừng xoá trước</b> khi đổi danh sách mời, nếu không địa chỉ cũ vào lại là tài khoản tự tạo lại.</td></tr>
+<tr><td>Thầy cô nghỉ thai sản, đi học</td><td>👥 Tài khoản → trạng thái <b>🔴 Khoá</b> → Lưu. Khoá lùi lại được, giữ nguyên mọi thứ họ đã làm — gần như luôn chọn Khoá thay vì Xoá.</td></tr>
+<tr><td>Thầy cô chuyển trường hẳn, nghỉ hưu</td><td>Làm <b>cả hai bên</b>: ✉️ xoá dòng mời và 👥 xoá tài khoản. Là Quản trị / Ban giám hiệu thì hạ vai trò xuống Giáo viên và Lưu trước, nút Xoá mới hiện.</td></tr>
+<tr><td>Giao thêm quyền quản trị cho ai</td><td>👥 Tài khoản → Vai trò = Quản trị hệ thống → Lưu (người chưa đăng nhập thì sửa ở ✉️ Danh sách mời).</td></tr>
+<tr><td>Một người dùng hai Gmail</td><td>Khai hai dòng trong ✉️ Danh sách mời, dòng phụ điền cột <b>Gộp vào</b> = địa chỉ chính. <b>Tuyệt đối không</b> dùng cột này cho hai người trùng họ tên — họ là hai người, hai thư mục hồ sơ.</td></tr>
+</table></div>
+
+<h3>Năm vai trò và quyền của từng vai</h3>
+<div class="khung-cuon"><table>
+<tr><th style="width:26%">Vai trò</th><th>Làm được gì</th></tr>
+<tr><td><b>Quản trị hệ thống</b></td><td>Toàn quyền, kể cả màn Quản trị: tài khoản, danh sách mời, thông tin trường, danh mục hồ sơ, nạp dữ liệu, sao lưu.</td></tr>
+<tr><td><b>Ban giám hiệu</b></td><td>Như Quản trị ở hầu hết việc điều hành và duyệt; vai của Hiệu trưởng và Phó Hiệu trưởng.</td></tr>
+<tr><td><b>Tổ trưởng chuyên môn</b></td><td>Quản lý phần việc của tổ chuyên môn.</td></tr>
+<tr><td><b>Giáo viên</b></td><td>Xem và làm phần việc được giao. Quyền hẹp nhất — chọn khi còn phân vân.</td></tr>
+<tr><td><b>Nhân viên</b></td><td>Kế toán, văn thư, thư viện, y tế học đường.</td></tr>
+</table></div>
+<div class="luuy"><b>Hai quy tắc giữ an toàn cho nhà trường:</b>
+<ul style="margin-bottom:0">
+<li><b>Luôn có ít nhất hai người vai trò Quản trị</b> — thường là Hiệu trưởng và một Phó Hiệu trưởng.
+Hệ thống không cho tự xoá tài khoản của chính mình và không cho xoá Quản trị / Ban giám hiệu khi
+chưa hạ vai, nhưng không chặn được việc hạ nhầm vai trò người khác. Trường không còn quản trị viên
+nào là trường hợp duy nhất phải nhờ người phụ trách hệ thống cấp lại quyền.</li>
+<li><b>Phân vân thì chọn quyền hẹp hơn.</b> Nâng quyền bao giờ cũng dễ hơn thu lại quyền đã trót cấp.</li>
+</ul></div>
+
+<h3>Sự cố thường gặp</h3>
+<div class="khung-cuon"><table>
+<tr><th style="width:38%">Hiện tượng</th><th>Nguyên nhân và cách chữa</th></tr>
+<tr><td>Thầy cô báo «đăng nhập rồi mà không thấy gì»</td><td>Họ đang 🟡 Chờ duyệt — địa chỉ đã dùng để đăng nhập không trùng địa chỉ trong danh sách mời. Vào 👥 Tài khoản xem địa chỉ thật, rồi sửa danh sách mời cho khớp hoặc đổi trạng thái sang 🟢 Hoạt động và chỉnh vai trò.</td></tr>
+<tr><td>Đã xoá mà người đó vẫn vào được</td><td>Mới xoá một bên. Phải xoá ở cả ✉️ Danh sách mời và 👥 Tài khoản.</td></tr>
+<tr><td>Đổi vai trò rồi mà vẫn quyền cũ</td><td>Sửa nhầm bên: người đã đăng nhập thì vai trò thật ở 👥 Tài khoản. Sửa xong bảo họ tải lại trang.</td></tr>
+<tr><td>Nút hiện «Lỗi!» khi bấm Lưu</td><td>Tài khoản đang dùng không đủ quyền Quản trị, hoặc mất mạng giữa chừng. Máy không bao giờ báo «Đã lưu ✓» khi chưa lưu được — tải lại trang để thấy đúng thực tế trên máy chủ.</td></tr>
+<tr><td>Danh bạ 👤 Hồ sơ CBGV-NV thiếu người</td><td>Rất có thể hai người trùng họ tên bị khai gộp nhầm ở cột Gộp vào. Xoá nội dung ô đó ở cả hai dòng rồi Lưu.</td></tr>
+<tr><td>Sửa xong nhưng màn hình vẫn như cũ</td><td>Trình duyệt giữ bản cũ. Máy tính bấm Ctrl + F5; điện thoại vuốt xuống tải lại hoặc đóng hẳn thẻ rồi mở lại.</td></tr>
+</table></div>
+<div class="diemdung">✅ <b>Thói quen nên giữ:</b> mỗi lần sửa xong, mở màn <b>👤 Hồ sơ CBGV-NV</b> đếm lại số
+người theo ba khối (Ban giám hiệu — Giáo viên — Nhân viên) và đối chiếu với danh sách giấy. Mọi thao
+tác quản trị đều được ghi vào <b>📒 Sổ nhật ký</b>: ai sửa, sửa ai, lúc nào — xoá người không làm mất
+những gì người đó đã ghi vào hệ thống.</div>
+
+<h2 id="hoi-dap"><span class="so">X</span>Câu hỏi thường gặp</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
 <tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),
