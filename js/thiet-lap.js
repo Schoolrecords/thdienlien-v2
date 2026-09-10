@@ -80,6 +80,11 @@
   // Cơ sở dữ liệu của trường này đã có cột moi_tai_khoan.email_chinh hay chưa
   // (sql/55). Đặt lúc đọc danh sách mời, quyết định có bày cột "Gộp vào" không.
   var CO_GOP = false;
+  // Cơ sở (điểm trường) cho cột "Nơi công tác" của Danh sách mời. Có cột này
+  // thì quản trị trường tự gắn được người mới về đúng điểm, không phải nhờ
+  // người làm kỹ thuật chạy SQL — và màn Hồ sơ CBGV mới lọc theo cơ sở được.
+  var DS_CO_SO = [];
+  var CO_CS = false;
 
   // ══════════════════════════════════════════════════════════
   // THẺ ⚙️ THÔNG TIN TRƯỜNG
@@ -156,12 +161,23 @@
   // ══════════════════════════════════════════════════════════
   function veDanhSachMoi(hop) {
     hop.innerHTML = '<div class="the-thong-bao">Đang tải…</div>';
-    may().from('moi_tai_khoan').select('*').order('ho_ten').then(function (kq) {
+    Promise.all([
+      may().from('moi_tai_khoan').select('*').order('ho_ten'),
+      // Danh sách cơ sở cho ô "Nơi công tác". Hỏng thì coi như trường một điểm:
+      // không bày cột ấy ra, chứ không làm hỏng cả thẻ Danh sách mời.
+      may().from('co_so').select('ma,ten,loai,so_tt').eq('hoat_dong', true).order('so_tt')
+    ]).then(function (r) {
+      var kq = r[0];
       if (kq.error) {
         hop.innerHTML = '<div class="the-thong-bao">Không đọc được danh sách mời: ' + thoat(kq.error.message) + '</div>';
         return;
       }
       var ds = kq.data || [];
+      // Cột "Nơi công tác" chỉ bày ra ở trường NHIỀU điểm — trường một điểm thì
+      // chọn giữa một cơ sở là vô nghĩa, mà thêm một cột là bảng chật thêm.
+      DS_CO_SO = (r[1] && !r[1].error && r[1].data) ? r[1].data : [];
+      CO_CS = DS_CO_SO.length > 1 &&
+        !!(ds.length && Object.prototype.hasOwnProperty.call(ds[0], 'co_so_ma'));
       // Cột "Gộp vào" chỉ bày ra khi cơ sở dữ liệu đã có (sql/55). Bày ra ở
       // trường chưa chạy di trú thì bấm Lưu là máy chủ báo không có cột ấy,
       // và cả dòng KHÔNG lưu được — hỏng một việc đang chạy tốt.
@@ -171,6 +187,16 @@
         '<div class="nhan-nho" style="margin:14px 0 10px">Thầy cô có tên ở đây thì <b>lần đầu đăng nhập ' +
         'Google là vào thẳng</b>, không phải chờ duyệt. Bỏ tên khỏi danh sách này KHÔNG xoá tài khoản đã ' +
         'tạo — muốn chặn hẳn thì sang thẻ 👥 Tài khoản.' +
+        // Nói HẲN RA là sửa được địa chỉ thư ngay tại đây. Chỗ này vốn im lặng
+        // nên người dùng tưởng địa chỉ khai sai thì phải nhờ kỹ thuật sửa —
+        // trong khi nút Lưu của từng dòng khớp theo id, sửa được cả cột email.
+        '<br>➕ <b>Thêm một người</b>: bấm <b>➕ Thêm một dòng</b> ở cuối bảng, điền địa chỉ thư ' +
+        'Google, họ tên, chức vụ, vai trò' + (CO_CS ? ', nơi công tác' : '') + ' và <b>dán được luôn ' +
+        'đường dẫn thư mục Drive</b> của người đó, rồi bấm <b>Lưu</b>.' +
+        '<br>✏️ <b>Khai sai địa chỉ thư thì sửa thẳng vào ô Email của dòng đó rồi bấm Lưu</b> — ' +
+        'không cần xoá đi thêm lại. Đổi xong, người ấy đăng nhập bằng địa chỉ mới và giữ nguyên ' +
+        'vai trò đã cấp. (Riêng lối <b>dán cả danh sách</b> bên dưới thì KHÔNG đổi được địa chỉ: ' +
+        'ở đó địa chỉ là khoá để tìm người, dán địa chỉ mới sẽ thành một người mới.)' +
         (CO_GOP ? '<br>Một thầy cô dùng <b>hai địa chỉ thư</b> thì ghi mỗi địa chỉ một dòng, ' +
           'dòng phụ điền cột <b>Gộp vào</b> là địa chỉ chính — danh bạ sẽ hiện <b>một thẻ</b>. ' +
           'Hai người <b>trùng họ tên</b> thì để trống cột đó, đừng gộp.' : '') + '</div>' +
@@ -187,7 +213,8 @@
         '<span id="tl-bao-dan" class="tl-bao"></span></details>' +
 
         '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
-        '<th>Email</th><th>Họ tên</th><th>Chức vụ</th><th>Tổ</th><th>Vai trò</th><th>Link Drive</th>' +
+        '<th>Email</th><th>Họ tên</th><th>Chức vụ</th><th>Tổ</th><th>Vai trò</th>' +
+        (CO_CS ? '<th>Nơi công tác</th>' : '') + '<th>Link Drive</th>' +
         (CO_GOP ? '<th>Gộp vào</th>' : '') + '<th></th>' +
         '</tr></thead><tbody id="tl-than-moi">' +
         ds.map(dongMoi).join('') +
@@ -214,6 +241,16 @@
         return '<option value="' + v + '"' + ((m && m.vai_tro) === v ? ' selected' : '') +
           (!m && v === 'giao_vien' ? ' selected' : '') + '>' + TEN_VAI_TRO[v] + '</option>';
       }).join('') + '</select></td>' +
+      // Ô CHỌN cơ sở, không phải ô gõ chữ: gõ tay là sớm muộn có người viết
+      // "CS1" hay "Quang Trung" thay vì mã CS02, và dòng ấy lặng lẽ rơi vào
+      // mục "Chưa gắn cơ sở" ở màn Hồ sơ CBGV.
+      (CO_CS
+        ? '<td><select data-cot="co_so_ma"><option value="">— chưa gắn —</option>' +
+          DS_CO_SO.map(function (c) {
+            return '<option value="' + thoat(c.ma) + '"' +
+              ((m && m.co_so_ma) === c.ma ? ' selected' : '') + '>' + thoat(c.ten) + '</option>';
+          }).join('') + '</select></td>'
+        : '') +
       o('link_drive', m && m.link_drive, '11em') +
       (CO_GOP ? o('email_chinh', m && m.email_chinh, '13em') : '') +
       '<td><button class="tl-luu-moi">Lưu</button>' +

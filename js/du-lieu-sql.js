@@ -493,13 +493,13 @@
             oLoc = '<div class="cbgv-loc">' +
               '<label for="cbgv-loc-cs">📍 Chọn nơi công tác</label> ' +
               '<select id="cbgv-loc-cs">' +
-              '<option value="">— Tất cả (' + ds.length + ' người) —</option>' +
+              '<option value="">— Tất cả (' + ds.length + ' Hồ sơ) —</option>' +
               maCS.map(function (ma) {
                 return '<option value="' + thoat(ma) + '">' + thoat(tenCS[ma] || ma) +
-                  ' (' + demCS[ma] + ' người)</option>';
+                  ' (' + demCS[ma] + ' Hồ sơ)</option>';
               }).join('') +
               (soTrong
-                ? '<option value="' + CS_TRONG + '">Chưa gắn cơ sở (' + soTrong + ' người)</option>'
+                ? '<option value="' + CS_TRONG + '">Chưa gắn cơ sở (' + soTrong + ' Hồ sơ)</option>'
                 : '') +
               '</select>' +
               '<span class="cbgv-loc-dem"></span></div>';
@@ -511,7 +511,11 @@
           ' onclick="this.parentNode.classList.toggle(\'open\')"' +
           ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.parentNode.classList.toggle(\'open\')}">' +
           '<span class="fo">' + nh.icon + '</span><b>' + thoat(nh.ten) + '</b>' +
-          '<span class="sub-cnt">' + ds.length + ' người</span>' +
+          // "Hồ sơ" chứ không phải "người" — thầy Chung chốt 10/9/2026. Màn này
+          // tên là "Hồ sơ CBGV – NV", mỗi thẻ là MỘT HỒ SƠ; đếm "người" ở đây
+          // dễ bị đọc thành số nhân sự của trường, mà hai con số ấy có thể lệch
+          // nhau (một người hai địa chỉ đã gộp thành một thẻ).
+          '<span class="sub-cnt">' + ds.length + ' Hồ sơ</span>' +
           '<span class="sub-arrow">▶</span></div>' +
           '<div class="sub-body">' + oLoc + '<div class="luoi-cbgv">';
         html += ds.map(function (m) {
@@ -595,7 +599,7 @@
               });
               // Nói ra con số đang xem: lọc xong mà im lặng thì người dùng không
               // biết mình đang nhìn một phần hay toàn bộ.
-              if (oDem) oDem.textContent = v ? 'đang xem ' + hien + ' người' : '';
+              if (oDem) oDem.textContent = v ? 'đang xem ' + hien + ' Hồ sơ' : '';
             };
             oChon.addEventListener('change', loc);
             loc();
