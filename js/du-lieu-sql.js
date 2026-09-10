@@ -10,6 +10,53 @@
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // 🔴 `admin` LÀ QUYỀN KỸ THUẬT, KHÔNG PHẢI CHỨC VỤ.
+  //    Bản trước xếp thẳng mọi admin vào nhóm "Ban giám hiệu — Quản trị",
+  //    nên một cô GIÁO VIÊN được cấp quyền quản trị hệ thống lại hiện trong
+  //    Ban giám hiệu — sai với thực tế nhà trường, và ai nhìn danh bạ cũng
+  //    tưởng cô ấy là cán bộ quản lý. Thầy Chung yêu cầu sửa 10/9/2026.
+  //    Nay admin được xếp theo CHỨC VỤ nhà trường ghi; chỉ ai chức vụ thật
+  //    là hiệu trưởng / phó hiệu trưởng mới vào Ban giám hiệu.
+  //    Người KHÔNG phải admin thì giữ nguyên vai trò như cũ — không đụng.
+  function boDau(s) {
+    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+  }
+  function nhomCua(m) {
+    if (m.vai_tro !== 'admin') return m.vai_tro;
+    var cv = boDau(m.chuc_vu);
+    // 🔑 CHƯA KHAI CHỨC VỤ THÌ GIỮ NGUYÊN NHƯ CŨ (Ban giám hiệu).
+    //    Kho mã này dùng chung cho mọi trường. Trường nào có hiệu trưởng
+    //    mang quyền admin mà ô chức vụ còn trống, đoán bừa là đẩy chính
+    //    người đứng đầu trường xuống nhóm Giáo viên — hỏng nặng hơn nhiều
+    //    so với việc để nguyên. Trống nghĩa là KHÔNG BIẾT, không phải
+    //    "không phải Ban giám hiệu"; muốn xếp đúng thì khai chức vụ ở
+    //    Quản trị → Tài khoản.
+    if (!cv.trim()) return 'ban_giam_hieu';
+    // Không neo đầu chuỗi ở đây: "Phó Hiệu trưởng" có chữ cần tìm ở GIỮA.
+    if (/hieu truong|giam hieu/.test(cv)) return 'ban_giam_hieu';
+    // 🔴 CHỈ NHÌN PHẦN ĐẦU CHUỖI, KHÔNG TÌM TỪ KHOÁ Ở BẤT KỲ ĐÂU.
+    //    Chức vụ tiếng Việt ghi VIỆC CHÍNH TRƯỚC, việc kiêm nhiệm ghi sau:
+    //    "Giáo viên kiêm thư viện", "Kế toán kiêm văn thư". Bản đầu tìm từ
+    //    khoá ở bất kỳ đâu nên "Giáo viên kiêm thư viện" trúng chữ
+    //    "thư viện" và bị xếp vào Nhân viên — đúng cái lỗi bản vá này sinh
+    //    ra để chữa, chỉ đổi chiều. Ở trường tiểu học một người kiêm nhiều
+    //    việc là chuyện thường, nên đây không phải ca hiếm.
+    if (/^(gv|giao vien|to truong)\b/.test(cv)) return 'giao_vien';
+    // Nhân viên: kể ra từng chức danh thay vì đoán, để người sau đọc là biết
+    // ai rơi vào đâu.
+    if (/^(nhan vien|ke toan|van thu|thu vien|thiet bi|y te|bao ve|phuc vu)\b/.test(cv)) {
+      return 'nhan_vien';
+    }
+    // Chức vụ lạ thì về Giáo viên — nhóm đông nhất, và ở trường tiểu học
+    // người được giao quản trị hệ thống thường là giáo viên.
+    return 'giao_vien';
+  }
+
+  // Dùng chung cho bản Word báo cáo TĐG (xuat-bao-cao-tdg.js): màn hình và bản
+  // Word PHẢI đếm theo cùng một luật, lệch nhau là báo cáo gửi Sở sai số.
+  window.nhomCBGV = nhomCua;
+
   // Giữ lại mô tả + người phụ trách của các hộp từ dữ liệu mẫu
   // (CSDL bảng nhom_con không có 2 cột này — phần chữ tĩnh của giao diện)
   var HOP_MAU = {};
@@ -313,32 +360,47 @@
   // vì bắt mọi trường phải chạy di trú TRƯỚC khi đẩy bản web mới.
   var COT_MOI = 'email,ho_ten,chuc_vu,to_chuyen_mon,vai_tro,link_drive,la_ky_thuat';
   function docDanhSachMoi(may) {
-    return may.from('moi_tai_khoan').select(COT_MOI + ',email_chinh').order('ho_ten')
-      .then(function (r) {
-        if (!r.error) return r;
-        return may.from('moi_tai_khoan').select(COT_MOI).order('ho_ten');
-      });
+    function thu(cot) {
+      return may.from('moi_tai_khoan').select(cot).order('ho_ten');
+    }
+    // PostgREST hỏi một cột không tồn tại là hỏng CẢ câu, nên phải lùi dần.
+    // 🔴 LÙI TỪNG CỘT MỘT, KHÔNG BỎ CẢ HAI CÙNG LÚC. Hiện trạng hay gặp nhất
+    //    là trường CÓ co_so_ma (sql/10, gần như trường nào cũng có) mà THIẾU
+    //    email_chinh (sql/55, mới hơn). Bỏ một lượt cả hai thì trường ấy mất
+    //    luôn ô lọc cơ sở — mà đó lại đúng là nhóm trường sáp nhập nhiều điểm,
+    //    tức là mất tính năng ở chính nơi cần nó nhất, lặng lẽ, không báo gì.
+    return thu(COT_MOI + ',email_chinh,co_so_ma')
+      .then(function (r) { return r.error ? thu(COT_MOI + ',co_so_ma')   : r; })
+      .then(function (r) { return r.error ? thu(COT_MOI + ',email_chinh') : r; })
+      .then(function (r) { return r.error ? thu(COT_MOI)                  : r; });
   }
 
   function napCBGV(may) {
     Promise.all([
       docDanhSachMoi(may),
-      may.from('nguoi_dung').select('email,trang_thai,anh_dai_dien')
+      may.from('nguoi_dung').select('email,trang_thai,anh_dai_dien'),
+      // Danh sách cơ sở để đặt tên cho ô lọc. Hỏng thì coi như trường một điểm
+      // — không có ô lọc, chứ không làm hỏng danh bạ.
+      may.from('co_so').select('ma,ten,loai,so_tt').eq('hoat_dong', true).order('so_tt')
     ]).then(function (kq) {
       if (kq[0].error) return; // GV chưa hoạt động thì RLS chặn — bỏ qua im lặng
       var moi = kq[0].data || [];
       var nd = {};
       (kq[1].data || []).forEach(function (u) { nd[u.email.toLowerCase()] = u; });
+      var dsCoSo = (kq[2] && !kq[2].error && kq[2].data) ? kq[2].data : [];
+      var tenCS = {};
+      dsCoSo.forEach(function (c) { tenCS[c.ma] = c.ten; });
 
       var TEN_VAI_TRO = {
         admin: 'Quản trị', ban_giam_hieu: 'Ban giám hiệu', to_truong: 'Tổ trưởng',
         giao_vien: 'Giáo viên', nhan_vien: 'Nhân viên'
       };
       var NHOM = [
-        { icon: '🏛', ten: 'Ban giám hiệu — Quản trị', loc: ['admin', 'ban_giam_hieu'] },
-        { icon: '📚', ten: 'Giáo viên', loc: ['to_truong', 'giao_vien'] },
+        { icon: '🏛', ten: 'Ban giám hiệu', loc: ['ban_giam_hieu'] },
+        { icon: '📚', ten: 'Giáo viên', loc: ['to_truong', 'giao_vien'], theoCoSo: true },
         { icon: '🗄', ten: 'Nhân viên', loc: ['nhan_vien'] }
       ];
+
       // Một người có thể có HAI email trong danh sách mời (thầy Chung: gmail và
       // nghean.edu.vn). Trước đây chỗ này giữ dòng gặp trước rồi BỎ dòng sau —
       // mà link Drive lại chỉ gắn cho một trong hai email, nên rơi đúng dòng
@@ -362,13 +424,22 @@
       //  người — mẫu thầy Chung chọn — nên hai cô Nguyễn Thị Hà tự phân biệt
       //  được, khối dò gỡ đi cho gọn.)
 
+      // Khoá lọc cho người CHƯA gắn cơ sở. Cố ý là một chuỗi CÓ MẶT CHỮ, không
+      // phải dấu cách: bản đầu dùng một dấu cách và lúc soát mới lộ ra ký tự ấy
+      // thật ra là byte NUL (0x00) — trình soạn thảo, trình duyệt và cả
+      // `git diff` đều vẽ nó y hệt dấu cách, nên không ai nhìn ra bằng mắt.
+      // Hậu quả nếu để lọt: bấm đúng mục "Chưa gắn cơ sở" thì lưới trắng trơn,
+      // mà số đếm vẫn ghi "đang xem 0 người" nên trông như trường không có ai
+      // thiếu dữ liệu. Ký tự vô hình làm khoá là tự đặt bẫy cho chính mình.
+      var CS_TRONG = '--chua-gan--';
+
       var daVe = {};
       var html = '';
       var soNhomDaVe = 0;   // nhóm đầu tiên CÓ người thì mở sẵn, các nhóm sau đóng
       NHOM.forEach(function (nh) {
         var ds = [], viTri = {};
         moi.forEach(function (m) {
-          if (m.la_ky_thuat || nh.loc.indexOf(m.vai_tro) < 0) return;
+          if (m.la_ky_thuat || nh.loc.indexOf(nhomCua(m)) < 0) return;
           var k = khoaNguoi(m);
           if (daVe[k]) return;                  // đã vẽ ở nhóm trước
           var i = viTri[k];
@@ -377,7 +448,8 @@
             ds.push({
               khoa: k,
               ho_ten: m.ho_ten, chuc_vu: m.chuc_vu, to_chuyen_mon: m.to_chuyen_mon,
-              vai_tro: m.vai_tro, link_drive: m.link_drive, emails: [m.email]
+              vai_tro: m.vai_tro, link_drive: m.link_drive, emails: [m.email],
+              co_so_ma: m.co_so_ma || ''
             });
             return;
           }
@@ -386,6 +458,7 @@
           if (!g.link_drive)    g.link_drive    = m.link_drive;
           if (!g.chuc_vu)       g.chuc_vu       = m.chuc_vu;
           if (!g.to_chuyen_mon) g.to_chuyen_mon = m.to_chuyen_mon;
+          if (!g.co_so_ma)      g.co_so_ma      = m.co_so_ma || '';
         });
         ds.forEach(function (g) { daVe[g.khoa] = true; });
         if (!ds.length) return;
@@ -396,6 +469,43 @@
         // dùng không biết bên trong có gì, tưởng màn hình rỗng.
         var moSan = (soNhomDaVe === 0);
         soNhomDaVe++;
+
+        // ── Ô chọn cơ sở, CHỈ cho nhóm Giáo viên ──
+        //  Trường sáp nhập có hàng chục giáo viên trải phẳng một mạch, thầy cô
+        //  phải cuộn rất lâu mới tìm ra tên mình (Quỳ Hợp 2: 76 giáo viên ở hai
+        //  điểm). Thầy Chung chốt 10/9/2026: bấm sổ xuống chọn phân hiệu rồi mới
+        //  hiện danh sách phẳng của phân hiệu đó.
+        //  Ban giám hiệu và Nhân viên KHÔNG tách — họ làm việc cho toàn trường,
+        //  và mỗi nhóm chỉ vài người nên tách ra chỉ thêm một cú bấm vô ích.
+        //  Trường một điểm cũng không hiện ô này: chọn giữa một cơ sở là vô nghĩa.
+        var oLoc = '';
+        if (nh.theoCoSo) {
+          var demCS = {};
+          ds.forEach(function (g) { demCS[g.co_so_ma] = (demCS[g.co_so_ma] || 0) + 1; });
+          // Giữ đúng thứ tự so_tt của bảng co_so, chỉ lấy cơ sở CÓ người
+          var maCS = dsCoSo.map(function (c) { return c.ma; })
+            .filter(function (ma) { return demCS[ma]; });
+          // ⚠️ co_so_ma trống KHÔNG được lặng lẽ nhét vào cơ sở chính: nhìn thấy
+          //    "Chưa gắn cơ sở · 12 người" thì Ban giám hiệu mới biết mà đi gắn.
+          //    Gộp ngầm là con số nào cũng đẹp mà phân công theo điểm thì sai.
+          var soTrong = demCS[''] || 0;
+          if (maCS.length > 1 || (maCS.length && soTrong)) {
+            oLoc = '<div class="cbgv-loc">' +
+              '<label for="cbgv-loc-cs">📍 Chọn nơi công tác</label> ' +
+              '<select id="cbgv-loc-cs">' +
+              '<option value="">— Tất cả (' + ds.length + ' người) —</option>' +
+              maCS.map(function (ma) {
+                return '<option value="' + thoat(ma) + '">' + thoat(tenCS[ma] || ma) +
+                  ' (' + demCS[ma] + ' người)</option>';
+              }).join('') +
+              (soTrong
+                ? '<option value="' + CS_TRONG + '">Chưa gắn cơ sở (' + soTrong + ' người)</option>'
+                : '') +
+              '</select>' +
+              '<span class="cbgv-loc-dem"></span></div>';
+          }
+        }
+
         html += '<div class="sub' + (moSan ? ' open' : '') + '">' +
           '<div class="sub-head" role="button" tabindex="0"' +
           ' onclick="this.parentNode.classList.toggle(\'open\')"' +
@@ -403,7 +513,7 @@
           '<span class="fo">' + nh.icon + '</span><b>' + thoat(nh.ten) + '</b>' +
           '<span class="sub-cnt">' + ds.length + ' người</span>' +
           '<span class="sub-arrow">▶</span></div>' +
-          '<div class="sub-body"><div class="luoi-cbgv">';
+          '<div class="sub-body">' + oLoc + '<div class="luoi-cbgv">';
         html += ds.map(function (m) {
           // Duyệt mọi email của người này: lấy ảnh đại diện đầu tiên tìm được,
           // và chỉ cần MỘT email đã đăng nhập là coi như đã kích hoạt.
@@ -421,7 +531,9 @@
           // Trạng thái kích hoạt không còn là một DÒNG chữ — thành CHẤM màu ở
           // góc ảnh (xanh = đã đăng nhập, xám = chưa), câu đầy đủ trong title.
           var tenDayDu = thoat(m.ho_ten);
-          return '<div class="the-cbgv">' +
+          // data-cs là khoá lọc của ô chọn cơ sở phía trên. Người chưa gắn cơ sở
+          // mang khoá CS_TRONG để phân biệt hẳn với "Tất cả" (chuỗi rỗng).
+          return '<div class="the-cbgv" data-cs="' + thoat(m.co_so_ma || CS_TRONG) + '">' +
             '<span class="anh-bao ' + (daVao ? 'da-vao' : 'chua-vao') + '"' +
             ' title="' + (daVao ? 'Đã đăng nhập vào hệ thống ít nhất một lần'
                                 : 'Người này chưa đăng nhập lần nào') + '">' +
@@ -459,6 +571,38 @@
       if (vung && html) {
         vung.innerHTML = html;
         if (baoCu) baoCu.style.display = 'none';
+
+        // Nối ô chọn cơ sở SAU khi đã vẽ. Cố ý không dùng onchange nội tuyến:
+        // chuỗi HTML dựng bằng nối chuỗi mà nhét cả hàm vào thuộc tính thì rất
+        // dễ vỡ dấu nháy, và đó là loại lỗi chỉ lộ ra trên trang thật.
+        //
+        // 🔑 BỌC TRY/CATCH: ô lọc là tiện ích PHỤ, danh bạ mới là việc chính.
+        //    Danh bạ đã vẽ xong ở dòng trên rồi; nếu khâu nối ô lọc văng lỗi
+        //    (môi trường không có querySelector, DOM lạ…) mà để lỗi thoát ra
+        //    thì cả lời hứa napCBGV bị bác — màn hình đứng nguyên trạng thái cũ
+        //    và KHÔNG có gì báo. Thà mất ô lọc còn hơn mất cả danh bạ.
+        try {
+          var oChon = vung.querySelector && vung.querySelector('#cbgv-loc-cs');
+          if (oChon) {
+            var luoi = oChon.closest('.sub-body').querySelector('.luoi-cbgv');
+            var oDem = oChon.parentNode.querySelector('.cbgv-loc-dem');
+            var loc = function () {
+              var v = oChon.value, hien = 0;
+              Array.prototype.forEach.call(luoi.children, function (the) {
+                var khop = !v || the.getAttribute('data-cs') === v;
+                the.style.display = khop ? '' : 'none';
+                if (khop) hien++;
+              });
+              // Nói ra con số đang xem: lọc xong mà im lặng thì người dùng không
+              // biết mình đang nhìn một phần hay toàn bộ.
+              if (oDem) oDem.textContent = v ? 'đang xem ' + hien + ' người' : '';
+            };
+            oChon.addEventListener('change', loc);
+            loc();
+          }
+        } catch (e) {
+          console.warn('[Danh bạ CBGV] Không nối được ô lọc cơ sở:', e);
+        }
       }
     });
   }

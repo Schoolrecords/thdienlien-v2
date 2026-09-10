@@ -651,6 +651,17 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
 /* Lưới thẻ nằm trong khối xếp gọn (.sub) thì phải có lề trong: sát mép nhìn
    chật, mà thẻ lại nhấc lên 2px lúc rê chuột nên không có lề là bị cắt bóng. */
 .sub-body > .luoi-cbgv { padding: 13px; }
+/* Ô chọn nơi công tác — chỉ hiện ở nhóm Giáo viên của trường nhiều điểm.
+   Nằm ngay trên lưới thẻ, dùng chung nền xám nhạt của thân khối cho liền mạch.
+   Trên điện thoại cho phép xuống dòng: nhãn + ô chọn + số đếm mà ép một hàng
+   thì ô chọn bị bóp còn vài chục pixel, không đọc nổi tên phân hiệu. */
+.cbgv-loc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 13px 13px 0; }
+.cbgv-loc label { font-weight: 700; font-size: 14px; color: var(--dam); }
+.cbgv-loc select { font: inherit; font-size: 14px; padding: 7px 10px;
+  border: 1px solid var(--vien-dam); border-radius: 8px; background: var(--the);
+  color: var(--chu); max-width: 100%; }
+.cbgv-loc-dem { font-size: 13px; color: var(--chu-mo); }
 /* Thẻ theo bản mẫu thầy Chung chọn 25/8/2026: vạch nhấn xanh lá bên trái ·
    ảnh tròn gradient xanh (chấm trạng thái đăng nhập ở góc ảnh) · tên đậm navy ·
    chức vụ XANH LÁ · viên email · nút thư mục góc trên phải. */

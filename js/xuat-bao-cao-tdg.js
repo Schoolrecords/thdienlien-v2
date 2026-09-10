@@ -214,19 +214,37 @@
           const khoa = String(x.email_chinh || x.email || '').toLowerCase().trim()
             || ('#' + Object.keys(nguoi).length);
           // Dòng chính (không có email_chinh) thắng dòng phụ khi cả hai cùng về
-          if (!nguoi[khoa] || !x.email_chinh) nguoi[khoa] = String(x.vai_tro || '');
+          if (!nguoi[khoa] || !x.email_chinh) {
+            // Giữ CẢ chức vụ, không chỉ vai trò: luật xếp nhóm cần chức vụ để
+            // biết một người mang quyền admin thật ra là hiệu trưởng hay giáo viên.
+            nguoi[khoa] = { vai_tro: String(x.vai_tro || ''), chuc_vu: String(x.chuc_vu || '') };
+          }
         });
-        const v = Object.keys(nguoi).map(function (k) { return nguoi[k]; });
+        /* 🔴 ĐẾM THEO ĐÚNG LUẬT CỦA MÀN HÌNH DANH BẠ (window.nhomCBGV trong
+           du-lieu-sql.js). Trước đây chỗ này tự áp quy ước riêng "CBQL =
+           ban_giam_hieu + admin". Từ 10/9/2026 màn hình xếp admin theo CHỨC VỤ,
+           nên giữ quy ước cũ là bản Word gửi Sở đếm một cô giáo có quyền quản
+           trị vào số CBQL, còn màn hình ngay bên cạnh lại hiện cô ấy ở nhóm
+           Giáo viên — đúng kiểu lệch số 616/636 mà chú thích trên đã cảnh báo.
+           Có đường lùi phòng khi tệp du-lieu-sql.js còn là bản cũ trong bộ nhớ
+           đệm trình duyệt: lùi về đúng quy ước cũ, chứ không để văng lỗi. */
+        const xepNhom = window.nhomCBGV || function (m) { return m.vai_tro; };
+        const v = Object.keys(nguoi).map(function (k) {
+          var m = nguoi[k];
+          return window.nhomCBGV ? xepNhom(m)
+            : (m.vai_tro === 'admin' ? 'ban_giam_hieu' : m.vai_tro);
+        });
         kq.tong = v.length;
         kq.kyThuat = mtk.data.filter(function (x) { return x.la_ky_thuat; }).length;
         // Số dòng bị gộp vì một người có hai địa chỉ — in ra ghi chú để hội
         // đồng đối chiếu danh sách N dòng với tổng không thấy vênh khó hiểu.
         kq.gop = (mtk.data.length - kq.kyThuat) - v.length;
-        /* CBQL gồm cả vai trò admin: Phó Hiệu trưởng quản trị hệ thống mang
-           vai_tro='admin' (quy ước sql/22) — danh bạ trên màn đã xếp admin vào
-           nhóm "Ban giám hiệu — Quản trị", bản Word phải cùng một quy ước.
+        /* CBQL = nhóm "Ban giám hiệu" của màn danh bạ. Người mang vai_tro
+           ='admin' đã được xepNhom() quy về đúng nhóm theo chức vụ ở trên, nên
+           ở đây KHÔNG cần (và không được) bắt riêng 'admin' nữa — bắt thêm là
+           đếm hai lần quy ước khác nhau.
            Tài khoản kỹ thuật vai trò admin đã bị la_ky_thuat loại ở trên. */
-        kq.cbql = v.filter(function (x) { return x === 'ban_giam_hieu' || x === 'admin'; }).length;
+        kq.cbql = v.filter(function (x) { return x === 'ban_giam_hieu'; }).length;
         kq.gv = v.filter(function (x) { return x === 'giao_vien' || x === 'to_truong'; }).length;
         kq.ht = v.filter(function (x) { return x === 'nhan_vien'; }).length;
         kq.khac = kq.tong - kq.cbql - kq.gv - kq.ht;
