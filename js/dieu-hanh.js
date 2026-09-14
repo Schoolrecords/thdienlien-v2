@@ -2363,6 +2363,9 @@
       // 24/8/2026 theo yêu cầu thầy Chung: lối sang app TKB nay là ô thứ tư
       // trên trang chủ (oTKB), để cả hai chỗ là thừa. Mã vẽ mục `ngoai`
       // trong veDieuHanh() giữ nguyên — muốn bật lại chỉ cần trả một dòng.
+      // 14/9/2026 (sổ dự án 91.13): Thời khóa biểu VỀ LẠI thành màn trong app —
+      // nạp từ tệp Smart Scheduler (js/tkb-nap.js), xem ở js/tkb-xem.js.
+      { ma: 'tkb', ten: 'Thời khóa biểu', bi: '🗓️', ngan: 'TKB' },
       { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
@@ -2395,8 +2398,9 @@
   // 'tkb' không còn là màn (lối sang app TKB nằm trên trang chủ) — ai giữ
   // trạng thái cũ thì đưa về Tổng quan, đừng để rơi vào màn trắng không tab
   // nào sáng.
+  // (14/9/2026: 'tkb' là màn thật trở lại — bỏ khỏi bảng này.)
   var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao', daythay: 'lichtuan',
-                 dugio: 'tongquan', tkb: 'tongquan', homnay: 'tongquan' };
+                 dugio: 'tongquan', homnay: 'tongquan' };
 
   function veDieuHanh() {
     var vung = $('#vung-dieuhanh');
@@ -2519,6 +2523,9 @@
       // nói "đưa về đúng màn mới" ở đây là sai — việc đó do MAN_CU làm.
       TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
+      // Màn TKB tự nạp dữ liệu (bất đồng bộ) nên ở đây chỉ dựng chỗ trống;
+      // TKB_XEM.ve() điền vào ngay sau khi gắn HTML (cuối veDieuHanh).
+      TAB === 'tkb' ? '<div id="tkb-xem"><div class="the-thong-bao">Đang tải thời khóa biểu…</div></div>' :
       TAB === 'thongbao' ? veThongBao() :
       TAB === 'viec' ? veViec() :
       // Báo cáo đầu buổi lên TRƯỚC: việc hằng ngày, ai cũng phải làm.
@@ -2541,6 +2548,7 @@
       '<div class="dh-than">' + dauMan + bang + chipKhac + locCS +
       '<div class="dh-noi-dung">' + noiDung + '</div>' +
       veNhatKyKhoi() + tabM + '</div></div>';
+    if (TAB === 'tkb' && window.TKB_XEM) window.TKB_XEM.ve(document.getElementById('tkb-xem'));
     veNhaCard();
   }
 
@@ -2618,15 +2626,17 @@
     //
     // Không khai `URL_TKB` thì KHÔNG vẽ ô: trường chưa có app thời khóa biểu mà
     // hiện nút là dẫn thầy cô sang thời khóa biểu của một trường khác.
+    // 14/9/2026 (sổ dự án 91.13): ô này mở MÀN TKB TRONG APP, không sang app
+    // ngoài nữa. Luôn vẽ khi có module — trường chưa nạp TKB thì màn tự nói
+    // "chưa nạp" và chỉ đường cho quản trị, không dẫn sang trường khác.
     function oTKB() {
-      var url = (window.CAU_HINH || {}).URL_TKB;
-      if (!url) return '';
-      return '<a class="tc-o lam tc-o-tkb" href="' + thoat(url) + '"' + thuocMoNgoai() + '>' +
+      if (!window.TKB_XEM) return '';
+      return '<a class="tc-o lam tc-o-tkb" href="#" onclick="DH.moTab(\'tkb\');return false;">' +
         '<div class="tc-dau"><span class="tc-ic">' +
         '<img src="img/tkb-3d.png" alt="" aria-hidden="true"></span>' +
         '<span class="tc-nhan">Thời khóa biểu</span></div>' +
-        '<div class="tc-con">Mở app ↗</div>' +
-        '<div class="tc-dv">xếp lịch · dạy thay</div></a>';
+        '<div class="tc-con">Xem TKB</div>' +
+        '<div class="tc-dv">của tôi · lớp · toàn trường</div></a>';
     }
 
     // Ô "Điểm trường an toàn" — phải NÓI CÙNG MỘT CHUYỆN với màn Tổng quan
