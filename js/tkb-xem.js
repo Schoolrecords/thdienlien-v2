@@ -33,6 +33,7 @@
     pbId: null,        // phiên bản đang xem
     dl: null,          // { tiet:[], gv:[], lopCoSo:{}, coSo:[] } của pbId
     dangNap: false, loi: '',
+    napXong: false,    // đã hỏi máy chủ xong (kể cả khi trường CHƯA có phiên bản nào)
     cheDo: null,       // 'toi' | 'lop' | 'gv' | 'truong'
     lop: '', gv: '', buoi: 'ca', coSo: 'all', timGV: '',
     mau: false         // đang dùng dữ liệu mẫu (chưa nối CSDL)
@@ -125,7 +126,7 @@
         ? 'Cơ sở dữ liệu của trường chưa có bảng thời khóa biểu — người phụ trách hệ thống cần chạy sql/64-thoi-khoa-bieu.sql.'
         : 'Không tải được thời khóa biểu: ' + m;
     }).then(function () {
-      S.dangNap = false;
+      S.dangNap = false; S.napXong = true;
       if (tiepTheo) tiepTheo();
     });
   }
@@ -168,9 +169,12 @@
     if (!may()) {
       S.mau = true;
       if (!S.dl) { S.dl = duLieuMau(); S.dsPhienBan = [{ id: 0, ap_dung_tu: homNayISO(), nam_hoc: (window.CAU_HINH || {}).NAM_HOC || '', hoc_ky: 1, cong_bo: true }]; S.pbId = 0; }
-    } else if (S.mau) { S.mau = false; S.dl = null; S.dsPhienBan = null; }
+    } else if (S.mau) { S.mau = false; S.dl = null; S.dsPhienBan = null; S.napXong = false; }
 
-    if (!S.mau && !S.dl && !S.loi) {
+    // 🔴 Phải xét napXong, KHÔNG chỉ xét S.dl: trường chưa nạp TKB nào thì tải xong
+    // S.dl vẫn null → điều kiện cũ lại gọi tải lần nữa, lặp vô tận, màn kẹt mãi ở
+    // "Đang tải…" (Tân Châu 1 trên trang thật 14/9/2026 — bản thử dùng dữ liệu mẫu nên không lộ).
+    if (!S.mau && !S.napXong && !S.loi) {
       if (!S.dangNap) napTatCa(function () { ve(); });
       EL.innerHTML = '<div class="the-thong-bao">Đang tải thời khóa biểu…</div>';
       return;
@@ -441,7 +445,7 @@
     tat('[data-gv]', function (b) { S.gv = b.getAttribute('data-gv'); ve(); });
     tat('[data-co-so]', function (b) { S.coSo = b.getAttribute('data-co-so'); ve(); });
     var pb = document.getElementById('tkb-pb');
-    if (pb) pb.addEventListener('change', function () { S.pbId = +pb.value; S.dl = null; ve(); });
+    if (pb) pb.addEventListener('change', function () { S.pbId = +pb.value; S.dl = null; S.napXong = false; ve(); });
     var tim = document.getElementById('tkb-tim-gv');
     if (tim) tim.addEventListener('input', function () {
       S.timGV = tim.value;
@@ -521,7 +525,7 @@
     setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
   }
 
-  function xoaBoNho() { S.dsPhienBan = null; S.dl = null; S.pbId = null; S.loi = ''; BO_NHO_PB = {}; }
+  function xoaBoNho() { S.dsPhienBan = null; S.dl = null; S.pbId = null; S.loi = ''; S.napXong = false; BO_NHO_PB = {}; }
 
   window.TKB_XEM = {
     ve: ve, xoaBoNho: xoaBoNho,
