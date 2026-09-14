@@ -664,8 +664,20 @@
   function daiDayThay() {
     var b = buoiXem();
     var ds = gvVangBuoi(b);
-    if (!ds.length || !(window.CAU_HINH || {}).URL_TKB) return '';
+    if (!ds.length) return '';
     var ten = ds.slice(0, 3).map(function (g) { return thoat(g.ten); }).join(' · ');
+    // 14/9/2026 (sổ dự án 92, giai đoạn 2): bố trí dạy thay NGAY TRONG APP —
+    // màn TKB › Dạy thay đọc thẳng sổ vắng này, không chuyển danh sách qua link.
+    // Thiếu module (tệp chưa nạp) thì mới rơi về lối cũ sang app TKB riêng.
+    if (window.DAY_THAY && window.TKB_XEM) {
+      return '<div class="dh-sang-tkb">' +
+        '<div class="chu"><b>' + ds.length + ' người vắng ' + tenBuoi(b) + ' nay:</b> ' + ten +
+        (ds.length > 3 ? ' và ' + (ds.length - 3) + ' người nữa' : '') +
+        '<span>Bấm để xem các tiết bị trống theo thời khóa biểu và chọn người dạy thay theo gợi ý.</span></div>' +
+        '<a class="nut" href="#" onclick="DAY_THAY.moNgay();DH.moTab(\'tkb\');TKB_XEM.moDayThay();return false;">' +
+        '👨‍🏫 Bố trí dạy thay</a></div>';
+    }
+    if (!(window.CAU_HINH || {}).URL_TKB) return '';
     return '<div class="dh-sang-tkb">' +
       '<div class="chu"><b>' + ds.length + ' người vắng ' + tenBuoi(b) + ' nay:</b> ' + ten +
       (ds.length > 3 ? ' và ' + (ds.length - 3) + ' người nữa' : '') +
@@ -2081,6 +2093,12 @@
   // Sổ vắng bên này nay tự chuyển sang app đó — xem daiDayThay() và
   // GIAO-THUC-HSS-SANG-TKB.md.
   function veDayThay() {
+    if (window.DAY_THAY && window.TKB_XEM) {
+      return '<div class="dh-tieu-de" style="margin-top:26px">👨‍🏫 Dạy thay theo tiết</div>' +
+        '<div class="hd-kiem xanh" style="margin-top:0">Bố trí dạy thay ở màn <b>Thời khóa biểu › Dạy thay</b> — ' +
+        'app đọc sổ vắng và thời khóa biểu, tự liệt kê tiết trống và gợi ý người thay. ' +
+        '<a href="#" onclick="DAY_THAY.moNgay();DH.moTab(\'tkb\');TKB_XEM.moDayThay();return false;">Mở màn Dạy thay ›</a></div>';
+    }
     var url = (window.CAU_HINH || {}).URL_TKB;
     if (!url) return '';
     return '<div class="dh-tieu-de" style="margin-top:26px">👨‍🏫 Dạy thay theo tiết</div>' +
@@ -2550,6 +2568,8 @@
       veNhatKyKhoi() + tabM + '</div></div>';
     if (TAB === 'tkb' && window.TKB_XEM) window.TKB_XEM.ve(document.getElementById('tkb-xem'));
     veNhaCard();
+    // "Hôm nay thầy/cô dạy thay N tiết" trên trang chủ (js/day-thay.js) — chỉ khi chạy thật
+    if (THAT && window.DAY_THAY) window.DAY_THAY.ganNhac(document.getElementById('dt-nhac-home'));
   }
 
   // ── Khối "NHẬT KÝ ĐIỀU HÀNH HÔM NAY" — cuối MỌI màn, theo bản thiết kế.

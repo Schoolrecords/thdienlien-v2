@@ -3517,3 +3517,54 @@ textarea.ht-o { min-height: 116px; display: block; }
   .tkb-ds-gv-cuon { max-height: 180px; }
   .tkb-dau-phai { width: 100%; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   DẠY THAY (js/day-thay.js) — 14/9/2026, sổ dự án 92 giai đoạn 2
+   Mỗi người vắng một khối; mỗi tiết một hàng: ký hiệu tiết · lớp-môn · ai dạy
+   thay · nút. Gợi ý mở NGAY DƯỚI hàng tiết (không hộp nổi) — trên điện thoại
+   hộp nổi che mất hàng đang chọn. Lý do hiện bằng chip, không hiện điểm.
+   ════════════════════════════════════════════════════════════════════════ */
+.dt-dau { margin: 0 0 12px; }
+.dt-dau .tkb-buoi { flex-wrap: wrap; }
+.dt-ngay { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; font-size: 13.5px; }
+.dt-ngay b { color: var(--dam); font-size: 15px; margin-left: 4px; }
+.dt-ngay label { display: inline-flex; gap: 6px; align-items: center; color: var(--chu-mo); }
+.dt-nut-tom { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.dt-the { background: var(--the); border: 1px solid var(--vien); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.dt-the > header { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-start; }
+.dt-the > header b { font-size: 15px; color: var(--dam); }
+.dt-the > header small { display: block; font-size: 12.3px; color: var(--chu-mo); }
+.dt-rong { margin: 8px 0 0; font-size: 13px; color: var(--chu-mo); }
+.dt-buoi { margin-top: 10px; }
+.dt-buoi-dau { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--vang-sam); }
+.dt-tiet { display: grid; grid-template-columns: 42px minmax(120px, 1.2fr) minmax(140px, 1.4fr) auto; gap: 10px; align-items: center;
+  padding: 7px 8px; border-top: 1px dashed var(--ke); font-size: 13.3px; }
+.dt-tiet.da { background: #f7fbf8; }
+.dt-tiet.hom-nay { background: #f5f8fd; }
+.dt-ki { font: 700 12px ui-monospace, Consolas, monospace; color: var(--chu-mo); text-align: center; background: var(--o-con); border-radius: 6px; padding: 3px 0; }
+.dt-hanh { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+.dt-goi-y { display: grid; gap: 6px; margin: 4px 0 8px 52px; padding: 8px; background: var(--o-con); border-radius: 10px; }
+.dt-uv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--the);
+  border: 1px solid var(--vien); border-radius: 9px; padding: 8px 10px; }
+.dt-uv.nhat { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok-nen); }
+.dt-uv.tu-quan { background: transparent; border-style: dashed; }
+.dt-uv b { font-size: 13.4px; }
+.dt-uv small { font-size: 11.8px; color: var(--chu-nhat); }
+.dt-ly-do { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.tkb-chip.xam { background: var(--o-con); color: var(--chu-mo); }
+.dt-tong-nguoi { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.dt-tong-nguoi span { font-size: 13px; background: var(--the); border: 1px solid var(--vien); border-radius: 99px; padding: 3px 10px; font-variant-numeric: tabular-nums; }
+.dt-bang td.ma { font: 700 12px ui-monospace, Consolas, monospace; }
+.dt-cua-toi { background: var(--the); border: 1px solid var(--vien); border-radius: 12px; overflow: hidden; }
+.dt-nhac { display: block; margin: 0 0 12px; padding: 11px 14px; border-radius: 12px; background: var(--canh-nen); color: var(--canh);
+  border: 1px solid #f1e2b5; font-size: 13.6px; text-decoration: none; line-height: 1.5; }
+.dt-nhac span { font-weight: 700; white-space: nowrap; }
+.dt-nhac:hover { filter: brightness(.98); }
+@media (max-width: 640px) {
+  .dt-tiet { grid-template-columns: 42px 1fr; }
+  .dt-tiet .dt-ai, .dt-tiet .dt-hanh { grid-column: 2; justify-content: flex-start; }
+  .dt-goi-y { margin-left: 0; }
+  .dt-uv { grid-template-columns: 1fr; }
+  .dt-nut-tom { margin-left: 0; }
+}

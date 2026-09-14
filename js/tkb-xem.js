@@ -66,26 +66,50 @@
   // ══════════════════════════════════════════════════════════════
   // NẠP DỮ LIỆU
   // ══════════════════════════════════════════════════════════════
-  function napTatCa(tiepTheo) {
-    // PostgREST trả tối đa 1000 dòng một lần — trường 25 lớp đã 700+ tiết, trường
-    // 40 lớp là quá 1000. Đọc theo trang, đừng để lưới thiếu tiết mà không báo.
-    function docHet(bang, cot, loc) {
-      var ra = [], co = 1000;
-      function trang(tu) {
-        return loc(may().from(bang).select(cot)).range(tu, tu + co - 1).then(function (r) {
-          if (r.error) throw r.error;
-          ra = ra.concat(r.data || []);
-          return (r.data || []).length === co ? trang(tu + co) : ra;
-        });
-      }
-      return trang(0);
+  // PostgREST trả tối đa 1000 dòng một lần — trường 25 lớp đã 700+ tiết, trường
+  // 40 lớp là quá 1000. Đọc theo trang, đừng để lưới thiếu tiết mà không báo.
+  function docHet(bang, cot, loc) {
+    var ra = [], co = 1000;
+    function trang(tu) {
+      return loc(may().from(bang).select(cot)).range(tu, tu + co - 1).then(function (r) {
+        if (r.error) throw r.error;
+        ra = ra.concat(r.data || []);
+        return (r.data || []).length === co ? trang(tu + co) : ra;
+      });
     }
+    return trang(0);
+  }
+  // Dữ liệu MỘT phiên bản — dùng chung cho màn xem và màn dạy thay (js/day-thay.js),
+  // giữ trong bộ nhớ theo id: đổi qua lại giữa hai màn không gọi máy chủ lại.
+  var BO_NHO_PB = {};
+  function docPhienBan(pb) {
+    if (BO_NHO_PB[pb.id]) return BO_NHO_PB[pb.id];
+    BO_NHO_PB[pb.id] = Promise.all([
+      docHet('tkb_tiet', 'lop,thu,buoi,tiet,mon,gv_nhan,gv_email', function (q) { return q.eq('phien_ban_id', pb.id).order('lop').order('thu').order('buoi').order('tiet'); }),
+      may().from('tkb_giao_vien').select('gv_nhan,ho_ten,email,lop_cn,phan_cong,so_tiet,so_tiet_pcgd').eq('phien_ban_id', pb.id),
+      may().from('lop_hoc').select('lop,co_so_ma').eq('nam_hoc', pb.nam_hoc),
+      may().from('co_so').select('ma,ten,so_tt').eq('hoat_dong', true).order('so_tt')
+    ]).then(function (r) {
+      if (r[1].error) throw r[1].error;
+      var lopCoSo = {};
+      (r[2].data || []).forEach(function (x) { lopCoSo[x.lop] = x.co_so_ma || ''; });
+      return { tiet: r[0], gv: r[1].data || [], lopCoSo: lopCoSo, coSo: (r[3] && r[3].data) || [] };
+    }, function (e) { delete BO_NHO_PB[pb.id]; throw e; });
+    return BO_NHO_PB[pb.id];
+  }
+  function docDsPhienBan() {
+    if (S.dsPhienBan) return Promise.resolve(S.dsPhienBan);
+    return may().from('tkb_phien_ban').select('id,nam_hoc,hoc_ky,ap_dung_tu,cong_bo,so_lop,so_tiet')
+      .order('ap_dung_tu', { ascending: false }).order('id', { ascending: false }).limit(20)
+      .then(function (r) { if (r.error) throw r.error; S.dsPhienBan = r.data || []; return S.dsPhienBan; });
+  }
+  // Bản ĐÃ CÔNG BỐ áp dụng cho một ngày (khớp hàm tkb_phien_ban_ngay trong sql/64)
+  function phienBanNgay(ds, ngay) {
+    return (ds || []).filter(function (x) { return x.cong_bo && x.ap_dung_tu <= ngay; })[0] || null;
+  }
+  function napTatCa(tiepTheo) {
     S.dangNap = true; S.loi = '';
-    var p = S.dsPhienBan ? Promise.resolve(S.dsPhienBan) :
-      may().from('tkb_phien_ban').select('id,nam_hoc,hoc_ky,ap_dung_tu,cong_bo,so_lop,so_tiet')
-        .order('ap_dung_tu', { ascending: false }).order('id', { ascending: false }).limit(20)
-        .then(function (r) { if (r.error) throw r.error; S.dsPhienBan = r.data || []; return S.dsPhienBan; });
-    p.then(function (ds) {
+    docDsPhienBan().then(function (ds) {
       if (!ds.length) { S.dl = null; return null; }
       if (!S.pbId || !ds.some(function (x) { return x.id === S.pbId; })) {
         var hn = homNayISO();
@@ -94,17 +118,7 @@
         S.pbId = dung.id;
       }
       var pb = ds.filter(function (x) { return x.id === S.pbId; })[0];
-      return Promise.all([
-        docHet('tkb_tiet', 'lop,thu,buoi,tiet,mon,gv_nhan,gv_email', function (q) { return q.eq('phien_ban_id', S.pbId).order('lop').order('thu').order('buoi').order('tiet'); }),
-        may().from('tkb_giao_vien').select('gv_nhan,ho_ten,email,lop_cn,phan_cong,so_tiet,so_tiet_pcgd').eq('phien_ban_id', S.pbId),
-        may().from('lop_hoc').select('lop,co_so_ma').eq('nam_hoc', pb.nam_hoc),
-        may().from('co_so').select('ma,ten,so_tt').eq('hoat_dong', true).order('so_tt')
-      ]).then(function (r) {
-        if (r[1].error) throw r[1].error;
-        var lopCoSo = {};
-        (r[2].data || []).forEach(function (x) { lopCoSo[x.lop] = x.co_so_ma || ''; });
-        S.dl = { tiet: r[0], gv: r[1].data || [], lopCoSo: lopCoSo, coSo: (r[3] && r[3].data) || [] };
-      });
+      return docPhienBan(pb).then(function (dl) { S.dl = dl; });
     }).catch(function (e) {
       var m = String((e && (e.message || e.details)) || e || '');
       S.loi = /tkb_|does not exist|schema cache|Could not find/i.test(m)
@@ -141,7 +155,7 @@
       }
     });
     var gv = cn.map(function (n, i) { return { gv_nhan: n, ho_ten: n.replace(/^Cô /, 'Nguyễn Thị ').replace(/^Thầy /, 'Nguyễn Văn '), lop_cn: lop[i] }; })
-      .concat(monBM.map(function (m) { return { gv_nhan: bm[m], ho_ten: bm[m].replace(/^(Cô|Thầy) /, 'Trần Văn '), phan_cong: m }; }));
+      .concat(monBM.map(function (m) { return { gv_nhan: bm[m], ho_ten: bm[m].replace(/^Cô /, 'Trần Thị ').replace(/^Thầy /, 'Trần Văn '), phan_cong: m }; }));
     return { tiet: tiet, gv: gv, lopCoSo: {}, coSo: [] };
   }
 
@@ -200,6 +214,7 @@
       : '';
 
     var tabs = [['toi', 'TKB của tôi'], ['lop', 'Theo lớp'], ['gv', 'Theo giáo viên'], ['truong', 'Toàn trường']]
+      .concat(window.DAY_THAY ? [['daythay', 'Dạy thay']] : [])
       .filter(function (t) { return t[0] !== 'toi' || cuaToi.length || S.mau; });
 
     var html =
@@ -220,6 +235,17 @@
         '</div>' +
       '</div>';
 
+    // Dạy thay có đầu màn riêng (chọn NGÀY, không chọn phiên bản) — js/day-thay.js
+    if (S.cheDo === 'daythay' && window.DAY_THAY) {
+      EL.innerHTML = '<div class="tkb-dau"><div class="tkb-tabs" role="tablist">' + tabs.map(function (t) {
+          return '<button role="tab" class="' + (S.cheDo === t[0] ? 'on' : '') + '" data-che-do="' + t[0] + '">' + t[1] + '</button>';
+        }).join('') + '</div></div><div id="dt-vung"></div>';
+      Array.prototype.slice.call(EL.querySelectorAll('[data-che-do]')).forEach(function (b) {
+        b.addEventListener('click', function () { S.cheDo = b.getAttribute('data-che-do'); ve(); });
+      });
+      window.DAY_THAY.ve(document.getElementById('dt-vung'));
+      return;
+    }
     if (S.cheDo === 'toi') html += veCuaToi(cuaToi.length ? cuaToi : dsGV.slice(0, 1));
     else if (S.cheDo === 'lop') html += veTheoLop(dsLop);
     else if (S.cheDo === 'gv') html += veTheoGV(dsGV);
@@ -495,7 +521,13 @@
     setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
   }
 
-  function xoaBoNho() { S.dsPhienBan = null; S.dl = null; S.pbId = null; S.loi = ''; }
+  function xoaBoNho() { S.dsPhienBan = null; S.dl = null; S.pbId = null; S.loi = ''; BO_NHO_PB = {}; }
 
-  window.TKB_XEM = { ve: ve, xoaBoNho: xoaBoNho };
+  window.TKB_XEM = {
+    ve: ve, xoaBoNho: xoaBoNho,
+    // cho js/day-thay.js
+    docDsPhienBan: docDsPhienBan, docPhienBan: docPhienBan, phienBanNgay: phienBanNgay,
+    duLieuMau: function () { return duLieuMau(); },
+    moDayThay: function () { S.cheDo = 'daythay'; ve(); }
+  };
 })();
