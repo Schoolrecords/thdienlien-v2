@@ -217,7 +217,9 @@
         }).join('') + '</select>'
       : '';
 
-    var tabs = [['toi', 'TKB của tôi'], ['lop', 'Theo lớp'], ['gv', 'Theo giáo viên'], ['truong', 'Toàn trường']]
+    // Thầy Chung 14/9/2026: "giao diện phẳng, dễ xem, không cần màu sắc; có xem Phân hiệu,
+    // từng lớp, từng giáo viên, có thống kê tiết dạy" — mã màn giữ nguyên ('truong' = Phân hiệu).
+    var tabs = [['toi', 'TKB của tôi'], ['truong', 'Phân hiệu'], ['lop', 'Từng lớp'], ['gv', 'Từng giáo viên'], ['thongke', 'Thống kê tiết dạy']]
       .concat(window.DAY_THAY ? [['daythay', 'Dạy thay']] : [])
       .filter(function (t) { return t[0] !== 'toi' || cuaToi.length || S.mau; });
 
@@ -253,12 +255,8 @@
     if (S.cheDo === 'toi') html += veCuaToi(cuaToi.length ? cuaToi : dsGV.slice(0, 1));
     else if (S.cheDo === 'lop') html += veTheoLop(dsLop);
     else if (S.cheDo === 'gv') html += veTheoGV(dsGV);
+    else if (S.cheDo === 'thongke') html += veThongKe(dsGV);
     else html += veToanTruong();
-
-    html += '<div class="tkb-chu-thich">' + [['tv', 'Tiếng Việt'], ['toan', 'Toán'], ['anh', 'Tiếng Anh'], ['tn', 'TNXH · Khoa học · LS&ĐL'],
-      ['hd', 'HĐTN'], ['nt', 'Nghệ thuật'], ['gd', 'GDTC'], ['dd', 'Đạo đức'], ['tin', 'Tin học · Công nghệ']].map(function (m) {
-      return '<span><i class="tkb-m-' + m[0] + '"></i>' + m[1] + '</span>';
-    }).join('') + '<span><i class="tkb-chieu-mau"></i>Buổi chiều</span></div>';
 
     EL.innerHTML = html;
     ganSuKien();
@@ -339,7 +337,7 @@
       luoiTuan(function (t, b, i) {
         var a = m[t + '|' + b + '|' + i];
         return a ? { mon: a[0].mon, phu: a.map(function (x) { return x.lop; }).join(' + '), trung: a.length > 1 } : null;
-      });
+      }) + thongKeMot(function (x) { return nhan[x.gv_nhan]; }, 'lop');
   }
 
   function veTheoLop(dsLop) {
@@ -363,7 +361,7 @@
         if (!a) return null;
         var g = gvCua[a[0].gv_nhan];
         return { mon: a[0].mon, phu: a[0].gv_nhan || '' , ten: g && g.ho_ten };
-      }) + '</div></div>';
+      }) + thongKeMot(function (x) { return x.lop === S.lop; }, 'gv') + '</div></div>';
   }
 
   function veTheoGV(dsGV) {
@@ -392,15 +390,14 @@
       luoiTuan(function (t, b, i) {
         var a = m[t + '|' + b + '|' + i];
         return a ? { mon: a[0].mon, phu: a.map(function (x) { return x.lop; }).join(' + '), trung: a.length > 1 } : null;
-      }) + '</div></div>';
+      }) + thongKeMot(function (x) { return x.gv_nhan === g.gv_nhan; }, 'lop') + '</div></div>';
   }
 
   function veToanTruong() {
     var dl = S.dl, dsLop = lopDanhSach();
     var coSo = dl.coSo.filter(function (c) { return dsLop.some(function (l) { return (dl.lopCoSo[l] || '') === c.ma; }); });
-    if (coSo.length > 1 && S.coSo !== 'all' && !coSo.some(function (c) { return c.ma === S.coSo; })) S.coSo = 'all';
-    if (coSo.length > 1 && S.coSo === 'all') S.coSo = coSo[0].ma;   // lưới rộng: mỗi lần một điểm trường
-    var lop = coSo.length > 1 ? dsLop.filter(function (l) { return (dl.lopCoSo[l] || '') === S.coSo; }) : dsLop;
+    if (S.coSo !== 'all' && !coSo.some(function (c) { return c.ma === S.coSo; })) S.coSo = 'all';
+    var lop = S.coSo !== 'all' ? dsLop.filter(function (l) { return (dl.lopCoSo[l] || '') === S.coSo; }) : dsLop;
     var m = {};
     dl.tiet.forEach(function (x) { m[x.lop + '|' + x.thu + '|' + x.buoi + '|' + x.tiet] = x; });
     var mt = soTietBuoi(), dsThu = thuCo(), hn = thuHomNay();
@@ -410,9 +407,12 @@
       if (khoi.length && khoi[khoi.length - 1].k === k) khoi[khoi.length - 1].n++;
       else khoi.push({ k: k, n: 1 });
     });
-    var h = (coSo.length > 1 ? '<div class="tkb-loc-cs">' + coSo.map(function (c) {
-        return '<button class="chip-loc' + (S.coSo === c.ma ? ' on' : '') + '" data-co-so="' + thoat(c.ma) + '">' + thoat(c.ten) + '</button>';
-      }).join('') + '</div>' : '') +
+    var soTietCS = dl.tiet.filter(function (x) { return lop.indexOf(x.lop) >= 0; }).length;
+    var soGVCS = {};
+    dl.tiet.forEach(function (x) { if (lop.indexOf(x.lop) >= 0 && x.gv_nhan) soGVCS[x.gv_nhan] = 1; });
+    var h = '<div class="tkb-loc-cs">' + [{ ma: 'all', ten: 'Toàn trường' }].concat(coSo.length > 1 ? coSo : []).map(function (c) {
+        return '<button class="tkb-chip-loc' + (S.coSo === c.ma ? ' on' : '') + '" data-co-so="' + thoat(c.ma) + '">' + thoat(c.ten) + '</button>';
+      }).join('') + '<span class="tkb-meta">' + lop.length + ' lớp · ' + soTietCS + ' tiết/tuần · ' + Object.keys(soGVCS).length + ' giáo viên</span></div>' +
       '<div class="tkb-cuon tkb-cuon-rong"><table class="tkb-rong"><thead>' +
       '<tr><th rowspan="2" class="dinh-trai">Thứ</th><th rowspan="2" class="dinh-trai2">Tiết</th>' +
       khoi.map(function (k) { return '<th colspan="' + k.n + '" class="tkb-khoi-dau">' + (k.k ? 'Khối ' + k.k : '') + '</th>'; }).join('') + '</tr>' +
@@ -437,6 +437,78 @@
     return h + '</tbody></table></div>';
   }
 
+  // ── Thống kê tiết dạy của MỘT người hoặc MỘT lớp: theo thứ · buổi · môn · lớp/người ──
+  // theo: 'lop' (thống kê của giáo viên, chia theo lớp) | 'gv' (của lớp, chia theo người dạy)
+  function thongKeMot(loc, theo) {
+    var ds = S.dl.tiet.filter(loc);
+    if (!ds.length) return '';
+    var dsThu = thuCo(), theoThu = {}, sang = 0, chieu = 0, theoMon = {}, theoPhu = {};
+    ds.forEach(function (x) {
+      var k = x.thu + (x.buoi === 'sang' ? 'S' : 'C');
+      theoThu[k] = (theoThu[k] || 0) + 1;
+      if (x.buoi === 'sang') sang++; else chieu++;
+      theoMon[x.mon] = (theoMon[x.mon] || 0) + 1;
+      var p = theo === 'lop' ? x.lop : (x.gv_nhan || 'chưa ghi tên');
+      theoPhu[p] = (theoPhu[p] || 0) + 1;
+    });
+    function dongDem(obj, sx) {
+      return Object.keys(obj).sort(sx || function (a, b) { return obj[b] - obj[a] || String(a).localeCompare(b, 'vi', { numeric: true }); })
+        .map(function (k) { return '<span>' + thoat(k) + ' <b>' + obj[k] + '</b></span>'; }).join('');
+    }
+    return '<div class="tkb-thong-ke">' +
+      '<div class="tkb-tk-tieu">Thống kê tiết dạy · <b>' + ds.length + '</b> tiết/tuần · sáng ' + sang + ' · chiều ' + chieu + '</div>' +
+      '<div class="tkb-cuon"><table class="tkb-tk-bang"><thead><tr><th></th>' + dsThu.map(function (t) { return '<th>' + TEN_THU[t] + '</th>'; }).join('') + '<th>Cộng</th></tr></thead><tbody>' +
+      ['S', 'C'].map(function (b) {
+        var cong = 0;
+        return '<tr><th>' + (b === 'S' ? 'Sáng' : 'Chiều') + '</th>' + dsThu.map(function (t) { var v = theoThu[t + b] || 0; cong += v; return '<td>' + (v || '·') + '</td>'; }).join('') + '<td><b>' + cong + '</b></td></tr>';
+      }).join('') +
+      '<tr class="cong"><th>Cả ngày</th>' + dsThu.map(function (t) { var v = (theoThu[t + 'S'] || 0) + (theoThu[t + 'C'] || 0); return '<td><b>' + (v || '·') + '</b></td>'; }).join('') + '<td><b>' + ds.length + '</b></td></tr>' +
+      '</tbody></table></div>' +
+      '<div class="tkb-tk-dong"><span class="tkb-tk-nhan">Theo môn</span>' + dongDem(theoMon) + '</div>' +
+      '<div class="tkb-tk-dong"><span class="tkb-tk-nhan">' + (theo === 'lop' ? 'Theo lớp' : 'Người dạy') + '</span>' + dongDem(theoPhu, theo === 'lop' ? soSanhLop : null) + '</div>' +
+      '</div>';
+  }
+
+  // ── Bảng thống kê tiết dạy TOÀN TRƯỜNG: mỗi giáo viên một dòng ──
+  function veThongKe(dsGV) {
+    var dl = S.dl, dsThu = thuCo();
+    var coSo = dl.coSo.filter(function (c) { return lopDanhSach().some(function (l) { return (dl.lopCoSo[l] || '') === c.ma; }); });
+    if (S.coSo !== 'all' && !coSo.some(function (c) { return c.ma === S.coSo; })) S.coSo = 'all';
+    var dem = {};
+    dl.tiet.forEach(function (x) {
+      if (!x.gv_nhan) return;
+      if (S.coSo !== 'all' && (dl.lopCoSo[x.lop] || '') !== S.coSo) return;
+      var d = dem[x.gv_nhan] || (dem[x.gv_nhan] = { tong: 0, sang: 0, chieu: 0, thu: {}, lop: {} });
+      d.tong++; d[x.buoi]++; d.thu[x.thu] = (d.thu[x.thu] || 0) + 1; d.lop[x.lop] = 1;
+    });
+    var ds = dsGV.filter(function (g) { return dem[g.gv_nhan]; });
+    var tong = { tong: 0, sang: 0, chieu: 0, thu: {} };
+    ds.forEach(function (g) {
+      var d = dem[g.gv_nhan];
+      tong.tong += d.tong; tong.sang += d.sang; tong.chieu += d.chieu;
+      dsThu.forEach(function (t) { tong.thu[t] = (tong.thu[t] || 0) + (d.thu[t] || 0); });
+    });
+    return (coSo.length > 1 ? '<div class="tkb-loc-cs">' + [{ ma: 'all', ten: 'Toàn trường' }].concat(coSo).map(function (c) {
+        return '<button class="tkb-chip-loc' + (S.coSo === c.ma ? ' on' : '') + '" data-co-so="' + thoat(c.ma) + '">' + thoat(c.ten) + '</button>';
+      }).join('') + '</div>' : '') +
+      '<div class="tkb-cuon"><table class="tkb-tk-bang rong"><thead><tr><th>TT</th><th class="trai">Giáo viên</th><th class="trai">Chủ nhiệm</th>' +
+      '<th>Tổng tiết/tuần</th><th>Sáng</th><th>Chiều</th>' + dsThu.map(function (t) { return '<th>' + TEN_THU_NGAN[t] + '</th>'; }).join('') +
+      '<th>Số lớp</th><th>Phân công</th><th>Chênh</th></tr></thead><tbody>' +
+      ds.map(function (g, i) {
+        var d = dem[g.gv_nhan];
+        var chenh = g.so_tiet_pcgd ? d.tong - g.so_tiet_pcgd : null;
+        return '<tr><td>' + (i + 1) + '</td><td class="trai"><button class="tkb-lien" data-gv-mo="' + thoat(g.gv_nhan) + '">' + thoat(g.ho_ten) + '</button><small>' + thoat(g.gv_nhan) + '</small></td>' +
+          '<td class="trai">' + thoat(g.lop_cn || '') + '</td><td><b>' + d.tong + '</b></td><td>' + d.sang + '</td><td>' + d.chieu + '</td>' +
+          dsThu.map(function (t) { return '<td>' + (d.thu[t] || '·') + '</td>'; }).join('') +
+          '<td>' + Object.keys(d.lop).length + '</td><td>' + (g.so_tiet_pcgd || '') + '</td>' +
+          '<td>' + (chenh === null || S.coSo !== 'all' ? '' : chenh === 0 ? '0' : '<b>' + (chenh > 0 ? '+' : '') + chenh + '</b>') + '</td></tr>';
+      }).join('') +
+      '<tr class="cong"><td></td><td class="trai"><b>Cộng ' + ds.length + ' giáo viên</b></td><td></td><td><b>' + tong.tong + '</b></td><td><b>' + tong.sang + '</b></td><td><b>' + tong.chieu + '</b></td>' +
+      dsThu.map(function (t) { return '<td><b>' + (tong.thu[t] || 0) + '</b></td>'; }).join('') + '<td></td><td></td><td></td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="tkb-meta" style="margin-top:8px">"Phân công" là số tiết khai ở trang PCGD của Smart Scheduler; "Chênh" khác 0 nghĩa là thời khóa biểu xếp thiếu hoặc thừa so với phân công. Bấm tên để xem thời khóa biểu của người đó.</p>';
+  }
+
   function ganSuKien() {
     function tat(sel, fn) { Array.prototype.slice.call(EL.querySelectorAll(sel)).forEach(function (b) { b.addEventListener('click', function () { fn(b); }); }); }
     tat('[data-che-do]', function (b) { S.cheDo = b.getAttribute('data-che-do'); ve(); });
@@ -444,6 +516,7 @@
     tat('[data-lop]', function (b) { S.lop = b.getAttribute('data-lop'); ve(); });
     tat('[data-gv]', function (b) { S.gv = b.getAttribute('data-gv'); ve(); });
     tat('[data-co-so]', function (b) { S.coSo = b.getAttribute('data-co-so'); ve(); });
+    tat('[data-gv-mo]', function (b) { S.gv = b.getAttribute('data-gv-mo'); S.cheDo = 'gv'; ve(); window.scrollTo(0, EL.getBoundingClientRect().top + window.scrollY - 80); });
     var pb = document.getElementById('tkb-pb');
     if (pb) pb.addEventListener('change', function () { S.pbId = +pb.value; S.dl = null; S.napXong = false; ve(); });
     var tim = document.getElementById('tkb-tim-gv');
@@ -462,7 +535,7 @@
   // IN — cửa sổ riêng, chỉ có lưới, khổ ngang
   // ══════════════════════════════════════════════════════════════
   function inTrang() {
-    var bang = EL.querySelector('.tkb-luoi, .tkb-rong');
+    var bang = EL.querySelector('.tkb-luoi, .tkb-rong, .tkb-tk-bang.rong');
     var tom = EL.querySelector('.tkb-tom');
     if (!bang) return;
     var cs = S.cheDo === 'truong';

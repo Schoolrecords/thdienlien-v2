@@ -3568,3 +3568,77 @@ textarea.ht-o { min-height: 116px; display: block; }
   .dt-uv { grid-template-columns: 1fr; }
   .dt-nut-tom { margin-left: 0; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   TKB PHẲNG — thầy Chung 14/9/2026: "giao diện phẳng, dễ xem, không cần màu sắc".
+   Khối này ĐÈ lên khối "THỜI KHÓA BIỂU" phía trên (cùng bộ chọn, đứng sau nên
+   thắng): bỏ màu môn, bỏ thẻ bo tròn trong ô, bỏ nền chiều vàng, bỏ cột hôm nay
+   tô navy. Chỉ còn bảng kẻ mảnh, chữ đen – xám, đường kẻ đậm tách buổi/thứ.
+   Muốn quay lại bản màu: xoá nguyên khối này.
+   ════════════════════════════════════════════════════════════════════════ */
+#tkb-xem { --tkb-ke: #d5dbe4; --tkb-ke-dam: #8c96a6; --tkb-nen-dau: #f4f5f7; }
+.tkb-tabs { background: none; padding: 0; border-bottom: 1px solid var(--tkb-ke); border-radius: 0; gap: 0; }
+.tkb-tabs button { border-radius: 0; padding: 9px 14px; color: var(--chu-mo); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tkb-tabs button.on { background: none; color: var(--chu); border-bottom-color: var(--chu); }
+.tkb-buoi { border-color: var(--tkb-ke); border-radius: 6px; }
+.tkb-buoi button.on { background: var(--tkb-nen-dau); color: var(--chu); box-shadow: inset 0 -2px 0 var(--chu); }
+.tkb-chon { border-color: var(--tkb-ke); border-radius: 6px; }
+
+.tkb-tom { border-color: var(--tkb-ke); border-radius: 6px; box-shadow: none; }
+.tkb-tom b { color: var(--chu); }
+.tkb-nhan { color: var(--chu-mo); }
+.tkb-cuon { border-color: var(--tkb-ke); border-radius: 6px; }
+.tkb-ds-lop, .tkb-ds-gv { border-color: var(--tkb-ke); border-radius: 6px; }
+.tkb-ds-lop button { border-color: var(--tkb-ke); border-radius: 4px; font-weight: 600; }
+.tkb-ds-lop button.on, .tkb-ds-gv button.on { background: var(--chu); border-color: var(--chu); }
+
+/* Lưới tuần: bảng kẻ ô đều, chữ thường */
+.tkb-luoi th { background: var(--tkb-nen-dau); color: var(--chu); border-bottom: 1px solid var(--tkb-ke-dam); font-weight: 700; }
+.tkb-luoi th.hom-nay { background: var(--tkb-nen-dau); color: var(--chu); box-shadow: inset 0 -3px 0 var(--chu); }
+.tkb-luoi th small { color: var(--chu-mo); }
+.tkb-luoi td { height: auto; padding: 6px 8px; border-bottom: 1px solid var(--tkb-ke); border-left: 1px solid var(--tkb-ke); }
+.tkb-luoi td.hom-nay { background: none; }
+.tkb-luoi tr.chieu td { background: none; }
+.tkb-luoi tr.het-buoi td { border-bottom: 2px solid var(--tkb-ke-dam); }
+.tkb-luoi .tkb-o-tiet, .tkb-rong .tkb-o-tiet { background: var(--tkb-nen-dau); color: var(--chu-mo); font-weight: 600; }
+.tkb-mon, .tkb-mon.nho { height: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; }
+.tkb-mon b { font-weight: 600; font-size: 13px; }
+.tkb-mon i { font-size: 11.8px; }
+.tkb-mon.nho b { font-size: 12px; }
+.tkb-mon.nho i { font-size: 11px; }
+.tkb-mon.trung { outline: 0; }
+.tkb-mon.trung i::after { content: ' (trùng tiết)'; font-weight: 700; color: var(--chu); }
+.tkb-trong { min-height: 0; height: 18px; border: 0; }
+
+/* Lưới phân hiệu */
+.tkb-rong thead th { background: var(--tkb-nen-dau); color: var(--chu); border-bottom: 1px solid var(--tkb-ke); border-left: 1px solid var(--tkb-ke); }
+.tkb-rong .dinh-trai { background: var(--tkb-nen-dau); }
+.tkb-rong .tkb-thu, .tkb-rong .tkb-thu.hom-nay { color: var(--chu); background: var(--tkb-nen-dau); border-top: 2px solid var(--tkb-ke-dam); }
+.tkb-rong .tkb-thu.hom-nay { box-shadow: inset 3px 0 0 var(--chu); }
+.tkb-rong td { padding: 4px 6px; border-bottom: 1px solid var(--tkb-ke); border-left: 1px solid var(--tkb-ke); }
+.tkb-rong tr.dau-thu td, .tkb-rong tr.dau-thu .tkb-o-tiet { border-top: 2px solid var(--tkb-ke-dam); }
+.tkb-rong tr.chieu td { background: none; }
+.tkb-rong .tkb-khoi-dau { border-left: 2px solid var(--tkb-ke-dam); color: var(--chu-mo); }
+
+/* Nút lọc phân hiệu */
+.tkb-loc-cs { align-items: center; gap: 6px 10px; }
+.tkb-chip-loc { font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border: 1px solid var(--tkb-ke); background: #fff; color: var(--chu-mo); border-radius: 4px; cursor: pointer; }
+.tkb-chip-loc.on { border-color: var(--chu); color: var(--chu); box-shadow: inset 0 -2px 0 var(--chu); }
+
+/* Thống kê tiết dạy */
+.tkb-thong-ke { margin-top: 14px; display: grid; gap: 8px; }
+.tkb-tk-tieu { font-size: 13px; color: var(--chu-mo); }
+.tkb-tk-tieu b { color: var(--chu); }
+.tkb-tk-bang { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tkb-tk-bang th, .tkb-tk-bang td { border: 1px solid var(--tkb-ke); padding: 6px 8px; text-align: center; }
+.tkb-tk-bang thead th { background: var(--tkb-nen-dau); color: var(--chu); font-weight: 700; }
+.tkb-tk-bang tbody th { background: var(--tkb-nen-dau); font-weight: 600; text-align: left; white-space: nowrap; }
+.tkb-tk-bang tr.cong td, .tkb-tk-bang tr.cong th { border-top: 2px solid var(--tkb-ke-dam); }
+.tkb-tk-bang .trai { text-align: left; }
+.tkb-tk-bang.rong td small { display: block; font-size: 11.5px; color: var(--chu-nhat); }
+.tkb-tk-bang.rong { min-width: 760px; }
+.tkb-lien { font: inherit; font-weight: 600; color: var(--chu); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.tkb-lien:hover { text-decoration: underline; }
+.tkb-tk-dong { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; align-items: baseline; }
+.tkb-tk-dong span b { font-variant-numeric: tabular-nums; }
+.tkb-tk-nhan { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--chu-mo); min-width: 90px; }
