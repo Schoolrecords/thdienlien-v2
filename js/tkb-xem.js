@@ -83,7 +83,7 @@
   // Dữ liệu MỘT phiên bản — dùng chung cho màn xem và màn dạy thay (js/day-thay.js),
   // giữ trong bộ nhớ theo id: đổi qua lại giữa hai màn không gọi máy chủ lại.
   var BO_NHO_PB = {};
-  function docPhienBan(pb) {
+  function docMotBan(pb) {
     if (BO_NHO_PB[pb.id]) return BO_NHO_PB[pb.id];
     BO_NHO_PB[pb.id] = Promise.all([
       docHet('tkb_tiet', 'lop,thu,buoi,tiet,mon,gv_nhan,gv_email', function (q) { return q.eq('phien_ban_id', pb.id).order('lop').order('thu').order('buoi').order('tiet'); }),
@@ -92,33 +92,178 @@
       may().from('co_so').select('ma,ten,so_tt').eq('hoat_dong', true).order('so_tt')
     ]).then(function (r) {
       if (r[1].error) throw r[1].error;
-      var lopCoSo = {};
+      var lopCoSo = {}, lopPB = {};
       (r[2].data || []).forEach(function (x) { lopCoSo[x.lop] = x.co_so_ma || ''; });
-      return { tiet: r[0], gv: r[1].data || [], lopCoSo: lopCoSo, coSo: (r[3] && r[3].data) || [] };
+      // Bản của một phân hiệu: lớp chưa khai ở lop_hoc (phân hiệu mới sáp nhập) vẫn về đúng phân hiệu
+      r[0].forEach(function (x) { lopPB[x.lop] = pb.id; if (pb.co_so_ma && !lopCoSo[x.lop]) lopCoSo[x.lop] = pb.co_so_ma; });
+      return { tiet: r[0], gv: r[1].data || [], lopCoSo: lopCoSo, lopPB: lopPB, coSo: (r[3] && r[3].data) || [] };
     }, function (e) { delete BO_NHO_PB[pb.id]; throw e; });
     return BO_NHO_PB[pb.id];
   }
+  // Một bản, hoặc BẢN GHÉP (pb.thanhPhan — mỗi phân hiệu một bản, xem phienBanNgay)
+  // Bản của MỘT phân hiệu cũng đi qua gopPhienBan để tên gọi hiển thị giống hệt khi đã ghép (không đổi
+  // tên khi phân hiệu khác nạp thêm). Khoá bộ nhớ 'g…' — khác khoá id số của docMotBan.
+  function docPhienBan(pb) {
+    if (!pb.thanhPhan && !pb.co_so_ma) return docMotBan(pb);
+    var tp = pb.thanhPhan || [pb], khoa = pb.thanhPhan ? pb.id : 'g' + pb.id;
+    if (BO_NHO_PB[khoa]) return BO_NHO_PB[khoa];
+    BO_NHO_PB[khoa] = Promise.all(tp.map(docMotBan)).then(function (ds) {
+      return gopPhienBan(tp, ds);
+    }, function (e) { delete BO_NHO_PB[khoa]; throw e; });
+    return BO_NHO_PB[khoa];
+  }
+  // Ghép dữ liệu nhiều bản. thanhPhan đã xếp: bản toàn trường (nếu có) trước, rồi phân hiệu
+  // từ cũ đến mới — bản sau THAY lớp trùng của bản trước. Tên gọi trùng mà khác người
+  // ("Cô Linh" hai phân hiệu) thì thêm tên phân hiệu vào sau cho khỏi gộp nhầm hai người.
+  //
+  // Danh tính một giáo viên (sửa sau soát đối kháng 14/9/2026):
+  //   · có email → email (cùng email là MỘT người dù hai tệp ghi tên gọi khác nhau: "Cô Vy" / "Vy")
+  //   · không email mà PCGD có họ tên → họ tên (người không tài khoản dạy hai phân hiệu vẫn là một)
+  //   · không cả hai → phân hiệu + tên gọi
+  // Tên hiển thị: tên gọi đầu tiên của danh tính đó. Tên gọi nào ứng với ≥ 2 danh tính (SAU KHI đã bỏ lớp
+  // bị bản sau thay) thì mọi danh tính thuộc bản phân hiệu mang hậu tố "(tên phân hiệu)" — cố định theo
+  // phân hiệu, không đổi khi thứ tự nạp đổi, để dạy thay đã lưu theo tên gọi không trỏ sang người khác.
+  function gopPhienBan(thanhPhan, dsDl) {
+    var coSo = dsDl[0].coSo, tenCS = {};
+    coSo.forEach(function (c) { tenCS[c.ma] = c.ten; });
+    var lopCoSo = {}, lopPB = {}, conLai = [];
+    // Lượt 1: lớp nào lấy theo bản nào (bản sau thay bản trước)
+    thanhPhan.forEach(function (pb, i) {
+      var dl = dsDl[i];
+      Object.keys(dl.lopCoSo).forEach(function (l) { if (lopCoSo[l] === undefined || dl.lopCoSo[l]) lopCoSo[l] = dl.lopCoSo[l]; });
+      dl.tiet.forEach(function (x) { lopPB[x.lop] = i; });
+    });
+    function khongDauTen(s) { return khongDau(String(s || '').replace(/\s+(HT|PHT|TPT)$/i, '')).replace(/\s+/g, ' ').trim(); }
+    // Lượt 2: danh tính từng tên gọi trong từng bản. Chỉ EMAIL mới nối người qua hai bản; không email thì
+    // khoá kèm phân hiệu — cùng họ tên ở hai phân hiệu có thể là hai người, tách an toàn hơn gộp nhầm
+    // (gộp nhầm thì người có tài khoản thấy tiết của người khác trong "TKB của tôi" — soát vòng 2).
+    var dtCua = thanhPhan.map(function (pb, i) {
+      var dl = dsDl[i], m = {}, cs = pb.co_so_ma || '';
+      dl.gv.forEach(function (g) {
+        if (g.email) m[g.gv_nhan] = 'e:' + String(g.email).toLowerCase();
+        else if (g.ho_ten) m[g.gv_nhan] = 'h:' + cs + '|' + khongDauTen(g.ho_ten);
+      });
+      dl.tiet.forEach(function (x) { if (x.gv_nhan && x.gv_email && !/^e:/.test(m[x.gv_nhan] || '')) m[x.gv_nhan] = 'e:' + String(x.gv_email).toLowerCase(); });
+      return function (nhan) { return m[nhan] || ('n:' + (pb.co_so_ma || '') + '|' + nhan); };
+    });
+    var tenDau = {}, dtTheoTen = {}, dtPhanHieu = {};
+    thanhPhan.forEach(function (pb, i) {
+      dsDl[i].tiet.forEach(function (x) {
+        if (lopPB[x.lop] !== i) return;
+        conLai.push({ i: i, x: x });
+        if (!x.gv_nhan) return;
+        var dt = dtCua[i](x.gv_nhan);
+        if (!tenDau[dt]) tenDau[dt] = x.gv_nhan;
+        if (pb.co_so_ma && !dtPhanHieu[dt]) dtPhanHieu[dt] = pb.co_so_ma;
+      });
+    });
+    Object.keys(tenDau).forEach(function (dt) { (dtTheoTen[tenDau[dt]] = dtTheoTen[tenDau[dt]] || []).push(dt); });
+    // Hậu tố phân hiệu: người KHÔNG email của bản phân hiệu LUÔN mang (tên không đổi khi phân hiệu khác nạp
+    // thêm — dạy thay đã lưu theo tên gọi vẫn khớp); người có email chỉ mang khi trùng tên với người khác.
+    // Vẫn trùng sau hậu tố (hiếm) thì đánh số — hai danh tính không bao giờ chung một tên hiển thị.
+    var tenCua = {}, daDung = {};
+    Object.keys(tenDau).sort().forEach(function (dt) {
+      var n = tenDau[dt];
+      if (dtPhanHieu[dt] && (!/^e:/.test(dt) || dtTheoTen[n].length > 1)) n = n + ' (' + (tenCS[dtPhanHieu[dt]] || dtPhanHieu[dt]) + ')';
+      var goc = n, so = 2;
+      while (daDung[n]) n = goc + ' #' + (so++);
+      daDung[n] = 1;
+      tenCua[dt] = n;
+    });
+    function tenHien(dt) { return tenCua[dt]; }
+    var tiet = conLai.map(function (c) {
+      var x = c.x;
+      return { lop: x.lop, thu: x.thu, buoi: x.buoi, tiet: x.tiet, mon: x.mon,
+        gv_nhan: x.gv_nhan ? tenHien(dtCua[c.i](x.gv_nhan)) : x.gv_nhan, gv_email: x.gv_email };
+    });
+    // Dòng giáo viên: chỉ lấy từ bản mà người đó CÒN tiết (khỏi cộng phân công của lớp đã bị thay)
+    var conTiet = {}, gvTheoNhan = {};
+    conLai.forEach(function (c) { if (c.x.gv_nhan) conTiet[c.i + '|' + c.x.gv_nhan] = 1; });
+    thanhPhan.forEach(function (pb, i) {
+      dsDl[i].gv.forEach(function (g) {
+        if (!conTiet[i + '|' + g.gv_nhan]) return;
+        var dt = dtCua[i](g.gv_nhan), n = tenHien(dt), cu = gvTheoNhan[n];
+        if (!cu) { gvTheoNhan[n] = Object.assign({}, g, { gv_nhan: n }); return; }
+        // Cùng một người dạy ở hai phân hiệu: cộng phân công, nối lớp chủ nhiệm
+        if (g.lop_cn) cu.lop_cn = cu.lop_cn ? cu.lop_cn + ', ' + g.lop_cn : g.lop_cn;
+        if (g.phan_cong) cu.phan_cong = cu.phan_cong ? cu.phan_cong + ' + ' + g.phan_cong : g.phan_cong;
+        if (g.so_tiet_pcgd) cu.so_tiet_pcgd = (cu.so_tiet_pcgd || 0) + g.so_tiet_pcgd;
+        if (!cu.email && g.email) cu.email = g.email;
+        if (!cu.ho_ten && g.ho_ten) cu.ho_ten = g.ho_ten;
+      });
+    });
+    var lopPBId = {};
+    Object.keys(lopPB).forEach(function (l) { lopPBId[l] = thanhPhan[lopPB[l]].id; });
+    return { tiet: tiet, gv: Object.keys(gvTheoNhan).map(function (n) { return gvTheoNhan[n]; }),
+      lopCoSo: lopCoSo, lopPB: lopPBId, coSo: coSo };
+  }
   function docDsPhienBan() {
     if (S.dsPhienBan) return Promise.resolve(S.dsPhienBan);
-    return may().from('tkb_phien_ban').select('id,nam_hoc,hoc_ky,ap_dung_tu,cong_bo,so_lop,so_tiet')
-      .order('ap_dung_tu', { ascending: false }).order('id', { ascending: false }).limit(20)
-      .then(function (r) { if (r.error) throw r.error; S.dsPhienBan = r.data || []; return S.dsPhienBan; });
+    // select('*'): trường chưa chạy sql/66 thì chưa có cột co_so_ma — vẫn đọc được như bản cả trường
+    return Promise.all([
+      // Không cắt 40 bản: bản đang dùng của một phân hiệu ít nạp lại có thể nằm rất xa (vài trăm dòng nhỏ)
+      may().from('tkb_phien_ban').select('*')
+        .order('ap_dung_tu', { ascending: false }).order('id', { ascending: false }).limit(1000),
+      may().from('co_so').select('ma,ten').eq('hoat_dong', true)
+    ]).then(function (r) {
+      if (r[0].error) throw r[0].error;
+      S.tenCoSo = {};
+      ((r[1] && r[1].data) || []).forEach(function (c) { S.tenCoSo[c.ma] = c.ten; });
+      S.dsPhienBan = r[0].data || [];
+      return S.dsPhienBan;
+    });
   }
-  // Bản ĐÃ CÔNG BỐ áp dụng cho một ngày (khớp hàm tkb_phien_ban_ngay trong sql/64)
+  // TKB áp dụng cho một ngày: với MỖI phạm vi (toàn trường / từng phân hiệu) lấy bản ĐÃ CÔNG BỐ
+  // mới nhất có ap_dung_tu <= ngày (sql/66). Bản toàn trường mới hơn thì bỏ các bản phân hiệu cũ hơn nó.
+  // Chỉ một bản → trả chính bản đó (id số, như trước); nhiều bản → bản ghép { id:'g…', thanhPhan }.
+  function sauHon(a, b) { return a.ap_dung_tu > b.ap_dung_tu || (a.ap_dung_tu === b.ap_dung_tu && a.id > b.id); }
   function phienBanNgay(ds, ngay) {
-    return (ds || []).filter(function (x) { return x.cong_bo && x.ap_dung_tu <= ngay; })[0] || null;
+    var moiPhamVi = {};
+    (ds || []).forEach(function (x) {
+      if (!x.cong_bo || x.ap_dung_tu > ngay) return;
+      var k = x.co_so_ma || '';
+      if (!moiPhamVi[k] || sauHon(x, moiPhamVi[k])) moiPhamVi[k] = x;
+    });
+    var ds0 = Object.keys(moiPhamVi).map(function (k) { return moiPhamVi[k]; });
+    if (!ds0.length) return null;
+    // Không ghép khác năm học: phân hiệu chưa nạp bản năm mới thì không kéo TKB năm cũ vào
+    var namMoi = ds0.reduce(function (a, b) { return sauHon(b, a) ? b : a; }).nam_hoc;
+    ds0 = ds0.filter(function (x) { return !namMoi || !x.nam_hoc || x.nam_hoc === namMoi; });
+    var toan = ds0.filter(function (x) { return !x.co_so_ma; })[0] || null;
+    var ph = ds0.filter(function (x) { return x.co_so_ma; })
+      .filter(function (x) { return !toan || sauHon(x, toan); })
+      .sort(function (a, b) { return sauHon(a, b) ? 1 : -1; });
+    var tp = (toan ? [toan] : []).concat(ph);
+    if (tp.length === 1) return tp[0];
+    var moiNhat = tp.reduce(function (a, b) { return sauHon(b, a) ? b : a; });
+    return { id: 'g' + tp.map(function (x) { return x.id; }).join('-'), thanhPhan: tp, cong_bo: true,
+      nam_hoc: moiNhat.nam_hoc, hoc_ky: moiNhat.hoc_ky, ap_dung_tu: moiNhat.ap_dung_tu };
+  }
+  function tenPhamVi(x) { return x.co_so_ma ? ((S.tenCoSo || {})[x.co_so_ma] || x.co_so_ma) : 'Toàn trường'; }
+  // Danh sách chọn ở đầu màn: "đang dùng hôm nay" (có thể là bản ghép) + từng bản đã nạp
+  // Trước ngày áp dụng đầu tiên (mọi bản công bố đều "chờ tới ngày") thì lấy bản ghép của ngày áp dụng sớm nhất
+  function banMacDinh(ds) {
+    var hn = homNayISO();
+    var dung = phienBanNgay(ds, hn);
+    if (dung) return dung;
+    var sau = ds.filter(function (x) { return x.cong_bo; }).map(function (x) { return x.ap_dung_tu; }).sort()[0];
+    return sau ? phienBanNgay(ds, sau) : null;
+  }
+  function dsChon() {
+    var ds = S.dsPhienBan || [];
+    var md = banMacDinh(ds);
+    return (md && md.thanhPhan ? [md] : []).concat(ds);
   }
   function napTatCa(tiepTheo) {
     S.dangNap = true; S.loi = '';
     docDsPhienBan().then(function (ds) {
       if (!ds.length) { S.dl = null; return null; }
-      if (!S.pbId || !ds.some(function (x) { return x.id === S.pbId; })) {
-        var hn = homNayISO();
-        var dung = ds.filter(function (x) { return x.cong_bo && x.ap_dung_tu <= hn; })[0] ||
-                   ds.filter(function (x) { return x.cong_bo; }).slice(-1)[0] || ds[0];
+      var chon = dsChon();
+      if (S.pbId === null || !chon.some(function (x) { return x.id === S.pbId; })) {
+        var dung = banMacDinh(ds) || ds[0];
         S.pbId = dung.id;
       }
-      var pb = ds.filter(function (x) { return x.id === S.pbId; })[0];
+      var pb = chon.filter(function (x) { return x.id === S.pbId; })[0];
       return docPhienBan(pb).then(function (dl) { S.dl = dl; });
     }).catch(function (e) {
       var m = String((e && (e.message || e.details)) || e || '');
@@ -209,11 +354,15 @@
     if (!S.lop || dsLop.indexOf(S.lop) < 0) S.lop = dsLop[0] || '';
     if (!S.gv || !dsGV.some(function (g) { return g.gv_nhan === S.gv; })) S.gv = dsGV[0] ? dsGV[0].gv_nhan : '';
 
-    var pb = (S.dsPhienBan || []).filter(function (x) { return x.id === S.pbId; })[0] || {};
-    var chonPB = (S.dsPhienBan || []).length > 1
-      ? '<select id="tkb-pb" class="tkb-chon">' + S.dsPhienBan.map(function (x) {
-          return '<option value="' + x.id + '"' + (x.id === S.pbId ? ' selected' : '') + '>Áp dụng từ ' + ngayVN(x.ap_dung_tu) +
-            (x.cong_bo ? '' : ' · nháp') + '</option>';
+    var dsC = dsChon();
+    var pb = dsC.filter(function (x) { return x.id === S.pbId; })[0] || {};
+    var coPhanHieu = (S.dsPhienBan || []).some(function (x) { return x.co_so_ma; });
+    var chonPB = dsC.length > 1
+      ? '<select id="tkb-pb" class="tkb-chon">' + dsC.map(function (x) {
+          var chu = x.thanhPhan
+            ? 'Đang dùng hôm nay · ghép ' + x.thanhPhan.map(tenPhamVi).join(' + ')
+            : 'Áp dụng từ ' + ngayVN(x.ap_dung_tu) + (coPhanHieu ? ' · ' + tenPhamVi(x) : '') + (x.cong_bo ? '' : ' · nháp');
+          return '<option value="' + thoat(x.id) + '"' + (x.id === S.pbId ? ' selected' : '') + '>' + thoat(chu) + '</option>';
         }).join('') + '</select>'
       : '';
 
@@ -518,7 +667,7 @@
     tat('[data-co-so]', function (b) { S.coSo = b.getAttribute('data-co-so'); ve(); });
     tat('[data-gv-mo]', function (b) { S.gv = b.getAttribute('data-gv-mo'); S.cheDo = 'gv'; ve(); window.scrollTo(0, EL.getBoundingClientRect().top + window.scrollY - 80); });
     var pb = document.getElementById('tkb-pb');
-    if (pb) pb.addEventListener('change', function () { S.pbId = +pb.value; S.dl = null; S.napXong = false; ve(); });
+    if (pb) pb.addEventListener('change', function () { S.pbId = /^\d+$/.test(pb.value) ? +pb.value : pb.value; S.dl = null; S.napXong = false; ve(); });
     var tim = document.getElementById('tkb-tim-gv');
     if (tim) tim.addEventListener('input', function () {
       S.timGV = tim.value;
@@ -573,7 +722,7 @@
       m[k] = m[k] ? m[k] + ' + ' + (theoGV ? x.lop : (x.gv_nhan || '')) : chuO;
     });
     var mt = soTietBuoi(), dsThu = thuCo();
-    var pb = (S.dsPhienBan || []).filter(function (x) { return x.id === S.pbId; })[0] || {};
+    var pb = dsChon().filter(function (x) { return x.id === S.pbId; })[0] || {};
     var sheets = ['sang', 'chieu'].filter(function (b) { return mt[b]; }).map(function (b) {
       var rows = [
         { cao: 24, o: [{ v: 'THỜI KHÓA BIỂU ' + (theoGV ? 'GIÁO VIÊN' : 'CÁC LỚP') + ' — BUỔI ' + (b === 'sang' ? 'SÁNG' : 'CHIỀU'), k: 'tt', gopN: dsCot.length + 1 }] },
@@ -603,7 +752,7 @@
   window.TKB_XEM = {
     ve: ve, xoaBoNho: xoaBoNho,
     // cho js/day-thay.js
-    docDsPhienBan: docDsPhienBan, docPhienBan: docPhienBan, phienBanNgay: phienBanNgay,
+    docDsPhienBan: docDsPhienBan, docPhienBan: docPhienBan, phienBanNgay: phienBanNgay, gopPhienBan: gopPhienBan,
     duLieuMau: function () { return duLieuMau(); },
     moDayThay: function () { S.cheDo = 'daythay'; ve(); }
   };

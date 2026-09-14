@@ -7,6 +7,8 @@
 //   TKB_GV_SC · TKB_PHONGHOC_S · TKB_PHONGHOC_C · TKB_PHONGHOC_SC
 // Đọc PCGD (họ tên đầy đủ + phân công) và TKB_LOP_S/C (nguồn từng tiết).
 // TKB_GV_S/C chỉ để ĐỐI CHIẾU; *_SC trùng dữ liệu, PHONGHOC tiểu học để trống.
+// 14/9/2026: tệp CHỈ có trang gộp (PCGD · TKB_LOP_SC · TKB_GV_SC — khuôn mỗi phân
+// hiệu thầy Chung gửi) cũng đọc được: không có TKB_LOP_S/C thì đọc TKB_LOP_SC.
 //
 // 🔑 Quyết định 14/9/2026 (sổ dự án 91.13): Quản trị số KHÔNG xếp lịch. Lịch
 //    xếp trong Smart Scheduler; ở đây chỉ đọc bản đã xếp. Đổi lịch = sửa bên
@@ -29,8 +31,8 @@
 
   var TRANG = {
     pcgd: 'PCGD',
-    lopS: 'TKB_LOP_S', lopC: 'TKB_LOP_C',
-    gvS: 'TKB_GV_S', gvC: 'TKB_GV_C'
+    lopS: 'TKB_LOP_S', lopC: 'TKB_LOP_C', lopSC: 'TKB_LOP_SC',
+    gvS: 'TKB_GV_S', gvC: 'TKB_GV_C', gvSC: 'TKB_GV_SC'
   };
   var TEN_10_TRANG = ['PCGD', 'TKB_LOP_S', 'TKB_LOP_C', 'TKB_LOP_SC', 'TKB_GV_S', 'TKB_GV_C',
     'TKB_GV_SC', 'TKB_PHONGHOC_S', 'TKB_PHONGHOC_C', 'TKB_PHONGHOC_SC'];
@@ -59,6 +61,21 @@
   function tenGoiCua(hoTen) {
     var p = chu(hoTen).replace(/\s+(HT|PHT|TPT|NV)$/i, '').split(/\s+/);
     return chuan(p[p.length - 1] || '');
+  }
+
+  // Ô "Thứ": số 2..8, hoặc gõ chữ "Thứ 3" / "T3" / "Chủ nhật". Không đọc được → 0 (giữ thứ dòng trên, vì ô gộp).
+  function soThu(v) {
+    var s = chu(v);
+    if (!s) return 0;
+    if (/^ch/i.test(chuan(s))) return 8;
+    var m = s.match(/\d+/);
+    var n = m ? +m[0] : 0;
+    return n >= 2 && n <= 8 ? n : 0;
+  }
+  function tenCotExcel(j) {
+    var s = '';
+    for (j = j + 1; j > 0; j = Math.floor((j - 1) / 26)) s = String.fromCharCode(65 + (j - 1) % 26) + s;
+    return s;
   }
 
   // ── Tiêu đề chung: "Trường tiểu học Diễn Liên\nNăm học 2025 - 2026\nHọc kỳ 1"
@@ -113,8 +130,8 @@
     var thu = 0;
     for (var k = dau + 1; k < aoa.length; k++) {
       var d = aoa[k] || [];
-      var t0 = chu(d[0]);
-      if (t0 !== '' && isFinite(+t0)) thu = +t0;
+      var t0 = soThu(d[0]);
+      if (t0) thu = t0;
       var tiet = +chu(d[1]);
       if (!thu || chu(d[1]) === '' || !isFinite(tiet) || tiet < 1) continue;
       cot.forEach(function (c) {
@@ -125,6 +142,74 @@
         var ben = v < 0 ? '' : s.slice(v + 3).trim();
         if (kieu === 'lop') o.push({ lop: c.ten, thu: thu, buoi: buoi, tiet: tiet, mon: mon, nhan: ben });
         else o.push({ nhan: c.ten, thu: thu, buoi: buoi, tiet: tiet, mon: mon, lop: ben });
+      });
+    }
+    return { o: o, cot: cot, loi: loi };
+  }
+
+  // ── Lưới GỘP sáng–chiều (TKB_LOP_SC / TKB_GV_SC) ──
+  // Thầy Chung 14/9/2026: tệp mỗi phân hiệu chỉ 3 trang PCGD · TKB_LOP_SC · TKB_GV_SC.
+  // Dòng tiêu đề "THỨ | TIẾT | 1A (Cô Trinh) | (gộp) | 1B …", dòng dưới "Sáng | Chiều"
+  // lặp lại — mỗi lớp/giáo viên hai cột. Tên nằm ở cột trái của ô gộp → mang sang phải.
+  function docLuoiSC(aoa, kieu) {
+    var o = [], cot = [], loi = [];
+    if (!aoa || !aoa.length) return { o: o, cot: cot, loi: ['Trang trống.'] };
+    var dau = -1;
+    for (var i = 0; i < Math.min(aoa.length, 15); i++) {
+      var r = aoa[i] || [];
+      if (chuan(r[0]) === 'thu' && chuan(r[1]) === 'tiet') { dau = i; break; }
+    }
+    if (dau < 0) return { o: o, cot: cot, loi: ['Không thấy dòng tiêu đề "THỨ | TIẾT".'] };
+    var h1 = aoa[dau] || [], h2 = aoa[dau + 1] || [];
+    var rong = Math.max(h1.length, h2.length);
+    // Nhãn buổi: "Sáng", "SÁNG", "S", "Buổi sáng" …
+    function buoiCua(v) {
+      var x = chuan(v).replace(/^buoi/, '');
+      return (x === 'sang' || x === 's') ? 'sang' : (x === 'chieu' || x === 'c') ? 'chieu' : '';
+    }
+    function coDuLieu(j) {
+      for (var r = dau + 2; r < aoa.length; r++) if (chu((aoa[r] || [])[j])) return true;
+      return false;
+    }
+    // Tên lớp/GV ở ô trái của ô gộp 2 cột; chỉ mang sang ĐÚNG cột kế bên — mang xa hơn thì
+    // cột có tiêu đề trống thật bị gán nhầm cho lớp trước (agent soát 14/9/2026).
+    var truoc = null;
+    for (var j = 2; j < rong; j++) {
+      var s = chu(h1[j]), ten = '', cn = '';
+      if (s) {
+        ten = s.split(/\n/)[0].trim();
+        if (kieu === 'lop') {
+          var m = s.match(/\(([^)]+)\)/);
+          if (m) cn = m[1].trim();
+          ten = ten.replace(/\s*\(.*$/, '').trim();
+        }
+        truoc = { j: j, ten: ten, cn: cn };
+      } else if (truoc && truoc.j === j - 1) {
+        ten = truoc.ten; cn = truoc.cn;
+      }
+      var buoi = buoiCua(h2[j]);
+      if (ten && buoi) cot.push({ j: j, ten: ten, cn: cn, buoi: buoi });
+      else if (coDuLieu(j)) {
+        loi.push('Cột ' + tenCotExcel(j) + ' có tiết nhưng ' + (!ten ? 'không có tên ' + (kieu === 'lop' ? 'lớp' : 'giáo viên') + ' ở dòng tiêu đề'
+          : 'dòng dưới tiêu đề không ghi "Sáng" hay "Chiều"') + ' — máy không biết tiết đó của ai.');
+      }
+    }
+    if (!cot.length) return { o: o, cot: cot, loi: loi.length ? loi : ['Dưới dòng "THỨ | TIẾT" không thấy dòng "Sáng | Chiều".'] };
+    var thu = 0;
+    for (var k = dau + 2; k < aoa.length; k++) {
+      var d = aoa[k] || [];
+      var t0 = soThu(d[0]);
+      if (t0) thu = t0;
+      var tiet = +chu(d[1]);
+      if (!thu || chu(d[1]) === '' || !isFinite(tiet) || tiet < 1) continue;
+      cot.forEach(function (c) {
+        var s = chu(d[c.j]);
+        if (!s) return;
+        var v = s.lastIndexOf(' - ');
+        var mon = (v < 0 ? s : s.slice(0, v)).trim();
+        var ben = v < 0 ? '' : s.slice(v + 3).trim();
+        if (kieu === 'lop') o.push({ lop: c.ten, thu: thu, buoi: c.buoi, tiet: tiet, mon: mon, nhan: ben });
+        else o.push({ nhan: c.ten, thu: thu, buoi: c.buoi, tiet: tiet, mon: mon, lop: ben });
       });
     }
     return { o: o, cot: cot, loi: loi };
@@ -185,20 +270,32 @@
   function docTep(trang) {
     var loi = [], nhac = [];
     var coLopS = timTrang(trang, TRANG.lopS), coLopC = timTrang(trang, TRANG.lopC);
-    if (!coLopS && !coLopC) {
-      return { loi: ['Tệp không có trang TKB_LOP_S / TKB_LOP_C — có đúng là tệp Smart Scheduler kết xuất ' +
-        '(Hệ thống › Chuyển đổi dữ liệu sang Excel) không? Các trang đang có: ' +
+    var coLopSC = timTrang(trang, TRANG.lopSC);
+    var tieuDe, tiet, cotLop;
+    // Có trang tách sáng/chiều CÓ TIẾT thì đọc trang đó (đủ 10 trang kết xuất); không thì đọc trang gộp SC
+    // (tệp 10 trang mà người dùng chỉ sửa trang SC vẫn đọc được).
+    var s = docLuoi(coLopS, 'sang', 'lop'), c = docLuoi(coLopC, 'chieu', 'lop');
+    if ((coLopS || coLopC) && (s.o.length + c.o.length > 0 || !coLopSC)) {
+      tieuDe = docTieuDe(coLopS || coLopC);
+      if (coLopS && s.loi.length) loi.push('TKB_LOP_S: ' + s.loi.join(' '));
+      if (coLopC && c.loi.length) loi.push('TKB_LOP_C: ' + c.loi.join(' '));
+      tiet = s.o.concat(c.o);
+      cotLop = s.cot.concat(c.cot);
+    } else if (coLopSC) {
+      tieuDe = docTieuDe(coLopSC);
+      var sc = docLuoiSC(coLopSC, 'lop');
+      if (sc.loi.length) loi.push('TKB_LOP_SC: ' + sc.loi.join(' '));
+      tiet = sc.o;
+      cotLop = sc.cot;
+    } else {
+      return { loi: ['Tệp không có trang TKB_LOP_SC (hoặc TKB_LOP_S / TKB_LOP_C) — có đúng là tệp Smart Scheduler kết xuất ' +
+        '(Hệ thống › Chuyển đổi dữ liệu sang Excel) hay tệp mẫu của hệ thống không? Các trang đang có: ' +
         Object.keys(trang).join(', ') + '.'], nhac: [] };
     }
-    var tieuDe = docTieuDe(coLopS || coLopC);
-    var s = docLuoi(coLopS, 'sang', 'lop'), c = docLuoi(coLopC, 'chieu', 'lop');
-    if (coLopS && s.loi.length) loi.push('TKB_LOP_S: ' + s.loi.join(' '));
-    if (coLopC && c.loi.length) loi.push('TKB_LOP_C: ' + c.loi.join(' '));
-    var tiet = s.o.concat(c.o);
 
     // Danh sách lớp theo thứ tự cột, kèm tên gọi chủ nhiệm trong tiêu đề
     var lop = [], daCo = {};
-    s.cot.concat(c.cot).forEach(function (x) {
+    cotLop.forEach(function (x) {
       if (daCo[x.ten]) { if (!daCo[x.ten].cn && x.cn) daCo[x.ten].cn = x.cn; return; }
       daCo[x.ten] = { ten: x.ten, cn: x.cn };
       lop.push(daCo[x.ten]);
@@ -209,8 +306,9 @@
     else if (pcgd.loi.length) nhac.push(pcgd.loi.join(' '));
 
     // Lưới giáo viên — để đối chiếu, không bắt buộc
-    var gvS = timTrang(trang, TRANG.gvS), gvC = timTrang(trang, TRANG.gvC);
+    var gvS = timTrang(trang, TRANG.gvS), gvC = timTrang(trang, TRANG.gvC), gvSC = timTrang(trang, TRANG.gvSC);
     var luoiGV = docLuoi(gvS, 'sang', 'gv').o.concat(docLuoi(gvC, 'chieu', 'gv').o);
+    if (!luoiGV.length && gvSC) luoiGV = docLuoiSC(gvSC, 'gv').o;   // trang GV chỉ để đối chiếu — lỗi ở đó không chặn
 
     // ── Kiểm tra ──
     if (!tiet.length) loi.push('Không đọc được tiết nào trong lưới lớp — tệp mẫu chưa điền, hay xuất nhầm trang?');
@@ -251,7 +349,7 @@
       loi: loi, nhac: nhac, tieuDe: tieuDe,
       lop: lop, tiet: tiet, pcgd: pcgd.ds, luoiGV: luoiGV,
       nhan: nhanDs, trungGV: trungGV, khongNhan: khongNhan, lech: lech, coThu7: coThu7,
-      coTrangGV: !!(gvS || gvC)
+      coTrangGV: luoiGV.length > 0
     };
   }
 
@@ -357,8 +455,8 @@
   }
 
   // ════════════════════════════════════════════════════════════
-  // TỆP MẪU — ĐÚNG 10 TRANG, ĐÚNG VỊ TRÍ Ô NHƯ SMART SCHEDULER KẾT XUẤT
-  // opt: { tenTruong, namHoc, hocKy, apDungTu (yyyy-mm-dd), lop:[…], giaoVien:[{hoTen, cn}] }
+  // TỆP MẪU — 3 TRANG PCGD · TKB_LOP_SC · TKB_GV_SC (khuôn Smart Scheduler, MỘT PHÂN HIỆU)
+  // opt: { tenTruong, phanHieu, namHoc, hocKy, apDungTu (yyyy-mm-dd), lop:[…], giaoVien:[{hoTen, cn}] }
   // Trả về cấu trúc { ten, sheets } cho window.EXCEL_DEP.tao
   // ════════════════════════════════════════════════════════════
   function mauTep(opt) {
@@ -378,56 +476,45 @@
     function o(v, k, x) { var c = { v: v, k: k || 'oL' }; if (x) for (var t in x) c[t] = x[t]; return c; }
     function bo() { return { bo: true }; }
 
-    function dauTrang(soCot, buoiChu) {
-      var gopN = Math.max(0, soCot - 6);
-      var r1 = [o(tieuDe, 'hdb', { gopN: 4, gopD: 2 }), bo(), bo(), bo(), bo(),
-        o('THỜI KHOÁ BIỂU ', 'tt', { gopN: gopN })];
-      var r2 = [bo(), bo(), bo(), bo(), bo(), o(buoiChu || '', 'tt2', { gopN: gopN })];
-      var r3 = [bo(), bo(), bo(), bo(), bo(), o(ngay, 'tt3', { gopN: gopN })];
-      return [{ cao: 22, o: r1 }, { cao: 18, o: r2 }, { cao: 18, o: r3 }, { o: [] }];
-    }
-    function luoi(ten, buoiChu, cotTen) {
-      var soCot = 2 + cotTen.length;
-      var rows = dauTrang(soCot, buoiChu);
-      rows.push({ cao: 30, o: [o('THỨ', 'dau'), o('TIẾT', 'dau')].concat(cotTen.map(function (t) { return o(t, 'dauW'); })) });
-      for (var thu = 2; thu <= 6; thu++) {
-        for (var t = 1; t <= so; t++) {
-          var r = [t === 1 ? o(thu, 'thu', { so: true, gopD: so - 1 }) : bo(), o(t, 'tiet', { so: true })];
-          cotTen.forEach(function () { r.push(o('', 'nhapV')); });
-          rows.push({ cao: 18, o: r });
-        }
-      }
-      return { ten: ten, cols: [6, 6].concat(cotTen.map(function () { return 16; })), rows: rows,
-        in: { dongBang: 5, cotBang: 2, vuaNgang: true } };
-    }
-    function luoiSC(ten, cotTen) {
+    // Trang gộp sáng–chiều, đúng khuôn tệp mỗi phân hiệu thầy Chung gửi 14/9/2026:
+    // dòng 1 tiêu đề + "THỜI KHOÁ BIỂU", dòng 2 "Thực hiện từ ngày…", dòng 4 "THỨ | TIẾT | 1A (Cô X)",
+    // dòng 5 "Sáng | Chiều", rồi thứ 2 → 7 × 5 tiết. nhap = tô vàng ô cần điền.
+    function luoiSC(ten, cotTen, nhap) {
       var soCot = 2 + cotTen.length * 2;
-      var rows = dauTrang(soCot, '').slice(0, 3);
+      var gopN = Math.max(0, soCot - 6);
+      var rows = [
+        // Ô gộp NGANG tự nhảy cột (xuat-excel.js) — bo() chỉ đệm ô bị gộp DỌC từ dòng trên
+        { cao: 48, o: [o(tieuDe, 'hdb', { gopN: 4, gopD: 1 }), o('THỜI KHOÁ BIỂU ', 'tt', { gopN: gopN })] },
+        { cao: 18, o: [bo(), bo(), bo(), bo(), bo(), o(ngay, 'tt3', { gopN: gopN })] },
+        { o: [] }
+      ];
       var h1 = [o('THỨ', 'dau', { gopD: 1 }), o('TIẾT', 'dau', { gopD: 1 })];
       var h2 = [bo(), bo()];
       cotTen.forEach(function (t) {
-        h1.push(o(String(t).replace(/\n/, ' '), 'dauW', { gopN: 1 })); h1.push(bo());
-        h2.push(o('Sáng', 'dau2')); h2.push(o('Chiều', 'dau2'));
+        h1.push(o(t, 'dauW', { gopN: 1 }));
+        h2.push(o('Sáng', 'dau')); h2.push(o('Chiều', 'dau'));
       });
-      rows.push({ cao: 30, o: h1 }, { o: h2 });
-      for (var thu = 2; thu <= 6; thu++) {
+      rows.push({ cao: 30, o: h1 }, { cao: 18, o: h2 });
+      for (var thu = 2; thu <= 7; thu++) {
         for (var t = 1; t <= so; t++) {
           var r = [t === 1 ? o(thu, 'thu', { so: true, gopD: so - 1 }) : bo(), o(t, 'tiet', { so: true })];
-          cotTen.forEach(function () { r.push(o('', 'oL')); r.push(o('', 'oL')); });
+          cotTen.forEach(function () { r.push(o('', nhap ? 'nhapV' : 'oL')); r.push(o('', nhap ? 'nhapV' : 'oL')); });
           rows.push({ cao: 18, o: r });
         }
       }
-      return { ten: ten, cols: [6, 6].concat(cotTen.map(function () { return 14; })).concat(cotTen.map(function () { return 14; })),
-        rows: rows, in: { dongBang: 5, cotBang: 2, vuaNgang: true } };
+      var rongCot = cotTen.map(function () { return 15; });
+      var cols = [6, 6];
+      rongCot.forEach(function (w) { cols.push(w, w); });
+      return { ten: ten, cols: cols, rows: rows, in: { dongBang: 5, cotBang: 2, vuaNgang: true } };
     }
 
     var cnCua = {};
     gv.forEach(function (g) { if (g.cn) cnCua[g.cn] = g.nhan || ''; });
-    var cotLop = lop.map(function (l) { return l + '\n(' + (cnCua[l] || '') + ')'; });
+    var cotLop = lop.map(function (l) { return cnCua[l] ? l + ' (' + cnCua[l] + ')' : l; });
     var cotGV = gv.length ? gv.map(function (g) { return g.nhan || ''; }) : ['', '', '', '', ''];
 
     var pcRows = [
-      { cao: 22, o: [o(tieuDe, 'hdb', { gopN: 2, gopD: 1 }), bo(), bo(), o('BẢNG PHÂN CÔNG GIẢNG DẠY', 'tt', { gopN: 2 })] },
+      { cao: 22, o: [o(tieuDe, 'hdb', { gopN: 2, gopD: 1 }), o('BẢNG PHÂN CÔNG GIẢNG DẠY', 'tt')] },
       { cao: 18, o: [bo(), bo(), bo(), o('', 'tt2'), o(''), o(ngay, 'tt3')] },
       { o: [] },
       { cao: 24, o: [o('TT', 'dau'), o('Giáo viên', 'dau'), o('Kiêm nhiệm', 'dau'), o('CN', 'dau'),
@@ -440,22 +527,20 @@
     });
     var pc = { ten: 'PCGD', cols: [5, 26, 14, 7, 70, 8], rows: pcRows, in: { dongBang: 4, doc: false, vuaNgang: true } };
 
-    var cotPhong = ['', '', '', '', '', '', '', '', '', ''];
+    // Thầy Chung 14/9/2026: "file tải lên nên như thế này" — 3 trang PCGD · TKB_LOP_SC · TKB_GV_SC,
+    // mỗi phân hiệu một tệp. Trang giáo viên KHÔNG bắt buộc điền (máy chỉ dùng để đối chiếu).
+    var tenTep = 'MAU-TKB-' + (opt.phanHieu ? khongDau(opt.phanHieu).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' : '') +
+      (nam || 'nam-hoc') + '.xlsx';
     return {
-      ten: 'MAU-TKB-SmartScheduler-' + (nam || 'nam-hoc') + '.xlsx',
-      sheets: [
-        pc,
-        luoi('TKB_LOP_S', 'BUỔI SÁNG', cotLop), luoi('TKB_LOP_C', 'BUỔI CHIỀU', cotLop), luoiSC('TKB_LOP_SC', lop.map(function (l, i) { return cotLop[i]; })),
-        luoi('TKB_GV_S', 'BUỔI SÁNG', cotGV), luoi('TKB_GV_C', 'BUỔI CHIỀU', cotGV), luoiSC('TKB_GV_SC', cotGV),
-        luoi('TKB_PHONGHOC_S', 'BUỔI SÁNG', cotPhong), luoi('TKB_PHONGHOC_C', 'BUỔI CHIỀU', cotPhong), luoiSC('TKB_PHONGHOC_SC', cotPhong)
-      ]
+      ten: tenTep,
+      sheets: [pc, luoiSC('TKB_LOP_SC', cotLop, true), luoiSC('TKB_GV_SC', cotGV, false)]
     };
   }
 
   var API = {
     TEN_10_TRANG: TEN_10_TRANG,
     chuan: chuan, khongDau: khongDau,
-    docTieuDe: docTieuDe, docLuoi: docLuoi, docPCGD: docPCGD,
+    docTieuDe: docTieuDe, docLuoi: docLuoi, docLuoiSC: docLuoiSC, docPCGD: docPCGD,
     docTep: docTep, ghepTen: ghepTen, mauTep: mauTep
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;

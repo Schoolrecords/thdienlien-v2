@@ -301,7 +301,8 @@
       if (nut) nut.disabled = true;
       var ban = function (g) {
         return { ngay: D.ngay, buoi: g.tiet.buoi, tiet: g.tiet.tiet, lop: g.tiet.lop, mon: g.tiet.mon, co_so_ma: g.tiet.coSo || null,
-          phien_ban_id: D.pb && D.pb.id ? D.pb.id : null, gv_vang_id: v.id > 0 ? v.id : null,
+          // TKB ghép nhiều phân hiệu (sql/66) có id dạng chữ 'g…' — ghi id bản chứa lớp đó
+          phien_ban_id: (D.dl && D.dl.lopPB && D.dl.lopPB[g.tiet.lop]) || (D.pb && typeof D.pb.id === 'number' && D.pb.id) || null, gv_vang_id: v.id > 0 ? v.id : null,
           gv_vang_nhan: g.tiet.gvNhan, gv_vang_ten: v.ho_ten, gv_vang_email: v.email || null,
           gv_thay_nhan: g.gv ? g.gv.nhan : null, gv_thay_ten: g.gv ? g.gv.ten : null, gv_thay_email: g.gv ? (g.gv.email || null) : null,
           trang_thai: 'da_phan' };
