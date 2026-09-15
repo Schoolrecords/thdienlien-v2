@@ -1,8 +1,13 @@
 # ============================================================
 # Giữ cho cơ sở dữ liệu các trường khỏi NGỦ
 #
-# Supabase gói miễn phí cho dự án ngủ sau 7 ngày không có request. Robot này
-# chạy 3 ngày một lần, gửi tới mỗi trường một truy vấn nhẹ.
+# Supabase gói miễn phí cho dự án ngủ khi lâu không có hoạt động. Robot này
+# chạy MỖI NGÀY, gửi tới mỗi trường truy vấn nhẹ (PostgREST + Auth, thử lại 3 lần).
+# Có trường không gọi được thì mở/cập nhật MỘT issue trên kho mã; hết hỏng tự đóng.
+#
+# 🔴 15/9/2026: bản 3 ngày/lần để Nguyễn Kiệm ngủ dù ping 13/9 được HTTP 200,
+#    và báo "failure" 5 lượt (1/9 → 13/9: Hòa Hiếu 1, Thần Lĩnh 1 ngủ) mà không
+#    ai biết — xem đầu .github/scripts/giu-supabase-thuc.js.
 #
 # 🔑 GitHub TỰ TẮT lịch chạy nếu kho mã 60 ngày không có gì mới. Nghỉ hè không
 #    ai commit là đúng lúc cần robot nhất thì nó lại vừa bị tắt. Vì vậy mỗi
@@ -15,13 +20,16 @@ name: Giữ Supabase các trường khỏi ngủ
 
 on:
   schedule:
-    # 3 ngày một lần, 03:11 UTC = 10:11 giờ Việt Nam. Giờ lẻ cho khỏi rơi đúng
-    # lúc GitHub đông việc — cron của GitHub hay bị đẩy trễ vào phút tròn.
-    - cron: '11 3 */3 * *'
+    # Mỗi ngày hai lượt: 03:11 UTC = 10:11 và 13:41 UTC = 20:41 giờ Việt Nam.
+    # Giờ lẻ cho khỏi rơi đúng lúc GitHub đông việc; hai lượt để một lượt bị
+    # GitHub bỏ (chuyện có xảy ra khi máy chủ quá tải) vẫn còn lượt kia.
+    - cron: '11 3 * * *'
+    - cron: '41 13 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write        # để ghi tệp mốc mỗi tháng
+  issues: write          # để mở issue báo trường ngủ — chỗ thầy Chung nhìn thấy
 
 concurrency:
   group: giu-supabase
