@@ -7,14 +7,16 @@
 <link rel="icon" href="img/he-thong.svg">
 <meta name="theme-color" content="#062d72">
 <!-- ⚠️ TRANG CÔNG KHAI DÙNG CHUNG cho mọi trường — như index.html, KHÔNG được
-     nêu tên một trường cụ thể nào (kể cả trong ví dụ). Bản đầy đủ dạng Word để
+     nêu tên một trường cụ thể nào (kể cả trong ví dụ, kể cả trong ẢNH). Bản đầy đủ dạng Word để
      gửi Zalo nằm ở repo tài liệu: quan-tri/HUONG-DAN-SU-DUNG-CHO-TRUONG.doc —
      sửa nội dung thì sửa CẢ HAI cho khớp.
      Bố cục 24/8/2026 (lần hai, theo góp ý thầy Chung): MỘT CỘT căn giữa, mục
-     lục là HỘP đầu trang kiểu tài liệu Word + nút nổi ↑ quay về mục lục. Bản
-     hai-cột-mục-lục-dính bị chê ở cả hai cỡ màn: máy tính thì trục trang lệch,
-     điện thoại thì thành dải cuộn ngang — đúng lỗi đã có bài học bên app TKB
-     ("dải điều hướng có ai sắp xếp chạy ngang phía trên bao giờ đâu"). -->
+     lục là HỘP đầu trang kiểu tài liệu Word + nút nổi ↑ quay về mục lục.
+     15/9/2026 — VIẾT LẠI TOÀN BỘ + ẢNH MINH HOẠ (img/huong-dan/): thời khóa biểu và dạy thay đã
+     về trong app (bỏ đoạn "app Thời khóa biểu riêng"), thêm Nộp giáo án, Điều hành, Điện thoại.
+     Ảnh: "demo-*" chụp bản xem thử (Trường Tiểu học Minh Họa); ảnh màn Quản trị chụp từ một trường
+     thật nhưng họ tên, Gmail đã THAY bằng tên giả và cột nơi công tác đã làm mờ — chụp lại thì giữ
+     nguyên hai điều ấy. -->
 <style>
   * { box-sizing: border-box; margin: 0; }
   :root {
@@ -24,81 +26,74 @@
   }
   html { scroll-behavior: smooth; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-         background: var(--nen); color: var(--chu); line-height: 1.65;
-         font-size: 16px; }
+         background: var(--nen); color: var(--chu); line-height: 1.65; font-size: 16px; }
 
-  /* ── Đầu trang ── */
   .dau { background: linear-gradient(120deg, #041f52 0%, var(--navy) 55%, #0a3f9e 100%);
          color: #fff; padding: 28px 20px 24px; }
   .dau .khung { max-width: 1010px; margin: 0 auto; display: flex; align-items: center; gap: 18px; }
   .dau img { width: 56px; height: 56px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
   .dau h1 { font-size: 1.45rem; line-height: 1.25; letter-spacing: .01em; }
-  .dau small { opacity: .82; display: block; font-weight: normal; font-size: .97rem;
-               margin-top: 2px; }
+  .dau small { opacity: .82; display: block; font-weight: normal; font-size: .97rem; margin-top: 2px; }
 
-  /* ── Một cột căn giữa ── */
   main { max-width: 1010px; margin: 0 auto; padding: 24px 20px 50px; }
   .mo-dau { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
             padding: 16px 20px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
 
-  /* ── Hộp mục lục kiểu tài liệu — hai cột trên máy tính ── */
   .hop-ml { background: #fff; border: 1px solid var(--ke); border-radius: 12px;
-            padding: 16px 20px 12px; margin: 14px 0 6px;
-            box-shadow: 0 1px 3px rgba(16,35,70,.06); }
-  .hop-ml .ml-tieu { font-weight: 800; color: var(--navy); font-size: 1.02rem;
-                     margin-bottom: 8px; }
+            padding: 16px 20px 12px; margin: 14px 0 6px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+  .hop-ml .ml-tieu { font-weight: 800; color: var(--navy); font-size: 1.02rem; margin-bottom: 8px; }
   .hop-ml ol { list-style: none; padding: 0; margin: 0;
                display: grid; grid-template-columns: 1fr 1fr; gap: 2px 28px; }
   .hop-ml a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--chu);
               text-decoration: none; border-left: 3px solid var(--ke); line-height: 1.4; }
-  .hop-ml a:hover { background: var(--navy-nhat); border-left-color: var(--navy-2);
-                    color: var(--navy); }
+  .hop-ml a:hover { background: var(--navy-nhat); border-left-color: var(--navy-2); color: var(--navy); }
   .hop-ml b { color: var(--navy); margin-right: 4px; }
 
-  /* ── Tiêu đề mục đánh số ── */
   h2 { display: flex; align-items: center; gap: 12px; color: var(--navy);
        font-size: 1.22rem; margin: 40px 0 14px; scroll-margin-top: 16px; }
   h2 .so { flex: none; min-width: 34px; height: 34px; padding: 0 7px; border-radius: 9px;
            background: var(--navy); color: #fff; font-size: .92rem; display: flex;
-           align-items: center; justify-content: center;
-           box-shadow: 0 2px 5px rgba(6,45,114,.3); }
-  h3 { font-size: 1.02rem; margin: 16px 0 6px; color: var(--navy); }
+           align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(6,45,114,.3); }
+  h3 { font-size: 1.02rem; margin: 18px 0 6px; color: var(--navy); }
   p, li { margin-bottom: 7px; }
   ol, ul { padding-left: 24px; margin-bottom: 10px; }
   a { color: var(--navy-2); }
 
-  /* ── Bảng: bọc thẻ trắng bo góc, đầu bảng navy ── */
   .khung-cuon { overflow-x: auto; background: #fff; border: 1px solid var(--ke);
-                border-radius: 12px; margin: 10px 0 16px;
-                box-shadow: 0 1px 3px rgba(16,35,70,.06); }
+                border-radius: 12px; margin: 10px 0 16px; box-shadow: 0 1px 3px rgba(16,35,70,.06); }
   table { border-collapse: collapse; width: 100%; font-size: .95rem; }
-  th, td { padding: 10px 14px; text-align: left; vertical-align: top;
-           border-bottom: 1px solid var(--ke); }
+  th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--ke); }
   td + td, th + th { border-left: 1px solid var(--ke); }
   tr:last-child td { border-bottom: none; }
   th { background: var(--navy); color: #fff; font-weight: 700; letter-spacing: .01em; }
   table tr:nth-child(even) td { background: #f7f9fd; }
 
   .nut { display: inline-block; border: 1px solid #97a6c4; background: #f0f2f6;
-         padding: 0 7px; border-radius: 5px; white-space: nowrap; font-size: .9em;
-         box-shadow: 0 1px 0 #d8deea; }
+         padding: 0 7px; border-radius: 5px; white-space: nowrap; font-size: .9em; box-shadow: 0 1px 0 #d8deea; }
   .ma { font-family: Consolas, Menlo, monospace; font-size: .95em; background: #e9edf6;
         padding: 1px 6px; border-radius: 4px; }
 
-  /* ── Hộp ghi chú ── */
   .diemdung, .luuy, .the { border-radius: 12px; padding: 13px 16px; margin: 12px 0;
                            box-shadow: 0 1px 3px rgba(16,35,70,.05); }
-  .diemdung { border: 1px solid #bcd9c1; border-left: 5px solid var(--xanh);
-              background: var(--xanh-nen); }
-  .luuy { border: 1px solid #e2d3ae; border-left: 5px solid var(--vang);
-          background: var(--vang-nen); }
+  .diemdung { border: 1px solid #bcd9c1; border-left: 5px solid var(--xanh); background: var(--xanh-nen); }
+  .luuy { border: 1px solid #e2d3ae; border-left: 5px solid var(--vang); background: var(--vang-nen); }
   .the { background: #fff; border: 1px solid var(--ke); border-left: 5px solid var(--navy-2); }
+
+  /* ── Ảnh minh hoạ ── */
+  figure { margin: 14px 0 20px; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--ke); border-radius: 10px;
+               box-shadow: 0 4px 16px rgba(16,35,70,.10); background: #fff; }
+  figure.hep img { max-width: 540px; margin: 0 auto; }
+  figure.dt { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  figure.dt img { width: 230px; }
+  figcaption { font-size: .88rem; color: var(--chu-mo); text-align: center; margin-top: 7px; width: 100%; }
+  figcaption b { color: var(--navy); }
+  .luoi2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 
   .ve-cong { display: inline-block; margin-top: 18px; background: var(--navy); color: #fff;
              padding: 11px 22px; border-radius: 9px; text-decoration: none; }
   footer { text-align: center; color: var(--chu-mo); font-size: .88rem; padding: 0 16px 34px; }
 
-  /* ── Nút nổi quay về mục lục ── */
   #len-dau { position: fixed; right: 22px; bottom: 24px; width: 46px; height: 46px;
              border-radius: 50%; border: none; background: var(--navy); color: #fff;
              font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(6,45,114,.35);
@@ -111,14 +106,16 @@
     main { padding: 16px 14px 40px; }
     .dau { padding: 20px 16px 18px; }
     .dau h1 { font-size: 1.2rem; }
-    .hop-ml ol { grid-template-columns: 1fr; }
+    .hop-ml ol, .luoi2 { grid-template-columns: 1fr; }
     h2 { font-size: 1.12rem; margin-top: 30px; }
+    figure.dt img { width: 44%; }
     #len-dau { right: 14px; bottom: 16px; }
   }
   @media print {
     #len-dau, .ve-cong { display: none !important; }
     body { background: #fff; }
-    .khung-cuon, .diemdung, .luuy, .the, .mo-dau, .hop-ml { box-shadow: none; }
+    .khung-cuon, .diemdung, .luuy, .the, .mo-dau, .hop-ml, figure img { box-shadow: none; }
+    figure, tr { break-inside: avoid; }
   }
 </style>
 </head>
@@ -132,10 +129,12 @@
 <main>
 
 <div class="mo-dau">
-<p style="margin-bottom:0"><b>Tài liệu này dành cho:</b> Ban giám hiệu và thầy cô các trường
-tiểu học muốn xem hệ thống, dùng thử với chính tên trường mình và đăng ký sử dụng chính thức.
-Mỗi trường có một <b>mã trường 5 chữ số</b> do người phụ trách hệ thống cấp —
-gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường của mình.</p>
+<p><b>Tài liệu này dành cho:</b> Ban giám hiệu và thầy cô các trường tiểu học — từ lúc xem thử, đăng ký,
+đăng nhập, cho tới việc hằng ngày: đưa hồ sơ lên, nộp giáo án, điều hành, thời khóa biểu – dạy thay,
+quản trị tài khoản và sao lưu. Mỗi trường có một <b>mã trường 5 chữ số</b> và thường có một <b>địa chỉ riêng</b>
+dạng <span class="ma">tentruong.quantrisotruonghoc.com</span> do người phụ trách hệ thống cấp.</p>
+<p style="margin-bottom:0">📷 Ảnh minh hoạ: ảnh ghi <i>«Trường Tiểu học Minh Họa»</i> là bản xem thử với dữ liệu mẫu;
+ảnh màn Quản trị chụp từ trang thật nhưng <b>họ tên, Gmail đã được thay bằng tên giả</b>.</p>
 </div>
 
 <div class="hop-ml" id="muc-luc">
@@ -147,392 +146,409 @@ gõ đúng mã là màn hình hiện đúng tên trường, đúng xã/phường
     <li><a href="#dang-ky"><b>IV.</b> Đăng ký sử dụng chính thức</a></li>
     <li><a href="#dang-nhap-that"><b>V.</b> Đăng nhập dùng thật</a></li>
     <li><a href="#nap-du-lieu"><b>VI.</b> Nạp học sinh và đội ngũ</a></li>
-    <li><a href="#len-drive"><b>VII.</b> Đưa hồ sơ lên Google Drive</a></li>
-    <li><a href="#sao-luu"><b>VIII.</b> Sao lưu dữ liệu hằng tháng</a></li>
-    <li><a href="#quan-tri"><b>IX.</b> Quản trị hệ thống — tài khoản, phân quyền</a></li>
-    <li><a href="#hoi-dap"><b>X.</b> Câu hỏi thường gặp</a></li>
+    <li><a href="#len-drive"><b>VII.</b> Đưa hồ sơ minh chứng lên Google Drive</a></li>
+    <li><a href="#giao-an"><b>VIII.</b> Nộp giáo án vào thư mục cá nhân</a></li>
+    <li><a href="#dieu-hanh"><b>IX.</b> Điều hành hằng ngày</a></li>
+    <li><a href="#tkb"><b>X.</b> Thời khóa biểu và dạy thay</a></li>
+    <li><a href="#sao-luu"><b>XI.</b> Sao lưu dữ liệu hằng tháng</a></li>
+    <li><a href="#quan-tri"><b>XII.</b> Quản trị hệ thống — tài khoản, phân quyền</a></li>
+    <li><a href="#dien-thoai"><b>XIII.</b> Dùng trên điện thoại</a></li>
+    <li><a href="#hoi-dap"><b>XIV.</b> Câu hỏi thường gặp</a></li>
   </ol>
 </div>
 
+<!-- ═══ I ═══════════════════════════════════════════════════════════════ -->
 <h2 id="lam-duoc-gi"><span class="so">I</span>Hệ thống làm được gì</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:26%">Khối việc</th><th>Nội dung</th></tr>
-<tr><td><b>Điều hành nhà trường</b></td><td>Bàn làm việc mỗi sáng của Ban giám hiệu: bảng
-tổng quan hôm nay (CBGV có mặt, học sinh, an toàn từng điểm trường), điểm danh &amp; chấm công,
-báo việc, <b>đề xuất – duyệt</b> (nghỉ phép, công tác, mua sắm… duyệt ngay trên điện thoại),
-giao việc, <b>lịch công tác tuần</b> kèm phân công trực từng điểm trường, thông báo có
-xác nhận đã đọc.</td></tr>
-<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng điện tử của toàn trường: hồ sơ chia theo
-bộ phận và hộp hồ sơ, mỗi đầu hồ sơ gắn một thư mục Google Drive chứa file minh chứng.
-Danh mục dựng sẵn theo Điều lệ trường tiểu học mới (2026) — nhà trường <b>tự thêm, sửa,
-xoá</b> được cho khớp thực tế trường mình; xuất <b>phiếu giao việc</b> từng hộp ra Word.</td></tr>
-<tr><td><b>Trường chuẩn Quốc gia</b></td><td>Tự đánh giá 4 tiêu chuẩn, 15 tiêu chí, 2 mức độ
-theo Thông tư 57; hội đồng tự đánh giá phân công đến từng người; theo dõi <b>điều kiện tại
-từng điểm trường</b> (trường sáp nhập nhiều địa điểm); tự tổng hợp Biểu 1, Biểu 2 và xuất
-báo cáo kèm phụ biểu ra Word đúng thể thức Nghị định 30/2020/NĐ-CP.</td></tr>
-<tr><td><b>Đảm bảo chất lượng</b></td><td>Chu trình PDCA; chỉ tiêu chất lượng theo Thông tư
-27/2020 (có nút chép chỉ tiêu năm trước); tổ Đảm bảo chất lượng và các phụ lục minh chứng;
-màn Cơ sở vật chất theo dõi phòng học, thiết bị <b>theo từng điểm trường</b>.</td></tr>
+<tr><td><b>Điều hành nhà trường</b></td><td>Bàn làm việc mỗi ngày của Ban giám hiệu: tổng quan hôm nay (CBGV có mặt, học sinh,
+an toàn từng điểm trường), báo việc, điểm danh &amp; chấm công, <b>đề xuất – duyệt</b> (nghỉ phép, công tác, mua sắm… duyệt
+ngay trên điện thoại), giao việc, <b>lịch công tác tuần</b> kèm phân công trực, thông báo có xác nhận đã nhận.</td></tr>
+<tr><td><b>Thời khóa biểu &amp; dạy thay</b></td><td>Nạp tệp <b>Smart Scheduler</b> kết xuất; mọi người xem thời khóa biểu của mình, từng lớp,
+từng giáo viên, từng phân hiệu, thống kê tiết dạy; <b>bố trí dạy thay</b> theo sổ vắng với gợi ý người rảnh tiết, gửi tin Zalo, in.</td></tr>
+<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng điện tử: bộ phận → hộp hồ sơ → đầu hồ sơ, mỗi đầu hồ sơ gắn một thư mục Google Drive;
+trạng thái <b>đếm theo tệp thật</b> trên Drive; danh mục dựng sẵn theo Điều lệ trường tiểu học 2026, nhà trường tự thêm, sửa, xoá;
+xuất <b>phiếu giao việc</b> từng hộp ra Word.</td></tr>
+<tr><td><b>Hồ sơ CBGV – NV</b></td><td>Danh bạ đội ngũ theo chức vụ và nơi công tác; mỗi người một <b>thư mục cá nhân</b> trên Drive để
+nộp giáo án, hồ sơ cá nhân.</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>Tự đánh giá 4 tiêu chuẩn, 15 tiêu chí, 2 mức theo Thông tư 57/2026; hội đồng tự đánh giá; điều kiện
+từng điểm trường; Biểu 1, Biểu 2, báo cáo tự đánh giá ra Word đúng Nghị định 30/2020.</td></tr>
+<tr><td><b>Đảm bảo chất lượng</b></td><td>Chuẩn đầu ra &amp; cam kết (chỉ tiêu theo Thông tư 27/2020), đối sánh chất lượng, điều kiện bảo đảm,
+tổ Đảm bảo chất lượng và hồ sơ.</td></tr>
 </table></div>
-<p>Ngoài ra có <b>Quản lý học sinh</b> theo năm học và từng điểm trường (kèm quy trình
-<b>lên lớp</b> chuyển cả trường sang năm học mới), <b>Hồ sơ CBGV–NV</b>, <b>Tổ chức đảng</b>.
-Mỗi trường một cơ sở dữ liệu <b>riêng biệt</b> — trường này không nhìn thấy dữ liệu của trường
-khác. Đăng nhập bằng Gmail sẵn có, việc xác thực do Google thực hiện, dữ liệu cá nhân được
-bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025. Hệ thống hỗ trợ đầy đủ <b>trường nhiều
-điểm trường sau sáp nhập</b>.</p>
+<p>Ngoài ra có <b>Quản lý học sinh</b> theo năm học và từng điểm trường (kèm quy trình <b>lên lớp</b>), <b>Tổ chức đảng</b>,
+<b>trường nhiều điểm trường sau sáp nhập</b>. Mỗi trường một cơ sở dữ liệu <b>riêng biệt</b>; đăng nhập bằng Gmail sẵn có, việc xác thực
+do Google thực hiện; dữ liệu cá nhân được bảo vệ theo Luật Bảo vệ dữ liệu cá nhân năm 2025.</p>
 
-<div class="the">
-<p style="margin-bottom:4px">🗓️ <b>Kèm miễn phí: App Thời khóa biểu.</b> Trường đăng ký
-sử dụng Quản trị số được dùng <b>miễn phí</b> app Thời khóa biểu đi liền hệ thống:</p>
-<ul style="margin-bottom:0">
-<li><b>Xếp thời khóa biểu tự động</b> bằng thuật toán tối ưu — khai phân công là máy tự xếp,
-hết cảnh xếp tay cả tuần đầu năm;</li>
-<li>Xếp riêng cho <b>từng phân hiệu, điểm trường</b> của trường sau sáp nhập;</li>
-<li><b>Phân công dạy thay thông minh</b>: danh sách thầy cô vắng khai bên Quản trị số được
-<b>chuyển sang tự động</b> — kể cả khi phải đăng nhập Google giữa chừng cũng không mất —
-app dựa vào thời khóa biểu tự đề xuất phương án dạy thay để Hiệu trưởng duyệt, không phải
-khai lại, không phải dò tay từng tiết;</li>
-<li>Mở từ ô <span class="nut">🗓️ Thời khóa biểu</span> ngay trên <b>trang chủ</b> (và trong
-màn Điều hành khi bố trí dạy thay).</li>
-</ul>
-</div>
-
+<!-- ═══ II ══════════════════════════════════════════════════════════════ -->
 <h2 id="vao-lan-dau"><span class="so">II</span>Vào hệ thống lần đầu bằng mã trường</h2>
+<div class="luoi2">
+<div>
 <ol>
 <li>Mở trình duyệt (máy tính hoặc điện thoại), vào <span class="ma">quantrisotruonghoc.com</span>.</li>
-<li>Ở ô <b>Mã trường</b>, gõ mã <b>5 chữ số</b> của trường mình — mã do người phụ trách
-hệ thống cấp khi nhà trường liên hệ hoặc đăng ký (xem phần IV).</li>
+<li>Ở ô <b>Mã trường</b>, gõ mã <b>5 chữ số</b> của trường mình.</li>
 <li>Bấm <span class="nut">Vào hệ thống</span>.</li>
 </ol>
-<div class="diemdung">✅ <b>Điểm kiểm tra:</b> trang hiện <b>đúng tên trường của thầy cô</b>
-kèm băng vàng <i>«👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu»</i>. Số liệu lúc này là
-<b>dữ liệu mẫu để tham quan</b>, chưa phải dữ liệu của trường.</div>
+<div class="diemdung">✅ <b>Điểm kiểm tra:</b> trang hiện <b>đúng tên trường</b> kèm băng vàng
+<i>«👁 Đang chạy CHẾ ĐỘ XEM THỬ với dữ liệu mẫu»</i> — số liệu lúc này là dữ liệu mẫu để tham quan.</div>
+</div>
+<figure><img src="img/huong-dan/cong-nhap-ma.jpg" alt="Cổng nhập mã trường">
+<figcaption><b>Hình 1.</b> Cổng vào: gõ mã trường, hoặc xem thử, hoặc đăng ký.</figcaption></figure>
+</div>
 <div class="khung-cuon"><table>
 <tr><th style="width:45%">Nếu màn hình báo</th><th>Nghĩa là gì — làm gì</th></tr>
 <tr><td><i>«Mã trường không đúng hoặc chưa được cấp quyền sử dụng…»</i></td>
-<td>Mã gõ chưa đúng — soát lại từng chữ số rồi gõ lại, hoặc liên hệ người phụ trách.</td></tr>
+<td>Mã gõ chưa đúng — soát lại từng chữ số, hoặc liên hệ người phụ trách.</td></tr>
 <tr><td><i>«Không kết nối được để kiểm tra mã trường…»</i></td>
 <td>Lỗi đường mạng, <b>không phải mã sai</b>. Kiểm tra mạng rồi bấm lại.</td></tr>
 </table></div>
 <div class="luuy"><b>Ba điều tiện nên biết:</b>
 <ul style="margin-bottom:0">
-<li><b>Lần sau khỏi gõ lại:</b> máy đã vào một lần thì màn nhập mã có nút
-<span class="nut">↪ Vào lại [tên trường]</span>.</li>
-<li><b>Muốn đổi sang trường khác:</b> bấm <span class="nut">↩ Về cổng đăng nhập</span>
-trên băng vàng.</li>
+<li><b>Lần sau khỏi gõ lại:</b> màn nhập mã có nút <span class="nut">↪ Vào lại [tên trường]</span>; trường đã dùng thật thì vào thẳng
+<b>địa chỉ riêng</b> của trường.</li>
+<li><b>Muốn đổi sang trường khác:</b> bấm <span class="nut">↩ Về cổng đăng nhập</span> trên băng vàng.</li>
 <li><b>Trường sáp nhập:</b> gõ mã của trường cũ vẫn về đúng trường mới sau sáp nhập.</li>
 </ul></div>
-<p>Chưa muốn gõ mã? Bấm <span class="nut">👁 Xem thử hệ thống</span> — hệ thống chạy với
-«Trường Tiểu học Minh Họa», một trường không có thật dựng riêng cho việc tham quan.</p>
 
+<!-- ═══ III ═════════════════════════════════════════════════════════════ -->
 <h2 id="tham-quan"><span class="so">III</span>Tham quan bản xem thử — đi từng màn</h2>
+<p>Bấm <span class="nut">👁 Xem thử hệ thống</span> ở cổng vào: hệ thống chạy với «Trường Tiểu học Minh Họa», một trường không có thật.</p>
+<figure><img src="img/huong-dan/demo-trang-chu.jpg" alt="Trang chủ bản xem thử">
+<figcaption><b>Hình 2.</b> Trang chủ: thanh chức năng, số liệu nhanh, khối «hôm nay» và ô Thời khóa biểu.</figcaption></figure>
 <div class="khung-cuon"><table>
 <tr><th style="width:26%">Màn</th><th>Xem gì ở đó</th></tr>
-<tr><td><b>Trang chủ</b></td><td>Khối lịch hôm nay + dãy số liệu nhanh (CBGV có mặt, học sinh,
-điểm trường an toàn) và ô <span class="nut">🗓️ Thời khóa biểu</span> mở sang app Thời khóa
-biểu; bảng tổng quan hồ sơ: tổng số đầu hồ sơ, tỉ lệ đã có minh chứng, tiến độ từng bộ phận.</td></tr>
-<tr><td><b>Điều hành</b></td><td>Tổng quan hôm nay, điểm danh &amp; chấm công, báo việc,
-đề xuất – duyệt, giao việc, <b>lịch công tác tuần</b> (kèm phân công trực và bố trí
-<b>dạy thay</b> khi có người vắng — danh sách vắng chuyển sẵn sang app Thời khóa biểu),
-thông báo.</td></tr>
-<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng: bộ phận → hộp hồ sơ → đầu hồ sơ, mỗi đầu
-có nút mở thẳng thư mục Drive; ô tìm kiếm theo tên/mã; màn <b>📋 Danh mục hồ sơ</b> cho
-trường tự thêm/sửa/xoá; xuất <b>phiếu giao việc</b> từng hộp ra Word đúng thể thức, in ký
-được ngay.</td></tr>
-<tr><td><b>Quản lý học sinh</b></td><td>Danh sách lớp theo năm học và từng điểm trường; tổng
-hợp sĩ số, nữ, dân tộc, khuyết tật…</td></tr>
-<tr><td><b>Trường chuẩn Quốc gia</b></td><td>15 thẻ tiêu chí — mức đạt, hiện trạng từng nội hàm,
-minh chứng gắn thẳng từ kho hồ sơ (<b>không phải kê hai lần</b>); hội đồng tự đánh giá;
-điều kiện tại từng điểm trường; xuất Biểu 1, Biểu 2 và báo cáo tự đánh giá ra Word.</td></tr>
-<tr><td><b>Đảm bảo chất lượng</b></td><td>Chuẩn đầu ra &amp; Cam kết (chỉ tiêu từng khối, có nút
-«Lấy lại chỉ tiêu năm trước»), Kế hoạch cải tiến PDCA, tổ Đảm bảo chất lượng, các phụ lục
-minh chứng, Cơ sở vật chất theo điểm trường.</td></tr>
+<tr><td><b>Trang chủ</b></td><td>Lịch hôm nay, CBGV có mặt, học sinh, điểm trường an toàn, ô <span class="nut">🗓️ Xem TKB</span>, việc cần xử lý gấp;
+các ô mở nhanh từng chức năng.</td></tr>
+<tr><td><b>Điều hành</b></td><td>Tổng quan, báo việc, điểm danh – chấm công, đề xuất – duyệt, giao việc, lịch tuần, thời khóa biểu, thông báo (mục IX, X).</td></tr>
+<tr><td><b>Quản trị Hồ sơ</b></td><td>Kho minh chứng theo bộ phận, ô tìm kiếm, nút 📁 mở thư mục Drive, ô <b>Hồ sơ CBGV – NV</b> (mục VII, VIII).</td></tr>
+<tr><td><b>Quản lý học sinh</b></td><td>Danh sách lớp theo năm học và từng điểm trường; sĩ số, nữ, dân tộc, khuyết tật.</td></tr>
+<tr><td><b>Trường chuẩn Quốc gia</b></td><td>15 thẻ tiêu chí, minh chứng gắn thẳng từ kho hồ sơ; hội đồng; xuất Biểu 1, Biểu 2, báo cáo ra Word.</td></tr>
+<tr><td><b>Đảm bảo chất lượng</b></td><td>Chuẩn đầu ra &amp; cam kết, đối sánh chất lượng, điều kiện bảo đảm, tổ ĐBCL &amp; hồ sơ.</td></tr>
 </table></div>
+<div class="luoi2">
+<figure><img src="img/huong-dan/demo-chuanqg.jpg" alt="Trường chuẩn Quốc gia"><figcaption><b>Hình 3.</b> Trường chuẩn Quốc gia.</figcaption></figure>
+<figure><img src="img/huong-dan/demo-dbcl.jpg" alt="Đảm bảo chất lượng"><figcaption><b>Hình 4.</b> Đảm bảo chất lượng.</figcaption></figure>
+</div>
 
+<!-- ═══ IV ══════════════════════════════════════════════════════════════ -->
 <h2 id="dang-ky"><span class="so">IV</span>Đăng ký sử dụng chính thức</h2>
 <ol>
 <li>Về màn nhập mã, bấm <span class="nut">✍ Đăng ký sử dụng</span>.</li>
-<li>Điền biểu 9 ô (ô đánh dấu * là bắt buộc). Quan trọng nhất là ô <b>Địa chỉ Gmail của
-người quản trị</b> — Gmail này sẽ là tài khoản quản trị hệ thống của trường.</li>
-<li>Bấm <span class="nut">📨 Gửi đăng ký</span>. Máy báo <i>«✅ Đã gửi đăng ký»</i> là người
-phụ trách đã nhận được và sẽ liên hệ lại.</li>
+<li>Điền biểu 9 ô (ô đánh dấu * là bắt buộc). Quan trọng nhất là ô <b>Địa chỉ Gmail của người quản trị</b>.</li>
+<li>Bấm <span class="nut">📨 Gửi đăng ký</span>. Máy báo <i>«✅ Đã gửi đăng ký»</i> là người phụ trách đã nhận được.</li>
 </ol>
-<div class="diemdung">✅ Khi bấm Gửi, nội dung cũng được <b>tự chép vào bộ nhớ tạm</b> —
-dán (Ctrl+V) vào Zalo gửi thêm một lần cho chắc. Mạng trục trặc thì màn hình tự mở khung
-nội dung để chép tay, không phải điền lại.</div>
-<p><b>Sau khi đăng ký:</b> bên hệ thống dựng cơ sở dữ liệu riêng cho trường (khoảng một
-buổi); nhà trường điền <b>biểu mẫu cung cấp dữ liệu</b> —
-<a href="bieu-mau/thu-thap-du-lieu-truong.xlsx"><b>📥 tải tại đây (Excel)</b></a> — gồm
-thông tin trường, điểm trường và lớp, email đăng nhập từng thầy cô, phân công phụ trách
-hộp hồ sơ, số liệu 3 năm; kèm hai tệp xuất từ CSDL ngành (hướng dẫn ngay trong biểu).
-Chi phí vận hành <b>0 đồng</b>; nhà trường <b>không phải đưa mật khẩu Gmail</b> của bất kỳ ai.</p>
+<div class="diemdung">✅ Khi bấm Gửi, nội dung cũng được <b>tự chép vào bộ nhớ tạm</b> — dán (Ctrl+V) vào Zalo gửi thêm một lần cho chắc.</div>
+<p><b>Sau khi đăng ký:</b> bên hệ thống dựng cơ sở dữ liệu riêng, tên miền riêng và cây thư mục hồ sơ trên Drive của trường;
+nhà trường điền <b>biểu mẫu cung cấp dữ liệu</b> — <a href="bieu-mau/thu-thap-du-lieu-truong.xlsx"><b>📥 tải tại đây (Excel)</b></a> —
+gồm thông tin trường, điểm trường và lớp, <b>Gmail đăng nhập</b> từng thầy cô, phân công phụ trách hộp hồ sơ, số liệu 3 năm; kèm quyết định
+thành lập / sáp nhập và hai tệp xuất từ CSDL ngành. Chi phí vận hành <b>0 đồng</b>; nhà trường <b>không phải đưa mật khẩu Gmail</b> của ai.</p>
 
+<!-- ═══ V ═══════════════════════════════════════════════════════════════ -->
 <h2 id="dang-nhap-that"><span class="so">V</span>Khi trường đã được cấp quyền — đăng nhập dùng thật</h2>
 <ol>
-<li>Vào trang của trường (gõ mã, hoặc bấm nút <span class="nut">↪ Vào lại [tên trường]</span>).</li>
-<li>Bấm <span class="nut">Đăng nhập bằng Google</span>, chọn đúng Gmail đã đăng ký với nhà trường.</li>
+<li>Vào địa chỉ riêng của trường (hoặc gõ mã trường).</li>
+<li>Bấm <span class="nut">Đăng nhập bằng Google</span>, chọn <b>đúng Gmail đã khai với nhà trường</b>.</li>
 </ol>
 <div class="khung-cuon"><table>
 <tr><th style="width:45%">Màn hình hiện</th><th>Nghĩa là gì</th></tr>
-<tr><td>Vào thẳng trang chủ, băng vàng biến mất</td><td>Đăng nhập thành công, số liệu là của trường.</td></tr>
-<tr><td><i>«🕐 Tài khoản đang chờ duyệt»</i></td><td>Gmail chưa có trong danh sách của trường —
-báo người quản trị của trường thêm vào.</td></tr>
-<tr><td><i>«Chưa mở đăng nhập — Trường đang trong quá trình cài đặt»</i></td>
-<td>Cơ sở dữ liệu của trường đang được dựng — chờ người phụ trách báo xong.</td></tr>
+<tr><td>Vào thẳng trang chủ, góc phải có ảnh đại diện, băng vàng biến mất</td><td>Đăng nhập thành công, số liệu là của trường.</td></tr>
+<tr><td><i>«🕐 Tài khoản đang chờ duyệt»</i></td><td>Gmail vừa dùng không có trong danh sách của trường — đăng nhập lại bằng đúng Gmail,
+hoặc báo quản trị của trường thêm / sửa địa chỉ.</td></tr>
+<tr><td><i>«Chưa mở đăng nhập — Trường đang trong quá trình cài đặt»</i></td><td>Cơ sở dữ liệu của trường đang được dựng — chờ người phụ trách báo xong.</td></tr>
 </table></div>
+<p>Bấm <b>ảnh đại diện góc phải</b> để xem mình đang dùng Gmail nào, vai trò gì; mở <b>⚙️ Quản trị hệ thống</b> (Ban giám hiệu),
+<b>📖 Hướng dẫn sử dụng</b>, <b>↩ Đăng xuất</b> (nhớ đăng xuất trên máy dùng chung).</p>
 <h3>Việc đầu tiên của người quản trị</h3>
+<div class="luoi2">
 <ol>
-<li>Mở <b>Quản trị → 🚀 Cài đặt</b>: bảng này liệt kê từng bước còn thiếu của trường mình —
-làm theo đúng thứ tự trong đó là xong phần dựng nền.</li>
-<li>Vào <b>⚙️ Thông tin trường</b> khai tên hiệu trưởng, quy mô, khẩu hiệu.</li>
-<li>Soát <b>✉️ Danh sách mời</b> — ai có tên (đúng Gmail) mới đăng nhập được. Có thể
-<b>dán cả bảng từ Excel</b> (Email · Họ tên · Chức vụ · Tổ · Vai trò · Link): người mới được
-thêm, người đã có <b>chỉ cập nhật những ô có chữ</b>, ô trống giữ nguyên — không sợ dán đè
-mất thông tin cũ.</li>
-<li>Vào <b>🔗 Link hồ sơ CBGV</b> dán hàng loạt đường dẫn thư mục Drive hồ sơ cá nhân
-của từng thầy cô — máy tự nhận ra ai là ai theo email hoặc họ tên.</li>
-<li>Mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp trường mình rồi mới phân công các bộ phận
-nhập minh chứng.</li>
+<li>Mở <b>Quản trị → 🚀 Cài đặt</b>: bảng liệt kê từng bước còn thiếu — bấm từng dòng để tới nơi khai.</li>
+<li><b>⚙️ Thông tin trường</b>: tên hiệu trưởng, điện thoại, email, khẩu hiệu, quy mô (in lên văn bản xuất Word).</li>
+<li><b>🏫 Cơ sở &amp; Sáp nhập</b>: điểm trường, <b>người phụ trách</b> từng điểm, quyết định sáp nhập (nếu có).</li>
+<li>Soát <b>✉️ Danh sách mời</b> — ai có tên (đúng Gmail) mới vào thẳng được.</li>
+<li>Mở <b>📋 Danh mục hồ sơ</b> chỉnh cho khớp trường mình rồi phân công các bộ phận đưa minh chứng.</li>
 </ol>
+<figure><img src="img/huong-dan/qt-cai-dat.jpg" alt="Thẻ Cài đặt">
+<figcaption><b>Hình 5.</b> 🚀 Cài đặt — trường đã xong bước nào, còn thiếu bước nào.</figcaption></figure>
+</div>
 
+<!-- ═══ VI ══════════════════════════════════════════════════════════════ -->
 <h2 id="nap-du-lieu"><span class="so">VI</span>Nạp danh sách học sinh và đội ngũ vào hệ thống</h2>
-<p>Nhà trường <b>tự nạp</b>, không phải gửi dữ liệu đi đâu cả. Vào <b>Quản trị →
-<span class="nut">📥 Nạp dữ liệu</span></b>.</p>
+<p>Nhà trường <b>tự nạp</b>, không phải gửi dữ liệu đi đâu cả. Vào <b>Quản trị → <span class="nut">📥 Nạp dữ liệu</span></b>.</p>
+<figure><img src="img/huong-dan/qt-nap-du-lieu.jpg" alt="Nạp dữ liệu">
+<figcaption><b>Hình 6.</b> 📥 Nạp dữ liệu: ① loại dữ liệu → ② năm học → ③ chọn tệp (hoặc tải mẫu để điền).</figcaption></figure>
 <ol>
-<li><b>Chuẩn bị tệp.</b> Vào <b>truong.csdl.moet.gov.vn</b> → Học sinh → <b>Xuất Excel</b>
-(tệp mẫu <i>C1-HocSinh</i>). Giữ nguyên hàng tiêu đề, đừng xoá hay đổi tên cột.
-Chưa có tệp của CSDL ngành? Bấm <span class="nut">⬇️ Tải mẫu Excel để điền</span> ngay dưới nút
-chọn tệp — máy đưa ra tệp mẫu đúng loại đang chọn, điền vào các ô <b>nền vàng</b> rồi chọn lại
-chính tệp đó (xem bảng ba loại tệp mẫu ở cuối mục).</li>
-<li><b>Chọn năm học.</b> Ô chọn có ba năm: năm trước, năm nay, năm sau. Tệp tải từ CSDL ngành
-thường là dữ liệu <b>năm vừa xong</b> — chọn đúng năm của tệp.</li>
+<li><b>Chuẩn bị tệp.</b> Vào <b>truong.csdl.moet.gov.vn</b> → Học sinh → <b>Xuất Excel</b> (tệp mẫu <i>C1-HocSinh</i>). Giữ nguyên hàng tiêu đề.
+Chưa có tệp của CSDL ngành? Bấm <span class="nut">⬇️ Tải mẫu Excel để điền</span>, điền các ô <b>nền vàng</b> rồi chọn lại chính tệp đó.</li>
+<li><b>Chọn năm học</b> đúng năm của tệp (tệp CSDL ngành thường là dữ liệu <b>năm vừa xong</b>).</li>
 <li><b>Chọn tệp</b> rồi chờ vài giây.</li>
-<li><b>Đọc bảng xem trước.</b> Máy báo rõ: bao nhiêu em thêm mới, bao nhiêu em cập nhật, em nào
-đổi lớp, lớp nào sẽ được tạo, dòng nào trong tệp bị thiếu dữ liệu (kèm số hàng Excel).
-<b>Chưa có gì được ghi ở bước này.</b></li>
+<li><b>Đọc bảng xem trước</b>: thêm mới, cập nhật, đổi lớp, lớp sẽ tạo, dòng thiếu dữ liệu (kèm số hàng Excel). <b>Chưa có gì được ghi.</b></li>
 <li>Thấy đúng thì bấm <span class="nut">📥 Ghi … em vào hệ thống</span>.</li>
 </ol>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Điều cần biết</th><th>Vì sao</th></tr>
 <tr><td>Hệ thống <b>không lấy</b> số điện thoại, họ tên cha mẹ, địa chỉ, nơi sinh</td>
-<td>Dù tệp của Bộ có sẵn. Chỉ lấy phần cần cho sổ sách: mã, họ tên, ngày sinh, giới tính,
-dân tộc, lớp, trạng thái — thu thập ít nhất có thể theo Luật Bảo vệ dữ liệu cá nhân năm 2025.</td></tr>
-<tr><td>Hệ thống <b>không xoá</b> học sinh nào</td>
-<td>Em nào có trong hệ thống mà không có trong tệp thì máy chỉ báo số lượng để nhà trường kiểm
-lại, không tự dọn.</td></tr>
-<tr><td>Nạp lại nhiều lần <b>an toàn</b></td>
-<td>Ghi đè theo mã học sinh, không sinh bản trùng. Tệp sai thì sửa trong Excel rồi nạp lại.</td></tr>
-<tr><td>Ô <b>số định danh cá nhân</b> mặc định để trống</td>
-<td>Chỉ tích khi nhà trường thật sự cần (làm học bạ số). Nạp rồi thì chỉ quản trị đọc được.</td></tr>
-<tr><td>Lớp mới tạo <b>chưa gắn điểm trường</b></td>
-<td>Nạp xong vào <b>Quản trị → 🏫 Cơ sở &amp; Sáp nhập</b> gán lớp nào thuộc điểm trường nào —
-trường có phân hiệu thì bước này bắt buộc, không thì mọi báo cáo dồn về một chỗ.</td></tr>
+<td>Chỉ lấy phần cần cho sổ sách — thu thập ít nhất có thể theo Luật Bảo vệ dữ liệu cá nhân năm 2025.</td></tr>
+<tr><td>Hệ thống <b>không xoá</b> học sinh nào</td><td>Em có trong hệ thống mà không có trong tệp thì máy chỉ báo số lượng để kiểm lại.</td></tr>
+<tr><td>Nạp lại nhiều lần <b>an toàn</b></td><td>Ghi đè theo mã học sinh, không sinh bản trùng.</td></tr>
+<tr><td>Ô <b>số định danh cá nhân</b> mặc định để trống</td><td>Chỉ tích khi thật sự cần. Nạp rồi thì chỉ quản trị đọc được.</td></tr>
+<tr><td>Lớp mới tạo <b>chưa gắn điểm trường</b></td><td>Nạp xong vào <b>🏫 Cơ sở &amp; Sáp nhập</b> phân lớp về điểm trường — trường có phân hiệu thì bắt buộc.</td></tr>
 </table></div>
-<div class="diemdung">✅ Nạp xong mở <b>Quản lý học sinh</b>, chọn đúng năm học vừa nạp:
-thấy đủ khối, đủ lớp, đúng sĩ số là được.</div>
-<p><b>Đội ngũ CBGV</b> nạp cùng chỗ, chọn loại dữ liệu <i>Đội ngũ CBGV</i>. Tệp có thể là
-<i>CSDL_GiaoVien</i> xuất từ CSDL ngành, hoặc <b>tệp mẫu CBGV</b> tải từ nút Tải mẫu (thêm được
-ba cột <b>Tổ chuyên môn · Vai trò trên hệ thống · Cơ sở công tác</b>, vai trò và cơ sở chọn trong
-ô xổ xuống). Máy đọc họ tên, email, chức vụ, tổ, vai trò, cơ sở để dựng
-<b>danh sách được phép đăng nhập</b>.
-⚠️ Email trong CSDL ngành hay là email công vụ hoặc khai nhầm sang người khác — máy sẽ
-chỉ ra từng dòng đáng ngờ, nhà trường soát rồi sửa lại cho đúng <b>Gmail thầy cô dùng thật</b>,
-vì đăng nhập hệ thống là đăng nhập bằng Google. Nạp lại <b>không hạ quyền</b> ai đã có trong
-danh sách và ô trống trong tệp không xoá thông tin đang có; ai được ghi <i>Quản trị hệ thống</i>
-ở cột Vai trò thì màn xem trước báo đỏ đích danh trước khi ghi.</p>
 <div class="khung-cuon"><table>
-<tr><th style="width:26%">Loại dữ liệu</th><th style="width:37%">Tệp mẫu tải từ nút Tải mẫu</th><th>Dùng khi</th></tr>
-<tr><td><b>Học sinh</b></td><td><i>MAU-NHAP-HOC-SINH-…xlsx</i> — Mã lớp · Mã học sinh · Họ tên ·
-Ngày sinh · Giới tính · Dân tộc · Khuyết tật · Trạng thái · Số định danh</td>
-<td>Trường muốn tự lập danh sách hoặc nạp bổ sung vài lớp. Cần <b>mã học sinh</b> của CSDL ngành —
-có tệp <i>C1-HocSinh</i> thì nạp thẳng tệp đó, nhanh hơn.</td></tr>
-<tr><td><b>Tuyển sinh lớp 1</b></td><td><i>MAU-CHIA-LOP-TUYEN-SINH-…xlsx</i> — mỗi lớp một khối
-«LỚP 1A», cột Họ và tên · Ngày sinh · Nữ · Dân tộc · Số CCCD · K.tật</td>
-<td>Đã chia lớp nhưng Bộ <b>chưa cấp mã</b>. Máy nạp với <b>mã tạm</b>; khi có tệp của Bộ, nạp lại
-loại Học sinh là máy đối chiếu theo số căn cước và đổi sang mã chính thức, không tạo bản ghi thứ hai.</td></tr>
-<tr><td><b>Đội ngũ CBGV</b></td><td><i>MAU-NHAP-CBGV-…xlsx</i> — Họ và tên · Email Google ·
-Chức vụ · Tổ chuyên môn · Vai trò · Cơ sở công tác</td>
-<td>Mở tài khoản cho cả trường một lần; hoặc bổ sung người mới. Mỗi tệp mẫu đều có trang
-<b>Hướng dẫn</b> ở đầu và dòng <i>Ví dụ</i> (máy tự bỏ qua).</td></tr>
+<tr><th style="width:24%">Loại dữ liệu</th><th style="width:38%">Tệp mẫu (nút Tải mẫu)</th><th>Dùng khi</th></tr>
+<tr><td><b>Học sinh</b></td><td><i>MAU-NHAP-HOC-SINH-…xlsx</i> — Mã lớp · Mã học sinh · Họ tên · Ngày sinh · Giới tính · Dân tộc · Khuyết tật · Trạng thái · Số định danh</td>
+<td>Tự lập danh sách hoặc nạp bổ sung vài lớp. Có tệp <i>C1-HocSinh</i> thì nạp thẳng tệp đó.</td></tr>
+<tr><td><b>Tuyển sinh lớp 1</b></td><td><i>MAU-CHIA-LOP-TUYEN-SINH-…xlsx</i> — mỗi lớp một khối «LỚP 1A»</td>
+<td>Đã chia lớp nhưng Bộ <b>chưa cấp mã</b>: máy nạp mã tạm, sau đối chiếu số căn cước để đổi sang mã chính thức.</td></tr>
+<tr><td><b>Đội ngũ CBGV</b></td><td><i>MAU-NHAP-CBGV-…xlsx</i> — Họ tên · Email Google · Chức vụ · Tổ · Vai trò · Cơ sở công tác</td>
+<td>Mở tài khoản cho cả trường một lần, hoặc bổ sung người mới.</td></tr>
 </table></div>
-<p><b>Cuối năm học:</b> dùng thẻ <b>🎓 Lên lớp</b> trong Quản trị — máy chuyển cả trường sang
-năm học mới theo đúng quy trình (khối 5 ra trường, các khối còn lại lên lớp), nhà trường
-xác nhận từng lớp, không phải nạp lại từ đầu.</p>
+<div class="luuy">⚠️ Email trong CSDL ngành hay là email công vụ hoặc khai nhầm — máy chỉ ra từng dòng đáng ngờ; nhà trường sửa lại cho đúng
+<b>Gmail thầy cô dùng thật</b>. Nạp lại <b>không hạ quyền</b> ai đã có và ô trống không xoá thông tin đang có.
+<b>Cuối năm học:</b> dùng thẻ <b>🎓 Lên lớp</b> chuyển cả trường sang năm mới, không phải nạp lại.</div>
 
+<!-- ═══ VII ═════════════════════════════════════════════════════════════ -->
 <h2 id="len-drive"><span class="so">VII</span>Đưa hồ sơ minh chứng lên Google Drive</h2>
-<p>File minh chứng (bản quét, ảnh chụp, văn bản…) <b>không nằm trong hệ thống</b> — chúng nằm
-trên <b>Google Drive của chính nhà trường</b>; hệ thống chỉ giữ đường dẫn tới từng thư mục.
-Nhờ vậy nhà trường toàn quyền với file của mình, và dung lượng không phụ thuộc hệ thống.</p>
-
-<h3>Chuẩn bị một lần (người quản trị)</h3>
-<ol>
-<li>Đăng nhập <b>tài khoản Google Drive của trường</b> — không dùng Drive cá nhân của một
-thầy cô: người chuyển công tác là kho minh chứng đi theo người.</li>
-<li>Dựng cây thư mục theo đúng danh mục hồ sơ: mỗi <b>hộp hồ sơ</b> một thư mục, trong đó
-mỗi <b>đầu hồ sơ</b> một thư mục con.</li>
-<li>Chia sẻ thư mục gốc ở chế độ <i>«Bất kỳ ai có đường liên kết → Người xem»</i> (hoặc chỉ
-chia sẻ cho các Gmail trong trường nếu muốn chặt hơn) — để thầy cô bấm nút trong app là
-xem được, còn quyền <b>bỏ file vào</b> thì cấp cho người phụ trách từng hộp.</li>
-<li>Chép đường dẫn từng thư mục dán vào từng đầu hồ sơ: mở <b>Quản trị Hồ sơ</b>, bấm vào
-đầu hồ sơ, dán vào ô <b>Đường dẫn Drive</b> rồi lưu (hoặc sửa hàng loạt trong màn
-<b>📋 Danh mục hồ sơ</b>).</li>
-</ol>
+<p>Tệp minh chứng <b>không nằm trong hệ thống</b> — chúng nằm trên <b>Google Drive của chính nhà trường</b>; hệ thống giữ đường dẫn tới
+từng thư mục và <b>đếm tệp thật</b> để biết hồ sơ nào đã có. Khi dựng trường, người phụ trách đã tạo sẵn cây thư mục đúng danh mục
+và gắn link vào từng đầu hồ sơ.</p>
 
 <h3>Hằng ngày (người phụ trách hồ sơ)</h3>
 <ol>
-<li>Mở app → <b>Quản trị Hồ sơ</b> → tìm đầu hồ sơ mình phụ trách (gõ tên hoặc mã vào ô
-tìm kiếm).</li>
-<li>Bấm nút <span class="nut">📂</span> ở cuối dòng — thư mục Drive của đúng đầu hồ sơ ấy
-mở ra trong thẻ mới.</li>
-<li>Đưa file vào thư mục:
+<li>Mở <b>Quản trị Hồ sơ</b> → gõ tên hoặc mã hồ sơ vào ô tìm kiếm (không dấu cũng được), hoặc bấm ô bộ phận → <b>Mở danh mục</b>.</li>
+<li>Bấm nút <span class="nut">📁</span> ở cuối dòng — thư mục Drive của đúng đầu hồ sơ ấy mở ra trong thẻ mới.</li>
+<li>Đưa tệp vào thư mục:
 <ul>
-<li><b>Trên máy tính:</b> kéo thả file vào cửa sổ Drive vừa mở, hoặc bấm
-<span class="nut">＋ Mới → Tải tệp lên</span>.</li>
-<li><b>Trên điện thoại:</b> dùng app <b>Google Drive</b>, bấm <span class="nut">＋</span> →
-<b>Quét</b> — camera chụp văn bản giấy và tự ghép thành một tệp PDF ngay ngắn, không cần
-máy quét. Chụp xong chọn đúng thư mục để lưu.</li>
+<li><b>Máy tính:</b> kéo thả tệp vào cửa sổ Drive, hoặc <span class="nut">＋ Mới → Tải tệp lên</span>.</li>
+<li><b>Điện thoại:</b> app <b>Google Drive</b> → <span class="nut">＋</span> → <b>Quét</b> — camera chụp văn bản giấy và tự ghép thành PDF.</li>
 </ul></li>
-<li>Quay lại app, bấm vào đầu hồ sơ, chuyển trạng thái sang <span class="nut">Đã có</span> —
-bảng tổng quan và tiến độ từng bộ phận cập nhật theo.</li>
+<li>Quay lại app, bấm <span class="nut">🔄 Kiểm tra ngay</span> ở đầu danh mục bộ phận — máy đếm tệp thật, hồ sơ có tệp chuyển <b>Đã có</b>.</li>
 </ol>
-<div class="luuy"><b>Trạng thái đi theo kho Drive thật:</b> khi Ban giám hiệu bấm
-<span class="nut">🔄 Kiểm tra ngay</span>, hệ thống đếm tệp thật trong từng thư mục — hồ sơ có
-tệp tự chuyển «Đã có», thư mục còn trống tự trả về «Chưa có», kể cả khi trước đó đã khai tay.
-Vì vậy đừng khai «Đã có» khi chưa đưa tệp lên: cách giữ trạng thái đúng duy nhất là đưa
-minh chứng vào đúng thư mục.</div>
-<div class="diemdung">✅ <b>Điểm kiểm tra:</b> ở trang chủ, tỉ lệ «đã có minh chứng» của bộ
-phận mình tăng lên; bấm lại nút <span class="nut">📂</span> thấy đúng file vừa đưa.</div>
-<div class="luuy"><b>Bốn thói quen nên giữ:</b>
+<figure><img src="img/huong-dan/ho-so-bo-phan.jpg" alt="Danh mục hồ sơ một bộ phận">
+<figcaption><b>Hình 7.</b> Danh mục một bộ phận: mã hồ sơ, tiêu chí TT57 liên quan, người phụ trách, trạng thái, nút 📁 mở Drive và ✏ sửa;
+<b>🔄 Kiểm tra ngay</b> và <b>📄 Tải file Word</b> (phiếu giao việc) ở đầu.</figcaption></figure>
+<div class="luoi2">
+<div>
+<h3 style="margin-top:0">Sửa một đầu hồ sơ (nút ✏)</h3>
+<p>Đổi tên cho khớp cách gọi của trường, đổi trạng thái <b>Đang cập nhật</b>, ghi người phụ trách, <b>giao quyền sửa</b> hồ sơ cho một tài khoản
+(người đó tự sửa được mà không cần quyền quản trị), dán / sửa <b>đường dẫn thư mục Drive</b>, ghi chú nội bộ.</p>
+<div class="luuy"><b>Trạng thái đi theo kho Drive thật:</b> thư mục có tệp tự chuyển «Đã có», thư mục trống tự trả về «Chưa có» — kể cả khi đã khai tay.
+Cách giữ trạng thái đúng duy nhất là đưa minh chứng vào đúng thư mục.</div>
+</div>
+<figure class="hep"><img src="img/huong-dan/ho-so-sua.jpg" alt="Khung sửa hồ sơ">
+<figcaption><b>Hình 8.</b> Khung ✏ sửa một đầu hồ sơ.</figcaption></figure>
+</div>
+<div class="luuy"><b>Năm thói quen nên giữ:</b>
 <ul style="margin-bottom:0">
-<li><b>Đặt tên file có năm học và nội dung</b> — <i>2026-2027 Ke hoach giao duc.pdf</i> dễ
-tìm hơn <i>Scan0012.pdf</i> rất nhiều.</li>
-<li><b>Quét bằng nút Quét của app Drive</b> thay vì chụp ảnh thường: chữ phẳng, nét, một
-văn bản nhiều trang gộp một tệp PDF.</li>
-<li>File chứa dữ liệu cá nhân (danh sách học sinh, hồ sơ CBGV…) thì <b>không để chế độ
-công khai toàn mạng</b> — chỉ chia sẻ trong trường.</li>
-<li>Nút <span class="nut">📂</span> báo <i>«Hồ sơ này chưa được gán thư mục trên Drive»</i>
-thì nhờ người quản trị dán đường dẫn (bước chuẩn bị ở trên) — không phải lỗi.</li>
+<li><b>Tải tệp bằng Gmail của chính mình</b> vào thư mục được chia sẻ — tệp tính vào dung lượng của người tải lên. Tài khoản Google của
+trường mà <b>đầy dung lượng</b> thì chính tài khoản trường không tải được tệp mới, nhưng thầy cô vẫn tải được bình thường.</li>
+<li><b>Đặt tên tệp có năm học và nội dung</b> — <i>2026-2027 Ke hoach giao duc.pdf</i> dễ tìm hơn <i>Scan0012.pdf</i>.</li>
+<li><b>Quét bằng nút Quét của app Drive</b> thay vì chụp ảnh thường: chữ phẳng, nét, nhiều trang gộp một PDF.</li>
+<li>Tệp chứa dữ liệu cá nhân thì <b>không để chế độ công khai toàn mạng</b> — chỉ chia sẻ trong trường.</li>
+<li>Nút <span class="nut">📁</span> báo <i>«chưa được gán thư mục trên Drive»</i> thì nhờ quản trị dán đường dẫn trong khung ✏ — không phải lỗi.</li>
 </ul></div>
 
-<h2 id="sao-luu"><span class="so">VIII</span>Sao lưu dữ liệu hằng tháng</h2>
-<p>Dữ liệu của trường nằm trên máy chủ, nhưng <b>bản sao lưu do chính nhà trường giữ</b>
-mới là bảo hiểm cuối cùng. Mỗi tháng một lần, người quản trị vào <b>Quản trị →
-<span class="nut">💾 Sao lưu</span></b>:</p>
+<!-- ═══ VIII ════════════════════════════════════════════════════════════ -->
+<h2 id="giao-an"><span class="so">VIII</span>Nộp giáo án vào thư mục cá nhân</h2>
+<p>Mỗi thầy cô có <b>một thư mục riêng</b> trên Drive của trường (trong thư mục «Hồ sơ giáo viên»), đã chia sẻ quyền sửa cho đúng Gmail
+của người đó; Ban giám hiệu xem được mọi thư mục. Hai đầu hồ sơ <b>kế hoạch bài dạy</b> trong kho hồ sơ bấm vào sẽ dẫn thẳng sang
+trang đội ngũ — không phải nộp giáo án hai nơi.</p>
 <ol>
-<li>Bấm <span class="nut">💾 Tải bản sao lưu</span> — máy gói toàn bộ dữ liệu của trường
-thành một tệp rồi tải về, mất khoảng nửa phút.</li>
-<li>Chuyển tệp vừa tải vào <b>Google Drive của trường</b> (thư mục «Sao lưu hệ thống»),
-xoá bản cũ hơn một năm.</li>
+<li>Bấm <b>Quản trị Hồ sơ</b> → ô <b>Hồ sơ CBGV – NV</b> → <b>Xem đội ngũ</b>.</li>
+<li>Mở nhóm của mình: <b>Ban giám hiệu · Giáo viên · Nhân viên</b>. Trường nhiều điểm trường: ô <b>📍 Chọn nơi công tác</b> để lọc.</li>
+<li>Bấm nút <span class="nut">📁</span> ở góc thẻ có tên mình → thư mục cá nhân mở ra → tải giáo án lên (như mục VII). Nên chia thư mục con theo tuần hoặc môn.</li>
 </ol>
+<figure><img src="img/huong-dan/cbgv.jpg" alt="Hồ sơ CBGV – NV">
+<figcaption><b>Hình 9.</b> Hồ sơ CBGV – NV: nhóm theo chức vụ, ô chọn nơi công tác, mỗi thẻ một nút 📁 (tên đã thay bằng tên giả).</figcaption></figure>
+<div class="luuy">Bấm 📁 mà Google báo <i>«Bạn cần quyền truy cập»</i> nghĩa là trình duyệt đang mở bằng <b>Gmail khác</b> Gmail được chia sẻ —
+đổi tài khoản Google cho đúng. Thẻ ghi <i>«Chưa gán thư mục»</i> thì quản trị dán link ở <b>🔗 Link hồ sơ CBGV</b>.</div>
+
+<!-- ═══ IX ══════════════════════════════════════════════════════════════ -->
+<h2 id="dieu-hanh"><span class="so">IX</span>Điều hành hằng ngày</h2>
+<p>Màn <b>Điều hành</b> là bàn làm việc của Ban giám hiệu và là nơi thầy cô gửi đề xuất, nhận việc, nhận thông báo.
+Góc phải có <span class="nut">Sáng</span> <span class="nut">Chiều</span> để chuyển buổi.</p>
+<figure><img src="img/huong-dan/demo-dieuhanh-tongquan.jpg" alt="Tổng quan điều hành">
+<figcaption><b>Hình 10.</b> Tổng quan hôm nay: CBGV có mặt, học sinh, an toàn từng điểm trường, việc cần xử lý.</figcaption></figure>
+<div class="khung-cuon"><table>
+<tr><th style="width:24%">Thẻ</th><th>Làm gì</th></tr>
+<tr><td><b>Báo việc</b></td><td>Báo nhanh sự việc phát sinh để Ban giám hiệu nắm và xử lý.</td></tr>
+<tr><td><b>Điểm danh &amp; Chấm công</b></td><td>Người phụ trách từng điểm trường báo đầu buổi: <span class="nut">✓ Hôm nay không ai vắng</span> hoặc
+<span class="nut">Có người vắng</span>. Bảng công tháng <b>cộng thẳng từ sổ vắng</b>, không ai nhập lại; cuối tháng <b>🔒 Chốt bảng công</b>,
+<b>📄 Xuất Word</b> (A4 ngang).</td></tr>
+<tr><td><b>Đề xuất – duyệt</b></td><td>Thầy cô gửi: Nghỉ phép · Nghỉ ốm · Đi công tác · Việc riêng · Mua sắm / sửa chữa · Khác. Ban giám hiệu
+<span class="nut">✓ Duyệt</span> hoặc <span class="nut">✗ Trao đổi lại</span>. <b>Đơn nghỉ đã duyệt tự vào sổ vắng</b> — dùng luôn cho chấm công và dạy thay.</td></tr>
+<tr><td><b>Giao việc</b></td><td><span class="nut">+ Giao việc</span> kèm hạn; người nhận xem ở <b>Việc của tôi</b>. Có thể lưu <b>mẫu việc</b> lặp lại.</td></tr>
+<tr><td><b>Lịch tuần</b></td><td><span class="nut">＋ Thêm việc</span>, <span class="nut">🧭 Phân trực</span>, <span class="nut">✎ Trọng tâm tuần</span>,
+<span class="nut">📄 Xuất Word</span> để in ký, niêm yết; chuyển tuần trước / tuần sau.</td></tr>
+<tr><td><b>Thời khóa biểu</b></td><td>Xem thời khóa biểu, bố trí dạy thay (mục X).</td></tr>
+<tr><td><b>Thông báo</b></td><td><span class="nut">📢 Gửi thông báo</span>; người nhận bấm <span class="nut">✓ Tôi đã nhận</span> — người gửi biết ai chưa đọc.</td></tr>
+</table></div>
+<div class="luoi2">
+<figure><img src="img/huong-dan/demo-dieuhanh-dexuat.jpg" alt="Đề xuất duyệt"><figcaption><b>Hình 11.</b> Đề xuất – duyệt.</figcaption></figure>
+<figure><img src="img/huong-dan/demo-dieuhanh-diemdanh.jpg" alt="Điểm danh chấm công"><figcaption><b>Hình 12.</b> Điểm danh &amp; chấm công.</figcaption></figure>
+<figure><img src="img/huong-dan/demo-dieuhanh-lichtuan.jpg" alt="Lịch tuần"><figcaption><b>Hình 13.</b> Lịch công tác tuần.</figcaption></figure>
+<figure><img src="img/huong-dan/demo-dieuhanh-thongbao.jpg" alt="Thông báo"><figcaption><b>Hình 14.</b> Thông báo có xác nhận đã nhận.</figcaption></figure>
+</div>
+
+<!-- ═══ X ═══════════════════════════════════════════════════════════════ -->
+<h2 id="tkb"><span class="so">X</span>Thời khóa biểu và dạy thay</h2>
+<p>Thời khóa biểu <b>xếp trong Smart Scheduler</b>, rồi <b>tải tệp kết xuất lên hệ thống</b> để mọi người xem. Hệ thống <b>không sửa tay</b>
+từng tiết — muốn đổi lịch thì sửa trong Smart Scheduler và nạp lại, để thời khóa biểu chỉ có một nguồn.</p>
+<h3>Nạp thời khóa biểu (Ban giám hiệu)</h3>
+<div class="luoi2">
+<ol>
+<li>Trong Smart Scheduler: <i>Hệ thống › Chuyển đổi dữ liệu sang Excel</i>. Tệp gồm 3 trang <b>PCGD · TKB_LOP_SC · TKB_GV_SC</b>
+(tệp đủ 10 trang cũng đọc được). Trường có phân hiệu: <b>mỗi phân hiệu một tệp</b>.</li>
+<li><b>Quản trị → 🗓️ Thời khóa biểu</b> → <span class="nut">Chọn tệp Excel…</span>.</li>
+<li>Máy <b>xem trước</b>, ghép tên gọi («Cô Lan») với tài khoản; soát rồi ghi, chọn ngày áp dụng. Các bản đã nạp được giữ lại theo ngày.</li>
+<li>Trường không dùng Smart Scheduler: <span class="nut">⬇️ Tải mẫu 3 trang</span>, điền ô vàng (mỗi ô tiết ghi <i>Môn - Cô X</i>).</li>
+</ol>
+<figure><img src="img/huong-dan/qt-thoi-khoa-bieu.jpg" alt="Nạp thời khóa biểu">
+<figcaption><b>Hình 15.</b> Quản trị → 🗓️ Thời khóa biểu.</figcaption></figure>
+</div>
+<h3>Xem thời khóa biểu (mọi người)</h3>
+<p><b>Điều hành → Thời khóa biểu</b> hoặc ô <b>Xem TKB</b> ở trang chủ: <b>TKB của tôi · Phân hiệu · Từng lớp · Từng giáo viên ·
+Thống kê tiết dạy · Dạy thay</b>; lọc Cả ngày / Sáng / Chiều; <span class="nut">🖨️ In</span> <span class="nut">⬇️ Excel</span>.</p>
+<div class="luoi2">
+<figure><img src="img/huong-dan/demo-tkb-lop.jpg" alt="Thời khóa biểu từng lớp"><figcaption><b>Hình 16.</b> Từng lớp.</figcaption></figure>
+<figure><img src="img/huong-dan/demo-tkb-thongke.jpg" alt="Thống kê tiết dạy"><figcaption><b>Hình 17.</b> Thống kê tiết dạy.</figcaption></figure>
+</div>
+<h3>Bố trí dạy thay (Ban giám hiệu)</h3>
+<div class="luoi2">
+<ol>
+<li>Người vắng lấy từ <b>sổ vắng</b> — gồm điểm danh báo vắng và đơn nghỉ đã duyệt.</li>
+<li><b>Thời khóa biểu → Dạy thay → Bố trí theo ngày</b>: chọn ngày, máy liệt kê người vắng · tiết cần thay · tiết chưa bố trí, kèm
+<b>gợi ý</b> người rảnh đúng tiết đó.</li>
+<li>Chọn người dạy thay từng tiết; gửi <b>tin Zalo</b> soạn sẵn hoặc <b>in</b> phân công.</li>
+<li>Giáo viên xem <b>Tiết dạy thay của tôi</b>; trang chủ nhắc. <b>Danh sách dạy thay</b> xem lại các tiết đã bố trí.</li>
+</ol>
+<figure><img src="img/huong-dan/demo-daythay.jpg" alt="Dạy thay"><figcaption><b>Hình 18.</b> Dạy thay — bố trí theo ngày.</figcaption></figure>
+</div>
+
+<!-- ═══ XI ══════════════════════════════════════════════════════════════ -->
+<h2 id="sao-luu"><span class="so">XI</span>Sao lưu dữ liệu hằng tháng</h2>
+<div class="luoi2">
+<div>
+<p>Dữ liệu nằm trên máy chủ, nhưng <b>bản sao lưu do chính nhà trường giữ</b> mới là bảo hiểm cuối cùng. Cuối mỗi tháng, người quản trị vào
+<b>Quản trị → <span class="nut">💾 Sao lưu</span></b>:</p>
+<ol>
+<li>Bấm <span class="nut">💾 Tải bản sao lưu</span> — máy gói toàn bộ dữ liệu thành một tệp, mất khoảng nửa phút.</li>
+<li>Cất vào <b>Google Drive của trường</b> (thư mục «Sao lưu hệ thống»), giữ <b>ít nhất ba bản gần nhất</b>.</li>
+</ol>
+</div>
+<figure><img src="img/huong-dan/qt-sao-luu.jpg" alt="Sao lưu"><figcaption><b>Hình 19.</b> 💾 Sao lưu.</figcaption></figure>
+</div>
 <div class="luuy"><b>Ba điều cần biết:</b>
 <ul style="margin-bottom:0">
-<li>Việc sao lưu nên do <b>Hiệu trưởng hoặc người phụ trách hệ thống</b> làm — tài khoản
-không đủ quyền đọc toàn bộ dữ liệu thì máy sẽ <b>chặn lại và báo rõ</b>, không tải về một
-tệp thiếu ruột trông y như bản thật.</li>
-<li>Mặc định tệp <b>không kèm</b> số định danh cá nhân của học sinh; chọn kèm thì phải giữ
-tệp như hồ sơ mật.</li>
-<li>Cần phục hồi thì đưa tệp cho người phụ trách hệ thống — <b>không tự nạp lại được</b>
-bằng cách kéo thả, đây là chủ ý để không ai lỡ tay ghi đè dữ liệu đang dùng.</li>
+<li>Nên do <b>Hiệu trưởng hoặc người phụ trách hệ thống</b> làm — tài khoản không đủ quyền thì máy <b>chặn lại và báo rõ</b>, không tải về tệp thiếu ruột.</li>
+<li>Mặc định tệp <b>không kèm</b> số định danh cá nhân của học sinh; chọn kèm thì giữ tệp như hồ sơ mật.</li>
+<li>Cần phục hồi thì đưa tệp cho người phụ trách hệ thống — <b>không tự nạp lại được</b> bằng kéo thả, để không ai lỡ tay ghi đè.</li>
 </ul></div>
 
-<h2 id="quan-tri"><span class="so">IX</span>Quản trị hệ thống — tài khoản và phân quyền</h2>
-<p>Chỉ người có vai trò <b>Quản trị hệ thống</b> hoặc <b>Ban giám hiệu</b> mới thấy màn này
-(mở từ hộp tài khoản góc phải → <span class="nut">⚙️ Quản trị hệ thống</span>). Đó là hàng rào đặt ở
-máy chủ, không phải chỉ giấu trên màn hình. Không cần biết một dòng lệnh nào — mọi việc dưới đây làm
-bằng chuột và bàn phím, trên điện thoại cũng được (bảng nhiều cột thì vuốt ngang trong lòng bảng).</p>
+<!-- ═══ XII ═════════════════════════════════════════════════════════════ -->
+<h2 id="quan-tri"><span class="so">XII</span>Quản trị hệ thống — tài khoản và phân quyền</h2>
+<p>Chỉ vai <b>Quản trị hệ thống</b> hoặc <b>Ban giám hiệu</b> mới vào được (ảnh đại diện góc phải → <span class="nut">⚙️ Quản trị hệ thống</span>).
+Hàng rào đặt ở máy chủ, không chỉ giấu trên màn hình. Mọi việc dưới đây làm bằng chuột và bàn phím, trên điện thoại cũng được.</p>
 <div class="khung-cuon"><table>
-<tr><th style="width:30%">Thẻ trong màn Quản trị</th><th>Dùng để</th></tr>
-<tr><td>🚀 Cài đặt</td><td>Bảng liệt kê từng bước còn thiếu của trường mình — làm theo đúng thứ tự là xong phần dựng nền.</td></tr>
-<tr><td>👥 Tài khoản</td><td>Những người <b>đã đăng nhập</b> ít nhất một lần: duyệt người chờ, đổi vai trò, khoá / mở khoá, xoá.</td></tr>
-<tr><td>✉️ Danh sách mời</td><td>Danh sách <b>được phép vào</b> do nhà trường khai: email, họ tên, chức vụ, tổ, vai trò, link Drive; dán cả bảng từ Excel.</td></tr>
-<tr><td>📥 Nạp dữ liệu</td><td>Nạp học sinh, tuyển sinh lớp 1, đội ngũ CBGV từ tệp Excel (mục VI).</td></tr>
-<tr><td>🔗 Link hồ sơ CBGV</td><td>Dán hàng loạt đường dẫn thư mục hồ sơ cá nhân — máy tự nhận ra ai là ai theo email hoặc họ tên.</td></tr>
-<tr><td>⚙️ Thông tin trường · 🏫 Cơ sở &amp; Sáp nhập · 📋 Danh mục hồ sơ</td><td>Khai tên hiệu trưởng, quy mô, khẩu hiệu; điểm trường và lớp thuộc điểm nào; chỉnh danh mục hồ sơ cho khớp trường mình.</td></tr>
-<tr><td>🎓 Lên lớp · 💾 Sao lưu · 📒 Sổ nhật ký</td><td>Chuyển cả trường sang năm học mới; tải bản sao lưu hằng tháng (mục VIII); tra ai làm gì, lúc nào.</td></tr>
+<tr><th style="width:32%">Thẻ trong màn Quản trị</th><th>Dùng để</th></tr>
+<tr><td>👥 Tài khoản</td><td>Người <b>đã đăng nhập</b> ít nhất một lần: duyệt người chờ, đổi vai trò, khoá / mở khoá, xoá.</td></tr>
+<tr><td>🚀 Cài đặt · ⚙️ Thông tin trường</td><td>Các bước còn thiếu; tên hiệu trưởng, liên hệ, khẩu hiệu, quy mô.</td></tr>
+<tr><td>✉️ Danh sách mời</td><td>Danh sách <b>được phép vào</b>: email, họ tên, chức vụ, tổ, vai trò, <b>nơi công tác</b>, link Drive; dán cả bảng từ Excel.</td></tr>
+<tr><td>🚩 Tổ chức đảng</td><td>Chi bộ / đảng bộ và các chi bộ trực thuộc; hồ sơ đảng.</td></tr>
+<tr><td>🧑‍💼 Phân công – Ủy quyền · 🧑‍⚖️ Hội đồng TĐG · 📈 KH cải tiến (Biểu 2) · 🏅 Chuẩn quốc gia</td><td>Phân công phụ trách, hội đồng tự đánh giá, kế hoạch cải tiến, bằng công nhận.</td></tr>
+<tr><td>🏫 Cơ sở &amp; Sáp nhập</td><td>Quyết định sáp nhập, điểm trường và người phụ trách, lớp thuộc điểm nào, trường tiền thân; máy tính mốc đánh giá lại chuẩn quốc gia.</td></tr>
+<tr><td>🎓 Lên lớp · 📋 Danh mục hồ sơ</td><td>Chuyển cả trường sang năm học mới; thêm / sửa / xoá đầu hồ sơ.</td></tr>
+<tr><td>🔗 Link hồ sơ CBGV · 📥 Nạp dữ liệu · 🗓️ Thời khóa biểu</td><td>Thư mục cá nhân từng người (dán hàng loạt); nạp học sinh, đội ngũ (mục VI); nạp thời khóa biểu (mục X).</td></tr>
+<tr><td>💾 Sao lưu · 📒 Sổ nhật ký</td><td>Tải bản sao lưu hằng tháng (mục XI); tra ai làm gì, lúc nào.</td></tr>
 </table></div>
 
 <h3>Điều quan trọng nhất: hai bảng khác nhau</h3>
-<p>Gần như mọi nhầm lẫn về tài khoản đều bắt nguồn từ chỗ này. <b>Danh sách mời là tấm thiệp mời;
-Tài khoản là người đã bước vào cửa.</b> Thu lại tấm thiệp không đuổi được người đã ngồi trong phòng —
+<p><b>Danh sách mời là tấm thiệp mời; Tài khoản là người đã bước vào cửa.</b> Thu lại tấm thiệp không đuổi được người đã ngồi trong phòng —
 muốn cắt hẳn một người thì phải làm cả hai bên.</p>
+<figure><img src="img/huong-dan/qt-danh-sach-moi.jpg" alt="Danh sách mời">
+<figcaption><b>Hình 20.</b> ✉️ Danh sách mời (họ tên, Gmail đã thay bằng tên giả; cột nơi công tác đã làm mờ).</figcaption></figure>
 <div class="khung-cuon"><table>
 <tr><th style="width:22%"></th><th>✉️ Danh sách mời</th><th>👥 Tài khoản</th></tr>
 <tr><td>Là gì</td><td>Danh sách được phép vào. Nhà trường tự khai.</td><td>Những người đã thật sự đăng nhập ít nhất một lần.</td></tr>
 <tr><td>Ai tạo ra dòng</td><td>Quản trị viên gõ vào (hoặc nạp từ tệp).</td><td>Máy tự tạo khi người đó đăng nhập Google lần đầu.</td></tr>
-<tr><td>Sửa được gì</td><td>Email, họ tên, chức vụ, tổ, vai trò, link Drive, cột Gộp vào.</td><td>Chỉ vai trò và trạng thái. Không sửa được email.</td></tr>
-<tr><td>Vai trò có tác dụng với</td><td>Người <b>chưa</b> đăng nhập lần nào (quyết định vai lúc bước vào).</td><td>Người <b>đã</b> đăng nhập — muốn nâng / hạ quyền phải sửa ở đây.</td></tr>
+<tr><td>Sửa được gì</td><td>Email, họ tên, chức vụ, tổ, vai trò, nơi công tác, link Drive, cột Gộp vào.</td><td>Chỉ vai trò và trạng thái.</td></tr>
+<tr><td>Vai trò có tác dụng với</td><td>Người <b>chưa</b> đăng nhập lần nào.</td><td>Người <b>đã</b> đăng nhập — nâng / hạ quyền sửa ở đây.</td></tr>
 <tr><td>Xoá dòng nghĩa là</td><td>Không được mời nữa, nhưng tài khoản đã tạo vẫn còn.</td><td>Xoá hẳn tài khoản khỏi hệ thống.</td></tr>
 </table></div>
-<p>Người có tên trong Danh sách mời thì lần đầu đăng nhập là vào thẳng, đúng vai trò đã ghi. Người
-không có tên mà vẫn đăng nhập được thì rơi vào trạng thái <b>🟡 Chờ duyệt</b>, chưa xem được gì cho tới
-khi quản trị viên đổi sang <b>🟢 Hoạt động</b> ở thẻ 👥 Tài khoản.</p>
+<p>Người có tên trong Danh sách mời thì lần đầu đăng nhập là vào thẳng, đúng vai trò. Người không có tên mà vẫn đăng nhập được thì rơi vào
+<b>🟡 Chờ duyệt</b>, chưa xem được gì cho tới khi quản trị viên đổi sang <b>🟢 Hoạt động</b>.</p>
 
 <h3>Tờ tra nhanh — tình huống nào làm ở đâu</h3>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Tình huống</th><th>Làm gì</th></tr>
-<tr><td>Trường có thầy cô mới về</td><td>✉️ Danh sách mời → <span class="nut">➕ Thêm một dòng</span> → Lưu → báo họ đăng nhập Google bằng đúng địa chỉ vừa ghi.</td></tr>
-<tr><td>Đầu năm học, thay cả danh sách</td><td>📥 Nạp dữ liệu → loại <i>Đội ngũ CBGV</i> (tệp mẫu hoặc tệp CSDL ngành), hoặc ✉️ Danh sách mời → <span class="nut">📋 Dán cả danh sách từ Excel</span> (6 cột: Email · Họ tên · Chức vụ · Tổ · Vai trò · Link Drive; vai trò ghi mã hay chữ tiếng Việt đều được).</td></tr>
-<tr><td>Thầy cô đổi Gmail, <b>chưa</b> từng đăng nhập</td><td>✉️ Danh sách mời → sửa ô Email → Lưu. Xong.</td></tr>
-<tr><td>Thầy cô đổi Gmail, <b>đã</b> từng đăng nhập</td><td>Ba việc đúng thứ tự: ✉️ sửa Email → họ đăng nhập lại bằng địa chỉ mới → 👥 Tài khoản xoá dòng địa chỉ cũ. <b>Đừng xoá trước</b> khi đổi danh sách mời, nếu không địa chỉ cũ vào lại là tài khoản tự tạo lại.</td></tr>
-<tr><td>Thầy cô nghỉ thai sản, đi học</td><td>👥 Tài khoản → trạng thái <b>🔴 Khoá</b> → Lưu. Khoá lùi lại được, giữ nguyên mọi thứ họ đã làm — gần như luôn chọn Khoá thay vì Xoá.</td></tr>
-<tr><td>Thầy cô chuyển trường hẳn, nghỉ hưu</td><td>Làm <b>cả hai bên</b>: ✉️ xoá dòng mời và 👥 xoá tài khoản. Là Quản trị / Ban giám hiệu thì hạ vai trò xuống Giáo viên và Lưu trước, nút Xoá mới hiện.</td></tr>
-<tr><td>Giao thêm quyền quản trị cho ai</td><td>👥 Tài khoản → Vai trò = Quản trị hệ thống → Lưu (người chưa đăng nhập thì sửa ở ✉️ Danh sách mời).</td></tr>
-<tr><td>Một người dùng hai Gmail</td><td>Khai hai dòng trong ✉️ Danh sách mời, dòng phụ điền cột <b>Gộp vào</b> = địa chỉ chính. <b>Tuyệt đối không</b> dùng cột này cho hai người trùng họ tên — họ là hai người, hai thư mục hồ sơ.</td></tr>
+<tr><td>Trường có thầy cô mới về</td><td>✉️ Danh sách mời → <span class="nut">➕ Thêm một dòng</span> → điền Gmail, họ tên, chức vụ, vai trò, nơi công tác, link Drive → Lưu
+→ báo họ đăng nhập bằng đúng Gmail vừa ghi.</td></tr>
+<tr><td>Đầu năm học, thay cả danh sách</td><td>📥 Nạp dữ liệu → loại <i>Đội ngũ CBGV</i>, hoặc ✉️ → <span class="nut">📋 Dán cả danh sách từ Excel</span>.</td></tr>
+<tr><td>Khai sai Gmail — <b>chưa</b> từng đăng nhập</td><td>✉️ sửa thẳng ô Email của dòng đó → Lưu. Xong.</td></tr>
+<tr><td>Đổi Gmail — <b>đã</b> từng đăng nhập</td><td>✉️ sửa Email → họ đăng nhập lại bằng địa chỉ mới (giữ nguyên vai trò) → 👥 xoá dòng địa chỉ cũ.</td></tr>
+<tr><td>Nghỉ thai sản, đi học</td><td>👥 Tài khoản → <b>🔴 Khoá</b> → Lưu. Khoá lùi lại được — gần như luôn chọn Khoá thay vì Xoá.</td></tr>
+<tr><td>Chuyển trường hẳn, nghỉ hưu</td><td>Làm <b>cả hai bên</b>: ✉️ xoá dòng mời và 👥 xoá tài khoản (Quản trị / BGH thì hạ vai trò trước).</td></tr>
+<tr><td>Giao thêm quyền quản trị</td><td>👥 Tài khoản → Vai trò = Quản trị hệ thống → Lưu (chưa đăng nhập thì sửa ở ✉️).</td></tr>
+<tr><td>Một người dùng hai Gmail</td><td>Hai dòng trong ✉️, dòng phụ điền <b>Gộp vào</b> = địa chỉ chính. <b>Không</b> dùng cho hai người trùng họ tên.</td></tr>
 </table></div>
 
-<h3>Năm vai trò và quyền của từng vai</h3>
+<h3>Năm vai trò</h3>
 <div class="khung-cuon"><table>
 <tr><th style="width:26%">Vai trò</th><th>Làm được gì</th></tr>
-<tr><td><b>Quản trị hệ thống</b></td><td>Toàn quyền, kể cả màn Quản trị: tài khoản, danh sách mời, thông tin trường, danh mục hồ sơ, nạp dữ liệu, sao lưu.</td></tr>
+<tr><td><b>Quản trị hệ thống</b></td><td>Toàn quyền, kể cả màn Quản trị.</td></tr>
 <tr><td><b>Ban giám hiệu</b></td><td>Như Quản trị ở hầu hết việc điều hành và duyệt; vai của Hiệu trưởng và Phó Hiệu trưởng.</td></tr>
 <tr><td><b>Tổ trưởng chuyên môn</b></td><td>Quản lý phần việc của tổ chuyên môn.</td></tr>
-<tr><td><b>Giáo viên</b></td><td>Xem và làm phần việc được giao. Quyền hẹp nhất — chọn khi còn phân vân.</td></tr>
-<tr><td><b>Nhân viên</b></td><td>Kế toán, văn thư, thư viện, y tế học đường.</td></tr>
+<tr><td><b>Giáo viên</b></td><td>Xem và làm phần việc được giao; nộp giáo án; gửi đề xuất. Quyền hẹp nhất — chọn khi còn phân vân.</td></tr>
+<tr><td><b>Nhân viên</b></td><td>Kế toán, văn thư, thư viện – thiết bị, y tế học đường.</td></tr>
 </table></div>
-<div class="luuy"><b>Hai quy tắc giữ an toàn cho nhà trường:</b>
+<div class="luuy"><b>Hai quy tắc giữ an toàn:</b>
 <ul style="margin-bottom:0">
-<li><b>Luôn có ít nhất hai người vai trò Quản trị</b> — thường là Hiệu trưởng và một Phó Hiệu trưởng.
-Hệ thống không cho tự xoá tài khoản của chính mình và không cho xoá Quản trị / Ban giám hiệu khi
-chưa hạ vai, nhưng không chặn được việc hạ nhầm vai trò người khác. Trường không còn quản trị viên
-nào là trường hợp duy nhất phải nhờ người phụ trách hệ thống cấp lại quyền.</li>
+<li><b>Luôn có ít nhất hai người vai Quản trị</b> — thường là Hiệu trưởng và một Phó Hiệu trưởng.</li>
 <li><b>Phân vân thì chọn quyền hẹp hơn.</b> Nâng quyền bao giờ cũng dễ hơn thu lại quyền đã trót cấp.</li>
 </ul></div>
 
 <h3>Sự cố thường gặp</h3>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Hiện tượng</th><th>Nguyên nhân và cách chữa</th></tr>
-<tr><td>Thầy cô báo «đăng nhập rồi mà không thấy gì»</td><td>Họ đang 🟡 Chờ duyệt — địa chỉ đã dùng để đăng nhập không trùng địa chỉ trong danh sách mời. Vào 👥 Tài khoản xem địa chỉ thật, rồi sửa danh sách mời cho khớp hoặc đổi trạng thái sang 🟢 Hoạt động và chỉnh vai trò.</td></tr>
-<tr><td>Đã xoá mà người đó vẫn vào được</td><td>Mới xoá một bên. Phải xoá ở cả ✉️ Danh sách mời và 👥 Tài khoản.</td></tr>
-<tr><td>Đổi vai trò rồi mà vẫn quyền cũ</td><td>Sửa nhầm bên: người đã đăng nhập thì vai trò thật ở 👥 Tài khoản. Sửa xong bảo họ tải lại trang.</td></tr>
-<tr><td>Nút hiện «Lỗi!» khi bấm Lưu</td><td>Tài khoản đang dùng không đủ quyền Quản trị, hoặc mất mạng giữa chừng. Máy không bao giờ báo «Đã lưu ✓» khi chưa lưu được — tải lại trang để thấy đúng thực tế trên máy chủ.</td></tr>
-<tr><td>Danh bạ 👤 Hồ sơ CBGV-NV thiếu người</td><td>Rất có thể hai người trùng họ tên bị khai gộp nhầm ở cột Gộp vào. Xoá nội dung ô đó ở cả hai dòng rồi Lưu.</td></tr>
-<tr><td>Sửa xong nhưng màn hình vẫn như cũ</td><td>Trình duyệt giữ bản cũ. Máy tính bấm Ctrl + F5; điện thoại vuốt xuống tải lại hoặc đóng hẳn thẻ rồi mở lại.</td></tr>
+<tr><td>«Đăng nhập rồi mà không thấy gì»</td><td>Đang 🟡 Chờ duyệt — Gmail đăng nhập không trùng Gmail trong danh sách mời. Xem địa chỉ thật ở 👥 Tài khoản rồi sửa cho khớp.</td></tr>
+<tr><td>Đã xoá mà người đó vẫn vào được</td><td>Mới xoá một bên — xoá ở cả ✉️ và 👥.</td></tr>
+<tr><td>Đổi vai trò rồi mà vẫn quyền cũ</td><td>Người đã đăng nhập thì vai trò thật ở 👥 Tài khoản. Sửa xong bảo họ tải lại trang.</td></tr>
+<tr><td>Nút hiện «Lỗi!» khi bấm Lưu</td><td>Không đủ quyền Quản trị, hoặc mất mạng. Máy không bao giờ báo «Đã lưu ✓» khi chưa lưu được.</td></tr>
+<tr><td>Hồ sơ CBGV – NV thiếu người</td><td>Hai người trùng họ tên bị khai gộp nhầm ở cột Gộp vào — xoá nội dung ô đó ở cả hai dòng rồi Lưu.</td></tr>
+<tr><td>Sửa xong mà màn hình vẫn như cũ</td><td>Trình duyệt giữ bản cũ: máy tính <span class="nut">Ctrl + F5</span>; điện thoại đóng hẳn thẻ rồi mở lại.</td></tr>
 </table></div>
-<div class="diemdung">✅ <b>Thói quen nên giữ:</b> mỗi lần sửa xong, mở màn <b>👤 Hồ sơ CBGV-NV</b> đếm lại số
-người theo ba khối (Ban giám hiệu — Giáo viên — Nhân viên) và đối chiếu với danh sách giấy. Mọi thao
-tác quản trị đều được ghi vào <b>📒 Sổ nhật ký</b>: ai sửa, sửa ai, lúc nào — xoá người không làm mất
-những gì người đó đã ghi vào hệ thống.</div>
+<div class="diemdung">✅ <b>Thói quen nên giữ:</b> sửa xong, mở <b>Hồ sơ CBGV – NV</b> đếm lại số người theo ba nhóm và đối chiếu danh sách giấy.
+Mọi thao tác quản trị đều ghi vào <b>📒 Sổ nhật ký</b>.</div>
 
-<h2 id="hoi-dap"><span class="so">X</span>Câu hỏi thường gặp</h2>
+<!-- ═══ XIII ════════════════════════════════════════════════════════════ -->
+<h2 id="dien-thoai"><span class="so">XIII</span>Dùng trên điện thoại</h2>
+<div class="luoi2">
+<div>
+<p>Hệ thống chạy trên trình duyệt điện thoại, <b>không phải cài ứng dụng</b>. Thanh chức năng thu vào nút <span class="nut">☰</span>;
+bảng nhiều cột thì vuốt ngang trong lòng bảng.</p>
+<p><b>Đưa ra màn hình chính</b> để lần sau một chạm là vào:</p>
+<ul>
+<li><b>Android (Chrome):</b> <span class="nut">⋮</span> → <b>Thêm vào màn hình chính</b>.</li>
+<li><b>iPhone (Safari):</b> nút chia sẻ <span class="nut">⬆</span> → <b>Thêm vào MH chính</b>.</li>
+</ul>
+<p>Việc hợp với điện thoại: duyệt đề xuất, báo điểm danh đầu buổi, xem thời khóa biểu, nhận thông báo, <b>quét văn bản bằng app Drive</b>
+để đưa minh chứng. Nhập liệu nhiều (danh mục, danh sách mời) thì máy tính thuận tay hơn.</p>
+</div>
+<figure class="dt"><img src="img/huong-dan/dt-trang-chu.jpg" alt="Trang chủ trên điện thoại"><img src="img/huong-dan/dt-hoso.jpg" alt="Hồ sơ trên điện thoại">
+<figcaption><b>Hình 21.</b> Trang chủ và Quản trị Hồ sơ trên điện thoại.</figcaption></figure>
+</div>
+
+<!-- ═══ XIV ═════════════════════════════════════════════════════════════ -->
+<h2 id="hoi-dap"><span class="so">XIV</span>Câu hỏi thường gặp</h2>
 <div class="khung-cuon"><table>
 <tr><th style="width:38%">Câu hỏi</th><th>Trả lời</th></tr>
-<tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống (người đã cấp mã),
-hoặc người của trường mình từng đăng ký.</td></tr>
-<tr><td>Tên trường hiện ra hơi khác tên thật (thiếu chữ, sai xã)?</td><td>Tên lấy theo danh
-bạ, có thể chưa kịp cập nhật sau sắp xếp đơn vị hành chính. Cứ đăng ký và ghi tên đúng vào
-ô «Tên trường» — khi dùng thật, tên lấy theo khai báo của nhà trường.</td></tr>
-<tr><td>Máy cứ tự mở ra một trường không phải trường mình?</td><td>Máy từng vào trường ấy nên
-ghi nhớ. Bấm <span class="nut">↩ Về cổng đăng nhập</span> trên băng vàng rồi gõ mã trường mình.</td></tr>
-<tr><td>Dùng điện thoại được không?</td><td>Được — chạy trên trình duyệt, không phải cài ứng
-dụng. Nhập liệu nhiều thì máy tính thuận tay hơn.</td></tr>
-<tr><td>Dữ liệu trường có ai khác xem được không?</td><td>Không. Mỗi trường một cơ sở dữ liệu
-riêng, quyền đặt đến từng tài khoản Gmail; file minh chứng nằm trên Google Drive của chính
-nhà trường.</td></tr>
-<tr><td>Hai người cùng sửa một bảng có đè mất của nhau không?</td><td>Không. Hệ thống chỉ ghi
-đúng ô vừa sửa, người này đổi ô nào thì ô đó thay đổi — hai người cùng nhập một màn (ví dụ
-hội đồng cùng chấm tiêu chí) là cách dùng bình thường.</td></tr>
-<tr><td>Xem thử có làm hỏng gì, có mất phí không?</td><td>Không và không. Bản xem thử chỉ chạy
-dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
+<tr><td>Quên mật khẩu thì sao?</td><td>Hệ thống không có mật khẩu riêng — đăng nhập bằng Google. Quên mật khẩu Gmail thì khôi phục ở Google.</td></tr>
+<tr><td>Không nhớ mã trường thì hỏi ai?</td><td>Người phụ trách hệ thống, hoặc người của trường mình từng đăng ký.</td></tr>
+<tr><td>Tên trường hiện ra hơi khác tên thật?</td><td>Tên lấy theo danh bạ, có thể chưa kịp cập nhật sau sắp xếp. Khi dùng thật, tên lấy theo khai báo của nhà trường.</td></tr>
+<tr><td>Máy cứ tự mở một trường không phải trường mình?</td><td>Máy từng vào trường ấy nên ghi nhớ — bấm <span class="nut">↩ Về cổng đăng nhập</span> rồi gõ mã trường mình.</td></tr>
+<tr><td>Dữ liệu trường có ai khác xem được không?</td><td>Không. Mỗi trường một cơ sở dữ liệu riêng, quyền đặt đến từng Gmail; tệp minh chứng nằm trên Drive của chính nhà trường.</td></tr>
+<tr><td>Hai người cùng sửa một bảng có đè nhau không?</td><td>Không — hệ thống chỉ ghi đúng ô vừa sửa.</td></tr>
+<tr><td>Trang báo không kết nối được cơ sở dữ liệu?</td><td>Hệ thống đang tạm nghỉ (hiếm gặp) — báo người phụ trách; dữ liệu không mất.</td></tr>
+<tr><td>Xem thử có làm hỏng gì, có mất phí không?</td><td>Không và không. Bản xem thử chỉ chạy dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
 </table></div>
 
 <a class="ve-cong" href="./">↩ Về trang đăng nhập</a>
@@ -554,8 +570,7 @@ dữ liệu mẫu; hệ thống vận hành chi phí 0 đồng.</td></tr>
   if (o && nay > 2026) o.textContent = '2026–' + nay;
 })();
 
-// Nút nổi quay về mục lục — chỉ hiện khi đã cuộn qua hộp mục lục. Không có
-// JS thì trang vẫn đọc bình thường, chỉ thiếu nút tắt này.
+// Nút nổi quay về mục lục — chỉ hiện khi đã cuộn qua hộp mục lục.
 (function () {
   var nut = document.getElementById('len-dau');
   var ml = document.getElementById('muc-luc');

@@ -150,7 +150,8 @@
         '<div class="the-thong-bao" style="margin-bottom:16px">' +
         '<div class="nhan-nho" style="text-align:left;margin-bottom:8px">Nạp hàng loạt từ Google Sheet</div>' +
         '<p style="font-size:14px;color:var(--chu-mo);margin-bottom:10px">' +
-        'Mở Sheet <b>THDienLien_05.2026</b> → tab <b>DSGV</b> → bôi đen <b>cột Gmail và cột Link</b> ' +
+        // Trước 15/9/2026 dòng này ghi tên Sheet riêng của một trường — hiện ra ở MỌI trường.
+        'Mở bảng link thư mục cá nhân (Google Sheet do người dựng hệ thống gửi, hoặc bảng của trường) → bôi đen <b>cột Gmail và cột Link</b> ' +
         '(kéo chọn cả hai, kể cả các cột ở giữa cũng không sao) → Ctrl+C → dán vào ô dưới. ' +
         'Mỗi dòng chỉ cần có <b>một email</b> và <b>một đường dẫn http</b> là máy tự nhận ra ai với ai. ' +
         'Không có email thì máy thử khớp theo <b>họ tên</b>.</p>' +
