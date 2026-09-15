@@ -106,7 +106,12 @@ async function giuMotTruong(x) {
 // ── Issue trên kho mã: chỗ thầy Chung NHÌN THẤY được khi robot hỏng ─────────
 async function gh(duong, opt = {}) {
   const token = process.env.GITHUB_TOKEN, kho = process.env.GITHUB_REPOSITORY;
-  if (!token || !kho) return null;           // chạy thử trên máy: bỏ qua
+  if (!token || !kho) {
+    // Trên máy thầy: bỏ qua là đúng. Trên GitHub Actions mà thiếu thì PHẢI kêu —
+    // lượt đầu 15/9/2026 thiếu env GITHUB_TOKEN, phần báo issue im lặng không chạy.
+    if (process.env.GITHUB_ACTIONS) console.log('⚠  Thiếu GITHUB_TOKEN trong env của bước chạy — KHÔNG mở được issue báo hỏng.');
+    return null;
+  }
   const r = await fetch(`https://api.github.com/repos/${kho}${duong}`, {
     ...opt,
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json',

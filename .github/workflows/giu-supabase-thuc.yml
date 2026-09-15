@@ -47,6 +47,10 @@ jobs:
 
       - name: Gửi truy vấn tới từng trường
         run: node .github/scripts/giu-supabase-thuc.js
+        env:
+          # KHÔNG tự có trong môi trường bước chạy — thiếu dòng này thì robot
+          # im lặng bỏ qua phần mở issue (lượt thử 15/9/2026 dính đúng thế).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Chống việc GitHub tắt lịch chạy sau 60 ngày kho mã im lặng.
       # always() để bước này vẫn chạy khi có trường không gọi được — lúc đó
