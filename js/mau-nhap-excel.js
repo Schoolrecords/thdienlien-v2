@@ -120,11 +120,13 @@
         hdRow('3', 'Máy chỉ "mở cửa": ai có tên trong danh sách thì lần đầu đăng nhập Google là vào thẳng, đúng vai trò. Ai không có tên vẫn đăng nhập được nhưng dừng ở màn chờ duyệt.'),
         { o: [o('', 'thuong'), o('', 'thuong')] },
         { cao: 20, o: [o('', 'thuong'), o('TỪNG CỘT', 'hdb')] },
-        hdRow('B', 'Cột "Email Google (đăng nhập)" là cột QUAN TRỌNG NHẤT: phải là địa chỉ Gmail (hoặc địa chỉ Google Workspace) thầy cô đang đăng nhập được. Sai một ký tự là người đó vĩnh viễn không vào được mà không hiểu vì sao. KHÔNG chép cột Email trong tệp CSDL_GiaoVien.xls của cơ sở dữ liệu ngành — cột đó nhiều địa chỉ công vụ @nghean.edu.vn không đăng nhập Google được, và hay chép nhầm dòng. Mỗi người MỘT địa chỉ riêng.'),
-        hdRow('C', 'Cột "Chức vụ" ghi như trên thẻ CBGV: Hiệu trưởng · Phó Hiệu trưởng · Giáo viên · GV - Tổ trưởng tổ 1 · Nhân viên kế toán · Nhân viên văn thư…'),
-        hdRow('D', 'Cột "Tổ chuyên môn": Tổ 1 · Tổ 2-3 · Tổ 4-5 · Tổ Văn phòng… (không có thì để trống).'),
-        hdRow('E', 'Cột "Vai trò trên hệ thống" CHỌN trong danh sách xổ xuống: Quản trị hệ thống (chỉ 1–2 người: Hiệu trưởng hoặc người được giao quản trị — có quyền cao nhất) · Ban giám hiệu · Tổ trưởng chuyên môn · Giáo viên · Nhân viên. Để trống thì máy suy từ cột Chức vụ (có chữ "Hiệu trưởng" → Ban giám hiệu, "Tổ trưởng" → Tổ trưởng, "Nhân viên" → Nhân viên, còn lại → Giáo viên) và không bao giờ tự đặt Quản trị. Vai trò của người ĐÃ CÓ trong hệ thống không bị đổi khi nạp lại.'),
-        hdRow('F', coNhieuCoSo
+        hdRow(cotCua(TIEU_DE, 'Email Google (đăng nhập)'), 'Cột "Email Google (đăng nhập)" là cột QUAN TRỌNG NHẤT: phải là địa chỉ Gmail (hoặc địa chỉ Google Workspace) thầy cô đang đăng nhập được. Sai một ký tự là người đó vĩnh viễn không vào được mà không hiểu vì sao. KHÔNG chép cột Email trong tệp CSDL_GiaoVien.xls của cơ sở dữ liệu ngành — cột đó nhiều địa chỉ công vụ @nghean.edu.vn không đăng nhập Google được, và hay chép nhầm dòng. Mỗi người MỘT địa chỉ riêng.'),
+        hdRow(cotCua(TIEU_DE, 'Chức vụ'), 'Cột "Chức vụ" ghi như trên thẻ CBGV: Hiệu trưởng · Phó Hiệu trưởng · Giáo viên · GV - Tổ trưởng tổ 1 · Nhân viên kế toán · Nhân viên văn thư…'),
+        hdRow(cotCua(TIEU_DE, 'Tổ chuyên môn'), 'Cột "Tổ chuyên môn": Tổ 1 · Tổ 2-3 · Tổ 4-5 · Tổ Văn phòng… (không có thì để trống).'),
+        hdRow(cotCua(TIEU_DE, 'Vai trò trên hệ thống'), 'Cột "Vai trò trên hệ thống" CHỌN trong danh sách xổ xuống: Quản trị hệ thống (chỉ 1–2 người: Hiệu trưởng hoặc người được giao quản trị — có quyền cao nhất) · Ban giám hiệu · Tổ trưởng chuyên môn · Giáo viên · Nhân viên. Để trống thì máy suy từ cột Chức vụ (có chữ "Hiệu trưởng" → Ban giám hiệu, "Tổ trưởng" → Tổ trưởng, "Nhân viên" → Nhân viên, còn lại → Giáo viên) và không bao giờ tự đặt Quản trị. Vai trò của người ĐÃ CÓ trong hệ thống không bị đổi khi nạp lại.'),
+        // 🔴 16/9/2026: năm nhãn trên đây trước ghi cứng B–F, lệch ĐÚNG MỘT BẬC so với cột thật
+        // (Email ở cột C mà sổ tay ghi B). Nay lấy chữ cột từ chính TIEU_DE — thêm/bớt cột không lệch nữa.
+        hdRow(cotCua(TIEU_DE, 'Cơ sở công tác'), coNhieuCoSo
           ? 'Cột "Cơ sở công tác" CHỌN trong danh sách (trường có ' + coSo.length + ' cơ sở/điểm trường). Để trống là chưa gắn cơ sở — gán sau ở thẻ Tài khoản.'
           : 'Cột "Cơ sở công tác" chỉ dùng cho trường có phân hiệu, điểm trường lẻ (ghi tên hoặc mã cơ sở đã khai ở thẻ Cơ sở & Sáp nhập). Trường một điểm thì để trống.'),
         { o: [o('', 'thuong'), o('', 'thuong')] },
