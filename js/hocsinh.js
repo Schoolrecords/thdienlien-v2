@@ -267,15 +267,34 @@
   // ══════════ HÀNG THẺ CON DÙNG CHUNG ══════════
   // so-chu-nhiem.js gọi window.LOP_HOC_THE('sochunhiem') để vẽ đúng đầu trang
   // này lên màn sổ. `phai` là HTML đặt bên phải tiêu đề (ô chọn năm học).
-  var CAC_THE = [['tong-quan', 'Tổng quan'], ['sochunhiem', 'Sổ chủ nhiệm'], ['sodaubai', 'Sổ đầu bài']];
+  // 29/9/2026: thẻ "Sổ chủ nhiệm" chỉ hiện với BGH/Quản trị + GVCN; thẻ "Kiểm tra sổ"
+  // (danh sách sổ đã nộp của nhiều lớp) chỉ hiện với BGH/Quản trị + tổ trưởng/tổ phó
+  // được giao. GV bộ môn, nhân viên chỉ thấy Tổng quan. so-chu-nhiem.js biết vai sớm
+  // hơn (đọc ngay khi mở sổ) thì báo qua window.SCN_QUYEN.
+  var CAC_THE = [['tong-quan', 'Tổng quan'], ['sochunhiem', 'Sổ chủ nhiệm'], ['kiemtra', 'Kiểm tra sổ'], ['sodaubai', 'Sổ đầu bài']];
+  var TEN_THE = { sochunhiem: 'Sổ chủ nhiệm', kiemtra: 'Kiểm tra sổ' };
+  function quyenSo() {
+    var vt = (window.NGUOI_DUNG || {}).vai_tro || '', q = window.SCN_QUYEN || {};
+    var bgh = XEM_THU || vt === 'admin' || vt === 'ban_giam_hieu';
+    return { so: bgh || LOP_TOI.length > 0 || !!q.gvcn, kiemTra: bgh || TO_TOI.length > 0 || !!q.toKT };
+  }
+  window.LOP_HOC_QUYEN = quyenSo;
+  // Đường dẫn vị trí trên màn sổ / màn kiểm tra: màn đó tự có tiêu đề và thẻ con
+  // riêng, nên KHÔNG vẽ lại tiêu đề "Lớp học" + hàng thẻ (hai tầng thẻ chồng nhau
+  // chiếm nửa màn điện thoại). Về trang Lớp học bằng chữ "Lớp học" ở đây.
+  window.LOP_HOC_VET = function (ma) {
+    return '<nav class="lh-vet" aria-label="Vị trí"><a href="#" data-lh-ve="home">Trang chủ</a><span>/</span>' +
+      '<a href="#hocsinh" data-lh-the="tong-quan">Lớp học</a><span>/</span><b>' + (TEN_THE[ma] || 'Sổ chủ nhiệm') + '</b></nav>';
+  };
   window.LOP_HOC_THE = function (maDangChon, phai) {
+    if (maDangChon === 'sochunhiem' || maDangChon === 'kiemtra') return '<div class="lh-dau">' + window.LOP_HOC_VET(maDangChon) + '</div>';
+    var q = quyenSo();
     return '<div class="lh-dau">' +
-      '<nav class="lh-vet" aria-label="Vị trí"><a href="#" data-lh-ve="home">Trang chủ</a><span>/</span>' +
-      (maDangChon === 'sochunhiem'
-        ? '<a href="#hocsinh" data-lh-the="tong-quan">Lớp học</a><span>/</span><b>Sổ chủ nhiệm</b>'
-        : '<b>Lớp học</b>') + '</nav>' +
+      '<nav class="lh-vet" aria-label="Vị trí"><a href="#" data-lh-ve="home">Trang chủ</a><span>/</span><b>Lớp học</b></nav>' +
       '<div class="lh-dau-hang"><h2>Lớp học</h2>' + (phai ? '<div class="lh-dau-phai">' + phai + '</div>' : '') + '</div>' +
-      '<div class="lh-the" role="tablist">' + CAC_THE.map(function (t) {
+      '<div class="lh-the" role="tablist">' + CAC_THE.filter(function (t) {
+        return t[0] === 'sochunhiem' ? q.so : t[0] === 'kiemtra' ? q.kiemTra : true;
+      }).map(function (t) {
         if (t[0] === 'sodaubai') {
           return '<button type="button" class="lh-the-mo" data-lh-the="sodaubai" aria-disabled="true" title="Chức năng đang xây dựng">' +
             t[1] + ' <small>sắp có</small></button>';
@@ -292,6 +311,11 @@
     }
     if (ma === 'sochunhiem') {
       if (window.SO_CHU_NHIEM && window.SO_CHU_NHIEM.moLop) window.SO_CHU_NHIEM.moLop();
+      else if (window.chuyenManHinh) window.chuyenManHinh('sochunhiem');
+      return;
+    }
+    if (ma === 'kiemtra') {
+      if (window.SO_CHU_NHIEM && window.SO_CHU_NHIEM.moKiemTra) window.SO_CHU_NHIEM.moKiemTra();
       else if (window.chuyenManHinh) window.chuyenManHinh('sochunhiem');
       return;
     }

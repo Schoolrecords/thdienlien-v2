@@ -3884,8 +3884,10 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   font-size: 10.5px; font-weight: 600; color: var(--chu-nhat); border: 1px solid var(--vien);
   border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px;
 }
-/* Trên màn Sổ chủ nhiệm: tiêu đề "Sổ chủ nhiệm" thành tiêu đề phụ dưới hàng thẻ */
-.lh-dau + .scn-dau h2 { font-size: 18px; }
+/* Màn Sổ chủ nhiệm / Kiểm tra sổ: chỉ còn đường dẫn phía trên (29/9/2026) — tiêu đề sổ
+   là tiêu đề DUY NHẤT của màn, cùng cỡ tiêu đề trang Lớp học */
+.lh-dau + .scn-dau h2 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.lh-dau:has(> .lh-vet:only-child) { margin-bottom: 2px; }
 
 /* Thanh lọc một hàng */
 .lh-loc { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
@@ -4043,3 +4045,16 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 /* Sổ chủ nhiệm — trạng thái kỳ nộp gần nhất ở cột thao tác trang Lớp học (sql/71, 28/9/2026) */
 .lh-duyet { display: inline-block; font-size: 12px; color: var(--chu-mo); white-space: nowrap; margin: 0 14px 0 -8px; }
 .lh-duyet.bo-sung { color: var(--vang-sam); font-weight: 600; }
+/* Lối tắt Sổ chủ nhiệm theo vai trên trang chủ (js/so-chu-nhiem.js veNhacHome, 29/9/2026) */
+.scn-nhac { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 0 0 12px;
+  padding: 10px 12px 10px 14px; border: 1px solid var(--vien); border-left: 3px solid var(--dam); border-radius: 12px; background: var(--the);
+  font-size: 14px; line-height: 1.45; color: var(--chu-mo); }
+.scn-nhac b { color: var(--chu); }
+.scn-nhac .scn-nhac-do { color: var(--vang-sam); }
+.scn-nhac-nut { display: flex; flex-wrap: wrap; gap: 8px; }
+.scn-nhac-nut button { font: inherit; font-size: 13.5px; font-weight: 600; min-height: 36px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--vien); background: #fff; color: var(--chu); }
+.scn-nhac-nut button:first-child { background: var(--dam); border-color: var(--dam); color: #fff; }
+.scn-nhac-nut button:hover { filter: brightness(.96); }
+@media (max-width: 640px) { .scn-nhac-nut { width: 100%; } .scn-nhac-nut button { flex: 1; } }
+@media print { #scn-nhac-home { display: none; } }
