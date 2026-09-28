@@ -3651,8 +3651,7 @@ textarea.ht-o { min-height: 116px; display: block; }
    nút chạm cao ≥ 36–40px.
    ════════════════════════════════════════════════════════════════════════ */
 #vung-sochunhiem { --scn-ke: #d5dbe4; --scn-ke-dam: #8c96a6; --scn-nen: #f4f5f7; margin: 0 auto; }   /* rộng bằng khung chung (28/9/2026) */
-.scn-dau { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding: 4px 0 12px; border-bottom: 1px solid var(--scn-ke); margin-bottom: 12px; }
-.scn-dau > div:first-child { flex: 1 1 260px; }
+.scn-dau { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 4px 0 12px; border-bottom: 1px solid var(--scn-ke); margin-bottom: 12px; }
 .scn-dau h2 { font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--chu); line-height: 1.2; }
 .scn-dau p { font-size: 13.5px; color: var(--chu-mo); margin-top: 2px; }
 .scn-chon { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -3762,7 +3761,87 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
   .scn-tabs button { padding: 10px 11px; }
 }
 @media print {
-  .scn-tabs, .scn-chon, #scn-word, .scn-mo-them, .scn-x { display: none !important; }
+  .scn-tabs, .scn-chon, .scn-nut-xem, .scn-mo-them, .scn-x { display: none !important; }
+}
+
+/* ── Hàng tiêu đề sổ: tiêu đề trái, nút "Xem sổ chủ nhiệm" góc phải (28/9/2026) ── */
+.scn-dau-tieu { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.scn-dau-tieu > div { flex: 1 1 240px; min-width: 0; }
+.scn-nut-xem {
+  display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  font: inherit; font-size: 14.5px; font-weight: 700; letter-spacing: .01em;
+  padding: 10px 18px; min-height: 42px; border: 0; border-radius: 10px;
+  background: var(--dam); color: #fff; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 48, 107, .25), 0 6px 16px rgba(20, 48, 107, .18);
+  transition: background .15s, box-shadow .15s, transform .15s;
+}
+.scn-nut-xem:hover { background: var(--dam-2); box-shadow: 0 2px 4px rgba(20, 48, 107, .25), 0 10px 22px rgba(20, 48, 107, .22); }
+.scn-nut-xem:active { transform: translateY(1px); }
+.scn-nut-xem:focus-visible { outline: 3px solid rgba(42, 92, 184, .45); outline-offset: 2px; }
+.scn-nut-xem svg { flex: 0 0 auto; }
+
+/* ── Khung xem trước sổ (lớp phủ toàn màn, kiểu hộp thoại; dưới hộp hỏi 9300) ── */
+html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
+.scn-xt {
+  position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(15, 23, 42, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  animation: scn-xt-hien .16s ease-out;
+}
+@keyframes scn-xt-hien { from { opacity: 0; } to { opacity: 1; } }
+.scn-xt-hop {
+  display: flex; flex-direction: column; width: min(1040px, 100%); height: 100%; max-height: 100%;
+  background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 64px rgba(15, 23, 42, .35);
+}
+.scn-xt-dau { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px 20px; padding: 18px 20px 12px; flex-wrap: wrap; }
+.scn-xt-tieu { flex: 1 1 320px; min-width: 0; }
+.scn-xt-tieu h2 { font-size: 18px; font-weight: 800; color: var(--chu); line-height: 1.3; margin: 0; }
+.scn-xt-tieu p { font-size: 13.5px; color: var(--chu-mo); line-height: 1.5; margin: 3px 0 0; }
+.scn-xt-nut { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.scn-xt-nut button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font: inherit; font-size: 14px; font-weight: 700; min-height: 40px; padding: 8px 16px;
+  border-radius: 10px; border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.scn-xt-nut button:disabled { opacity: .5; cursor: default; }
+.scn-xt-nut button:focus-visible { outline: 3px solid rgba(42, 92, 184, .45); outline-offset: 2px; }
+.scn-xt-nut .scn-xt-luu { background: var(--dam); color: #fff; }
+.scn-xt-nut .scn-xt-luu:not(:disabled):hover { background: var(--dam-2); }
+.scn-xt-nut .scn-xt-in { background: var(--o-con); color: var(--chu); border-color: var(--vien); }
+.scn-xt-nut .scn-xt-in:not(:disabled):hover { background: var(--ke); }
+.scn-xt-nut .scn-xt-dong { width: 40px; padding: 0; background: transparent; color: var(--chu-mo); }
+.scn-xt-nut .scn-xt-dong:hover { background: var(--o-con); color: var(--chu); }
+.scn-xt-chon { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; padding: 0 20px 14px; border-bottom: 1px solid var(--vien); }
+.scn-xt-ban { display: inline-flex; padding: 3px; gap: 2px; background: var(--o-con); border: 1px solid var(--vien); border-radius: 10px; }
+.scn-xt-ban button {
+  font: inherit; font-size: 13.5px; font-weight: 600; min-height: 34px; padding: 6px 14px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--chu-mo); cursor: pointer;
+}
+.scn-xt-ban button.on { background: #fff; color: var(--dam); box-shadow: 0 1px 3px rgba(16, 32, 64, .14); }
+.scn-xt-ban-mot { font-size: 13.5px; font-weight: 700; color: var(--dam); padding: 6px 12px; background: var(--o-con); border: 1px solid var(--vien); border-radius: 10px; }
+.scn-xt-tt27 { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--chu); cursor: pointer; min-height: 34px; }
+.scn-xt-tt27 input { width: 17px; height: 17px; accent-color: var(--dam); }
+.scn-xt-cuon { position: relative; flex: 1 1 auto; min-height: 0; background: #e4e7ec; }
+.scn-xt-khung { display: block; width: 100%; height: 100%; border: 0; background: #e4e7ec; }
+.scn-xt-khung[hidden], .scn-xt-cho[hidden] { display: none; }
+.scn-xt-cho { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; font-size: 14px; color: var(--chu-mo); }
+@media (max-width: 760px) {
+  .scn-xt { padding: 0; }
+  .scn-xt-hop { width: 100%; height: 100%; border-radius: 0; }
+  .scn-xt-dau { padding: 12px 56px 8px 12px; gap: 8px; }
+  .scn-xt-tieu { flex-basis: 100%; }
+  .scn-xt-tieu h2 { font-size: 16px; }
+  .scn-xt-tieu p { font-size: 12.5px; }
+  .scn-xt-nut { flex: 1 1 100%; margin-right: -44px; }
+  .scn-xt-nut .scn-xt-luu, .scn-xt-nut .scn-xt-in { flex: 1 1 0; padding: 8px 10px; font-size: 13.5px; }
+  .scn-xt-nut .scn-xt-in { flex: 0 0 auto; }
+  .scn-xt-nut .scn-xt-dong { position: absolute; top: 8px; right: 8px; }
+  .scn-xt-chon { padding: 0 12px 10px; gap: 8px 12px; }
+  .scn-xt-ban { width: 100%; }
+  .scn-xt-ban button { flex: 1 1 0; padding: 6px 8px; font-size: 12.8px; }
+}
+@media (max-width: 640px) {
+  .scn-nut-xem { width: 100%; justify-content: center; }
 }
 
 

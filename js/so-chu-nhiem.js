@@ -9,8 +9,10 @@
 //
 // Chín thẻ: Tổng quan · Kế hoạch · Học sinh · Theo dõi hằng ngày · Phụ huynh ·
 //          Hỗ trợ HS · Đánh giá (chỉ đọc) · Tổng kết · Kiểm tra – Duyệt (sql/71).
-// Hai nút Word: "sổ đầy đủ" (GVCN, BGH) và "bản gửi tổ trưởng (đã lọc)" — cả hai
-// BÁM KHUNG SỔ CHỦ NHIỆM THẬT của trường (Sổ chủ nhiệm 1B 2025-2026); sổ là hồ
+// Nút "Xem sổ chủ nhiệm" → khung xem trước toàn màn (tờ A4 dựng từ CHÍNH HTML xuất
+// Word) có "Lưu về máy (Word)" + "In"; chọn bản lưu hồ sơ | bản nộp tổ chuyên môn
+// (bản sau chỉ BGH/quản trị, tổ trưởng được giao). Word BÁM KHUNG SỔ CHỦ NHIỆM THẬT
+// của trường: bìa một section có viền đôi, ruột section sau không viền; sổ là hồ
 // sơ nên trang trong không in Quốc hiệu; tuỳ chọn kèm trích TT 27 (nạp lười
 // js/so-chu-nhiem-tt27.js). Sổ dự án mục 99.
 //
@@ -743,13 +745,11 @@
     }
     var phu = D.lop ? ['Lớp <b>' + thoat(D.lop) + '</b>', D.gvcnTen ? 'GVCN ' + thoat(D.gvcnTen) : '', 'Năm học ' + thoat(D.nam), D.coSoTen ? thoat(D.coSoTen) : '']
       .filter(Boolean).join(' · ') : D.laToKT ? 'Kiểm tra sổ các lớp được giao · ' + thoat(tenToCua(D.toCuaToi)) + ' · Năm học ' + thoat(D.nam) : 'Năm học ' + thoat(D.nam);
-    var word = D.lop && !D.dangNap ? '<div class="scn-chon"><button class="scn-nut" data-act="word-day-du">Word: sổ đầy đủ</button>' +
-      '<button class="scn-nut phu" data-act="word-loc">Bản gửi tổ trưởng (đã lọc)</button>' +
-      '<label class="scn-nhan ngang"><input type="checkbox" id="scn-tt27"' + (D.tt27 ? ' checked' : '') + '> Kèm trích TT 27</label></div>' : '';
+    // Một nút "Xem sổ chủ nhiệm" ở góc phải hàng tiêu đề — tách khỏi ô chọn điểm trường/lớp
+    var xem = D.lop && !D.dangNap && !D.loiKhung ? '<button type="button" class="scn-nut-xem" data-act="xem-so">' + SVG.mat + '<span>Xem sổ chủ nhiệm</span></button>' : '';
     // Hàng thẻ con của trang "Lớp học" (hocsinh.js) — sổ là một thẻ của trang đó
     var lh = window.LOP_HOC_THE ? window.LOP_HOC_THE('sochunhiem') : '';
-    return lh + '<div class="scn-dau"><div><h2>Sổ chủ nhiệm</h2><p>' + phu + '</p></div>' + chon +
-      word + '</div>';
+    return lh + '<div class="scn-dau"><div class="scn-dau-tieu"><div><h2>Sổ chủ nhiệm</h2><p>' + phu + '</p></div>' + xem + '</div>' + chon + '</div>';
   }
 
   // ── Tổng quan ──
@@ -1321,8 +1321,7 @@
       'kèm tên học sinh cần giúp đỡ, nổi trội về học tập. Nộp xong vẫn ghi sổ bình thường.</p>' +
       '<div class="scn-hang">' + oChon('dv-ky', KY_NOP, D.kyNop) +
       (xong ? chipTT(moi.trang_thai) : '<button class="scn-nut" data-act="nop-ky">' + nhan + '</button>') +
-      (moi && !xong ? chipTT(moi.trang_thai) : '') +
-      '<button class="scn-nut phu" data-act="word-loc">Xem bản gửi tổ trưởng (Word)</button></div>';
+      (moi && !xong ? chipTT(moi.trang_thai) : '') + '</div>';
     var dsSap = ds.slice().sort(function (a, b) { return thuTuKy(a.ky) - thuTuKy(b.ky) || b.lan - a.lan; });
     h += dsSap.length ? '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>Kỳ</th><th>Lần</th><th>Nộp lúc</th><th>Trạng thái</th><th>Kiểm tra, nhận xét</th><th>Mã bản</th></tr></thead><tbody>' +
       dsSap.map(function (n) {
@@ -1384,7 +1383,7 @@
     h += '<p class="scn-ghi-chu">Mã bản <code>' + maNgan(n.ma_bam) + '</code> (SHA-256 của bản chụp, máy chủ dựng lúc ' + gioVN(n.nop_luc) + ').</p>';
     var xn = dsXacNhan(n);
     if (xn) h += '<p class="scn-nhan">Đã xác nhận</p>' + xn;
-    h += '<div class="scn-hang"><button class="scn-nut phu" data-act="word-bc">Tải bản gửi tổ trưởng (Word)</button>' +
+    h += '<div class="scn-hang"><button class="scn-nut phu" data-act="xem-bc">Xem bản nộp tổ</button>' +
       (laBGH() && D.dsLop.some(function (l) { return chuanLop(l.lop) === chuanLop(n.lop); }) ? '<button class="scn-nut phu" data-act="mo-so" data-lop="' + thoat(n.lop) + '">Mở sổ đầy đủ lớp ' + thoat(n.lop) + '</button>' : '') + '</div>';
     var q = quyenXN(n);
     if (q.length) {
@@ -1399,7 +1398,7 @@
     return h;
   }
 
-  // Tóm tắt bản chụp trên màn (bản Word đầy đủ tải bằng nút)
+  // Tóm tắt bản chụp trên màn (bản đầy đủ: nút "Xem bản nộp tổ" → khung xem trước)
   function veTomBanChup(bc, ky) {
     var ss = bc.si_so || {}, h = '<dl class="scn-dl">';
     h += '<dt>Lớp</dt><dd>' + thoat(bc.lop) + (bc.co_so_ten ? ' · ' + thoat(bc.co_so_ten) : '') + ' · GVCN ' + thoat(bc.gvcn || '') + ' · sĩ số ' + (ss.tong || 0) + ' (nữ ' + (ss.nu || 0) + ', hòa nhập ' + (ss.hoa_nhap || 0) + ')</dd>';
@@ -1723,28 +1722,34 @@
     };
     var h = '';
 
-    // ── BÌA ──
+    // ── BÌA (WordSection1 — trang DUY NHẤT có viền đôi) ──
+    // Theo bìa sổ chủ nhiệm thật của trường (đo bằng Word 28/9/2026): chủ quản
+    // 14pt thường · tên trường 14pt đậm + gạch ngắn · SỔ CHỦ NHIỆM 48pt đậm ·
+    // CẤP TIỂU HỌC 18pt đậm · khối thông tin 14pt đậm lùi 3cm · năm học đậm
+    // nghiêng. Lề, viền trang: WORD_TIEN_ICH.khungWordBia.
     var truong = W.cauHinh('TEN_TRUONG'), chuQuan = W.cauHinh('DON_VI_CHU_QUAN') || W.cauHinh('CHU_QUAN_THUONG');
     var truongBan = (m.ban_dai_dien || []).filter(function (b) { return /trưởng/i.test(b.vai_tro || '') && !/phó/i.test(b.vai_tro || ''); })[0] || null;
-    var dongBia = function (t) { return '<p style="margin:5pt 0 0 1.5cm;font-size:14pt">' + t + '</p>'; };
+    var dongBia = function (t) { return '<p style="margin:0 0 4pt 3cm;font-size:14pt;line-height:1.5"><b>' + t + '</b></p>'; };
+    var biaCham = function (t) { t = String(t == null ? '' : t).trim(); return t ? c(t) : '…………………………………'; };
     // Khoảng trống bằng đoạn rỗng: Word bỏ margin-top của đoạn rỗng nên bìa dồn lên nửa trang
-    var trong = function (n) { return new Array(n + 1).join('<p style="margin:0">&nbsp;</p>'); };
-    h += '<p class="giua" style="margin:0;font-size:13pt">' + c(String(chuQuan).toUpperCase()) + '</p>' +
-      '<p class="giua" style="margin:0;font-size:13pt"><b>' + c(String(truong).toUpperCase()) + '</b></p>' + W.gachTenTruong(truong || 'TRUONG') +
-      trong(7) + '<p class="giua" style="margin:0"><b style="font-size:32pt">SỔ CHỦ NHIỆM</b></p>' +
-      '<p class="giua" style="margin:8pt 0 0"><b style="font-size:16pt">CẤP TIỂU HỌC</b></p>' +
-      (loc ? '<p class="giua nghieng" style="margin:10pt 0 0;font-size:12pt">Bản gửi tổ chuyên môn — đã lọc dữ liệu cá nhân nhạy cảm</p>' : '') +
-      trong(loc ? 4 : 5) +
-      dongBia(c(truong) + ':&nbsp;&nbsp;&nbsp;&nbsp;Lớp: <b>' + c(lop) + '</b>') +
-      (m.co_so_ten ? dongBia('Điểm trường: ' + c(m.co_so_ten)) : '') +
-      dongBia('Tổ chuyên môn: ' + hoac(m.to_chuyen_mon || tc.to || '')) +
-      dongBia('Họ và tên giáo viên chủ nhiệm: ' + hoac(m.gvcn)) +
-      (loc ? '' : dongBia('Điện thoại: ' + hoac(m.gvcn_sdt))) +
-      dongBia('Họ và tên trưởng ban đại diện CMHS: ' + hoac(truongBan && truongBan.ho_ten)) +
-      (loc ? '' : dongBia('Điện thoại: ' + hoac(truongBan && truongBan.sdt))) +
-      trong(4) + '<p class="giua" style="margin:0;font-size:14pt"><b>Năm học: ' + c(namCach) + '</b></p>' +
-      (tc.nop ? '<p class="giua nghieng" style="margin:6pt 0 0;font-size:11pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
-        : loc ? '<p class="giua nghieng" style="margin:6pt 0 0;font-size:11pt">Bản xem trước — chưa nộp kiểm tra</p>' : '') + NGAT;
+    var trong = function (n) { return new Array(n + 1).join('<p style="margin:0;font-size:14pt">&nbsp;</p>'); };
+    var TRUONG = String(truong).toUpperCase();
+    var bia = '<p class="giua" style="margin:0;font-size:14pt">' + c(String(chuQuan).toUpperCase()) + '</p>' +
+      '<p class="giua" style="margin:0;font-size:14pt"><b>' + c(TRUONG) + '</b></p>' +
+      W.gach(Math.max(2.5, Math.min(4.5, TRUONG.length * 0.28 * 0.4)), 14) +
+      trong(7) + '<p class="giua" style="margin:0;line-height:1.2"><b style="font-size:48pt">SỔ CHỦ NHIỆM</b></p>' +
+      '<p class="giua" style="margin:6pt 0 0"><b style="font-size:18pt">CẤP TIỂU HỌC</b></p>' +
+      (loc ? '<p class="giua nghieng" style="margin:8pt 0 0;font-size:12pt">Bản nộp tổ chuyên môn — đã lược dữ liệu cá nhân</p>' : '') +
+      trong(loc ? 7 : 8) +
+      // Dòng đầu gộp tên trường + điểm trường như mẫu: "Trường Tiểu học … – <điểm trường>:  Lớp: 1A1"
+      dongBia(c(truong) + (m.co_so_ten ? ' – ' + c(m.co_so_ten) : '') + ':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lớp: ' + c(lop)) +
+      dongBia('Họ và tên giáo viên chủ nhiệm: ' + biaCham(m.gvcn)) +
+      (loc ? '' : dongBia('Điện thoại: ' + biaCham(m.gvcn_sdt))) +
+      dongBia('Họ và tên trưởng đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
+      (loc ? '' : dongBia('Điện thoại: ' + biaCham(truongBan && truongBan.sdt))) +
+      trong(loc ? 11 : 10) + '<p class="giua" style="margin:0;font-size:14pt"><b><i>Năm học: ' + c(String(nam).replace('-', ' – ')) + '</i></b></p>' +
+      (tc.nop ? '<p class="giua nghieng" style="margin:4pt 0 0;font-size:11pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
+        : loc ? '<p class="giua nghieng" style="margin:4pt 0 0;font-size:11pt">Bản xem trước — chưa nộp kiểm tra</p>' : '');
 
     // ── PHỤ LỤC TT27 (tuỳ chọn, văn bản tĩnh — phần DUY NHẤT có Quốc hiệu) ──
     if (tc.tt27 && tc.tt27.length) {
@@ -1975,22 +1980,185 @@
       '</tr></table>';
     h += '<p class="nghieng" style="font-size:10.5pt;margin-top:10pt">Sổ chủ nhiệm lớp ' + c(lop) + ', năm học ' + c(namCach) + ' — ' +
       (tc.nop ? 'Mã bản: ' + maNgan(tc.nop.ma_bam) + ' (SHA-256 của bản chụp nộp lúc ' + gioVN(tc.nop.nop_luc) + ')' : loc ? 'bản xem trước, chưa nộp kiểm tra' : 'BẢN LÀM VIỆC, xuất lúc ' + gioVN(new Date().toISOString())) + '.</p>';
-    return h;
+    // Bìa một section (có viền), ruột một section (không viền) — tệp Word hoàn chỉnh
+    return W.khungWordBia('Sổ chủ nhiệm lớp ' + lop + (loc ? ' (bản nộp tổ)' : ''), bia, h);
   }
 
-  function tenTepWord(lop, loc) { return 'so-chu-nhiem-lop-' + String(lop).toLowerCase().replace(/\s+/g, '') + '-' + D.nam + (loc ? '-ban-gui-to' : '') + '.doc'; }
-  function xuatTuMoHinh(m, nop) {
-    var W = window.WORD_TIEN_ICH;
-    if (!W) { bao('Chưa tải được bộ xuất Word.'); return; }
+  // ══════════ XEM SỔ CHỦ NHIỆM — KHUNG XEM TRƯỚC (28/9/2026) ══════════
+  // Một nút "Xem sổ chủ nhiệm" → lớp phủ toàn màn: các tờ A4 dựng từ CHÍNH HTML
+  // đem đi xuất Word (iframe srcdoc — kiểu chữ Times New Roman cỡ như Word, cô
+  // lập khỏi CSS của app). Chọn bản: bản lưu hồ sơ (đầy đủ) | bản nộp tổ chuyên
+  // môn (đã lọc — CHỈ BGH/quản trị và tổ trưởng được giao; GVCN chỉ có bản lưu
+  // hồ sơ). "Lưu về máy (Word)" tải đúng bản đang xem; "In" in nội dung xem trước.
+  var XT = { mo: false, ban: 'day_du', coBan: ['day_du'], lop: '', nam: '', moHinh: {}, nop: null, html: '', dem: 0, truoc: null };
+  var TEN_BAN = { day_du: 'Sổ chủ nhiệm (bản lưu hồ sơ)', nop_duyet: 'Bản nộp tổ chuyên môn' };
+  var SVG = {
+    mat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    tai: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>',
+    inAn: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>',
+    dong: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
+  // Bản nộp tổ chuyên môn chỉ BGH / quản trị và tổ trưởng được giao mới chọn được
+  function banXemDuoc() { return laBGH() || D.laToKT ? ['day_du', 'nop_duyet'] : ['day_du']; }
+  function tenTepWord(lop, nam, loc) { return 'so-chu-nhiem-lop-' + String(lop).toLowerCase().replace(/\s+/g, '') + '-' + nam + (loc ? '-ban-nop-to' : '') + '.doc'; }
+
+  // HTML Word hoàn chỉnh của một mô hình (bìa section 1 có viền, ruột section 2)
+  function htmlWord(m, nop) {
     var lop = m.lop || D.lop;
-    var tc = { nop: nop || null, tt27: D.tt27 ? window.SCN_TT27 : null, to: toCuaKhoi(m.khoi),
+    return wordSo(m, { nop: nop || null, tt27: D.tt27 ? window.SCN_TT27 : null, to: toCuaKhoi(m.khoi),
       dsNop: D.dv.nop.filter(function (n) { return chuanLop(n.lop) === chuanLop(lop); }),
-      dsDuyet: D.dv.duyet.filter(function (x) { return chuanLop(x.lop) === chuanLop(lop); }) };
-    var loc = m.muc_do === 'nop_duyet';
-    W.taiVe(W.khungWord('Sổ chủ nhiệm lớp ' + lop + (loc ? ' (bản gửi tổ)' : ''), wordSo(m, tc)), tenTepWord(lop, loc));
-    bao('Đã tải ' + (loc ? 'bản gửi tổ trưởng (đã lọc)' : 'sổ đầy đủ') + ' lớp ' + lop + '.');
+      dsDuyet: D.dv.duyet.filter(function (x) { return chuanLop(x.lop) === chuanLop(lop); }) });
   }
-  // Phụ lục TT27 nạp lười — chỉ khi người xuất tích ô
+  // Kiểu riêng của bản XEM TRƯỚC, chèn vào cuối <head> của chính tệp Word: nền
+  // xám, mỗi section một tờ A4 trắng có bóng; bìa có viền đôi đúng lề của Word;
+  // mỗi ngắt trang trong ruột thành một khe xám giữa hai tờ. Khi in: bìa một
+  // trang không lề (tự vẽ lề + viền), ruột theo lề thể thức.
+  var CSS_XEM = '<style>' +
+    'html{background:#e4e7ec}body{margin:0;padding:24px 12px 40px;background:#e4e7ec}' +
+    '.WordSection1,.WordSection2{box-sizing:border-box;width:21cm;margin:0 auto 24px;background:#fff;' +
+    'box-shadow:0 1px 3px rgba(15,23,42,.12),0 10px 28px rgba(15,23,42,.12)}' +
+    '.WordSection1{position:relative;min-height:29.7cm;padding:calc(1.5cm + 28.5pt) calc(1.5cm + 28.5pt) calc(1cm + 28.5pt) calc(2cm + 28.5pt)}' +
+    '.WordSection1:before{content:"";position:absolute;top:1.5cm;right:1.5cm;bottom:1cm;left:2cm;border:4.5pt double #000;pointer-events:none}' +
+    '.WordSection2{min-height:29.7cm;padding:2cm 1.5cm 2cm 3cm}' +
+    '.WordSection2 p[style*="page-break-before"]{height:24px;margin:2cm -1.5cm 2cm -3cm !important;background:#e4e7ec;font-size:0 !important;line-height:0 !important;' +
+    'box-shadow:inset 0 6px 8px -6px rgba(15,23,42,.25),inset 0 -6px 8px -6px rgba(15,23,42,.25)}' +
+    'br[style*="section-break"]{display:none}' +
+    '@page WordSection1{margin:0;border:none;padding:0}' +
+    '@media print{html{zoom:1 !important}html,body{background:#fff;padding:0}' +
+    '.WordSection1,.WordSection2{box-shadow:none;margin:0;width:auto;min-height:0}' +
+    '.WordSection1{height:29.6cm;overflow:hidden;page-break-after:always}.WordSection2{padding:0}' +
+    '.WordSection2 p[style*="page-break-before"]{height:0;margin:0 !important;background:none;box-shadow:none;page-break-before:always}}' +
+    '</style>';
+  function htmlXem(html) { return html.replace('</head>', CSS_XEM + '</head>'); }
+
+  // Mô hình của bản đang chọn (có đệm trong lúc khung đang mở)
+  function layMoHinh(ban) {
+    if (XT.moHinh[ban]) return Promise.resolve(XT.moHinh[ban]);
+    var ghi = function (m) { XT.moHinh[ban] = m; return m; };
+    if (ban !== 'nop_duyet') return Promise.resolve(ghi(dungMoHinh()));
+    // Bản nộp tổ: máy chủ dựng bản xem trước (cùng hàm lọc lúc nộp)
+    if (!may()) return Promise.resolve(ghi(locBanChup(dungMoHinh())));
+    return may().rpc('scn_ban_chup', { p_nam: D.nam, p_lop: XT.lop }).then(function (r) {
+      if (r.error) throw new Error(thieuBang(loiChu(r.error)) ? 'cơ sở dữ liệu chưa chạy sql/71.' : loiChu(r.error));
+      return ghi(r.data);
+    });
+  }
+
+  // Mở khung. tuy = { ban, coBan, moHinh, nop } — bản chụp đã nộp (màn duyệt) truyền sẵn mô hình
+  function moXem(tuy) {
+    tuy = tuy || {};
+    XT.coBan = tuy.coBan || banXemDuoc();
+    XT.ban = tuy.ban && XT.coBan.indexOf(tuy.ban) >= 0 ? tuy.ban : XT.coBan[0];
+    XT.moHinh = {}; XT.nop = tuy.nop || null; XT.html = '';
+    if (tuy.moHinh) XT.moHinh[XT.ban] = tuy.moHinh;
+    XT.lop = (tuy.moHinh && tuy.moHinh.lop) || D.lop; XT.nam = (tuy.moHinh && tuy.moHinh.nam_hoc) || D.nam;
+    if (!XT.mo) XT.truoc = document.activeElement;
+    XT.mo = true;
+    dungKhungXem();
+    veXem();
+  }
+  function dongXem() {
+    var k = document.getElementById('scn-xt');
+    if (k) k.parentNode.removeChild(k);
+    XT.mo = false; XT.moHinh = {}; XT.html = ''; XT.dem++;
+    document.documentElement.classList.remove('scn-xt-khoa');
+    document.removeEventListener('keydown', phimXem, true);
+    if (XT.truoc && XT.truoc.focus && document.body.contains(XT.truoc)) XT.truoc.focus();
+  }
+  function phimXem(e) {
+    if (!XT.mo) return;
+    if (e.key === 'Escape' || e.key === 'Esc') { e.preventDefault(); e.stopPropagation(); dongXem(); return; }
+    if (e.key === 'Tab') {
+      // Giữ tiêu điểm trong khung (hộp thoại)
+      var k = document.getElementById('scn-xt'); if (!k) return;
+      var ds = Array.prototype.slice.call(k.querySelectorAll('button:not([disabled]), input, iframe:not([hidden])'));
+      if (!ds.length) return;
+      var dau = ds[0], cuoi = ds[ds.length - 1];
+      if (e.shiftKey && document.activeElement === dau) { e.preventDefault(); cuoi.focus(); }
+      else if (!e.shiftKey && document.activeElement === cuoi) { e.preventDefault(); dau.focus(); }
+    }
+  }
+  function dungKhungXem() {
+    var k = document.getElementById('scn-xt');
+    if (k) return k;
+    k = document.createElement('div');
+    k.id = 'scn-xt'; k.className = 'scn-xt';
+    k.setAttribute('role', 'dialog'); k.setAttribute('aria-modal', 'true'); k.setAttribute('aria-labelledby', 'scn-xt-td');
+    k.innerHTML = '<div class="scn-xt-hop">' +
+      '<header class="scn-xt-dau"><div class="scn-xt-tieu"><h2 id="scn-xt-td"></h2><p id="scn-xt-mo"></p></div>' +
+      '<div class="scn-xt-nut">' +
+      '<button type="button" class="scn-xt-luu" data-xt="luu">' + SVG.tai + '<span>Lưu về máy (Word)</span></button>' +
+      '<button type="button" class="scn-xt-in" data-xt="in">' + SVG.inAn + '<span>In</span></button>' +
+      '<button type="button" class="scn-xt-dong" data-xt="dong" aria-label="Đóng" title="Đóng (Esc)">' + SVG.dong + '</button></div></header>' +
+      '<div class="scn-xt-chon" id="scn-xt-chon"></div>' +
+      '<div class="scn-xt-cuon"><div class="scn-xt-cho" id="scn-xt-cho">Đang dựng bản xem trước…</div>' +
+      '<iframe class="scn-xt-khung" id="scn-xt-khung" title="Xem trước sổ chủ nhiệm" hidden></iframe></div></div>';
+    document.body.appendChild(k);
+    k.addEventListener('click', function (e) {
+      if (e.target === k) { dongXem(); return; }
+      var b = e.target.closest ? e.target.closest('button') : null;
+      if (!b || b.disabled) return;
+      var x = b.getAttribute('data-xt'), ban = b.getAttribute('data-ban');
+      if (ban) { if (ban !== XT.ban) { XT.ban = ban; veXem(); } return; }
+      if (x === 'dong') dongXem(); else if (x === 'luu') luuXem(); else if (x === 'in') inXem();
+    });
+    k.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'scn-xt-tt27') { D.tt27 = !!e.target.checked; veXem(); }
+    });
+    k.querySelector('#scn-xt-khung').addEventListener('load', coGianXem);
+    if (!dungKhungXem.coResize) { dungKhungXem.coResize = true; window.addEventListener('resize', function () { if (XT.mo) coGianXem(); }); }
+    document.addEventListener('keydown', phimXem, true);
+    document.documentElement.classList.add('scn-xt-khoa');
+    var nutDong = k.querySelector('[data-xt="dong"]'); if (nutDong && nutDong.focus) nutDong.focus();
+    return k;
+  }
+  // Điện thoại: thu nhỏ tờ A4 cho vừa bề ngang khung
+  function coGianXem() {
+    var ifr = document.getElementById('scn-xt-khung');
+    var d = ifr && ifr.contentDocument;
+    if (!d || !d.documentElement || !ifr.clientWidth) return;
+    var k = Math.min(1, (ifr.clientWidth - 16) / 820);
+    d.documentElement.style.zoom = k < 1 ? String(Math.max(0.3, k)) : '';
+  }
+  function veXem() {
+    var k = dungKhungXem(), loc = XT.ban === 'nop_duyet', lan = ++XT.dem;
+    k.querySelector('#scn-xt-td').textContent = 'Sổ chủ nhiệm lớp ' + XT.lop + ' · Năm học ' + XT.nam;
+    k.querySelector('#scn-xt-mo').textContent = XT.nop
+      ? 'Bản nộp tổ chuyên môn — ' + (TEN_KY_NOP[XT.nop.ky] || XT.nop.ky) + ', lần ' + XT.nop.lan + ', bản chụp máy chủ lúc ' + gioVN(XT.nop.nop_luc) + ', đã lược dữ liệu cá nhân.'
+      : loc ? 'Bản nộp tổ chuyên môn: đã lược dữ liệu cá nhân (điện thoại, hoàn cảnh gia đình, trao đổi riêng…). Xem trước giống tệp Word.'
+        : 'Bản lưu hồ sơ đầy đủ, có dữ liệu cá nhân của học sinh — lưu hành nội bộ. Xem trước giống tệp Word.';
+    k.querySelector('#scn-xt-chon').innerHTML = (XT.coBan.length > 1
+      ? '<div class="scn-xt-ban" role="group" aria-label="Chọn bản">' + XT.coBan.map(function (b) {
+          return '<button type="button" data-ban="' + b + '" class="' + (XT.ban === b ? 'on' : '') + '" aria-pressed="' + (XT.ban === b) + '">' + TEN_BAN[b] + '</button>';
+        }).join('') + '</div>'
+      : '<span class="scn-xt-ban-mot">' + TEN_BAN[XT.ban] + '</span>') +
+      '<label class="scn-xt-tt27"><input type="checkbox" id="scn-xt-tt27"' + (D.tt27 ? ' checked' : '') + '> Kèm trích Thông tư 27</label>';
+    var cho = k.querySelector('#scn-xt-cho'), ifr = k.querySelector('#scn-xt-khung'), luu = k.querySelector('[data-xt="luu"]'), nIn = k.querySelector('[data-xt="in"]');
+    cho.textContent = 'Đang dựng bản xem trước…'; cho.hidden = false; ifr.hidden = true; luu.disabled = true; nIn.disabled = true; XT.html = '';
+    if (!window.WORD_TIEN_ICH) { cho.textContent = 'Chưa tải được bộ xuất Word.'; return; }
+    napTT27().then(function () { return layMoHinh(XT.ban); }).then(function (m) {
+      if (lan !== XT.dem || !XT.mo) return;
+      XT.html = htmlWord(m, XT.nop);
+      ifr.srcdoc = htmlXem(XT.html);
+      cho.hidden = true; ifr.hidden = false; luu.disabled = false; nIn.disabled = false;
+    }).catch(function (e) {
+      if (lan !== XT.dem) return;
+      cho.textContent = 'Chưa dựng được ' + TEN_BAN[XT.ban].toLowerCase() + ': ' + loiChu(e);
+    });
+  }
+  function luuXem() {
+    if (!XT.html) return;
+    var loc = XT.ban === 'nop_duyet';
+    window.WORD_TIEN_ICH.taiVe(XT.html, tenTepWord(XT.lop, XT.nam, loc));
+    bao('Đã tải ' + (loc ? 'bản nộp tổ chuyên môn' : 'sổ chủ nhiệm (bản lưu hồ sơ)') + ' lớp ' + XT.lop + '.');
+  }
+  function inXem() {
+    var ifr = document.getElementById('scn-xt-khung');
+    var w = ifr && ifr.contentWindow;
+    if (!w || !XT.html) return;
+    try { w.focus(); w.print(); } catch (e) { bao('Trình duyệt chặn lệnh in: ' + loiChu(e)); }
+  }
+  // Phụ lục TT27 nạp lười — chỉ khi người xem tích ô
   function napTT27() {
     if (!D.tt27 || window.SCN_TT27) return Promise.resolve();
     return new Promise(function (xong) {
@@ -1998,25 +2166,15 @@
       var v = (String((document.querySelector('script[src*="so-chu-nhiem.js"]') || {}).src || '').match(/\?v=\d+/) || [''])[0];
       s.src = 'js/so-chu-nhiem-tt27.js' + v;
       s.onload = function () { xong(); };
-      s.onerror = function () { bao('Không tải được phần trích Thông tư 27 — xuất không kèm phụ lục.'); xong(); };
+      s.onerror = function () { bao('Không tải được phần trích Thông tư 27 — xem không kèm phụ lục.'); xong(); };
       document.head.appendChild(s);
     });
   }
-  function xuatWord(mucDo) {
-    napTT27().then(function () {
-      if (mucDo !== 'nop_duyet') return xuatTuMoHinh(dungMoHinh(), null);
-      // Bản gửi tổ trưởng: máy chủ dựng bản xem trước (cùng hàm lọc lúc nộp)
-      if (!may()) return xuatTuMoHinh(locBanChup(dungMoHinh()), null);
-      may().rpc('scn_ban_chup', { p_nam: D.nam, p_lop: D.lop }).then(function (r) {
-        if (r.error) { bao('Chưa dựng được bản gửi tổ trưởng: ' + (thieuBang(loiChu(r.error)) ? 'cơ sở dữ liệu chưa chạy sql/71.' : loiChu(r.error))); return; }
-        xuatTuMoHinh(r.data, null);
-      }, function (e) { bao('Chưa dựng được bản gửi tổ trưởng: ' + loiChu(e)); });
-    });
-  }
-  function xuatWordBanChup() {
+  // Tổ trưởng / BGH ở màn duyệt: xem bản chụp đã nộp — chỉ có bản nộp tổ
+  function xemBanChup() {
     var n = nopTheoId(D.moNop);
     if (!n || !D.bcMo) return;
-    napTT27().then(function () { xuatTuMoHinh(D.bcMo, n); });
+    moXem({ ban: 'nop_duyet', coBan: ['nop_duyet'], moHinh: D.bcMo, nop: n });
   }
 
   // ══════════ SỰ KIỆN ══════════
@@ -2030,7 +2188,6 @@
       var ds = D.dsLop.filter(function (l) { return !D.locCoSo || l.coSo === D.locCoSo; });
       if (ds.length && !ds.some(function (l) { return l.lop === D.lop; })) { D.lop = ds[0].lop; D.dangNap = true; ve(); napLop().then(function () { ve(); }); } else ve();
     });
-    gan('scn-tt27', function (o) { D.tt27 = !!o.checked; });
     gan('dv-ky', function (o) { D.kyNop = o.value; ve(); });
     gan('dv-loc-ky', function (o) { D.locKy = o.value; D.moNop = null; ve(); });
     gan('dv-loc-tt', function (o) { D.locTT = o.value; D.moNop = null; ve(); });
@@ -2082,7 +2239,7 @@
       'luu-hop': function () { luuLienLac('hop', a('data-id'), b); }, 'luu-tdph': function () { luuLienLac('', a('data-id'), b); },
       'luu-ht': function () { luuHoTro(a('data-id'), b); }, 'luu-tk': function () { luuTongKet(b); },
       'khoa': function () { datKhoa(giaTri('scn-khoa') || null, b); }, 'mo-khoa': function () { datKhoa(null, b); },
-      'word-day-du': function () { xuatWord('day_du'); }, 'word-loc': function () { xuatWord('nop_duyet'); }, 'word-bc': xuatWordBanChup,
+      'xem-so': function () { moXem(); }, 'xem-bc': xemBanChup,
       'nop-ky': function () { nopKy(b); }, 'nd-them': function () { ndThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
       'mo-so': function () { var l = a('data-lop'); D.moNop = null; D.lop = l; D.tab = 'tong-quan'; D.dangNap = true; ve(); napLop().then(function () { ve(); }); },
       'them-ct': function () { var v = document.getElementById('kh-cuoc-thi'); if (v) { var d = document.createElement('div'); d.innerHTML = dongCuocThi(false)({}); v.appendChild(d.firstChild); } },
@@ -2336,5 +2493,6 @@
   }
   window.SO_CHU_NHIEM = { ve: ve, moLop: moLop, taiLai: function () { D.khoiTao = false; khiHien(); },
     // cho bài thử: dựng HTML bản Word từ một mô hình (vd. bản chụp máy chủ trả về)
-    wordHtml: function (m, tc) { return wordSo(m, tc || {}); }, moHinh: function () { return dungMoHinh(); } };
+    wordHtml: function (m, tc) { return wordSo(m, tc || {}); }, moHinh: function () { return dungMoHinh(); },
+    moXem: moXem, dongXem: dongXem };
 })(typeof window !== 'undefined' ? window : null);

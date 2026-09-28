@@ -62,14 +62,20 @@
     var trang = ngang
       ? 'size:29.7cm 21cm;mso-page-orientation:landscape;margin:1.5cm 1.5cm 1.5cm 2cm'
       : 'size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm';
+    return dauTep(tieuDeTab, '@page Section1{' + trang + '}div.Section1{page:Section1}') +
+      '<body><div class="Section1">' + than + '</div></body></html>';
+  }
+
+  // Phần đầu tệp Word HTML (khai báo Word + kiểu chữ, bảng dùng chung) — trang
+  // (@page) do nơi gọi truyền vào.
+  function dauTep(tieuDeTab, cssTrang) {
     return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
       'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">' +
       '<title>' + chan(tieuDeTab) + '</title>' +
       '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>' +
       '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
-      '<style>' +
-      '@page Section1{' + trang + '}div.Section1{page:Section1}' +
+      '<style>' + cssTrang +
       'body{' + FONT + ';font-size:13pt;line-height:1.5;color:#000}' +
       'table{border-collapse:collapse;width:100%}' +
       // Bảng gắn class "co-dinh" thì Word giữ đúng bề rộng cột đã khai, không tự
@@ -84,7 +90,25 @@
       // Ô chứa đường dẫn Drive: chuỗi ID dài không có dấu cách, phải cho ngắt
       // giữa chừng, nếu không Word nong cột đó ra và bóp các cột còn lại.
       '.duongdan{font-size:10.5pt;word-break:break-all}' +
-      '</style></head><body><div class="Section1">' + than + '</div></body></html>';
+      '</style></head>';
+  }
+
+  // Tệp CÓ TRANG BÌA (sổ, hồ sơ): hai section Word.
+  //  · WordSection1 = bìa: A4, lề trên 1,5 · dưới 1 · trái 2 · phải 1,5 cm và
+  //    VIỀN TRANG ĐÔI chỉ ở section này (đo trên bìa sổ chủ nhiệm thật của trường).
+  //  · WordSection2 = ruột: lề thể thức NĐ 30 như khungWord, KHÔNG viền.
+  // Ngắt giữa hai phần phải là NGẮT SECTION (mso-break-type:section-break) —
+  // ngắt trang thường thì Word dồn cả tệp về một section, viền lan ra mọi trang.
+  // Kiểm bằng Word COM 28/9/2026: Sections.Count = 2, chỉ Sections(1) có viền.
+  var NGAT_SECTION = '<br clear=all style="page-break-before:always;mso-break-type:section-break">';
+  function khungWordBia(tieuDeTab, bia, than) {
+    return dauTep(tieuDeTab,
+      '@page WordSection1{size:21cm 29.7cm;margin:1.5cm 1.5cm 1cm 2cm;border:double windowtext 4.5pt;padding:24pt;' +
+      'mso-page-border-surround-header:no;mso-page-border-surround-footer:no}div.WordSection1{page:WordSection1}' +
+      '@page WordSection2{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.WordSection2{page:WordSection2}') +
+      '<body><div class="WordSection1">' + bia + '</div>' +
+      '<span style="font-size:13pt">' + NGAT_SECTION + '</span>' +
+      '<div class="WordSection2">' + than + '</div></body></html>';
   }
 
   // Đường kẻ ngang dưới tên cơ quan / tiêu ngữ — dựng bằng DÃY DẤU CÁCH CỨNG
@@ -217,7 +241,7 @@
   window.WORD_TIEN_ICH = {
     chan: chan, cauHinh: cauHinh, ngayVN: ngayVN, diaDanh: diaDanh,
     gach: gach, gachTenTruong: gachTenTruong, O_TRAI: O_TRAI, O_PHAI: O_PHAI,
-    khungWord: khungWord, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
+    khungWord: khungWord, khungWordBia: khungWordBia, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
   };
 
   // Phiếu giao việc của một hộp — nhận mã hộp 'H01'…'H14'

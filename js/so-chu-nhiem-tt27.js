@@ -2,8 +2,8 @@
 // so-chu-nhiem-tt27.js — PHỤ LỤC TUỲ CHỌN của bản Word Sổ chủ nhiệm:
 // trích "Quy định đánh giá học sinh tiểu học" (ban hành kèm theo Thông tư
 // 27/2020/TT-BGDĐT ngày 04/9/2020), chép NGUYÊN VĂN như sổ giấy trường đang
-// dùng (Sổ chủ nhiệm 1B năm học 2025-2026). Chỉ nạp khi người xuất tích ô
-// "Kèm trích Thông tư 27" — so-chu-nhiem.js tự chèn thẻ <script> này.
+// dùng (Sổ chủ nhiệm 1B năm học 2025-2026). Chỉ nạp khi người xem tích ô
+// "Kèm trích Thông tư 27" trong khung xem trước — so-chu-nhiem.js tự chèn thẻ <script> này.
 // Văn bản tĩnh, không có dữ liệu cá nhân. [kiểu, chữ]: g = giữa đậm ·
 // n = ghi chú nghiêng · d = tên điều (đậm) · p = đoạn thường.
 // ============================================================
