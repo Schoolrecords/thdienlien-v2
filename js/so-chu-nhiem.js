@@ -1758,34 +1758,46 @@
     };
     var h = '';
 
-    // ── BÌA (WordSection1 — trang DUY NHẤT có viền đôi) ──
-    // Theo bìa sổ chủ nhiệm thật của trường (đo bằng Word 28/9/2026): chủ quản
-    // 14pt thường · tên trường 14pt đậm + gạch ngắn · SỔ CHỦ NHIỆM 48pt đậm ·
-    // CẤP TIỂU HỌC 18pt đậm · khối thông tin 14pt đậm lùi 3cm · năm học đậm
-    // nghiêng. Lề, viền trang: WORD_TIEN_ICH.khungWordBia.
+    // ── BÌA IN MÀU (WordSection1) — mẫu thầy Chung chọn 29/9/2026 ──
+    // Nền: img/bia-so-chu-nhiem.jpg (trống đồng xanh, khung thông tin, chữ
+    // "SỔ CHỦ NHIỆM – TIỂU HỌC" in sẵn trên ảnh; phần chữ riêng của từng trường
+    // đã xoá khỏi ảnh). Chữ dưới đây đặt bằng dòng cao CỐ ĐỊNH (exactly) cho khớp
+    // vị trí trên ảnh — đo chồng lên mẫu bằng Word COM. Lề section 1: 1 cm.
     var truong = W.cauHinh('TEN_TRUONG'), chuQuan = W.cauHinh('DON_VI_CHU_QUAN') || W.cauHinh('CHU_QUAN_THUONG');
     var truongBan = (m.ban_dai_dien || []).filter(function (b) { return /trưởng/i.test(b.vai_tro || '') && !/phó/i.test(b.vai_tro || ''); })[0] || null;
-    var dongBia = function (t) { return '<p style="margin:0 0 4pt 3cm;font-size:14pt;line-height:1.5"><b>' + t + '</b></p>'; };
     var biaCham = function (t) { t = String(t == null ? '' : t).trim(); return t ? c(t) : '…………………………………'; };
-    // Khoảng trống bằng đoạn rỗng: Word bỏ margin-top của đoạn rỗng nên bìa dồn lên nửa trang
-    var trong = function (n) { return new Array(n + 1).join('<p style="margin:0;font-size:14pt">&nbsp;</p>'); };
-    var TRUONG = String(truong).toUpperCase();
-    var bia = '<p class="giua" style="margin:0;font-size:14pt">' + c(String(chuQuan).toUpperCase()) + '</p>' +
-      '<p class="giua" style="margin:0;font-size:14pt"><b>' + c(TRUONG) + '</b></p>' +
-      W.gach(Math.max(2.5, Math.min(4.5, TRUONG.length * 0.28 * 0.4)), 14) +
-      trong(7) + '<p class="giua" style="margin:0;line-height:1.2"><b style="font-size:48pt">SỔ CHỦ NHIỆM</b></p>' +
-      '<p class="giua" style="margin:6pt 0 0"><b style="font-size:18pt">CẤP TIỂU HỌC</b></p>' +
-      (loc ? '<p class="giua nghieng" style="margin:8pt 0 0;font-size:12pt">Bản nộp tổ chuyên môn — đã lược dữ liệu cá nhân</p>' : '') +
-      trong(loc ? 7 : 8) +
-      // Dòng đầu gộp tên trường + điểm trường như mẫu: "Trường Tiểu học … – <điểm trường>:  Lớp: 1A1"
-      dongBia(c(truong) + (m.co_so_ten ? ' – ' + c(m.co_so_ten) : '') + ':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lớp: ' + c(lop)) +
-      dongBia('Họ và tên giáo viên chủ nhiệm: ' + biaCham(m.gvcn)) +
-      (loc ? '' : dongBia('Điện thoại: ' + biaCham(m.gvcn_sdt))) +
-      dongBia('Đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
-      (loc ? '' : dongBia('Điện thoại: ' + biaCham(truongBan && truongBan.sdt))) +
-      trong(loc ? 11 : 10) + '<p class="giua" style="margin:0;font-size:14pt"><b><i>Năm học: ' + c(String(nam).replace('-', ' – ')) + '</i></b></p>' +
-      (tc.nop ? '<p class="giua nghieng" style="margin:4pt 0 0;font-size:11pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
-        : loc ? '<p class="giua nghieng" style="margin:4pt 0 0;font-size:11pt">Bản xem trước — chưa nộp kiểm tra</p>' : '');
+    var MAU_BIA = '#0D1B5E';
+    var dongCo = function (t, cao, kieu) {
+      return '<p style="margin:0;line-height:' + cao + 'pt;mso-line-height-rule:exactly;color:' + MAU_BIA + ';' + (kieu || '') + '">' + t + '</p>';
+    };
+    var trongCo = function (cao) { return '<p style="margin:0;line-height:' + cao + 'pt;mso-line-height-rule:exactly;font-size:6pt">&nbsp;</p>'; };
+    var oBia = function (t) { return dongCo('<b>' + t + '</b>', 37, 'margin-left:51pt;font-size:18pt;white-space:nowrap'); };
+    var bia = trongCo(21) +
+      dongCo('<b>' + c(String(chuQuan).toUpperCase()) + '</b>', 27, 'text-align:center;font-size:17pt') +
+      dongCo('<b>' + c(String(truong).toUpperCase()) + '</b>', 27.2, 'text-align:center;font-size:18.5pt') +
+      trongCo(468) +
+      oBia('Giáo viên chủ nhiệm : ' + biaCham(m.gvcn)) +
+      oBia('Lớp : ' + c(lop)) +
+      oBia(c(truong)) +
+      oBia(c(W.cauHinh('DIA_CHI_TRUONG') || '') || '&nbsp;') +   // trống vẫn giữ chỗ, kẻo năm học trôi lên
+      trongCo(27) +
+      dongCo('<b>NĂM HỌC: ' + c(nam) + '</b>', 30, 'text-align:center;font-size:16.5pt');
+
+    // ── THÔNG TIN CHUNG (trang đầu phần ruột) — các dòng của bìa cũ không còn
+    //    chỗ trên bìa màu: điểm trường, điện thoại GVCN, đại diện CMHS; bản nộp
+    //    tổ thì ghi rõ đã lược dữ liệu + lần nộp, mã bản.
+    var dongTT = function (t) { return '<p style="margin:0 0 6pt;font-size:14pt;line-height:1.5"><b>' + t + '</b></p>'; };
+    h += tieuDe('THÔNG TIN CHUNG') +
+      dongTT(c(truong) + (m.co_so_ten ? ' – ' + c(m.co_so_ten) : '')) +
+      dongTT('Lớp: ' + c(lop) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Năm học: ' + c(String(nam).replace('-', ' – '))) +
+      dongTT('Họ và tên giáo viên chủ nhiệm: ' + biaCham(m.gvcn)) +
+      (loc ? '' : dongTT('Điện thoại: ' + biaCham(m.gvcn_sdt))) +
+      dongTT('Đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
+      (loc ? '' : dongTT('Điện thoại: ' + biaCham(truongBan && truongBan.sdt))) +
+      (loc ? '<p class="nghieng" style="margin:10pt 0 0;font-size:12pt">Bản nộp tổ chuyên môn — đã lược dữ liệu cá nhân.</p>' : '') +
+      (tc.nop ? '<p class="nghieng" style="margin:4pt 0 0;font-size:12pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
+        : loc ? '<p class="nghieng" style="margin:4pt 0 0;font-size:12pt">Bản xem trước — chưa nộp kiểm tra.</p>' : '') +
+      NGAT;
 
     // ── PHỤ LỤC TT27 (tuỳ chọn, văn bản tĩnh — phần DUY NHẤT có Quốc hiệu) ──
     if (tc.tt27 && tc.tt27.length) {
@@ -2017,7 +2029,7 @@
     h += '<p class="nghieng" style="font-size:10.5pt;margin-top:10pt">Sổ chủ nhiệm lớp ' + c(lop) + ', năm học ' + c(namCach) + ' — ' +
       (tc.nop ? 'Mã bản: ' + maNgan(tc.nop.ma_bam) + ' (SHA-256 của bản chụp nộp lúc ' + gioVN(tc.nop.nop_luc) + ')' : loc ? 'bản xem trước, chưa nộp kiểm tra' : 'BẢN LÀM VIỆC, xuất lúc ' + gioVN(new Date().toISOString())) + '.</p>';
     // Bìa một section (có viền), ruột một section (không viền) — tệp Word hoàn chỉnh
-    return W.khungWordBia('Sổ chủ nhiệm lớp ' + lop + (loc ? ' (bản nộp tổ)' : ''), bia, h);
+    return W.khungWordBiaAnh('Sổ chủ nhiệm lớp ' + lop + (loc ? ' (bản nộp tổ)' : ''), bia, h, ANH_BIA);
   }
 
   // ══════════ XEM SỔ CHỦ NHIỆM — KHUNG XEM TRƯỚC (28/9/2026) ══════════
@@ -2039,6 +2051,8 @@
   function tenTepWord(lop, nam, loc) { return 'so-chu-nhiem-lop-' + String(lop).toLowerCase().replace(/\s+/g, '') + '-' + nam + (loc ? '-ban-nop-to' : '') + '.doc'; }
 
   // HTML Word hoàn chỉnh của một mô hình (bìa section 1 có viền, ruột section 2)
+  // Ảnh nền bìa màu: tên tệp trong gói Word (MHTML) và đường dẫn trên web
+  var ANH_BIA = 'bia-so-chu-nhiem.jpg', ANH_BIA_WEB = 'img/bia-so-chu-nhiem.jpg';
   function htmlWord(m, nop) {
     var lop = m.lop || D.lop;
     return wordSo(m, { nop: nop || null, tt27: D.tt27 ? window.SCN_TT27 : null, to: toCuaKhoi(m.khoi),
@@ -2057,8 +2071,11 @@
     'html{background:#e4e7ec}body{margin:0;padding:24px 12px 40px;background:#e4e7ec}' +
     '.WordSection1,.WordSection2{box-sizing:border-box;width:21cm;margin:0 auto 24px;background:#fff;' +
     'box-shadow:0 1px 3px rgba(15,23,42,.12),0 10px 28px rgba(15,23,42,.12)}' +
-    '.WordSection1{position:relative;min-height:29.7cm;padding:calc(1.5cm + 28.5pt) calc(1.5cm + 28.5pt) calc(1cm + 28.5pt) calc(2cm + 28.5pt)}' +
-    '.WordSection1:before{content:"";position:absolute;top:1.5cm;right:1.5cm;bottom:1cm;left:2cm;border:4.5pt double #000;pointer-events:none}' +
+    // Bìa màu: ảnh nền phủ kín tờ, lề 1 cm như section 1 trong Word
+    // +19pt: trình duyệt đặt chữ giữa dòng cao cố định, Word đặt sát đáy dòng —
+    // đo chồng hai bản 29/9/2026 lệch ~19pt, bù ở lề trên cho bản xem khớp tệp Word.
+    '.WordSection1{position:relative;height:29.7cm;overflow:hidden;padding:calc(1cm + 19pt) 1cm 0.5cm;' +
+    'background:#bfe6fb url(' + ANH_BIA_WEB + ') center/100% 100% no-repeat;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.WordSection2{min-height:29.7cm;padding:2cm 1.5cm 2cm 3cm}' +
     '.WordSection2 p[style*="page-break-before"]{height:24px;margin:2cm -1.5cm 2cm -3cm !important;background:#e4e7ec;font-size:0 !important;line-height:0 !important;' +
     'box-shadow:inset 0 6px 8px -6px rgba(15,23,42,.25),inset 0 -6px 8px -6px rgba(15,23,42,.25)}' +
@@ -2066,7 +2083,7 @@
     '@page WordSection1{margin:0;border:none;padding:0}' +
     '@media print{html{zoom:1 !important}html,body{background:#fff;padding:0}' +
     '.WordSection1,.WordSection2{box-shadow:none;margin:0;width:auto;min-height:0}' +
-    '.WordSection1{height:29.6cm;overflow:hidden;page-break-after:always}.WordSection2{padding:0}' +
+    '.WordSection1{height:29.6cm;overflow:hidden;page-break-after:always;padding:calc(1cm + 19pt) 1cm 0.5cm}.WordSection2{padding:0}' +
     '.WordSection2 p[style*="page-break-before"]{height:0;margin:0 !important;background:none;box-shadow:none;page-break-before:always}}' +
     '</style>';
   function htmlXem(html) { return html.replace('</head>', CSS_XEM + '</head>'); }
@@ -2186,11 +2203,34 @@
       cho.textContent = 'Chưa dựng được ' + TEN_BAN[XT.ban].toLowerCase() + ': ' + loiChu(e);
     });
   }
+  // Ảnh bìa đọc một lần, giữ dạng base64 để gói vào tệp Word
+  var ANH_BIA_B64 = null;
+  function docAnhBia() {
+    if (ANH_BIA_B64) return Promise.resolve(ANH_BIA_B64);
+    if (!window.fetch || !window.FileReader) return Promise.reject(new Error('trình duyệt không đọc được ảnh'));
+    return fetch(ANH_BIA_WEB).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then(function (b) {
+        return new Promise(function (xong, hong) {
+          var fr = new FileReader();
+          fr.onload = function () { ANH_BIA_B64 = String(fr.result).split(',')[1] || ''; xong(ANH_BIA_B64); };
+          fr.onerror = function () { hong(fr.error); };
+          fr.readAsDataURL(b);
+        });
+      });
+  }
   function luuXem() {
     if (!XT.html) return;
-    var loc = XT.ban === 'nop_duyet';
-    window.WORD_TIEN_ICH.taiVe(XT.html, tenTepWord(XT.lop, XT.nam, loc));
-    bao('Đã tải ' + (loc ? 'bản nộp tổ chuyên môn' : 'sổ chủ nhiệm (bản lưu hồ sơ)') + ' lớp ' + XT.lop + '.');
+    var loc = XT.ban === 'nop_duyet', html = XT.html, ten = tenTepWord(XT.lop, XT.nam, loc), W = window.WORD_TIEN_ICH;
+    var xong = function (kem) {
+      bao('Đã tải ' + (loc ? 'bản nộp tổ chuyên môn' : 'sổ chủ nhiệm (bản lưu hồ sơ)') + ' lớp ' + XT.lop + '.' + (kem || ''));
+    };
+    if (!W.taiVeMHT || !window.fetch || !window.FileReader) { W.taiVe(html, ten); xong(); return; }
+    docAnhBia().then(function (b64) {
+      W.taiVeMHT(html, ten, [{ ten: ANH_BIA, loai: 'image/jpeg', b64: b64 }]); xong();
+    }, function () {
+      // Không đọc được ảnh (mất mạng…) thì vẫn cho tải — bìa không có nền màu
+      W.taiVe(html, ten); xong(' Chưa tải được ảnh nền bìa — bìa không có màu.');
+    });
   }
   function inXem() {
     var ifr = document.getElementById('scn-xt-khung');

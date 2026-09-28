@@ -399,6 +399,9 @@
 
   function veStats() {
     var kq = xepMuc();
+    // Ô "mức chuẩn quốc gia" ở trang chủ: trường chưa khai mức được công nhận
+    // thì hiện kết quả TỰ ĐÁNH GIÁ này (ghi rõ là tự đánh giá) — thầy Chung 29/9/2026.
+    if (window.capNhatMucTrangChu) window.capNhatMucTrangChu(kq.ketLuan, NAM_DL);
     // Tách "chưa chấm" khỏi "chấm Không đạt": trường mới mở màn từng thấy
     // "15 tiêu chí chưa đạt Mức 1" ngay dưới chữ "Chưa đánh giá".
     var chuaCham = TC.filter(function (t) { return !t.daCham; }).length;

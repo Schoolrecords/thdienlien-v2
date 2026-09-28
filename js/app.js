@@ -674,6 +674,14 @@
   // tên trường trong index.html đều điền từ đây, KHÔNG ghi cứng trong HTML.
   // Gọi HAI lần: lúc khởi động, và lại một lần nữa trong du-lieu-sql.js sau khi
   // bảng cau_hinh trên CSDL ghi đè CAU_HINH (CSDL mới là nguồn chuẩn).
+  // Gọi từ tcqg.js mỗi lần xếp mức: nhớ kết quả TỰ ĐÁNH GIÁ rồi vẽ lại ô trang
+  // chủ. Chỉ nhận kết luận có mức (Đạt Mức 1/2) — "Chưa đánh giá", "Không đạt"
+  // thì giữ dấu gạch như cũ, không tự viết thay nhà trường.
+  window.capNhatMucTrangChu = function (ketLuan, nam) {
+    var m = /Mức\s*([123])/.exec(String(ketLuan || ''));
+    window.MUC_TU_DG = m && !/không/i.test(ketLuan) ? { muc: 'Mức ' + m[1], nam: nam || '' } : null;
+    datNhanDienTruong();
+  };
   function datNhanDienTruong() {
     var C = window.CAU_HINH || {};
     // Biểu trưng trung tính cho cổng chung và bản xem thử. Nhận ra bằng chính
@@ -699,6 +707,7 @@
     $$('.dien-chu-quan').forEach(function (e) { e.textContent = C.DON_VI_CHU_QUAN || ''; });
     var oMuc = document.getElementById('tk-muc-cqg');
     if (oMuc) oMuc.textContent = C.MUC_CHUAN_QG || '–';
+    var tuDG = !C.MUC_CHUAN_QG && window.MUC_TU_DG;   // xem capNhatMucTrangChu
     // Nhãn dưới ô mức chuẩn quốc gia. Câu "phấn đấu giữ vững và phát triển" chỉ
     // đúng với trường ĐÃ đạt chuẩn; trường chưa khai mà để câu đó thì thành
     // phần mềm nói hộ một cam kết nhà trường chưa hề đưa ra.
@@ -715,6 +724,11 @@
     if (oMucHop) {
       oMucHop.title = C.MUC_CHUAN_QG ? ''
         : 'Chưa khai mức chuẩn quốc gia. Quản trị → ⚙️ Thông tin trường → Mức ĐANG đạt.';
+    }
+    if (tuDG) {
+      if (oMuc) oMuc.textContent = tuDG.muc;
+      if (oMucNhan) oMucNhan.textContent = 'tự đánh giá năm học ' + tuDG.nam;
+      if (oMucHop) oMucHop.title = 'Kết quả tự đánh giá theo Thông tư 57 (trang Trường chuẩn quốc gia), chưa phải mức được công nhận. Khai mức được công nhận ở Quản trị → ⚙️ Thông tin trường.';
     }
 
     // Khẩu hiệu: dựng cả dòng ở đây. Trống thì ẩn hẳn, đừng để trơ hai bông lúa.

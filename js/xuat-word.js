@@ -69,13 +69,13 @@
   // Phần đầu tệp Word HTML (khai báo Word + kiểu chữ, bảng dùng chung) — trang
   // (@page) do nơi gọi truyền vào.
   function dauTep(tieuDeTab, cssTrang, bangTuDo) {
-    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-      'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+    return '<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:w10="urn:schemas-microsoft-com:office:word" ' +
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">' +
       '<title>' + chan(tieuDeTab) + '</title>' +
       '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>' +
       '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
-      '<style>' + cssTrang +
+      '<style>v\\:*{behavior:url(#default#VML)}o\\:*{behavior:url(#default#VML)}' + cssTrang +
       'body{' + FONT + ';font-size:13pt;line-height:1.5;color:#000}' +
       // bangTuDo (chỉ tệp có bìa — sổ): KHÔNG ép bảng rộng 100%. Đo bằng Word COM
       // 28/9/2026: có luật này thì Word bỏ qua độ rộng cm khai cho từng cột và tự
@@ -115,6 +115,56 @@
       '<body><div class="WordSection1">' + bia + '</div>' +
       '<span style="font-size:13pt">' + NGAT_SECTION + '</span>' +
       '<div class="WordSection2">' + than + '</div></body></html>';
+  }
+
+  // Tệp có BÌA ẢNH IN MÀU phủ kín trang (sổ chủ nhiệm, thầy Chung 29/9/2026):
+  // section 1 KHÔNG viền, lề mỏng; ảnh nằm SAU chữ, neo theo mép trang. Ảnh là
+  // hình nổi VML (cách Word tự lưu ảnh "Behind text" ra HTML) — thẻ <img> thường
+  // thì Word xếp vào dòng chữ, không làm nền được. Tệp phải tải bằng taiVeMHT để
+  // ảnh nằm TRONG tệp (Word không đọc ảnh data: trong HTML).
+  function khungWordBiaAnh(tieuDeTab, bia, than, tenAnh) {
+    return dauTep(tieuDeTab,
+      '@page WordSection1{size:21cm 29.7cm;margin:1cm 1cm 0.5cm 1cm}div.WordSection1{page:WordSection1}' +
+      '@page WordSection2{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.WordSection2{page:WordSection2}' +
+      'table.so-bang th,table.so-bang td{padding:2pt 4pt;line-height:1.2}', true) +
+      '<body><div class="WordSection1">' + nenTrang(tenAnh) + bia + '</div>' +
+      '<span style="font-size:13pt">' + NGAT_SECTION + '</span>' +
+      '<div class="WordSection2">' + than + '</div></body></html>';
+  }
+  function nenTrang(tenAnh) {
+    return '<!--[if gte vml 1]><v:shapetype id="_x0000_t75" coordsize="21600,21600" o:spt="75" o:preferrelative="t"' +
+      ' path="m@4@5l@4@11@9@11@9@5xe" filled="f" stroked="f"><v:stroke joinstyle="miter"/><v:formulas>' +
+      ['if lineDrawn pixelLineWidth 0', 'sum @0 1 0', 'sum 0 0 @1', 'prod @2 1 2', 'prod @3 21600 pixelWidth',
+        'prod @3 21600 pixelHeight', 'sum @0 0 1', 'prod @6 1 2', 'prod @7 21600 pixelWidth', 'sum @8 21600 0',
+        'prod @7 21600 pixelHeight', 'sum @10 21600 0'].map(function (f) { return '<v:f eqn="' + f + '"/>'; }).join('') +
+      '</v:formulas><v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/><o:lock v:ext="edit" aspectratio="t"/></v:shapetype>' +
+      '<v:shape id="nen_bia" o:spid="_x0000_s1025" type="#_x0000_t75" style="position:absolute;margin-left:0;margin-top:0;' +
+      'width:595.3pt;height:841.9pt;z-index:-251658240;mso-position-horizontal:absolute;mso-position-horizontal-relative:page;' +
+      'mso-position-vertical:absolute;mso-position-vertical-relative:page"><v:imagedata src="' + tenAnh + '" o:title=""/>' +
+      '<w10:wrap anchorx="page" anchory="page"/></v:shape><![endif]-->';
+  }
+
+  // Tải tệp Word KÈM ẢNH: gói MHTML (multipart/related) — Word mở như "trang web
+  // một tệp", ảnh nằm trong tệp. tep = [{ ten, loai, b64 }]; html tham chiếu ảnh
+  // bằng đúng `ten` (đường dẫn tương đối). Kiểm bằng Word COM 29/9/2026.
+  function taiVeMHT(html, tenTep, tep) {
+    var XD = '\r\n', B = '----=_NextPart_QTS_' + Date.now();
+    var chia = function (x) { return x.replace(/.{1,76}/g, function (d) { return d + XD; }); };
+    var b64 = function (str) { return btoa(unescape(encodeURIComponent(str))); };
+    var goi = 'MIME-Version: 1.0' + XD + 'Content-Type: multipart/related; boundary="' + B + '"' + XD + XD +
+      '--' + B + XD + 'Content-Location: file:///C:/so/so.htm' + XD + 'Content-Transfer-Encoding: base64' + XD +
+      'Content-Type: text/html; charset="utf-8"' + XD + XD + chia(b64('\ufeff' + html)) + XD +
+      (tep || []).map(function (t) {
+        return '--' + B + XD + 'Content-Location: file:///C:/so/' + t.ten + XD + 'Content-Transfer-Encoding: base64' + XD +
+          'Content-Type: ' + t.loai + XD + XD + chia(t.b64) + XD;
+      }).join('') + '--' + B + '--' + XD;
+    var blob = new Blob([goi], { type: 'application/msword' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = tenTep;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 400);
   }
 
   // Đường kẻ ngang dưới tên cơ quan / tiêu ngữ — dựng bằng DÃY DẤU CÁCH CỨNG
@@ -247,7 +297,7 @@
   window.WORD_TIEN_ICH = {
     chan: chan, cauHinh: cauHinh, ngayVN: ngayVN, diaDanh: diaDanh,
     gach: gach, gachTenTruong: gachTenTruong, O_TRAI: O_TRAI, O_PHAI: O_PHAI,
-    khungWord: khungWord, khungWordBia: khungWordBia, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
+    khungWord: khungWord, khungWordBia: khungWordBia, khungWordBiaAnh: khungWordBiaAnh, taiVeMHT: taiVeMHT, theThuc: theThuc, khoiKy: khoiKy, taiVe: taiVe, TEN_TT: TEN_TT
   };
 
   // Phiếu giao việc của một hộp — nhận mã hộp 'H01'…'H14'
