@@ -488,12 +488,18 @@
       may().from('lop_hoc').select('lop, khoi, co_so_ma').eq('nam_hoc', D.nam),
       may().from('co_so').select('ma, ten').eq('hoat_dong', true).order('so_tt'),
       // Bảng giao người kiểm tra (sql/71). RLS: BGH đọc hết, người khác chỉ dòng của mình.
-      may().from('scn_nguoi_duyet').select('*').eq('nam_hoc', D.nam).order('id')
+      may().from('scn_nguoi_duyet').select('*').eq('nam_hoc', D.nam).order('id'),
+      // GVCN DỰ KIẾN (sql/70): lớp chưa có phân công vì cô chưa đăng nhập lần nào
+      // thì bìa sổ, ô chọn lớp vẫn có tên. Trường chưa chạy 70 → lỗi → bỏ qua.
+      may().from('lop_hoc').select('lop, gvcn_ten').eq('nam_hoc', D.nam)
     ]).then(function (r) {
       if (r[0].error) throw r[0].error;
       var pc = r[0].data || [];
       D.gvcnCua = {};
       pc.forEach(function (p) { if (p.nguoi_dung && p.nguoi_dung.ho_ten) D.gvcnCua[chuanLop(p.lop)] = p.nguoi_dung.ho_ten; });
+      ((r[4] && !r[4].error && r[4].data) || []).forEach(function (l) {
+        if (l.gvcn_ten && !D.gvcnCua[chuanLop(l.lop)]) D.gvcnCua[chuanLop(l.lop)] = l.gvcn_ten;
+      });
       D.lopCuaToi = lopCuaGVCN(pc, u.id, D.nam);
       var lh = (r[1] && !r[1].error && r[1].data) || [];
       D.coSo = (r[2] && !r[2].error && r[2].data) || [];
