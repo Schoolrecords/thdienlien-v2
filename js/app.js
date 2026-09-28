@@ -37,7 +37,8 @@
   // ── Điều hướng: hero chỉ hiện ở Trang chủ ──
   function chuyenManHinh(ma) {
     $$('.man-hinh').forEach(function (m) { m.classList.toggle('hien', m.id === 'mh-' + ma); });
-    var nutSang = (ma === 'cbgv') ? 'hoso' : ma;
+    // Màn con không có nút riêng trên menu thì tô sáng nút của nhánh cha
+    var nutSang = (ma === 'cbgv') ? 'hoso' : (ma === 'sochunhiem') ? 'hocsinh' : ma;
     $$('nav.menu button').forEach(function (b) {
       b.classList.toggle('dang-chon', b.getAttribute('data-di') === nutSang);
     });

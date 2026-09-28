@@ -299,7 +299,8 @@
       ' · Năm học ' + thoat(NAM) + '</div></div>' +
       '<div class="sp"></div>' +
       '<button class="nut-kiem-tra" id="hsp-word">📄 Tải file Word</button> ' +
-      '<button class="nut-kiem-tra" id="hsp-in" style="background:#5b6b85">🖨 In danh sách</button>' +
+      '<button class="nut-kiem-tra" id="hsp-in" style="background:#5b6b85">🖨 In danh sách</button> ' +
+      '<button class="nut-kiem-tra" id="hsp-scn">📘 Mở sổ chủ nhiệm lớp này</button>' +
       '</div>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr>' +
       '<th style="width:56px">TT</th><th>Mã học sinh</th><th>Họ và tên</th>' +
@@ -318,6 +319,11 @@
       'số đó nằm ở bảng riêng, chỉ quản trị đọc được.</p>';
 
     $('#hsp-word').addEventListener('click', function () { xuatWord(lop, d); });
+    $('#hsp-scn').addEventListener('click', function () {
+      window.dongDsHs();
+      if (window.SO_CHU_NHIEM && window.SO_CHU_NHIEM.moLop) window.SO_CHU_NHIEM.moLop(lop);
+      else window.chuyenManHinh('sochunhiem');
+    });
     // Gắn cờ để @media print chỉ in đúng lớp phủ danh sách, không in cả lưới
     // thẻ khối phía sau. Gỡ cờ ở sự kiện afterprint bên dưới.
     $('#hsp-in').addEventListener('click', function () {

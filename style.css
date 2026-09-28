@@ -3764,3 +3764,6 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 @media print {
   .scn-tabs, .scn-chon, #scn-word, .scn-mo-them, .scn-x { display: none !important; }
 }
+
+/* Nút vào Sổ chủ nhiệm ở đầu màn Quản lý học sinh (28/9/2026 — sổ không còn nút trên menu) */
+.hs-hero .hs-nut-scn { margin-top: 12px; background: #fff; color: #14306b; font-weight: 700; }

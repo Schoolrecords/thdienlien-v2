@@ -1320,5 +1320,14 @@
   document.addEventListener('dangnhap-xong', function () { D.khoiTao = false; D.lop = ''; D.so = null; khiHien(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', gan); else gan();
 
-  window.SO_CHU_NHIEM = { ve: ve, taiLai: function () { D.khoiTao = false; khiHien(); } };
+  // Mở sổ, tuỳ chọn nhảy thẳng tới một lớp (nút trong danh sách lớp ở màn Học sinh).
+  // Lớp không thuộc danh sách người này được xem thì napKhung tự trả về lớp mặc định.
+  function moLop(lop) {
+    if (lop && lop !== D.lop) {
+      D.lop = lop; D.tab = 'tong-quan';
+      if (D.khoiTao) { D.dangNap = true; napLop().then(function () { ve(); }); }
+    }
+    if (window.chuyenManHinh) window.chuyenManHinh('sochunhiem');
+  }
+  window.SO_CHU_NHIEM = { ve: ve, moLop: moLop, taiLai: function () { D.khoiTao = false; khiHien(); } };
 })(typeof window !== 'undefined' ? window : null);
