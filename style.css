@@ -1276,6 +1276,8 @@ td.tdst { white-space: nowrap; text-align: right; }
 }
 .kd-thanh #kd-std { max-width: 430px; }
 .kd-thanh .sp, .ct-tab .sp, .ct-day .sp, .mc-dong .sp { flex: 1; }
+/* Người không được xuất báo cáo TĐG thấy dòng chú thay cho hai nút (tcqg.js duocXuat) */
+.kd-thanh .kd-chi-xem { font-size: 13px; color: var(--chu-mo); }
 
 /* Hai cột làm việc */
 .kd-lam { display: grid; gap: 14px; grid-template-columns: 1fr; align-items: stretch; }

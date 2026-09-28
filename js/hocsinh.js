@@ -315,6 +315,11 @@
       return (g.khoi || []).map(Number).indexOf(+d.khoi) >= 0 && (!g.co_so_ma || g.co_so_ma === d.coSoMa);
     });
   }
+  function duocXuatDs(lop) {
+    if (XEM_THU) return true;
+    var vt = (window.NGUOI_DUNG || {}).vai_tro || '';
+    return vt === 'admin' || vt === 'ban_giam_hieu' || LOP_TOI.indexOf(lop) >= 0;
+  }
   function coTheXemSo(lop) {
     if (XEM_THU) return true;
     var u = window.NGUOI_DUNG, vt = u ? u.vai_tro : '';
@@ -624,8 +629,13 @@
     $('#hsp-than').innerHTML =
       '<div class="lh-ngan-nut">' +
       (coTheXemSo(lop) ? '<button type="button" class="lh-lien" id="hsp-scn">Mở sổ chủ nhiệm</button>' : '') +
-      '<button type="button" class="lh-lien" id="hsp-word">Xuất Word</button>' +
-      '<button type="button" class="lh-lien" id="hsp-in">In</button></div>' +
+      // Xuất Word / In danh sách lớp (dữ liệu cá nhân học sinh): chỉ BGH/quản
+      // trị và GVCN lớp đó — rà phân quyền 28/9/2026, sổ dự án mục 100.
+      // Giáo viên khác vẫn XEM danh sách trên màn (máy chủ cho đọc).
+      (duocXuatDs(lop)
+        ? '<button type="button" class="lh-lien" id="hsp-word">Xuất Word</button>' +
+          '<button type="button" class="lh-lien" id="hsp-in">In</button>'
+        : '') + '</div>' +
       '<p class="lh-ngan-tom">Nam ' + x.nam + ' · Nữ ' + x.nu +
       (chua ? ' · chưa ghi giới tính ' + chua : '') + ' · Hoà nhập ' + x.hn + '</p>' +
       '<div class="lh-cuon"><table class="lh-bang lh-bang-hs"><thead><tr>' +
@@ -642,11 +652,11 @@
       'Số định danh cá nhân có lưu trong hệ thống nhưng <b>không hiển thị</b> ở màn hình này — ' +
       'số đó nằm ở bảng riêng, chỉ quản trị đọc được.</p>';
 
-    $('#hsp-word').addEventListener('click', function () { xuatWord(lop, d); });
+    if ($('#hsp-word')) $('#hsp-word').addEventListener('click', function () { xuatWord(lop, d); });
     if ($('#hsp-scn')) $('#hsp-scn').addEventListener('click', function () { moSo(lop); });
     // Gắn cờ để @media print chỉ in đúng bảng chi tiết, không in cả trang
     // phía sau. Gỡ cờ ở sự kiện afterprint bên dưới.
-    $('#hsp-in').addEventListener('click', function () {
+    if ($('#hsp-in')) $('#hsp-in').addEventListener('click', function () {
       document.body.classList.add('in-danh-sach');
       window.print();
     });
@@ -667,6 +677,7 @@
   function xuatWord(lop, d) {
     var W = window.WORD_TIEN_ICH;
     if (!W) { window.notify('Chưa tải được bộ xuất Word.'); return; }
+    if (!duocXuatDs(lop)) { window.notify('Chỉ Ban giám hiệu hoặc GVCN lớp ' + lop + ' mới xuất được danh sách lớp.'); return; }
     var than = W.theThuc() +
       // <p><b> chứ không phải <h2>: Word ánh xạ h2 vào kiểu "Heading 2"
       // (Calibri Light xanh) — font khai ở body không đè được kiểu Heading.

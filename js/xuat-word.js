@@ -254,6 +254,12 @@
   window.xuatHopWord = function (maHop) {
     var hop = window.HOP[maHop];
     if (!hop) return;
+    // Phiếu giao việc = văn bản phân công: chỉ BGH/quản trị (rà phân quyền 28/9/2026).
+    var u = window.NGUOI_DUNG;
+    if (window.MAY_CHU && !(u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu'))) {
+      window.notify('Chỉ Ban giám hiệu mới xuất được phiếu giao việc.');
+      return;
+    }
     var ds = window.HO_SO.filter(function (h) { return h.hop === maHop; });
     if (!ds.length) { window.notify('Hộp này chưa có hồ sơ nào để xuất.'); return; }
 

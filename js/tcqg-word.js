@@ -41,8 +41,19 @@
       '</tr></table>';
   }
 
+  // Cửa quyền XUẤT (tcqg.js duocXuat — rà phân quyền 28/9/2026, sổ dự án mục
+  // 100): nút đã ẩn với người không được xuất; chặn thêm ở đây cho lối gọi
+  // thẳng hàm. motTieuChi = danh mục minh chứng của một tiêu chí (giấy làm việc).
+  function biChan(motTieuChi) {
+    var f = motTieuChi ? window.tcqgDuocXuatTieuChi : window.tcqgDuocXuat;
+    if (!f || f()) return false;
+    window.notify(window.TCQG_CHU_CHAN_XUAT || 'Thầy cô không có quyền xuất văn bản này.');
+    return true;
+  }
+
   // ── F3. DANH SÁCH HỘI ĐỒNG ──
   window.xuatDanhSachHoiDong = function () {
+    if (biChan()) return;
     var d = window.duLieuHoiDong && window.duLieuHoiDong();
     if (!d || !d.tv.length) { window.notify('Chưa có thành viên hội đồng để in.'); return; }
     var chan = W().chan;
@@ -77,6 +88,7 @@
 
   // ── F4. BẢNG PHÂN CÔNG NHIỆM VỤ ──
   window.xuatPhanCongHoiDong = function () {
+    if (biChan()) return;
     var d = window.duLieuHoiDong && window.duLieuHoiDong();
     if (!d || !d.tv.length) { window.notify('Chưa có thành viên hội đồng để in.'); return; }
     var chan = W().chan;
@@ -150,17 +162,20 @@
   }
 
   window.xuatMinhChungTheoTieuChuan = function () {
+    if (biChan()) return;
     var std = +((document.getElementById('kd-std') || {}).value || 0);
     var ds = (window.TIEU_CHI || []).filter(function (t) { return !std || t.ma.charAt(0) === String(std); })
       .map(function (t) { return t.ma; });
     xuatMinhChung(ds, std ? 'Tiêu chuẩn ' + std : 'Toàn bộ 4 tiêu chuẩn');
   };
   window.xuatMinhChungTieuChi = function (ma) {
+    if (biChan(true)) return;
     xuatMinhChung([ma], 'Tiêu chí ' + ma);
   };
 
   // ── F2. KẾ HOẠCH CẢI TIẾN — BIỂU 2 (A4 ngang) ──
   window.xuatBieu2 = function () {
+    if (biChan()) return;
     var may = window.MAY_CHU;
     var namHoc = window.CAU_HINH.NAM_HOC;
     var chan = W().chan;

@@ -724,6 +724,12 @@
                   'khai_quat', 'kn_so', 'kn_ubnd'];
 
   async function xuatBaoCao() {
+    // Cửa quyền xuất (tcqg.js duocXuat — rà phân quyền 28/9/2026): nút đã ẩn
+    // với người không được xuất, chặn thêm ở đây cho lối gọi thẳng hàm.
+    if (window.tcqgDuocXuat && !window.tcqgDuocXuat()) {
+      if (typeof notify === 'function') notify(window.TCQG_CHU_CHAN_XUAT);
+      return;
+    }
     const d = layDuLieu();
     if (!d) {
       if (typeof notify === 'function') {

@@ -1150,11 +1150,15 @@
       if (bc.dien === 'loi') loi.push('điện');
       if (bc.nuoc === 'loi') loi.push('nước');
       if (bc.csvc === 'loi') loi.push('phòng học');
+      // "Ghi thành sự việc" chỉ cho BGH và người phụ trách chính điểm đó (rà phân
+      // quyền 28/9/2026, mục 100) — giáo viên khác thấy dòng, không thấy nút.
       if (loi.length) {
-        themBC.push({ loai: 'CSVC', pill: 'vang',
-          chu: thoat(c.ten) + ' báo <b>' + thoat(loi.join(', ')) + '</b> có vấn đề',
-          nguon: 'báo cáo ' + tenBuoi(b) + (bc.ghiChu ? ' — ' + thoat(bc.ghiChu) : ''),
-          nut: 'Ghi thành sự việc', ham: 'DH.svTuCsvc(\'' + nhay(c.ma) + '\')' });
+        var chuLoi = thoat(c.ten) + ' báo <b>' + thoat(loi.join(', ')) + '</b> có vấn đề';
+        var nguonLoi = 'báo cáo ' + tenBuoi(b) + (bc.ghiChu ? ' — ' + thoat(bc.ghiChu) : '');
+        themBC.push((laQT() || coSoDuocBao().indexOf(c.ma) >= 0)
+          ? { loai: 'CSVC', pill: 'vang', chu: chuLoi, nguon: nguonLoi,
+              nut: 'Ghi thành sự việc', ham: 'DH.svTuCsvc(\'' + nhay(c.ma) + '\')' }
+          : { loai: 'CSVC', pill: 'vang', chu: '<b>' + chuLoi + '</b><small>' + nguonLoi + '</small>', nut: '' });
       }
     });
     ds = themBC.concat(ds);

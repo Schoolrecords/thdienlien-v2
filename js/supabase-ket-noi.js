@@ -284,6 +284,8 @@
       window.chuyenManHinh('quantri');
     });
     document.getElementById('muc-dang-xuat').addEventListener('click', dangXuat);
+    // Thẻ "Quản trị hệ thống" ở trang chủ: chỉ BGH/quản trị (js/app.js, mục 100)
+    if (window.apQuyenGiaoDien) window.apQuyenGiaoDien();
   }
 
   function dangNhap() {
@@ -383,9 +385,9 @@
         }
         if (dangNap && dangNap.then) dangNap.then(xongNap, xongNap);
         else xongNap();
-        if (r.data.vai_tro === 'admin' || r.data.vai_tro === 'ban_giam_hieu') {
-          window.veQuanTri && window.veQuanTri();
-        }
+        // Gọi cho MỌI vai: veQuanTri tự dọn màn khi không phải BGH/quản trị —
+        // vai bị hạ giữa phiên thì các nút quản trị cũ không đứng lại (mục 100).
+        window.veQuanTri && window.veQuanTri();
       } else {
         // cho_duyet hoặc khoa → giữ nguyên cổng, KHÔNG mở khóa trang
         veCongChoDuyet(r.data.email, r.data.trang_thai === 'khoa');

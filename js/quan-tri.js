@@ -33,7 +33,15 @@
 
   window.veQuanTri = function () {
     var vung = document.getElementById('vung-quantri');
-    if (!vung || !window.MAY_CHU || !laQT()) return;
+    if (!vung) return;
+    if (!window.MAY_CHU || !laQT()) {
+      // Không phải BGH/quản trị (hoặc vừa bị hạ vai giữa phiên): dọn sạch màn,
+      // trả lại dòng báo — rà phân quyền 28/9/2026, sổ dự án mục 100.
+      if (window.MAY_CHU) vung.innerHTML = '';
+      var baoKhong = document.getElementById('quantri-thong-bao');
+      if (baoKhong) baoKhong.style.display = '';
+      return;
+    }
     var baoCu = document.getElementById('quantri-thong-bao');
     if (baoCu) baoCu.style.display = 'none';
 

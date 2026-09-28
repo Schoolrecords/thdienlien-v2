@@ -45,7 +45,10 @@
     '<button type="button" data-tt="co">Đã có</button>' +
     '<button type="button" data-tt="dang">Đang cập nhật</button>' +
     '<button type="button" data-tt="chua">Chưa có</button></div></div>' +
-    '<div class="hs-o"><label>Người phụ trách</label>' +
+    // Người phụ trách + giao quyền = PHÂN CÔNG: chỉ BGH/quản trị (rà phân quyền
+    // 28/9/2026, sổ dự án mục 100; máy chủ chặn thêm ở sql/72). Người được giao
+    // chỉ cập nhật trạng thái, link Drive, ghi chú.
+    '<div class="hs-o" id="hsONguoi"><label>Người phụ trách</label>' +
     '<input id="hsNguoi" placeholder="Ví dụ: Hiệu trưởng, Văn thư, Tổ trưởng Tổ 1-2-3…">' +
     '<div class="goi-y">Tên chức danh hiển thị trong bảng danh mục.</div></div>' +
     '<div class="hs-o" id="hsOTaiKhoan"><label>Giao quyền sửa cho tài khoản</label>' +
@@ -87,6 +90,10 @@
       window.notify('Thầy cô không được phân công phụ trách hồ sơ này.');
       return;
     }
+    if (!laQuanTri() && hs.trang_thai === 'da_dong') {
+      window.notify('Hồ sơ này đã đóng (hết căn cứ) — chỉ Ban giám hiệu mở lại được.');
+      return;
+    }
     maDangSua = ma;
     ttDangChon = hs.trang_thai;
     $('hsMa').textContent = hs.ma;
@@ -98,6 +105,7 @@
 
     $('hsTenMoi').value = hs.ten || '';
     $('hsOTen').style.display = laQuanTri() ? '' : 'none';
+    $('hsONguoi').style.display = laQuanTri() ? '' : 'none';
 
     var oTk = $('hsOTaiKhoan');
     if (laQuanTri()) {
@@ -146,7 +154,6 @@
 
     var thayDoi = {
       trang_thai: ttDangChon,
-      nguoi_phu_trach: $('hsNguoi').value.trim() || null,
       link_drive: link || null,
       ghi_chu: $('hsGhiChu').value.trim() || null,
       cap_nhat_luc: new Date().toISOString(),
@@ -154,6 +161,7 @@
     };
     if (laQuanTri()) {
       thayDoi.phu_trach_id = $('hsTaiKhoan').value || null;
+      thayDoi.nguoi_phu_trach = $('hsNguoi').value.trim() || null;
       // Chỉ quản trị mới gửi cột tên — người khác gửi là trigger chặn cột
       // cấu trúc (sql/49) từ chối cả câu update.
       thayDoi.ten = tenMoi;

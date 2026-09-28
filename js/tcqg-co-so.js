@@ -23,6 +23,7 @@
     var u = window.NGUOI_DUNG;
     return !!u && ['admin', 'ban_giam_hieu', 'to_truong'].indexOf(u.vai_tro) >= 0;
   }
+  function duocXuat() { return !window.tcqgDuocXuat || window.tcqgDuocXuat(); }
 
   var CO_SO = [];     // cơ sở đang hoạt động
   var GHI = {};       // 'tieuChiMa|coSoMa' → bản ghi tdg_co_so
@@ -144,10 +145,14 @@
           '</div>';
       }).join('') + '</div>' +
 
-      '<div style="margin-top:12px">' +
-      '<button class="nut-vien" id="cs-word">📄 Xuất phụ biểu điều kiện từng địa điểm (Word)</button>' +
-      '<div class="cs-chu" style="color:var(--chu-mo)">Gồm tất cả tiêu chí cần soi địa điểm, ' +
-      'kẹp sau báo cáo tự đánh giá.</div></div>';
+      // Phụ biểu kẹp sau báo cáo tự đánh giá = văn bản chính thức: cùng cửa
+      // quyền với nút xuất báo cáo (tcqg.js duocXuat — rà phân quyền 28/9/2026).
+      (duocXuat()
+        ? '<div style="margin-top:12px">' +
+          '<button class="nut-vien" id="cs-word">📄 Xuất phụ biểu điều kiện từng địa điểm (Word)</button>' +
+          '<div class="cs-chu" style="color:var(--chu-mo)">Gồm tất cả tiêu chí cần soi địa điểm, ' +
+          'kẹp sau báo cáo tự đánh giá.</div></div>'
+        : '');
   }
 
   function nutMuc(tcMa, csMa, muc, dat) {
@@ -338,6 +343,7 @@
   function xuatPhuBieu() {
     var W = window.WORD_TIEN_ICH;
     if (!W || !dung()) return;
+    if (!duocXuat()) { (window.notify || window.alert)(window.TCQG_CHU_CHAN_XUAT); return; }
     W.taiVe(
       W.khungWord('Phu bieu dia diem ' + NAM, thanPhuBieu(TIEU_CHI, CO_SO, GHI, NAM, W), true),
       'phu-bieu-dieu-kien-tung-dia-diem-' + NAM + '.doc');

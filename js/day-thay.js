@@ -92,6 +92,14 @@
     var e = toiEmail();
     return !!e && D.coSo.some(function (c) { return c.ma === coSoMa && String(c.phu_trach_email || '').toLowerCase() === e; });
   }
+  // Người được IN danh sách dạy thay (bản có ô ký "NGƯỜI LẬP"): BGH, hoặc người
+  // phụ trách ít nhất một điểm trường — đúng người máy chủ cho ghi day_thay.
+  // Rà phân quyền 28/9/2026 (sổ dự án mục 100): trước đây mọi giáo viên đều thấy nút.
+  function laPhuTrachNao() {
+    if (laQT()) return true;
+    var e = toiEmail();
+    return !!e && D.coSo.some(function (c) { return String(c.phu_trach_email || '').toLowerCase() === e; });
+  }
   function boiCanh() {
     return L().boiCanh({ ngay: D.ngay, tiet: D.dl.tiet, gv: D.dl.gv, lopCoSo: D.dl.lopCoSo, vang: D.vang,
       dayThay: D.dayThay, dayThayThang: D.dayThayThang, quanLy: D.quanLy });
@@ -151,7 +159,8 @@
       '<div><span class="tkb-nhan">Tiết cần thay</span><b class="so">' + tong + '</b><small>theo TKB áp dụng từ ' + ngayVN(D.pb.ap_dung_tu) + '</small></div>' +
       '<div><span class="tkb-nhan">Chưa bố trí</span><b class="so" style="color:' + (chua ? 'var(--thieu)' : 'var(--ok)') + '">' + chua + '</b><small>' + (chua ? 'tiết' : 'đã đủ') + '</small></div>' +
       (D.dayThay.length ? '<div class="dt-nut-tom"><button class="dh-nut-nho" id="dt-zalo">📋 Chép tin Zalo</button>' +
-        (laQT() && D.dayThay.some(function (d) { return d.trang_thai === 'da_phan'; }) ? '<button class="dh-nut-nho" id="dt-da-bao">✓ Đánh dấu đã báo</button>' : '') + '</div>' : '') +
+        // Máy chủ (dt_sua) cho cả người phụ trách điểm; RLS tự lọc đúng tiết điểm của họ.
+        (D.dayThay.some(function (d) { return d.trang_thai === 'da_phan' && duocBoTri(d.co_so_ma); }) ?'<button class="dh-nut-nho" id="dt-da-bao">✓ Đánh dấu đã báo</button>' : '') + '</div>' : '') +
       '</div>';
 
     if (!D.vang.length) {
@@ -360,7 +369,7 @@
       '<button class="chip-loc" data-tam="thang-truoc">Tháng trước</button>' +
       '<label>Từ <input type="date" id="dt-tu" class="tkb-chon" value="' + D.dsTu + '"></label>' +
       '<label>đến <input type="date" id="dt-den" class="tkb-chon" value="' + D.dsDen + '"></label>' +
-      '<button class="dh-nut-nho" id="dt-in">🖨️ In</button></div><div id="dt-ds-bang"><div class="the-thong-bao">Đang tải…</div></div>';
+      (laPhuTrachNao() ? '<button class="dh-nut-nho" id="dt-in">🖨️ In</button>' : '') + '</div><div id="dt-ds-bang"><div class="the-thong-bao">Đang tải…</div></div>';
     vung.innerHTML = h;
     function doi(tu, den) { D.dsTu = tu; D.dsDen = den; veDanhSach(vung); }
     Array.prototype.slice.call(vung.querySelectorAll('[data-tam]')).forEach(function (b) {
@@ -401,11 +410,13 @@
       Array.prototype.slice.call(bang.querySelectorAll('[data-toi-ngay]')).forEach(function (b) {
         b.addEventListener('click', function () { D.ngay = b.getAttribute('data-toi-ngay'); D.khung = 'bo-tri'; ve(); });
       });
-      document.getElementById('dt-in').onclick = function () { inDanhSach(ds, theoNguoi, tuQuan); };
+      var nutIn = document.getElementById('dt-in');
+      if (nutIn) nutIn.onclick = function () { inDanhSach(ds, theoNguoi, tuQuan); };
     }).catch(function (e) { bang.innerHTML = '<div class="hd-kiem do">Không tải được: ' + thoat((e && e.message) || e) + '</div>'; });
   }
 
   function inDanhSach(ds, theoNguoi, tuQuan) {
+    if (!laPhuTrachNao()) { bao('Chỉ Ban giám hiệu hoặc người phụ trách điểm trường mới in được danh sách dạy thay.'); return; }
     var w = window.open('', '_blank');
     if (!w) { bao('Trình duyệt chặn cửa sổ in — cho phép cửa sổ bật lên rồi bấm lại.'); return; }
     var ten = (window.CAU_HINH || {}).TEN_TRUONG || '';

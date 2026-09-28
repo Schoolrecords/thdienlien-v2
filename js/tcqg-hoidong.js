@@ -89,9 +89,15 @@
     var goc = document.getElementById('kd-hoi-dong');
     if (!goc) return;
     taiHoiDong(namHoc).then(function (d) {
+      var email = ((window.NGUOI_DUNG || {}).email || '').trim().toLowerCase();
+      var toi = email ? d.tv.filter(function (t) { return (t.email || '').trim().toLowerCase() === email; })[0] : null;
+      // Vai của người đang đăng nhập trong hội đồng năm này → tcqg.js dựa vào
+      // đó mở nút xuất báo cáo cho Chủ tịch / Phó Chủ tịch / Thư ký (mục 100).
+      var vaiCu = window.TCQG_VAI_HD || '';
+      window.TCQG_VAI_HD = toi ? toi.vai_tro : '';
+      if (window.TCQG_VAI_HD !== vaiCu && window.tcqgVeLaiQuyen) window.tcqgVeLaiQuyen();
       if (!d.hd) { goc.innerHTML = daiKiem(null); return; }
-      var email = ((window.NGUOI_DUNG || {}).email || '').toLowerCase();
-      var toi = d.tv.filter(function (t) { return (t.email || '').toLowerCase() === email; })[0];
+      var xuatDuoc = !window.tcqgDuocXuat || window.tcqgDuocXuat();
       goc.innerHTML =
         '<div class="sub open"><div class="sub-head" role="button" onclick="this.parentNode.classList.toggle(\'open\')">' +
         '<span class="fo">👥</span><b>Hội đồng tự đánh giá · Năm học ' + thoat(namHoc) + ' · ' + d.tv.length + ' thành viên' +
@@ -116,10 +122,13 @@
             '<td>' + thoat(t.chuc_vu || '') + '</td><td>' + thoat(t.vai_tro) + '</td>' +
             '<td>' + thoat(t.nhom || '') + '</td><td>' + (t.tieu_chi_phu_trach || []).join(', ') + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
-        '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-        '<button class="nut-vien nho" onclick="window.xuatDanhSachHoiDong?xuatDanhSachHoiDong():notify(\'Bản in sẽ có ở bước sau.\')">📄 Danh sách hội đồng (Word)</button>' +
-        '<button class="nut-vien nho" onclick="window.xuatPhanCongHoiDong?xuatPhanCongHoiDong():notify(\'Bản in sẽ có ở bước sau.\')">📄 Bảng phân công nhiệm vụ (Word)</button>' +
-        '</div></div></div>';
+        (xuatDuoc
+          ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+            '<button class="nut-vien nho" onclick="window.xuatDanhSachHoiDong?xuatDanhSachHoiDong():notify(\'Bản in sẽ có ở bước sau.\')">📄 Danh sách hội đồng (Word)</button>' +
+            '<button class="nut-vien nho" onclick="window.xuatPhanCongHoiDong?xuatPhanCongHoiDong():notify(\'Bản in sẽ có ở bước sau.\')">📄 Bảng phân công nhiệm vụ (Word)</button>' +
+            '</div>'
+          : '') +
+        '</div></div>';
       // Cầu dữ liệu cho bản in
       window.duLieuHoiDong = function () { return { namHoc: namHoc, hd: d.hd, tv: sapThanhVien(d.tv), kiem: d.kiem }; };
     });

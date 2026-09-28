@@ -128,6 +128,22 @@
   var locTT = 'tatca';
   var boPhanDangMo = null; // soTT bộ phận đang mở trong lớp phủ
 
+  // BGH / quản trị (hoặc bản xem thử chưa nối CSDL). Rà phân quyền 28/9/2026
+  // (sổ dự án mục 100): phiếu giao việc, ghi trạng thái rà Drive, thẻ Quản trị
+  // ở trang chủ chỉ dành cho nhóm này — máy chủ dùng đúng la_admin().
+  function laQuanTriApp() {
+    var u = window.NGUOI_DUNG;
+    if (!window.MAY_CHU) return !u;
+    return !!u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu');
+  }
+  // Ẩn/hiện các lối vào chỉ dành cho BGH theo người đang đăng nhập. Gọi lại
+  // sau đăng nhập (supabase-ket-noi.js) và khi 'dangnhap-xong'.
+  window.apQuyenGiaoDien = function () {
+    var the = document.getElementById('the-quan-tri');
+    if (the) the.style.display = laQuanTriApp() ? '' : 'none';
+  };
+  document.addEventListener('dangnhap-xong', function () { window.apQuyenGiaoDien(); });
+
   function banGhi(ma) { // bản ghi đầy đủ trong CSDL (null ở chế độ xem thử)
     return (window.HS_BAN_GHI && window.HS_BAN_GHI[ma]) || null;
   }
@@ -390,6 +406,13 @@
         if (n >= 0) { doi[h.ma] = n; demDoi++; }
       });
       if (!demDoi || !window.MAY_CHU) return;
+      // Người không phải BGH/quản trị vẫn XEM được kết quả đếm, nhưng không
+      // gửi lệnh ghi — máy chủ (la_admin) từ chối, gửi đi chỉ thêm một lỗi (mục 100).
+      if (!laQuanTriApp()) {
+        var nhanGv = conSong() && $('#kq-kiem-tra .nhan-nho');
+        if (nhanGv) nhanGv.innerHTML += '<br><i>Trạng thái "Đã có / Chưa có" chỉ được ghi lại khi Ban giám hiệu hoặc quản trị bấm kiểm tra.</i>';
+        return;
+      }
       window.MAY_CHU.rpc('cap_nhat_tu_drive', { du_lieu: doi }).then(function (r) {
         if (r.error) {
           // Giáo viên bấm: vẫn được xem kết quả đếm, chỉ không được ghi.
@@ -478,8 +501,11 @@
           ' onclick="if(!event.target.closest(\'.sub-word\'))this.parentNode.classList.toggle(\'open\')"' +
           ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.parentNode.classList.toggle(\'open\')}">' +
           '<span class="fo">📁</span><b>' + thoatHTML(maHop + '. ' + hop.ten) + '</b>' +
-          '<button type="button" class="sub-word" title="Tải phiếu giao việc của hộp này ra Word"' +
-          ' onclick="event.stopPropagation();xuatHopWord(\'' + maHop + '\')">📄 Tải file Word</button>' +
+          // Phiếu giao việc = văn bản PHÂN CÔNG: chỉ BGH/quản trị (mục 100).
+          (laQuanTriApp()
+            ? '<button type="button" class="sub-word" title="Tải phiếu giao việc của hộp này ra Word"' +
+              ' onclick="event.stopPropagation();xuatHopWord(\'' + maHop + '\')">📄 Tải file Word</button>'
+            : '') +
           '<span class="sub-cnt">' + ds.length + ' hồ sơ</span><span class="sub-arrow">▶</span></div>' +
           '<div class="sub-body"><table class="rec-tbl"><thead><tr>' +
           '<th style="width:120px">Mã hồ sơ</th><th>Tên hồ sơ</th>' +

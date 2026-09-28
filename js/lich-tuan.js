@@ -428,8 +428,10 @@
           : '<button class="dh-nut-nho" onclick="LT.banHanh(false)">↩ Thu về nháp</button>') +
         '</div>' +
         (MO === 'viec' ? veKhungViec() : MO === 'truc' ? veKhungTruc() : '')
-      : '<div class="dh-chon-hang" style="margin-top:12px">' +
-        '<button class="dh-nut-nho" onclick="LT.word()">📄 Xuất Word</button></div>';
+      // Bản Word lịch tuần mang thể thức NĐ 30 + ô ký — văn bản ban hành của
+      // nhà trường, chỉ Ban giám hiệu xuất (rà phân quyền 28/9/2026, mục 100).
+      // Thầy cô xem lịch đã ban hành ngay trên màn này.
+      : '';
 
     return tieuDe + dieuHuong + nhan + canhBaoMoc + bangTT + trongTam + luoi + nutQT;
   }
@@ -440,6 +442,7 @@
   function xuatWord() {
     var W = window.WORD_TIEN_ICH;
     if (!W) { window.notify('Chưa nạp được bộ xuất Word (js/xuat-word.js).'); return; }
+    if (!laQT()) { window.notify('Chỉ Ban giám hiệu mới xuất được bản Word lịch tuần.'); return; }
     if (!TUAN) { window.notify('Tuần này chưa có lịch để xuất.'); return; }
 
     var hang = '';

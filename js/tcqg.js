@@ -71,6 +71,37 @@
     var u = window.NGUOI_DUNG;
     return !!u && ['admin', 'ban_giam_hieu'].indexOf(u.vai_tro) >= 0;
   }
+  // ── Quyền XUẤT văn bản chính thức (rà phân quyền 28/9/2026, sổ dự án mục 100) ──
+  // Báo cáo tự đánh giá (Biểu 1), danh mục minh chứng, danh sách + phân công
+  // hội đồng, phụ biểu địa điểm là văn bản trình ký của nhà trường: chỉ Ban
+  // giám hiệu / quản trị, và người GIỮ BÚT của hội đồng theo quyết định —
+  // Chủ tịch, Phó Chủ tịch, Thư ký (vai trong thanh_vien_hoi_dong, khớp Gmail).
+  // Trước đây nút bày cho MỌI tài khoản: giáo viên bấm là ra nguyên bản Word.
+  // window.TCQG_VAI_HD do tcqg-hoidong.js điền khi nạp hội đồng của năm.
+  // Máy chủ không phân biệt được (xuất Word làm ở trình duyệt, từ dữ liệu mọi
+  // người đều được ĐỌC) — nên đây là cửa giao diện, nói rõ cho người bị chặn.
+  function vaiHoiDong() { return window.TCQG_VAI_HD || ''; }
+  function duocXuat() {
+    if (!window.MAY_CHU) return true;             // bản xem thử
+    if (laQT()) return true;
+    var v = vaiHoiDong();
+    return v === 'Chủ tịch' || v === 'Phó Chủ tịch' || v === 'Thư ký';
+  }
+  // Danh mục minh chứng của MỘT tiêu chí là giấy làm việc của người chấm:
+  // thêm người được chấm (tổ trưởng) và mọi thành viên hội đồng.
+  function duocXuatTieuChi() { return duocXuat() || coQuyenCham() || !!vaiHoiDong(); }
+  window.tcqgDuocXuat = duocXuat;
+  window.tcqgDuocXuatTieuChi = duocXuatTieuChi;
+  window.TCQG_CHU_CHAN_XUAT = 'Chỉ Ban giám hiệu hoặc Chủ tịch, Phó Chủ tịch, Thư ký hội đồng ' +
+    'tự đánh giá mới xuất được văn bản này.';
+  // tcqg-hoidong.js gọi khi biết vai của người đang đăng nhập trong hội đồng.
+  window.tcqgVeLaiQuyen = function () {
+    if (TAI_HONG || !$('#kd-thanh')) return;
+    veThanh();
+    var ct = $('#kd-chi-tiet'), dang = document.activeElement;
+    var dangGo = !!(ct && dang && ct.contains(dang) && /^(TEXTAREA|INPUT|SELECT)$/.test(dang.tagName));
+    if (!DANG_SUA && !dangGo && (TAB_CT === 'mc' || TAB_CT === 'dd')) veChiTiet();
+  };
 
   // ── Hàng đợi ghi: các lệnh nối đuôi nhau, lệnh lỗi không giết hàng ──
   var HANG_GHI = Promise.resolve();
@@ -322,10 +353,10 @@
     veChiTiet();
     veDanhGiaChung();
     veBaoCao();
-    if (laQT()) {
-      $('#kd-nut-hd').style.display = '';
-      $('#kd-nut-kh').style.display = '';
-    }
+    // Có cả nhánh ẩn: vai bị hạ giữa phiên (Quản trị đổi vai rồi vé tự làm
+    // mới) thì hai nút sửa không được đứng lại trên màn.
+    $('#kd-nut-hd').style.display = laQT() ? '' : 'none';
+    $('#kd-nut-kh').style.display = laQT() ? '' : 'none';
     window.veHoiDongTCQG && window.veHoiDongTCQG(NAM_DL || NAM);
   }
 
@@ -346,8 +377,10 @@
         return '<option value="' + t.so + '"' + (STD === t.so ? ' selected' : '') + '>Tiêu chuẩn ' + t.so + ' — ' + thoat(t.ten) + '</option>';
       }).join('') + '</select>' +
       '<span class="sp"></span>' +
-      '<button class="nut-vien" onclick="window.xuatMinhChungTheoTieuChuan?xuatMinhChungTheoTieuChuan():notify(\'Bản xuất danh mục minh chứng sẽ có ở bước sau.\')">📋 Danh mục minh chứng</button>' +
-      '<button class="nut-xuat-bc" onclick="window.xuatBaoCaoTuDanhGia?xuatBaoCaoTuDanhGia():notify(\'Bản xuất báo cáo sẽ có ở bước sau.\')">📄 Xuất báo cáo tự đánh giá</button>';
+      (duocXuat()
+        ? '<button class="nut-vien" onclick="window.xuatMinhChungTheoTieuChuan?xuatMinhChungTheoTieuChuan():notify(\'Bản xuất danh mục minh chứng sẽ có ở bước sau.\')">📋 Danh mục minh chứng</button>' +
+          '<button class="nut-xuat-bc" onclick="window.xuatBaoCaoTuDanhGia?xuatBaoCaoTuDanhGia():notify(\'Bản xuất báo cáo sẽ có ở bước sau.\')">📄 Xuất báo cáo tự đánh giá</button>'
+        : '<span class="kd-chi-xem" title="' + thoat(window.TCQG_CHU_CHAN_XUAT) + '">🔒 Báo cáo tự đánh giá do Ban giám hiệu, Thư ký hội đồng xuất</span>');
     $('#kd-nam-hoc').addEventListener('change', function () { NAM = this.value; taiTCQG(); });
     $('#kd-std').addEventListener('change', function () { STD = +this.value; veList(); veDanhGiaChung(); });
   }
@@ -652,7 +685,9 @@
       }).join('') + '</div>' +
       (dem.chua ? '<div class="hs-loi hien" style="margin:12px 0 0">Còn ' + dem.chua +
         ' minh chứng chưa có trong kho — việc chấm mức cần dựa trên minh chứng có thật.</div>' : '') +
-      '<div style="margin-top:12px"><button class="nut-vien" onclick="window.xuatMinhChungTieuChi?xuatMinhChungTieuChi(\'' + c.ma + '\'):notify(\'Bản xuất sẽ có ở bước sau.\')">📄 Tải danh mục minh chứng của tiêu chí này (Word)</button></div>';
+      (duocXuatTieuChi()
+        ? '<div style="margin-top:12px"><button class="nut-vien" onclick="window.xuatMinhChungTieuChi?xuatMinhChungTieuChi(\'' + c.ma + '\'):notify(\'Bản xuất sẽ có ở bước sau.\')">📄 Tải danh mục minh chứng của tiêu chí này (Word)</button></div>'
+        : '');
   }
 
   // ── Tab Kết luận & Ghi chú ──
