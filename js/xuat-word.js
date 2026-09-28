@@ -68,7 +68,7 @@
 
   // Phần đầu tệp Word HTML (khai báo Word + kiểu chữ, bảng dùng chung) — trang
   // (@page) do nơi gọi truyền vào.
-  function dauTep(tieuDeTab, cssTrang) {
+  function dauTep(tieuDeTab, cssTrang, bangTuDo) {
     return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
       'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">' +
@@ -77,7 +77,10 @@
       '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
       '<style>' + cssTrang +
       'body{' + FONT + ';font-size:13pt;line-height:1.5;color:#000}' +
-      'table{border-collapse:collapse;width:100%}' +
+      // bangTuDo (chỉ tệp có bìa — sổ): KHÔNG ép bảng rộng 100%. Đo bằng Word COM
+      // 28/9/2026: có luật này thì Word bỏ qua độ rộng cm khai cho từng cột và tự
+      // chia lại (cột Họ và tên 3,6 cm thay vì 4,3 cm → tên rơi dòng).
+      'table{border-collapse:collapse' + (bangTuDo ? '' : ';width:100%') + '}' +
       // Bảng gắn class "co-dinh" thì Word giữ đúng bề rộng cột đã khai, không tự
       // nong cột theo nội dung dài nhất (áp cho cả bảng chứ không áp toàn cục,
       // để các bảng cũ giữ nguyên cách dàn cột đã kiểm chứng).
@@ -105,7 +108,10 @@
     return dauTep(tieuDeTab,
       '@page WordSection1{size:21cm 29.7cm;margin:1.5cm 1.5cm 1cm 2cm;border:double windowtext 4.5pt;padding:24pt;' +
       'mso-page-border-surround-header:no;mso-page-border-surround-footer:no}div.WordSection1{page:WordSection1}' +
-      '@page WordSection2{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.WordSection2{page:WordSection2}') +
+      '@page WordSection2{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.WordSection2{page:WordSection2}' +
+      // Bảng trong SỔ (thầy Chung 28/9/2026: cột Họ và tên hẹp, tên rơi dòng): ô
+      // đệm mỏng + giãn dòng 1,2 — đệm 6pt hai bên ăn mất ~0,4 cm mỗi cột.
+      'table.so-bang th,table.so-bang td{padding:2pt 4pt;line-height:1.2}', true) +
       '<body><div class="WordSection1">' + bia + '</div>' +
       '<span style="font-size:13pt">' + NGAT_SECTION + '</span>' +
       '<div class="WordSection2">' + than + '</div></body></html>';

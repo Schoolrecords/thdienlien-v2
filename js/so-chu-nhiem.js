@@ -1685,28 +1685,50 @@
       return t ? t.split('\n').map(function (d) { return '<p style="margin:0 0 2pt;text-align:justify">' + c(d) + '</p>'; }).join('') : cham(n || 2);
     }
     function hoac(t) { t = String(t == null ? '' : t).trim(); return t ? '<b>' + c(t) + '</b>' : '………………………………'; }
+    // ── Bảng trong sổ: Word CHỈ nghe đệm ô và độ rộng viết THẲNG vào từng ô ──
+    // (đo bằng Word COM 28/9/2026: luật CSS theo lớp bị luật chung th,td đè → đệm
+    // vẫn 6pt; độ rộng % bị Word chia lại → cột Họ và tên hẹp, tên rơi dòng).
+    // Nên: đổi % → cm theo khổ chữ 16,5 cm, khai <colgroup>, khoá bề rộng bảng,
+    // và ghi đệm 2pt × 3pt vào từng ô.
+    var KHO_CM = 16.5, DEM = 'padding:2pt 3pt;line-height:1.2;';
+    function cm(r) { return /%$/.test(r) ? (parseFloat(r) * KHO_CM / 100).toFixed(2) + 'cm' : r; }
+    function oDem(h) {
+      return h.replace(/<t([hd])(\s[^>]*)?>/g, function (m, t, a) {
+        a = a || '';
+        return /style="/.test(a) ? '<t' + t + a.replace('style="', 'style="' + DEM) + '>' : '<t' + t + ' style="' + DEM + '"' + a + '>';
+      });
+    }
     function bang(dau, ds, rong, soTrong) {
-      var th = '<tr>' + dau.map(function (d, i) { return '<th' + (rong && rong[i] ? ' style="width:' + rong[i] + '"' : '') + '>' + c(d) + '</th>'; }).join('') + '</tr>';
+      var rcm = rong ? rong.map(cm) : null;
+      var th = '<tr>' + dau.map(function (d, i) { return '<th' + (rcm && rcm[i] ? ' style="width:' + rcm[i] + '"' : '') + '>' + c(d) + '</th>'; }).join('') + '</tr>';
       var trong = '<tr>' + dau.map(function () { return '<td>&nbsp;</td>'; }).join('') + '</tr>';
       var tb = ds.length ? ds.map(function (r) { return '<tr>' + r.map(function (o, i) { return '<td' + (i === 0 ? ' class="giua"' : '') + '>' + (o == null ? '' : o) + '</td>'; }).join('') + '</tr>'; }).join('')
         : new Array((soTrong || 5) + 1).join(trong);
-      return '<table class="co-dinh"><thead>' + th + '</thead><tbody>' + tb + '</tbody></table>';
+      var cg = rcm ? '<colgroup>' + rcm.map(function (x) { return '<col style="width:' + x + '">'; }).join('') + '</colgroup>' : '';
+      return oDem('<table class="co-dinh so-bang" style="width:' + KHO_CM + 'cm">' + cg + '<thead>' + th + '</thead><tbody>' + tb + '</tbody></table>');
     }
     // Bảng hai tầng tiêu đề: mỗi mức một cặp SL / TL (như sổ giấy)
     function bangMuc(tenCot, dsDong, mucs, lay, coSoDG, nhomTen) {
       var soCot = 2 + (coSoDG ? 1 : 0) + mucs.length * 2;
-      var h = '<table class="co-dinh"><thead><tr><th rowspan="2" style="width:7%">TT</th><th rowspan="2">' + c(tenCot) + '</th>' +
-        (coSoDG ? '<th rowspan="2" style="width:11%">Số HS được ĐG</th>' : '') +
-        mucs.map(function (x) { return '<th colspan="2">' + c(x[1]) + '</th>'; }).join('') + '</tr><tr>' +
-        mucs.map(function () { return '<th>SL</th><th>TL</th>'; }).join('') + '</tr></thead><tbody>';
+      // Độ rộng tuyệt đối (cm): TT 0,9 · tên 4,2 · (số HS ĐG 1,6) · các cột SL/TL chia đều phần còn lại
+      var wTen = 4.2, wSo = coSoDG ? 1.6 : 0, wO = ((KHO_CM - 0.9 - wTen - wSo) / (mucs.length * 2)).toFixed(2) + 'cm';
+      var cg = '<colgroup><col style="width:0.9cm"><col style="width:' + wTen + 'cm">' + (coSoDG ? '<col style="width:' + wSo + 'cm">' : '') +
+        mucs.map(function () { return '<col style="width:' + wO + '"><col style="width:' + wO + '">'; }).join('') + '</colgroup>';
+      var h = '<table class="co-dinh so-bang" style="width:' + KHO_CM + 'cm">' + cg + '<thead><tr><th rowspan="2" style="width:0.9cm">TT</th><th rowspan="2" style="width:' + wTen + 'cm">' + c(tenCot) + '</th>' +
+        (coSoDG ? '<th rowspan="2" style="width:' + wSo + 'cm">Số HS được ĐG</th>' : '') +
+        mucs.map(function (x) { return '<th colspan="2" style="width:' + (parseFloat(wO) * 2).toFixed(2) + 'cm">' + c(x[1]) + '</th>'; }).join('') + '</tr><tr>' +
+        mucs.map(function () { return '<th style="width:' + wO + '">SL</th><th style="width:' + wO + '">TL</th>'; }).join('') + '</tr></thead><tbody>';
       var tt = 0, nhomCu = null;
       dsDong.forEach(function (d) {
-        if (nhomTen && d[2] !== nhomCu) { nhomCu = d[2]; tt = 0; h += '<tr><td></td><td colspan="' + (soCot - 1) + '"><b>' + c(nhomTen[d[2]]) + '</b></td></tr>'; }
+        if (nhomTen && d[2] !== nhomCu) { nhomCu = d[2]; tt = 0; h += '<tr><td style="width:0.9cm"></td><td colspan="' + (soCot - 1) + '" style="width:' + (KHO_CM - 0.9).toFixed(2) + 'cm"><b>' + c(nhomTen[d[2]]) + '</b></td></tr>'; }
         var v = lay(d[0]) || {};
-        h += '<tr><td class="giua">' + (++tt) + '</td><td>' + c(d[1]) + '</td>' + (coSoDG ? '<td class="giua">' + (v.mau != null ? v.mau : '') + '</td>' : '') +
-          mucs.map(function (x) { var s = v[x[0]]; return '<td class="giua">' + (s != null && s !== '' ? s : '') + '</td><td class="giua">' + tiLe(s, v.mau) + '</td>'; }).join('') + '</tr>';
+        // Ghi bề rộng vào TỪNG ô: tiêu đề có ô gộp dọc/ngang nên Word dựng lưới cột
+        // theo hàng dữ liệu — không có bề rộng ở đây là cột TT, tên môn bị bóp.
+        h += '<tr><td class="giua" style="width:0.9cm">' + (++tt) + '</td><td style="width:' + wTen + 'cm">' + c(d[1]) + '</td>' +
+          (coSoDG ? '<td class="giua" style="width:' + wSo + 'cm">' + (v.mau != null ? v.mau : '') + '</td>' : '') +
+          mucs.map(function (x) { var s = v[x[0]]; return '<td class="giua" style="width:' + wO + '">' + (s != null && s !== '' ? s : '') + '</td><td class="giua" style="width:' + wO + '">' + tiLe(s, v.mau) + '</td>'; }).join('') + '</tr>';
       });
-      return h + '</tbody></table>';
+      return oDem(h + '</tbody></table>');
     }
     var MUC_MON = [['T', 'Hoàn thành tốt (T)'], ['H', 'Hoàn thành (H)'], ['C', 'Chưa hoàn thành (C)']];
     var MUC_NL = [['T', 'Tốt (T)'], ['Đ', 'Đạt (Đ)'], ['C', 'Cần cố gắng (C)']];
@@ -1777,17 +1799,17 @@
     h += loc
       ? bang(['TT', 'Họ và tên', 'Ngày sinh', 'Nữ', 'Dân tộc'], hs.map(function (x, i) {
           return [i + 1, c(x.ho_ten) + (x.hoa_nhap ? ' <i>(HN)</i>' : ''), '<span class="giua">' + ngayVN(x.ngay_sinh) + '</span>', x.gioi_tinh === 'Nữ' ? 'Nữ' : '', c(x.dan_toc || '')];
-        }), ['7%', '43%', '18%', '10%', '22%'], 35) +
+        }), ['0.9cm', '7.2cm', '2.6cm', '1.3cm', '4.5cm'], 35) +
         '<p class="nghieng" style="font-size:11pt;margin:3pt 0 0">Bản gửi tổ chuyên môn không có các cột tôn giáo, họ tên và nghề nghiệp của cha mẹ.</p>'
       : bang(['TT', 'Họ và tên', 'Ngày sinh', 'Nữ', 'Dân tộc', 'Tôn giáo', 'Họ tên bố (mẹ) hoặc người giám hộ', 'Nghề nghiệp'], hs.map(function (x, i) {
           return [i + 1, c(x.ho_ten) + (x.hoa_nhap ? ' <i>(HN)</i>' : ''), '<span class="giua">' + ngayVN(x.ngay_sinh) + '</span>', x.gioi_tinh === 'Nữ' ? 'Nữ' : '',
             c(x.dan_toc || ''), c(x.ton_giao || ''), c(x.cha_me_ten || ''), c(x.nghe_nghiep || '')];
-        }), ['6%', '21%', '12%', '6%', '9%', '9%', '23%', '14%'], 35);
+        }), ['0.8cm', '4.1cm', '2.3cm', '0.9cm', '1.1cm', '1.4cm', '3.7cm', '2.2cm'], 35);
     h += NGAT + tieuDe('THÔNG TIN VỀ HỌC SINH LỚP ' + LOP + ' NĂM HỌC ' + namCach) +
       (loc ? '<p class="nghieng">(Bảng số điện thoại, địa chỉ, hoàn cảnh gia đình, đặc điểm cá nhân là dữ liệu cá nhân nhạy cảm — chỉ có trong bản đầy đủ của giáo viên chủ nhiệm và Ban giám hiệu.)</p>'
         : bang(['TT', 'Họ và tên', 'Số điện thoại', 'Địa chỉ', 'Xóm', 'Hoàn cảnh gia đình', 'Đặc điểm cá nhân (khả năng vượt trội, hạn chế về học tập, NL, PC)'], hs.map(function (x, i) {
             return [i + 1, c(x.ho_ten), c(x.sdt || ''), c(x.dia_chi || ''), c(x.xom || ''), c(x.hoan_canh_gd || ''), c(x.dac_diem || '')];
-          }), ['6%', '19%', '13%', '13%', '9%', '18%', '22%'], 35));
+          }), ['0.8cm', '4.3cm', '2.3cm', '2.2cm', '1.1cm', '2.9cm', '2.9cm'], 35));
 
     // ── THÔNG TIN CƠ BẢN VỀ LỚP ──
     h += NGAT + tieuDe('THÔNG TIN CƠ BẢN VỀ LỚP ' + LOP + ' NĂM HỌC ' + namCach) +
@@ -1881,7 +1903,7 @@
       var td = (m.theo_doi || []).filter(function (x) { return String(x.ngay).slice(0, 7) === ym; });
       if (td.length) r += nho('Nhật ký theo dõi, nhận xét, khen – nhắc') + bang(['Ngày', 'Học sinh', 'Loại', 'Nội dung'], td.map(function (x) {
         return [ngayVN(x.ngay), c(x.hoc_sinh || ''), c(TEN_LOAI_TD[x.loai] || x.loai), c(x.noi_dung || '') + (x.da_bao_cmhs && !loc ? ' <i>(đã báo cha mẹ)</i>' : '')];
-      }), ['14%', '24%', '12%', '50%']);
+      }), ['13%', '27%', '11%', '49%']);
       var cc = (((m.chuyen_can || {}).thang) || []).filter(function (x) { return x.thang === ym; })[0];
       if (cc) {
         var tl2 = tiLeChuyenCan(cc.P + cc.K + cc.R, siSo, cc.buoi);
@@ -1946,17 +1968,17 @@
       ? dong(Object.keys(m.ho_tro_khac_so || {}).length ? Object.keys(m.ho_tro_khac_so).map(function (k) { return c((TEN_HT[k] || k).split(' (')[0]) + ': ' + m.ho_tro_khac_so[k]; }).join('; ') + ' <i>(chỉ số lượng)</i>' : 'Không có.')
       : bang(['TT', 'Học sinh', 'Nhu cầu, biểu hiện', 'Biện pháp, phối hợp', 'Kết quả'], khac.map(function (x, i) {
           return [i + 1, c(x.ho_ten), c((TEN_HT[x.loai] || x.loai) + (x.bieu_hien ? ': ' + x.bieu_hien : '')), c([x.bien_phap, x.nguoi_phoi_hop].filter(Boolean).join(' — ')), c((TEN_TT_HT[x.trang_thai] || '') + (x.ket_qua ? ': ' + x.ket_qua : ''))];
-        }), ['6%', '20%', '28%', '28%', '18%'], 3));
+        }), ['6%', '26%', '25%', '26%', '17%'], 3));
     h += muc('C. Trao đổi riêng, phản ánh với cha mẹ học sinh') + (loc
       ? dong('Trao đổi riêng: ' + so(m.trao_doi_so) + ' lần; phản ánh, kiến nghị: ' + so(m.phan_anh_so) + ' lần <i>(chỉ số lượng)</i>.')
       : bang(['Ngày', 'Học sinh', 'Nội dung', 'Phản hồi, việc cần làm'], (m.trao_doi || []).map(function (x) {
           return [ngayVN(x.ngay), c(x.hoc_sinh), c((x.loai === 'phan_anh' ? '[Phản ánh] ' : '') + x.noi_dung), c([x.phan_hoi, x.ket_luan].filter(Boolean).join(' — '))];
-        }), ['14%', '24%', '34%', '28%'], 3));
+        }), ['13%', '27%', '33%', '27%'], 3));
     h += muc('D. Học sinh thuộc diện chính sách, cần quan tâm') + (loc
       ? dong('Diện chính sách: ' + so(hc.chinh_sach) + ' em; cần quan tâm: ' + so(hc.can_quan_tam) + ' em <i>(chỉ số lượng)</i>.')
       : bang(['TT', 'Họ và tên', 'Diện / hoàn cảnh', 'Ở với', 'Sức khỏe cần lưu ý'], (m.hoan_canh || []).filter(function (x) { return x.dien.length || x.can_quan_tam; }).map(function (x, i) {
           return [i + 1, c(x.ho_ten), c(x.dien.map(function (d) { return TEN_CS[d] || d; }).concat(x.can_quan_tam ? ['Cần quan tâm'] : []).join('; ')), c(x.o_voi), c(x.suc_khoe)];
-        }), ['6%', '24%', '30%', '18%', '22%'], 3));
+        }), ['6%', '27%', '28%', '17%', '22%'], 3));
     if (loc) h += muc('E. Sự việc cần lưu ý (an toàn, bắt nạt…)') + dong('Đã ghi ' + so(m.su_viec_so) + ' sự việc <i>(nội dung chỉ giáo viên chủ nhiệm và Ban giám hiệu xem)</i>.');
     h += '<p class="nghieng" style="font-size:11pt;margin:6pt 0 0">Sổ có dữ liệu cá nhân của học sinh (Luật Bảo vệ dữ liệu cá nhân 2025): lưu hành nội bộ, không chia sẻ lên nhóm mạng xã hội.</p>';
 
