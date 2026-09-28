@@ -3650,7 +3650,7 @@ textarea.ht-o { min-height: 116px; display: block; }
    Điện thoại: mọi hàng tự xuống dòng, bảng cuộn ngang trong khung riêng,
    nút chạm cao ≥ 36–40px.
    ════════════════════════════════════════════════════════════════════════ */
-#vung-sochunhiem { --scn-ke: #d5dbe4; --scn-ke-dam: #8c96a6; --scn-nen: #f4f5f7; max-width: 1100px; margin: 0 auto; }
+#vung-sochunhiem { --scn-ke: #d5dbe4; --scn-ke-dam: #8c96a6; --scn-nen: #f4f5f7; margin: 0 auto; }   /* rộng bằng khung chung (28/9/2026) */
 .scn-dau { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding: 4px 0 12px; border-bottom: 1px solid var(--scn-ke); margin-bottom: 12px; }
 .scn-dau > div:first-child { flex: 1 1 260px; }
 .scn-dau h2 { font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--chu); line-height: 1.2; }
@@ -3774,7 +3774,7 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
    bóng lớn, không bo tròn to. Màu chỉ dùng cho trạng thái ("Chưa có GVCN").
    Hàng thẻ con .lh-dau dùng CHUNG với màn Sổ chủ nhiệm (window.LOP_HOC_THE).
    ════════════════════════════════════════════════════════════════════════════ */
-.lh-trang { max-width: 1100px; margin: 0 auto; }
+.lh-trang { margin: 0 auto; }   /* rộng bằng khung chung như trang Chuẩn quốc gia (thầy Chung 28/9/2026) */
 
 /* Đầu trang: vệt vị trí · tiêu đề + ô năm học · hàng thẻ con */
 .lh-dau { margin-bottom: 14px; }
@@ -3956,3 +3956,9 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 /* GVCN dự kiến (sql/70): chữ xám, ghi chú "chưa đăng nhập" (28/9/2026) */
 .lh-dk { color: var(--chu-mo); }
 .lh-dk small { font-size: 11.5px; opacity: .8; margin-left: 4px; }
+/* Cột TT trang Lớp học (28/9/2026) */
+.lh-ds .c-stt { width: 44px; color: var(--chu-mo); }
+@media (max-width: 760px) { .lh-ds .c-stt { display: none; } }
+/* Sổ chủ nhiệm — trạng thái kỳ nộp gần nhất ở cột thao tác trang Lớp học (sql/71, 28/9/2026) */
+.lh-duyet { display: inline-block; font-size: 12px; color: var(--chu-mo); white-space: nowrap; margin: 0 14px 0 -8px; }
+.lh-duyet.bo-sung { color: var(--vang-sam); font-weight: 600; }

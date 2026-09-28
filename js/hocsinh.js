@@ -12,8 +12,11 @@
 // thấy một trang liền mạch.
 //
 // QUYỀN SỔ CHỦ NHIỆM (thầy chốt 28/9/2026): chỉ Quản trị, BGH và GVCN của đúng
-// lớp đó được XEM; chỉ GVCN lớp đó được SỬA. Tổ trưởng, GV bộ môn, nhân viên
-// không thấy lối vào. Ẩn/hiện ở đây chỉ cho gọn — hàng rào thật là RLS sql/69.
+// lớp đó được XEM; chỉ GVCN lớp đó được SỬA. GV bộ môn, nhân viên không thấy lối
+// vào. TỔ TRƯỞNG/TỔ PHÓ được BGH giao kiểm tra (bảng scn_nguoi_duyet, sql/71) thấy
+// lối "Sổ chủ nhiệm" ở lớp thuộc khối được giao — bấm vào chỉ mở màn KIỂM TRA
+// (bản chụp đã lọc), không mở sổ gốc. Cột thao tác hiện nhỏ trạng thái kỳ nộp gần
+// nhất. Ẩn/hiện ở đây chỉ cho gọn — hàng rào thật là RLS sql/69 + sql/71.
 //
 // Nguồn: hoc_sinh_lop ⋈ hoc_sinh · phan_cong_day (GVCN) · lop_hoc (cơ sở).
 //
@@ -46,6 +49,8 @@
   var CN_ID = {};      // '1A' -> [nguoi_dung_id,…] (để nhận "Lớp của tôi")
   var NHIEU_CS = false;
   var LOP_TOI = [];    // lớp người đang xem làm GVCN (năm đang xem)
+  var TO_TOI = [];     // dòng giao kiểm tra sổ của người đang xem (scn_nguoi_duyet, sql/71)
+  var DUYET = {};      // '4A' -> lần nộp sổ chủ nhiệm gần nhất (scn_nop, RLS lọc theo quyền)
   var THE = 'tong-quan';
   var GOP_MO = false;   // bảng tổng hợp điểm trường × khối đang mở?
   var LOC = { cs: '', khoi: '', tim: '' };
@@ -142,7 +147,12 @@
               if (!r.error) return r.data || [];
               return may.from('lop_hoc').select('lop, co_so_ma, co_so:co_so_ma(ten)').eq('nam_hoc', NAM)
                 .then(function (r2) { return r2.error ? [] : (r2.data || []); });
-            }, function () { return []; })
+            }, function () { return []; }),
+          // Sổ chủ nhiệm — nộp kiểm tra (sql/71): phụ, lỗi (chưa chạy 71) thì bỏ qua
+          may.from('scn_nop').select('lop, ky, lan, trang_thai, nop_luc').eq('nam_hoc', NAM).order('id').limit(5000)
+            .then(function (r) { return r.error ? [] : (r.data || []); }, function () { return []; }),
+          may.from('scn_nguoi_duyet').select('email, khoi, co_so_ma, ten_to').eq('nam_hoc', NAM)
+            .then(function (r) { return r.error ? [] : (r.data || []); }, function () { return []; })
         ]);
       })
       .then(function (kq) {
@@ -170,7 +180,31 @@
         LOP_TOI = u && u.id ? Object.keys(CN_ID).filter(function (l) {
           return LOP[l] && CN_ID[l].indexOf(u.id) >= 0;
         }).sort(sapLop) : [];
+        var em = String((u && u.email) || '').trim().toLowerCase();
+        TO_TOI = (kq[4] || []).filter(function (d) { return String(d.email || '').toLowerCase() === em; });
+        DUYET = napDuyet(kq[3] || []);
       });
+  }
+
+  // Lần nộp gần nhất của mỗi lớp (bỏ lần đã bị thay) — để hiện trạng thái nhỏ
+  function napDuyet(ds) {
+    var ra = {};
+    ds.forEach(function (n) {
+      if (n.trang_thai === 'thay_the') return;
+      var cu = ra[n.lop];
+      if (!cu || String(n.nop_luc) > String(cu.nop_luc)) ra[n.lop] = n;
+    });
+    return ra;
+  }
+  var KY_NGAN = { 'hk1': 'HK I', 'ca-nam': 'Cả năm' };
+  var TT_NGAN = { da_nop: 'chờ kiểm tra', da_kiem_tra: 'đã kiểm tra', yeu_cau_bo_sung: 'cần bổ sung', da_duyet: 'đã duyệt' };
+  var TT_DAI = { da_nop: 'Đã nộp, chờ kiểm tra', da_kiem_tra: 'Đã kiểm tra', yeu_cau_bo_sung: 'Yêu cầu bổ sung', da_duyet: 'Đã duyệt' };
+  function oDuyet(lop) {
+    var n = DUYET[lop];
+    if (!n || !coTheXemSo(lop)) return '';
+    var ky = KY_NGAN[n.ky] || ('T' + String(n.ky).replace('thang-', ''));
+    return '<span class="lh-duyet' + (n.trang_thai === 'yeu_cau_bo_sung' ? ' bo-sung' : '') + '" title="Sổ chủ nhiệm — ' + thoat(ky === 'HK I' ? 'cuối học kỳ I' : ky === 'Cả năm' ? 'cuối năm' : 'tháng ' + ky.slice(1)) +
+      ' (lần ' + n.lan + '): ' + thoat(TT_DAI[n.trang_thai] || n.trang_thai) + ' · nộp ' + ngayVN(n.nop_luc) + '">' + thoat(ky) + ' · ' + thoat(TT_NGAN[n.trang_thai] || n.trang_thai) + '</span>';
   }
 
   // ══════════ DỮ LIỆU MẪU (chế độ xem thử, !window.MAY_CHU) ══════════
@@ -223,6 +257,10 @@
     });
     NHIEU_CS = true;
     LOP_TOI = ['4A'];   // khớp sổ chủ nhiệm mẫu (người xem thử "chủ nhiệm" 4A)
+    // khớp thẻ Kiểm tra – Duyệt mẫu của so-chu-nhiem.js
+    DUYET = { '4A': { lop: '4A', ky: 'thang-9', lan: 1, trang_thai: 'da_kiem_tra', nop_luc: y + '-09-26T15:05:00+07:00' },
+      '4C': { lop: '4C', ky: 'thang-9', lan: 1, trang_thai: 'da_nop', nop_luc: y + '-09-27T16:40:00+07:00' } };
+    TO_TOI = [];
     CAC_NAM = [NAM];
   }
 
@@ -269,14 +307,23 @@
     else if (window.chuyenManHinh) window.chuyenManHinh('sochunhiem');
   }
 
-  // Ai được mở sổ chủ nhiệm của lớp này: Quản trị, BGH, GVCN đúng lớp.
+  // Ai được mở sổ chủ nhiệm của lớp này: Quản trị, BGH, GVCN đúng lớp — và tổ
+  // trưởng/tổ phó được giao kiểm tra lớp đó (mở màn kiểm tra, không mở sổ gốc).
+  function laToKiemTra(lop) {
+    var d = LOP[lop];
+    return !!d && TO_TOI.some(function (g) {
+      return (g.khoi || []).map(Number).indexOf(+d.khoi) >= 0 && (!g.co_so_ma || g.co_so_ma === d.coSoMa);
+    });
+  }
   function coTheXemSo(lop) {
     if (XEM_THU) return true;
     var u = window.NGUOI_DUNG, vt = u ? u.vai_tro : '';
-    return vt === 'admin' || vt === 'ban_giam_hieu' || LOP_TOI.indexOf(lop) >= 0;
+    return vt === 'admin' || vt === 'ban_giam_hieu' || LOP_TOI.indexOf(lop) >= 0 || laToKiemTra(lop);
   }
   function oSo(lop) {
-    return coTheXemSo(lop) ? '<button type="button" class="lh-lien" data-lh-scn="' + thoat(lop) + '">Sổ chủ nhiệm</button>' : '';
+    if (!coTheXemSo(lop)) return '';
+    var chiKiemTra = !XEM_THU && laToKiemTra(lop) && LOP_TOI.indexOf(lop) < 0 && !/^(admin|ban_giam_hieu)$/.test((window.NGUOI_DUNG || {}).vai_tro || '');
+    return '<button type="button" class="lh-lien" data-lh-scn="' + thoat(lop) + '"' + (chiKiemTra ? ' title="Mở màn kiểm tra sổ (bản đã lọc) của lớp thuộc tổ"' : '') + '>Sổ chủ nhiệm</button>';
   }
   var O_SDB = '<span class="lh-sap-co" title="Chức năng đang xây dựng">Sổ đầu bài <small>sắp có</small></span>';
 
@@ -465,7 +512,8 @@
     var cot = [['lop', 'Lớp']];
     if (NHIEU_CS) cot.push(['coSo', 'Điểm trường']);
     cot.push(['gvcn', 'Giáo viên chủ nhiệm'], ['siSo', 'Sĩ số', 'so'], ['nu', 'Nam / Nữ', 'so'], ['hn', 'Hoà nhập', 'so']);
-    var soCot = cot.length + 1;
+    var soCot = cot.length + 2;   // + cột TT + cột thao tác
+    var stt = 0;                  // đánh số LIỀN cả trang, không đếm lại theo khối (thầy Chung 28/9/2026)
 
     // Nhóm theo khối; trong khối sắp theo cột người dùng chọn
     var theoKhoi = {};
@@ -481,7 +529,7 @@
       return r ? r * SAP.chieu : sapLop(a.lop, b.lop);
     }
 
-    h += '<div class="lh-bang-boc"><table class="lh-bang lh-ds"><thead><tr>' + cot.map(function (k) {
+    h += '<div class="lh-bang-boc"><table class="lh-bang lh-ds"><thead><tr><th class="so c-stt">TT</th>' + cot.map(function (k) {
       var dang = SAP.cot === k[0];
       return '<th' + (k[2] ? ' class="so"' : '') + ' aria-sort="' + (dang ? (SAP.chieu > 0 ? 'ascending' : 'descending') : 'none') + '">' +
         '<button type="button" data-lh-sap="' + k[0] + '">' + k[1] +
@@ -493,6 +541,7 @@
       h += '<tr class="lh-nhom"><td colspan="' + soCot + '">Khối ' + thoat(k) + ' <span>· ' + tk.lop + ' lớp · ' + tk.hs + ' HS</span></td></tr>';
       nhom.forEach(function (x) {
         h += '<tr class="lh-dong" data-lh-lop="' + thoat(x.lop) + '" tabindex="0" title="Bấm để xem danh sách học sinh lớp ' + thoat(x.lop) + '">' +
+          '<td class="so c-stt">' + (++stt) + '</td>' +
           '<td class="c-lop"><b>' + thoat(x.lop) + '</b>' +
           (x.khopHs.length ? '<small>' + x.khopHs.slice(0, 2).map(thoat).join(', ') +
             (x.khopHs.length > 2 ? ' và ' + (x.khopHs.length - 2) + ' em khác' : '') + '</small>' : '') + '</td>' +
@@ -503,7 +552,7 @@
           '<td class="so c-ss">' + x.siSo + '<span class="lh-dv"> HS</span></td>' +
           '<td class="so c-nn"><span class="lh-dv">Nam </span>' + x.nam + ' / <span class="lh-dv">Nữ </span>' + x.nu + '</td>' +
           '<td class="so c-hn">' + (x.hn ? '<span class="lh-dv">Hoà nhập </span>' + x.hn : '<span class="lh-nhat">0</span>') + '</td>' +
-          '<td class="tt c-tt">' + oSo(x.lop) + O_SDB + '</td></tr>';
+          '<td class="tt c-tt">' + oSo(x.lop) + oDuyet(x.lop) + O_SDB + '</td></tr>';
       });
     });
     h += '</tbody></table></div>';
