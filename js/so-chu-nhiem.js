@@ -442,7 +442,7 @@
     ngayTD: '', buoiTD: 'sang', ddTam: null, chon: {}, loaiTD: 'khen', hsMo: '', sua: null, kyDG: '', kyTK: 'hk1',
     // Nộp kiểm tra – ký duyệt (sql/71)
     dv: { nop: [], duyet: [], nguoiDuyet: [], loi: '' }, laToKT: false, dsLopKT: [], toCuaToi: [],
-    kyNop: '', locKy: '', locTT: 'cho', moNop: null, bcMo: null, dangMo: false, hopKy: '', tt27: false,
+    kyNop: '', locKy: '', locTT: 'cho', moNop: null, bcMo: null, dangMo: false, hopKy: '', tt27: true,
     lopLoc: '', lopMuon: '', co71: true
   };
   var EL = null;
@@ -2092,6 +2092,9 @@
   }
 
   // Mở khung. tuy = { ban, coBan, moHinh, nop } — bản chụp đã nộp (màn duyệt) truyền sẵn mô hình
+  // Mở thẳng một bản (bài kiểm tra dùng để soát bản nộp tổ đã lọc đúng chưa —
+  // khung không còn công tắc hai bản).
+  window.SCN_XEM_BAN = function (ban) { moXem({ ban: ban }); };
   function moXem(tuy) {
     tuy = tuy || {};
     XT.coBan = tuy.coBan || banXemDuoc();
@@ -2132,12 +2135,11 @@
     k.id = 'scn-xt'; k.className = 'scn-xt';
     k.setAttribute('role', 'dialog'); k.setAttribute('aria-modal', 'true'); k.setAttribute('aria-labelledby', 'scn-xt-td');
     k.innerHTML = '<div class="scn-xt-hop">' +
-      '<header class="scn-xt-dau"><div class="scn-xt-tieu"><h2 id="scn-xt-td"></h2><p id="scn-xt-mo"></p></div>' +
+      '<header class="scn-xt-dau"><div class="scn-xt-tieu"><h2 id="scn-xt-td"></h2></div>' +
       '<div class="scn-xt-nut">' +
       '<button type="button" class="scn-xt-luu" data-xt="luu">' + SVG.tai + '<span>Lưu về máy (Word)</span></button>' +
       '<button type="button" class="scn-xt-in" data-xt="in">' + SVG.inAn + '<span>In</span></button>' +
       '<button type="button" class="scn-xt-dong" data-xt="dong" aria-label="Đóng" title="Đóng (Esc)">' + SVG.dong + '</button></div></header>' +
-      '<div class="scn-xt-chon" id="scn-xt-chon"></div>' +
       '<div class="scn-xt-cuon"><div class="scn-xt-cho" id="scn-xt-cho">Đang dựng bản xem trước…</div>' +
       '<iframe class="scn-xt-khung" id="scn-xt-khung" title="Xem trước sổ chủ nhiệm" hidden></iframe></div></div>';
     document.body.appendChild(k);
@@ -2148,9 +2150,6 @@
       var x = b.getAttribute('data-xt'), ban = b.getAttribute('data-ban');
       if (ban) { if (ban !== XT.ban) { XT.ban = ban; veXem(); } return; }
       if (x === 'dong') dongXem(); else if (x === 'luu') luuXem(); else if (x === 'in') inXem();
-    });
-    k.addEventListener('change', function (e) {
-      if (e.target && e.target.id === 'scn-xt-tt27') { D.tt27 = !!e.target.checked; veXem(); }
     });
     k.querySelector('#scn-xt-khung').addEventListener('load', coGianXem);
     if (!dungKhungXem.coResize) { dungKhungXem.coResize = true; window.addEventListener('resize', function () { if (XT.mo) coGianXem(); }); }
@@ -2169,17 +2168,11 @@
   }
   function veXem() {
     var k = dungKhungXem(), loc = XT.ban === 'nop_duyet', lan = ++XT.dem;
-    k.querySelector('#scn-xt-td').textContent = 'Sổ chủ nhiệm lớp ' + XT.lop + ' · Năm học ' + XT.nam;
-    k.querySelector('#scn-xt-mo').textContent = XT.nop
-      ? 'Bản nộp tổ chuyên môn — ' + (TEN_KY_NOP[XT.nop.ky] || XT.nop.ky) + ', lần ' + XT.nop.lan + ', bản chụp máy chủ lúc ' + gioVN(XT.nop.nop_luc) + ', đã lược dữ liệu cá nhân.'
-      : loc ? 'Bản nộp tổ chuyên môn: đã lược dữ liệu cá nhân (điện thoại, hoàn cảnh gia đình, trao đổi riêng…). Xem trước giống tệp Word.'
-        : 'Bản lưu hồ sơ đầy đủ, có dữ liệu cá nhân của học sinh — lưu hành nội bộ. Xem trước giống tệp Word.';
-    k.querySelector('#scn-xt-chon').innerHTML = (XT.coBan.length > 1
-      ? '<div class="scn-xt-ban" role="group" aria-label="Chọn bản">' + XT.coBan.map(function (b) {
-          return '<button type="button" data-ban="' + b + '" class="' + (XT.ban === b ? 'on' : '') + '" aria-pressed="' + (XT.ban === b) + '">' + TEN_BAN[b] + '</button>';
-        }).join('') + '</div>'
-      : '<span class="scn-xt-ban-mot">' + TEN_BAN[XT.ban] + '</span>') +
-      '<label class="scn-xt-tt27"><input type="checkbox" id="scn-xt-tt27"' + (D.tt27 ? ' checked' : '') + '> Kèm trích Thông tư 27</label>';
+    // Khung gọn (thầy Chung 29/9/2026): một hàng tiêu đề + nút, KHÔNG công tắc
+    // hai bản, KHÔNG ô Thông tư 27 (luôn kèm), KHÔNG dòng mô tả. Bản nộp tổ
+    // (tổ trưởng / BGH mở từ màn Kiểm tra – Duyệt) chỉ ghi thêm đuôi ngắn.
+    k.querySelector('#scn-xt-td').textContent = 'Sổ chủ nhiệm lớp ' + XT.lop + ' · Năm học ' + XT.nam +
+      (XT.nop ? ' · Bản nộp tổ lần ' + XT.nop.lan : loc ? ' · Bản nộp tổ' : '');
     var cho = k.querySelector('#scn-xt-cho'), ifr = k.querySelector('#scn-xt-khung'), luu = k.querySelector('[data-xt="luu"]'), nIn = k.querySelector('[data-xt="in"]');
     cho.textContent = 'Đang dựng bản xem trước…'; cho.hidden = false; ifr.hidden = true; luu.disabled = true; nIn.disabled = true; XT.html = '';
     if (!window.WORD_TIEN_ICH) { cho.textContent = 'Chưa tải được bộ xuất Word.'; return; }
@@ -2237,6 +2230,8 @@
       s.src = 'js/so-chu-nhiem-tt27.js' + v;
       s.onload = function () { xong(); };
       s.onerror = function () { bao('Không tải được phần trích Thông tư 27 — xem không kèm phụ lục.'); xong(); };
+      // Mạng treo: quá 8 giây thì dựng sổ không kèm phụ lục, đừng để khung quay mãi
+      setTimeout(xong, 8000);
       document.head.appendChild(s);
     });
   }

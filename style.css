@@ -3794,9 +3794,9 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   display: flex; flex-direction: column; width: min(1040px, 100%); height: 100%; max-height: 100%;
   background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 64px rgba(15, 23, 42, .35);
 }
-.scn-xt-dau { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px 20px; padding: 18px 20px 12px; flex-wrap: wrap; }
+.scn-xt-dau { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 16px 14px 22px; flex-wrap: wrap; border-bottom: 1px solid var(--vien); }
 .scn-xt-tieu { flex: 1 1 320px; min-width: 0; }
-.scn-xt-tieu h2 { font-size: 18px; font-weight: 800; color: var(--chu); line-height: 1.3; margin: 0; }
+.scn-xt-tieu h2 { font-size: 18px; font-weight: 800; color: var(--chu); line-height: 1.3; margin: 0; overflow-wrap: anywhere; }
 .scn-xt-tieu p { font-size: 13.5px; color: var(--chu-mo); line-height: 1.5; margin: 3px 0 0; }
 .scn-xt-nut { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .scn-xt-nut button {
@@ -3830,7 +3830,7 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 @media (max-width: 760px) {
   .scn-xt { padding: 0; }
   .scn-xt-hop { width: 100%; height: 100%; border-radius: 0; }
-  .scn-xt-dau { padding: 12px 56px 8px 12px; gap: 8px; }
+  .scn-xt-dau { padding: 12px 56px 12px 12px; gap: 8px; }
   .scn-xt-tieu { flex-basis: 100%; }
   .scn-xt-tieu h2 { font-size: 16px; }
   .scn-xt-tieu p { font-size: 12.5px; }
