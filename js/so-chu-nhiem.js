@@ -1783,21 +1783,11 @@
       trongCo(27) +
       dongCo('<b>NĂM HỌC: ' + c(nam) + '</b>', 30, 'text-align:center;font-size:16.5pt');
 
-    // ── THÔNG TIN CHUNG (trang đầu phần ruột) — các dòng của bìa cũ không còn
-    //    chỗ trên bìa màu: điểm trường, điện thoại GVCN, đại diện CMHS; bản nộp
-    //    tổ thì ghi rõ đã lược dữ liệu + lần nộp, mã bản.
-    var dongTT = function (t) { return '<p style="margin:0 0 6pt;font-size:14pt;line-height:1.5"><b>' + t + '</b></p>'; };
-    h += tieuDe('THÔNG TIN CHUNG') +
-      dongTT(c(truong) + (m.co_so_ten ? ' – ' + c(m.co_so_ten) : '')) +
-      dongTT('Lớp: ' + c(lop) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Năm học: ' + c(String(nam).replace('-', ' – '))) +
-      dongTT('Họ và tên giáo viên chủ nhiệm: ' + biaCham(m.gvcn)) +
-      (loc ? '' : dongTT('Điện thoại: ' + biaCham(m.gvcn_sdt))) +
-      dongTT('Đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
-      (loc ? '' : dongTT('Điện thoại: ' + biaCham(truongBan && truongBan.sdt))) +
-      (loc ? '<p class="nghieng" style="margin:10pt 0 0;font-size:12pt">Bản nộp tổ chuyên môn — đã lược dữ liệu cá nhân.</p>' : '') +
-      (tc.nop ? '<p class="nghieng" style="margin:4pt 0 0;font-size:12pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
-        : loc ? '<p class="nghieng" style="margin:4pt 0 0;font-size:12pt">Bản xem trước — chưa nộp kiểm tra.</p>' : '') +
-      NGAT;
+    // Không có trang "Thông tin chung" (thầy Chung 29/9/2026 bỏ). Bản nộp tổ
+    // chỉ ghi một dòng nhỏ đầu phần ruột: đã lược dữ liệu + lần nộp, mã bản.
+    if (loc) h += '<p class="nghieng" style="margin:0 0 4pt;font-size:11pt">Bản nộp tổ chuyên môn — đã lược dữ liệu cá nhân. ' +
+      (tc.nop ? 'Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '.'
+        : 'Bản xem trước — chưa nộp kiểm tra.') + '</p>';
 
     // ── PHỤ LỤC TT27 (tuỳ chọn, văn bản tĩnh — phần DUY NHẤT có Quốc hiệu) ──
     if (tc.tt27 && tc.tt27.length) {
