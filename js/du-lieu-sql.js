@@ -22,7 +22,11 @@
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
   }
+  var CV_NHAN_VIEN = /^(nhan vien|ke toan|van thu|thu vien|thiet bi|y te|bao ve|phuc vu)\b/;
   function nhomCua(m) {
+    // Tổ trưởng Tổ Văn phòng là NHÂN VIÊN (kế toán, văn thư…) mang vai tổ
+    // trưởng để duyệt việc của tổ — xếp theo chức vụ, quyền giữ nguyên.
+    if (m.vai_tro === 'to_truong' && CV_NHAN_VIEN.test(boDau(m.chuc_vu))) return 'nhan_vien';
     if (m.vai_tro !== 'admin') return m.vai_tro;
     var cv = boDau(m.chuc_vu);
     // 🔑 CHƯA KHAI CHỨC VỤ THÌ GIỮ NGUYÊN NHƯ CŨ (Ban giám hiệu).
@@ -45,7 +49,7 @@
     if (/^(gv|giao vien|to truong)\b/.test(cv)) return 'giao_vien';
     // Nhân viên: kể ra từng chức danh thay vì đoán, để người sau đọc là biết
     // ai rơi vào đâu.
-    if (/^(nhan vien|ke toan|van thu|thu vien|thiet bi|y te|bao ve|phuc vu)\b/.test(cv)) {
+    if (CV_NHAN_VIEN.test(cv)) {
       return 'nhan_vien';
     }
     // Chức vụ lạ thì về Giáo viên — nhóm đông nhất, và ở trường tiểu học
