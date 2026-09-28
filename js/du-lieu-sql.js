@@ -462,6 +462,17 @@
         });
         ds.forEach(function (g) { daVe[g.khoa] = true; });
         if (!ds.length) return;
+        // Ban giám hiệu: HIỆU TRƯỞNG đứng đầu, rồi Phó Hiệu trưởng (thầy Chung
+        // 28/9/2026). Cùng bậc thì giữ thứ tự sẵn có (theo họ tên).
+        if (nh.loc.indexOf('ban_giam_hieu') >= 0) {
+          var bac = function (g) {
+            var cv = String(g.chuc_vu || '').toLowerCase();
+            return /phó\s*hiệu\s*trưởng/.test(cv) ? 1 : /hiệu\s*trưởng/.test(cv) ? 0 : 2;
+          };
+          ds = ds.map(function (g, i) { return [g, i]; })
+            .sort(function (x, y) { return bac(x[0]) - bac(y[0]) || x[1] - y[1]; })
+            .map(function (x) { return x[0]; });
+        }
         // Xếp gọn thành khối bấm mở — dùng lại đúng kiểu `.sub` của danh mục hộp
         // hồ sơ, đừng vẽ kiểu riêng. Trường 39 người mà trải phẳng một mạch thì
         // phải cuộn hết trang mới thấy nhóm Nhân viên nằm cuối.
