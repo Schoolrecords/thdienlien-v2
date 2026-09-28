@@ -13,7 +13,9 @@
 // Ai thấy gì:
 //   GVCN            mở là vào thẳng lớp mình (tự nhận từ phan_cong_day), ghi được.
 //   BGH / quản trị  có ô chọn điểm trường + lớp, chỉ ĐỌC; đặt được mốc KHOÁ SỔ.
-//   Tổ trưởng       chọn lớp, đọc phần không nhạy cảm (RLS sql/69 lọc ở máy chủ).
+//   Tổ trưởng, GV bộ môn, nhân viên: KHÔNG vào sổ (thầy Hiệu phó chốt 28/9/2026 —
+//                   trước đó tổ trưởng được chọn lớp và đọc phần không nhạy cảm).
+//                   Tổ trưởng đang chủ nhiệm một lớp thì vẫn vào sổ lớp mình như GVCN.
 // RLS là hàng rào thật; ẩn/hiện nút ở đây chỉ để giao diện gọn.
 //
 // Giao diện PHẲNG ít màu (thầy Chung 14/9: "phẳng, dễ xem, không cần màu sắc"),
@@ -266,7 +268,8 @@
   function toi() { return window.NGUOI_DUNG || null; }
   function vaiTro() { var u = toi(); return u ? u.vai_tro : ''; }
   function laBGH() { return !may() || vaiTro() === 'admin' || vaiTro() === 'ban_giam_hieu'; }
-  function laQuanLy() { return laBGH() || vaiTro() === 'to_truong'; }
+  // "Quản lý" = người được chọn lớp bất kỳ để XEM: chỉ BGH và Quản trị (28/9/2026 bỏ tổ trưởng)
+  function laQuanLy() { return laBGH(); }
   function loiChu(e) { return String((e && (e.message || e.details || e.hint)) || e || ''); }
   function thieuBang(m) { return /scn_|does not exist|schema cache|Could not find/i.test(m); }
 
@@ -528,13 +531,13 @@
     if (!D.lop) {
       EL.innerHTML = h + '<div class="the-thong-bao">' + (laQuanLy()
         ? 'Chưa có lớp nào của năm học ' + thoat(D.nam) + ' — khai lớp và phân công chủ nhiệm ở <b>Quản trị</b>.'
-        : 'Thầy cô chưa được phân công <b>chủ nhiệm</b> lớp nào trong năm học ' + thoat(D.nam) +
-          '. Sổ chủ nhiệm mở cho giáo viên chủ nhiệm; nếu thầy cô đang chủ nhiệm, báo Ban giám hiệu ghi phân công ở <b>Quản trị › Phân công</b>.') + '</div>';
+        : 'Sổ chủ nhiệm chỉ dành cho <b>GVCN lớp, Ban giám hiệu và Quản trị</b>. Thầy cô chưa được phân công chủ nhiệm lớp nào trong năm học ' +
+          thoat(D.nam) + ' — nếu thầy cô đang chủ nhiệm, báo Ban giám hiệu ghi phân công ở <b>Quản trị › Phân công</b>.') + '</div>';
       ganChung(); return;
     }
     h += baoLoiNguon();
     if (khoaDen()) h += '<div class="hd-kiem vang">🔒 Sổ đã được Ban giám hiệu <b>khoá đến ngày ' + ngayVN(khoaDen()) + '</b> — các mục có ngày từ đó trở về trước chỉ xem, không sửa.</div>';
-    if (may() && !laGVCNLopNay()) h += '<div class="scn-ghi-chu">Thầy cô đang xem sổ của lớp khác — chỉ đọc. ' + (vaiTro() === 'to_truong' ? 'Tổ trưởng không xem phần hoàn cảnh, hỗ trợ học sinh và trao đổi riêng với cha mẹ (dữ liệu nhạy cảm).' : '') + '</div>';
+    if (may() && !laGVCNLopNay()) h += '<div class="scn-ghi-chu">Ban giám hiệu, Quản trị xem sổ ở chế độ chỉ đọc — chỉ giáo viên chủ nhiệm của lớp được ghi.</div>';
     h += '<nav class="scn-tabs" role="tablist">' + TABS.map(function (t) {
       return '<button class="' + (D.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>';
     }).join('') + '</nav><div class="scn-than">';
@@ -557,7 +560,9 @@
     }
     var phu = D.lop ? ['Lớp <b>' + thoat(D.lop) + '</b>', D.gvcnTen ? 'GVCN ' + thoat(D.gvcnTen) : '', 'Năm học ' + thoat(D.nam), D.coSoTen ? thoat(D.coSoTen) : '']
       .filter(Boolean).join(' · ') : 'Năm học ' + thoat(D.nam);
-    return '<div class="scn-dau"><div><h2>Sổ chủ nhiệm</h2><p>' + phu + '</p></div>' + chon +
+    // Hàng thẻ con của trang "Lớp học" (hocsinh.js) — sổ là một thẻ của trang đó
+    var lh = window.LOP_HOC_THE ? window.LOP_HOC_THE('sochunhiem') : '';
+    return lh + '<div class="scn-dau"><div><h2>Sổ chủ nhiệm</h2><p>' + phu + '</p></div>' + chon +
       (D.lop && !D.dangNap ? '<button class="scn-nut" id="scn-word">Xuất Word sổ</button>' : '') + '</div>';
   }
 
@@ -1320,9 +1325,15 @@
   document.addEventListener('dangnhap-xong', function () { D.khoiTao = false; D.lop = ''; D.so = null; khiHien(); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', gan); else gan();
 
-  // Mở sổ, tuỳ chọn nhảy thẳng tới một lớp (nút trong danh sách lớp ở màn Học sinh).
+  // Mở sổ, tuỳ chọn nhảy thẳng tới một lớp (liên kết ở dòng từng lớp của trang Lớp học).
   // Lớp không thuộc danh sách người này được xem thì napKhung tự trả về lớp mặc định.
   function moLop(lop) {
+    // Chỉ nhảy tới lớp nằm trong danh sách người này được xem (GVCN: lớp mình;
+    // BGH/Quản trị: mọi lớp). Lớp khác thì giữ lớp đang mở — không nạp trộm.
+    if (lop && D.khoiTao && !D.dangNap) {
+      var hop = D.dsLop.filter(function (l) { return chuanLop(l.lop) === chuanLop(lop); })[0];
+      lop = hop ? hop.lop : '';
+    }
     if (lop && lop !== D.lop) {
       D.lop = lop; D.tab = 'tong-quan';
       if (D.khoiTao) { D.dangNap = true; napLop().then(function () { ve(); }); }

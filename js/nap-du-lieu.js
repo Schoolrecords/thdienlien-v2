@@ -919,7 +919,7 @@
             'thức nên hiện có HAI bản ghi (một mã tạm, một mã thật): ' +
             loiDoiMa.slice(0, 5).join(' · ') +
             (loiDoiMa.length > 5 ? ' … và ' + (loiDoiMa.length - 5) + ' em nữa' : '') +
-            '. Vào Quản lý học sinh tìm mã bắt đầu bằng TAM- để xử lý.');
+            '. Vào trang Lớp học tìm mã bắt đầu bằng TAM- để xử lý.');
         }
       });
   }
@@ -1098,7 +1098,7 @@
         html += '<div class="hd-kiem do" style="margin-top:10px"><b>Kiểm lại năm học!</b><br>' +
           'Ngày trong tệp cho thấy đây là dữ liệu năm học <b>' + thoat(KQ.namDoan) + '</b>, ' +
           'nhưng ô năm học đang để <b>' + thoat(nam) + '</b>. ' +
-          'Nạp nhầm năm thì màn Quản lý học sinh vẫn hiện đủ số nhưng gắn sai năm, ' +
+          'Nạp nhầm năm thì trang Lớp học vẫn hiện đủ số nhưng gắn sai năm, ' +
           'và số liệu ba năm của Biểu 1 lệch theo.<br><br>' +
           '<button class="nut-phu" id="nap-doi-nam">Dùng năm ' + thoat(KQ.namDoan) + ' theo tệp</button></div>';
       }
@@ -1382,7 +1382,7 @@
               '<b>👥 Tài khoản</b>. Vai trò sửa được ở đó.</div>'
             : '<div class="hd-kiem xanh"><b>Xong. Đã ghi ' + KQ.em.length +
               ' em vào năm học ' + thoat(nam) + '.</b><br>' +
-              'Mở màn <b>Quản lý học sinh</b> để xem danh sách theo khối và lớp. ' +
+              'Mở trang <b>Lớp học</b> để xem danh sách theo khối và lớp. ' +
               'Lớp mới tạo cần gán điểm trường ở thẻ <b>🏫 Cơ sở &amp; Sáp nhập</b>.</div>';
           KQ = null;
         })

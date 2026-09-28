@@ -277,7 +277,7 @@
       '<p style="margin-top:8px"><b>Chưa có kết quả học tập của ' + thoat(tenKy()) +
       ' năm học ' + thoat(nam()) + '.</b></p>' +
       '<p style="font-size:14px;color:var(--chu-mo);margin-top:6px">' +
-      'Màn này lấy thẳng số liệu từ <b>Quản lý học sinh</b> — nhập kết quả ở đó xong là bảng ' +
+      'Màn này lấy thẳng số liệu từ <b>Lớp học</b> — nhập kết quả ở đó xong là bảng ' +
       'dưới đây tự có, không phải nhập lại lần nữa.</p></div>';
   }
 
@@ -289,7 +289,7 @@
       'Nơi nào thấp hơn mặt bằng chung sẽ được chỉ ra ngay, để nhà trường biết chỗ nào cần ưu tiên ' +
       'giáo viên, thiết bị và thời gian.' +
       '<div style="margin-top:7px;font-size:13.6px;color:var(--chu-mo)">' +
-      'Toàn bộ số liệu lấy từ <b>Quản lý học sinh</b>. Màn này không có ô nhập nào — ' +
+      'Toàn bộ số liệu lấy từ <b>Lớp học</b>. Màn này không có ô nhập nào — ' +
       'một số liệu chỉ nhập ở một nơi.</div></div>' + chonKy();
 
     if (DANG_TAI) return dau + '<div class="the-thong-bao">Đang tính…</div>';

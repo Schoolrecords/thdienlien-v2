@@ -213,7 +213,7 @@
       (t.oLai
         ? '<div class="hd-kiem vang"><b>' + t.oLai + ' học sinh ở lại lớp.</b> ' +
           'Máy KHÔNG tự xếp các em này vào lớp nào của năm mới — xếp lớp cho học sinh ' +
-          'lưu ban là việc của nhà trường. Chuyển năm xong, vào màn Học sinh xếp tay.</div>'
+          'lưu ban là việc của nhà trường. Chuyển năm xong, vào trang Lớp học xếp tay.</div>'
         : '');
   }
 

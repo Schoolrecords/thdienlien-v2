@@ -3765,5 +3765,189 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
   .scn-tabs, .scn-chon, #scn-word, .scn-mo-them, .scn-x { display: none !important; }
 }
 
-/* Nút vào Sổ chủ nhiệm ở đầu màn Quản lý học sinh (28/9/2026 — sổ không còn nút trên menu) */
-.hs-hero .hs-nut-scn { margin-top: 12px; background: #fff; color: #14306b; font-weight: 700; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TRANG "LỚP HỌC" (js/hocsinh.js) — 28/9/2026, sổ dự án mục 98. Tiền tố .lh-
+   Thay dải hero xanh căn giữa + lưới thẻ khối của màn "Quản lý học sinh" cũ
+   (các khối .hs-hero / .the-khoi phía trên nay không còn ai dùng — để nguyên,
+   dọn sau). Kiểu phần mềm quản lý: phẳng, đường kẻ mảnh, không gradient, không
+   bóng lớn, không bo tròn to. Màu chỉ dùng cho trạng thái ("Chưa có GVCN").
+   Hàng thẻ con .lh-dau dùng CHUNG với màn Sổ chủ nhiệm (window.LOP_HOC_THE).
+   ════════════════════════════════════════════════════════════════════════════ */
+.lh-trang { max-width: 1100px; margin: 0 auto; }
+
+/* Đầu trang: vệt vị trí · tiêu đề + ô năm học · hàng thẻ con */
+.lh-dau { margin-bottom: 14px; }
+.lh-vet { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12.5px; color: var(--chu-nhat); margin-bottom: 4px; }
+.lh-vet a { color: var(--chu-mo); text-decoration: none; }
+.lh-vet a:hover { color: var(--chu); text-decoration: underline; }
+.lh-vet b { color: var(--chu-mo); font-weight: 600; }
+.lh-dau-hang { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; }
+.lh-dau-hang h2 { font-size: 24px; font-weight: 700; color: var(--chu); line-height: 1.25; letter-spacing: -.01em; }
+.lh-nam { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--chu-mo); }
+.lh-nam select, .lh-loc select, .lh-loc input {
+  font: inherit; font-size: 14px; color: var(--chu); background: #fff;
+  border: 1px solid var(--vien-dam); border-radius: 6px; height: 36px; padding: 0 10px;
+}
+.lh-nam select:focus, .lh-loc select:focus, .lh-loc input:focus { outline: 2px solid var(--chinh); outline-offset: -1px; border-color: var(--chinh); }
+.lh-the { display: flex; gap: 24px; border-bottom: 1px solid var(--vien); margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.lh-the::-webkit-scrollbar { display: none; }
+.lh-the button {
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--chu-mo); background: none; border: 0;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 0; cursor: pointer; white-space: nowrap;
+}
+.lh-the button:hover { color: var(--chu); }
+.lh-the button.on { color: var(--dam); border-bottom-color: var(--dam); }
+.lh-the button.lh-the-mo { color: var(--chu-nhat); cursor: default; }
+.lh-the button small, .lh-sap-co small {
+  font-size: 10.5px; font-weight: 600; color: var(--chu-nhat); border: 1px solid var(--vien);
+  border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px;
+}
+/* Trên màn Sổ chủ nhiệm: tiêu đề "Sổ chủ nhiệm" thành tiêu đề phụ dưới hàng thẻ */
+.lh-dau + .scn-dau h2 { font-size: 18px; }
+
+/* Thanh lọc một hàng */
+.lh-loc { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.lh-loc input { flex: 1 1 260px; max-width: 420px; }
+
+/* Dải số liệu phẳng */
+.lh-so { display: flex; flex-wrap: wrap; border-top: 1px solid var(--vien); border-bottom: 1px solid var(--vien); margin: 0; }
+.lh-so > div { padding: 10px 24px; border-left: 1px solid var(--vien); }
+.lh-so > div:first-child { padding-left: 0; border-left: 0; }
+.lh-so dt { font-size: 12.5px; color: var(--chu-mo); }
+.lh-so dd { margin: 2px 0 0; font-size: 24px; font-weight: 700; color: var(--chu); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.lh-so > div.canh dd { color: var(--canh); }
+.lh-ghi { font-size: 12.5px; color: var(--chu-mo); margin: 8px 0 0; line-height: 1.6; }
+.lh-cho, .lh-rong { padding: 24px 0; color: var(--chu-mo); font-size: 14px; }
+
+/* "Lớp của tôi" — một dòng nổi bật mảnh */
+.lh-cua-toi {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 14px 0 0; padding: 8px 14px;
+  background: #fff; border: 1px solid var(--vien); border-left: 3px solid var(--dam); border-radius: 4px; font-size: 14px;
+}
+.lh-cua-toi .nhan { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--chu-mo); }
+.lh-cua-toi b { color: var(--chu); }
+.lh-cua-toi > span:not(.nhan) { color: var(--chu-mo); }
+
+/* Liên kết chữ (thay nút có emoji) */
+.lh-lien {
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--chinh); background: none; border: 0;
+  padding: 4px 0; margin-right: 16px; cursor: pointer; white-space: nowrap;
+}
+.lh-lien:last-child { margin-right: 0; }
+.lh-lien:hover { color: var(--dam); text-decoration: underline; }
+.lh-sap-co { font-size: 14px; color: var(--chu-nhat); white-space: nowrap; cursor: default; }
+
+/* Bảng */
+.lh-bang-boc { background: #fff; border: 1px solid var(--vien); border-radius: 6px; overflow-x: auto; margin-top: 14px; }
+.lh-bang { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--chu); }
+.lh-bang th {
+  text-align: left; font-size: 12.5px; font-weight: 600; color: var(--chu-mo); background: var(--o-con);
+  border-bottom: 1px solid var(--vien); padding: 0 12px; height: 40px; white-space: nowrap;
+}
+.lh-bang th button {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px; height: 40px;
+}
+.lh-bang th button:hover { color: var(--chu); }
+.lh-bang th[aria-sort="ascending"], .lh-bang th[aria-sort="descending"] { color: var(--chu); }
+.lh-mui { font-size: 9px; }
+.lh-mui:empty { display: none; }
+.lh-bang td { padding: 0 12px; height: 42px; border-bottom: 1px solid var(--ke); vertical-align: middle; }
+.lh-bang tbody tr:last-child td { border-bottom: 0; }
+.lh-bang .so { text-align: right; font-variant-numeric: tabular-nums; }
+.lh-bang .tt { text-align: right; white-space: nowrap; }
+.lh-nhom td {
+  height: 32px; background: var(--o-con); font-size: 12.5px; font-weight: 700; color: var(--chu);
+  border-bottom: 1px solid var(--vien);
+}
+.lh-nhom td span { font-weight: 400; color: var(--chu-mo); }
+.lh-dong { cursor: pointer; }
+.lh-dong:hover td { background: #f7f9fc; }
+.lh-dong:focus-visible { outline: 2px solid var(--chinh); outline-offset: -2px; }
+.lh-dong .c-lop b { font-weight: 700; }
+.lh-dong .c-lop small { display: block; font-size: 12px; color: var(--chu-mo); line-height: 1.3; padding-bottom: 4px; }
+.lh-chua { color: var(--canh); font-size: 13px; font-weight: 600; }
+.lh-nhat { color: var(--chu-nhat); }
+.lh-dv { display: none; }
+.lh-an { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Tổng hợp điểm trường × khối — thu gọn dưới bảng lớp */
+.lh-gop { margin-top: 22px; }
+.lh-gop > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--chu); padding: 6px 0; }
+.lh-gop > summary:hover { color: var(--dam); }
+.lh-gop .lh-bang-boc { margin-top: 6px; }
+.lh-tq .lh-cong td { background: var(--o-con); font-weight: 600; }
+.lh-tq .lh-tong td { font-weight: 700; border-top: 1px solid var(--vien-dam); }
+
+/* Bảng chi tiết lớp trượt ra bên phải */
+.lh-phu { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(16, 28, 52, .28); }
+.lh-phu.on { display: block; }
+.lh-ngan {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(560px, 100%);
+  background: #fff; border-left: 1px solid var(--vien); box-shadow: -4px 0 16px rgba(16, 32, 64, .10);
+  display: flex; flex-direction: column; animation: lh-truot .18s ease-out;
+}
+@keyframes lh-truot { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.lh-ngan-dau { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid var(--vien); }
+.lh-ngan-dau h3 { font-size: 18px; font-weight: 700; color: var(--chu); }
+.lh-ngan-dau p { font-size: 13px; color: var(--chu-mo); margin-top: 2px; line-height: 1.5; }
+.lh-x {
+  flex: none; width: 32px; height: 32px; font: inherit; font-size: 20px; line-height: 1; color: var(--chu-mo);
+  background: #fff; border: 1px solid var(--vien); border-radius: 6px; cursor: pointer;
+}
+.lh-x:hover { color: var(--chu); border-color: var(--vien-dam); }
+.lh-ngan-than { flex: 1; overflow-y: auto; padding: 10px 20px 24px; }
+.lh-ngan-nut { display: flex; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--ke); }
+.lh-ngan-tom { font-size: 13px; color: var(--chu-mo); margin: 10px 0 8px; }
+.lh-cuon { overflow-x: auto; border: 1px solid var(--vien); border-radius: 6px; }
+.lh-bang-hs td { height: 40px; padding: 0 10px; }
+.lh-bang-hs th { padding: 0 10px; }
+.lh-ma { color: var(--chu-mo); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+@media (max-width: 759px) {
+  .lh-dau-hang h2 { font-size: 21px; }
+  .lh-loc select { flex: 1 1 40%; }
+  .lh-loc input { flex: 1 1 100%; max-width: none; }
+  .lh-so { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .lh-so > div, .lh-so > div:first-child { padding: 8px 0; border-left: 0; }
+  .lh-so dd { font-size: 20px; }
+
+  /* Bảng lớp thành danh sách dòng mảnh */
+  .lh-ds, .lh-ds tbody { display: block; }
+  .lh-ds thead { display: none; }
+  .lh-ds tr.lh-nhom { display: block; }
+  .lh-ds tr.lh-nhom td { display: block; height: auto; padding: 7px 14px; }
+  .lh-ds tr.lh-dong {
+    display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 14px;
+    grid-template-areas: "lop ss" "cn nn" "cs hn" "tt tt"; border-bottom: 1px solid var(--ke);
+  }
+  .lh-ds tr.lh-dong:last-child { border-bottom: 0; }
+  .lh-ds tr.lh-dong td { display: block; height: auto; padding: 0; border: 0; background: none; }
+  .lh-ds .c-lop { grid-area: lop; font-size: 15px; }
+  .lh-ds .c-ss { grid-area: ss; font-weight: 600; }
+  .lh-ds .c-cn { grid-area: cn; }
+  .lh-ds .c-nn { grid-area: nn; color: var(--chu-mo); font-size: 13px; }
+  .lh-ds .c-cs { grid-area: cs; color: var(--chu-mo); font-size: 13px; }
+  .lh-ds .c-hn { grid-area: hn; color: var(--chu-mo); font-size: 13px; }
+  .lh-ds .c-tt { grid-area: tt; text-align: left; padding-top: 2px; }
+  .lh-ds .lh-dv { display: inline; }
+  .lh-ds .lh-nhat { display: none; }   /* hoà nhập 0: danh sách dòng khỏi hiện số 0 trơ trọi */
+
+  .lh-the { gap: 18px; }
+  .lh-ngan { width: 100%; border-left: 0; box-shadow: none; }
+  .lh-bang-hs .c-ma { display: none; }   /* điện thoại: bỏ cột Mã cho họ tên khỏi gãy dòng */
+  .lh-bang-hs td:nth-child(3) { white-space: nowrap; }
+  .lh-ngan-dau { padding: 12px 16px 10px; }
+  .lh-ngan-than { padding: 8px 16px 20px; }
+}
+
+@media print {
+  .lh-vet, .lh-the, .lh-loc, .lh-nam, .lh-ngan-nut, .lh-x, .lh-lien, .lh-sap-co { display: none !important; }
+  /* 72.1-DA-SOI (28/9/2026): #hs-phu.lh-phu là con TRỰC TIẾP của <body> (khai
+     trong index.html; body không flex/grid). .lh-ngan là con của .lh-phu, mà
+     .lh-phu chỉ có display none/block, không flex/grid. Hạ về static an toàn. */
+  .lh-phu { position: static !important; background: none !important; }
+  .lh-ngan { position: static !important; width: auto !important; border: 0 !important; box-shadow: none !important; animation: none !important; display: block !important; }
+  .lh-ngan-than, .lh-cuon, .lh-bang-boc { overflow: visible !important; }
+}
