@@ -491,14 +491,18 @@
       may().from('scn_nguoi_duyet').select('*').eq('nam_hoc', D.nam).order('id'),
       // GVCN DỰ KIẾN (sql/70): lớp chưa có phân công vì cô chưa đăng nhập lần nào
       // thì bìa sổ, ô chọn lớp vẫn có tên. Trường chưa chạy 70 → lỗi → bỏ qua.
-      may().from('lop_hoc').select('lop, gvcn_ten').eq('nam_hoc', D.nam)
+      // + gvcn_sdt (sql/73): điện thoại GVCN in trên bìa khi cô chưa tự ghi.
+      may().from('lop_hoc').select('lop, gvcn_ten, gvcn_sdt').eq('nam_hoc', D.nam).then(function (r) {
+        return r.error ? may().from('lop_hoc').select('lop, gvcn_ten').eq('nam_hoc', D.nam) : r;
+      })
     ]).then(function (r) {
       if (r[0].error) throw r[0].error;
       var pc = r[0].data || [];
-      D.gvcnCua = {};
+      D.gvcnCua = {}; D.sdtCua = {};
       pc.forEach(function (p) { if (p.nguoi_dung && p.nguoi_dung.ho_ten) D.gvcnCua[chuanLop(p.lop)] = p.nguoi_dung.ho_ten; });
       ((r[4] && !r[4].error && r[4].data) || []).forEach(function (l) {
         if (l.gvcn_ten && !D.gvcnCua[chuanLop(l.lop)]) D.gvcnCua[chuanLop(l.lop)] = l.gvcn_ten;
+        if (l.gvcn_sdt) D.sdtCua[chuanLop(l.lop)] = l.gvcn_sdt;
       });
       D.lopCuaToi = lopCuaGVCN(pc, u.id, D.nam);
       var lh = (r[1] && !r[1].error && r[1].data) || [];
@@ -1067,7 +1071,7 @@
             '<input class="scn-o" data-bdd-sdt value="' + thoat(b.sdt || '') + '" placeholder="Điện thoại" inputmode="tel">' +
             '<button class="scn-x" data-act="xoa-bdd" title="Bỏ dòng">×</button></div>';
         }).join('') + '</div><div class="scn-hang"><button class="scn-nut phu nho" data-act="them-bdd">+ Thêm người</button>' +
-        '<label class="scn-nhan ngang">Điện thoại GVCN (in trên bìa sổ) <input id="bdd-gvcn-sdt" class="scn-o" inputmode="tel" value="' + thoat((S.lop && S.lop.gvcn_sdt) || '') + '"></label>' +
+        '<label class="scn-nhan ngang">Điện thoại GVCN (in trên bìa sổ) <input id="bdd-gvcn-sdt" class="scn-o" inputmode="tel" value="' + thoat((S.lop && S.lop.gvcn_sdt) || (D.sdtCua || {})[chuanLop(D.lop)] || '') + '"></label>' +
         '<button class="scn-nut" data-act="luu-bdd">Lưu ban đại diện</button></div>' +
         '<p class="scn-ghi-chu">Trưởng ban (vai trò có chữ "Trưởng") và số điện thoại in trên bìa sổ bản đầy đủ; bản gửi tổ trưởng chỉ có họ tên.</p>'
       : (bdd.length ? '<ul class="scn-ds">' + bdd.map(function (b) { return '<li>' + thoat(b.vai_tro) + ': <b>' + thoat(b.ho_ten) + '</b></li>'; }).join('') + '</ul>' : rong('Chưa ghi.')));
@@ -1592,7 +1596,7 @@
     var tdAsc = S.theoDoi.slice().sort(function (a, b) { return a.ngay < b.ngay ? -1 : a.ngay > b.ngay ? 1 : (a.id || 0) - (b.id || 0); });
     return {
       phien_ban: 1, muc_do: 'day_du', nam_hoc: D.nam, lop: D.lop, khoi: D.khoi, co_so_ten: D.coSoTen, gvcn: D.gvcnTen,
-      gvcn_sdt: (S.lop && S.lop.gvcn_sdt) || '', to_chuyen_mon: toCuaKhoi(D.khoi), lap_luc: new Date().toISOString(), khoa_den: khoaDen() || null,
+      gvcn_sdt: (S.lop && S.lop.gvcn_sdt) || (D.sdtCua || {})[chuanLop(D.lop)] || '', to_chuyen_mon: toCuaKhoi(D.khoi), lap_luc: new Date().toISOString(), khoa_den: khoaDen() || null,
       si_so: { tong: hs.length, nu: hs.filter(function (h) { return h.gioi_tinh === 'Nữ'; }).length, nam: hs.filter(function (h) { return h.gioi_tinh === 'Nam'; }).length,
         hoa_nhap: hs.filter(function (h) { return h.khuyet_tat_hoa_nhap; }).length, dtts: hs.filter(function (h) { return h.dan_toc && !/^kinh$/i.test(String(h.dan_toc).trim()); }).length },
       hoc_sinh: hs.map(function (h) {
@@ -1690,12 +1694,16 @@
     // vẫn 6pt; độ rộng % bị Word chia lại → cột Họ và tên hẹp, tên rơi dòng).
     // Nên: đổi % → cm theo khổ chữ 16,5 cm, khai <colgroup>, khoá bề rộng bảng,
     // và ghi đệm 2pt × 3pt vào từng ô.
-    var KHO_CM = 16.5, DEM = 'padding:2pt 3pt;line-height:1.2;';
+    var KHO_CM = 16.5, DEM = 'padding:2pt 3pt;line-height:1.2;',
+      DEM_TH = 'background:#EAF3FB;text-align:center;vertical-align:middle;';
     function cm(r) { return /%$/.test(r) ? (parseFloat(r) * KHO_CM / 100).toFixed(2) + 'cm' : r; }
     function oDem(h) {
       return h.replace(/<t([hd])(\s[^>]*)?>/g, function (m, t, a) {
         a = a || '';
-        return /style="/.test(a) ? '<t' + t + a.replace('style="', 'style="' + DEM) + '>' : '<t' + t + ' style="' + DEM + '"' + a + '>';
+        // Ô tiêu đề: chữ giữa ô cả ngang lẫn dọc, nền xanh rất nhạt (thầy Chung
+        // 28/9/2026 — không dùng nền xám). Word bỏ qua kiểu theo class nên ghi thẳng vào ô.
+        var d = t === 'h' ? DEM + DEM_TH : DEM;
+        return /style="/.test(a) ? '<t' + t + a.replace('style="', 'style="' + d) + '>' : '<t' + t + ' style="' + d + '"' + a + '>';
       });
     }
     function bang(dau, ds, rong, soTrong) {
@@ -1773,7 +1781,7 @@
       dongBia(c(truong) + (m.co_so_ten ? ' – ' + c(m.co_so_ten) : '') + ':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lớp: ' + c(lop)) +
       dongBia('Họ và tên giáo viên chủ nhiệm: ' + biaCham(m.gvcn)) +
       (loc ? '' : dongBia('Điện thoại: ' + biaCham(m.gvcn_sdt))) +
-      dongBia('Họ và tên trưởng đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
+      dongBia('Đại diện CMHS: ' + biaCham(truongBan && truongBan.ho_ten)) +
       (loc ? '' : dongBia('Điện thoại: ' + biaCham(truongBan && truongBan.sdt))) +
       trong(loc ? 11 : 10) + '<p class="giua" style="margin:0;font-size:14pt"><b><i>Năm học: ' + c(String(nam).replace('-', ' – ')) + '</i></b></p>' +
       (tc.nop ? '<p class="giua nghieng" style="margin:4pt 0 0;font-size:11pt">Bản nộp ' + c(TEN_KY_NOP[tc.nop.ky] || tc.nop.ky) + ' (lần ' + tc.nop.lan + ') lúc ' + gioVN(tc.nop.nop_luc) + ' · mã bản ' + maNgan(tc.nop.ma_bam) + '</p>'
@@ -2041,7 +2049,11 @@
   // xám, mỗi section một tờ A4 trắng có bóng; bìa có viền đôi đúng lề của Word;
   // mỗi ngắt trang trong ruột thành một khe xám giữa hai tờ. Khi in: bìa một
   // trang không lề (tự vẽ lề + viền), ruột theo lề thể thức.
+  // 🔴 text-size-adjust: Safari trên iPhone tự PHÓNG TO chữ trong khung hẹp
+  //    ("text autosizing") nhưng giữ nguyên chiều cao dòng Word (pt) → chữ đè
+  //    lên nhau, tờ A4 tràn phải (ảnh thầy Chung 28/9/2026). Tắt hẳn đi.
   var CSS_XEM = '<style>' +
+    'html{-webkit-text-size-adjust:none;text-size-adjust:none}' +
     'html{background:#e4e7ec}body{margin:0;padding:24px 12px 40px;background:#e4e7ec}' +
     '.WordSection1,.WordSection2{box-sizing:border-box;width:21cm;margin:0 auto 24px;background:#fff;' +
     'box-shadow:0 1px 3px rgba(15,23,42,.12),0 10px 28px rgba(15,23,42,.12)}' +
