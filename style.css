@@ -3953,3 +3953,6 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 }
 /* Tên học sinh trong bảng chi tiết lớp nằm một dòng trên máy tính (28/9/2026) */
 @media (min-width: 761px) { .lh-ngan td:nth-child(3) { white-space: nowrap; } }
+/* GVCN dự kiến (sql/70): chữ xám, ghi chú "chưa đăng nhập" (28/9/2026) */
+.lh-dk { color: var(--chu-mo); }
+.lh-dk small { font-size: 11.5px; opacity: .8; margin-left: 4px; }

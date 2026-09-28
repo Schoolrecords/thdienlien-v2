@@ -134,9 +134,15 @@
             .select('lop, nguoi_dung_id, nguoi_dung:nguoi_dung_id(ho_ten)')
             .eq('nam_hoc', NAM).eq('la_chu_nhiem', true)
             .then(function (r) { return r.error ? [] : (r.data || []); }, function () { return []; }),
-          may.from('lop_hoc').select('lop, co_so_ma, co_so:co_so_ma(ten)')
+          // gvcn_ten = GVCN DỰ KIẾN (sql/70). Trường chưa chạy sql/70 thì cột chưa có →
+          // đọc lại không có cột đó, kẻo mất luôn tên điểm trường.
+          may.from('lop_hoc').select('lop, co_so_ma, gvcn_ten, co_so:co_so_ma(ten)')
             .eq('nam_hoc', NAM)
-            .then(function (r) { return r.error ? [] : (r.data || []); }, function () { return []; })
+            .then(function (r) {
+              if (!r.error) return r.data || [];
+              return may.from('lop_hoc').select('lop, co_so_ma, co_so:co_so_ma(ten)').eq('nam_hoc', NAM)
+                .then(function (r2) { return r2.error ? [] : (r2.data || []); });
+            }, function () { return []; })
         ]);
       })
       .then(function (kq) {
@@ -152,6 +158,7 @@
         (kq[2] || []).forEach(function (l) {
           if (LOP[l.lop]) {
             LOP[l.lop].coSoMa = l.co_so_ma || '';
+            LOP[l.lop].cnDuKien = l.gvcn_ten || '';
             if (l.co_so && l.co_so.ten) LOP[l.lop].coSo = l.co_so.ten;
           }
           if (l.co_so_ma) nhieuCoSo[l.co_so_ma] = 1;
@@ -310,7 +317,7 @@
       if (h.gioi_tinh === 'Nam') nam++; else if (h.gioi_tinh === 'Nữ') nu++;
       if (h.khuyet_tat_hoa_nhap) hn++;
     });
-    return { lop: l, khoi: d.khoi, coSo: d.coSo, coSoMa: d.coSoMa, gvcn: CN[l] || '', siSo: d.em.length, nam: nam, nu: nu, hn: hn };
+    return { lop: l, khoi: d.khoi, coSo: d.coSo, coSoMa: d.coSoMa, gvcn: CN[l] || '', gvcnDK: d.cnDuKien || '', siSo: d.em.length, nam: nam, nu: nu, hn: hn };
   }
 
   function dsCoSo() {
@@ -341,7 +348,7 @@
 
   function tong(ds) {
     var t = { lop: ds.length, hs: 0, nu: 0, hn: 0, chuaCN: 0 };
-    ds.forEach(function (x) { t.hs += x.siSo; t.nu += x.nu; t.hn += x.hn; if (!x.gvcn) t.chuaCN++; });
+    ds.forEach(function (x) { t.hs += x.siSo; t.nu += x.nu; t.hn += x.hn; if (!x.gvcn && !x.gvcnDK) t.chuaCN++; });
     return t;
   }
 
@@ -425,7 +432,7 @@
 
   function giaTriSap(x, c) {
     if (c === 'coSo') return x.coSo || '';
-    if (c === 'gvcn') return x.gvcn || '￿';     // chưa có GVCN xếp cuối
+    if (c === 'gvcn') return x.gvcn || x.gvcnDK || '￿';     // chưa có GVCN xếp cuối
     if (c === 'siSo') return x.siSo;
     if (c === 'nu') return x.nu;
     if (c === 'hn') return x.hn;
@@ -464,6 +471,11 @@
     var theoKhoi = {};
     ds.forEach(function (x) { (theoKhoi[x.khoi] = theoKhoi[x.khoi] || []).push(x); });
     function so(a, b) {
+      // Sắp theo lớp: trong khối gom theo ĐIỂM TRƯỜNG trước (thầy Chung 28/9/2026)
+      // — 1A, 1A1, 1A2 của ba điểm xen kẽ nhau rất khó đọc.
+      if (SAP.cot === 'lop' && NHIEU_CS && a.coSoMa !== b.coSoMa) {
+        return String(a.coSoMa || '').localeCompare(String(b.coSoMa || '')) * SAP.chieu;
+      }
       var va = giaTriSap(a, SAP.cot), vb = giaTriSap(b, SAP.cot);
       var r = (typeof va === 'number') ? va - vb : String(va).localeCompare(String(vb), 'vi', { numeric: true });
       return r ? r * SAP.chieu : sapLop(a.lop, b.lop);
@@ -485,7 +497,9 @@
           (x.khopHs.length ? '<small>' + x.khopHs.slice(0, 2).map(thoat).join(', ') +
             (x.khopHs.length > 2 ? ' và ' + (x.khopHs.length - 2) + ' em khác' : '') + '</small>' : '') + '</td>' +
           (NHIEU_CS ? '<td class="c-cs">' + thoat(x.coSo || '—') + '</td>' : '') +
-          '<td class="c-cn">' + (x.gvcn ? thoat(x.gvcn) : '<span class="lh-chua">Chưa có GVCN</span>') + '</td>' +
+          '<td class="c-cn">' + (x.gvcn ? thoat(x.gvcn)
+            : x.gvcnDK ? '<span class="lh-dk" title="GVCN dự kiến — hệ thống tự ghi phân công khi thầy cô đăng nhập lần đầu">' + thoat(x.gvcnDK) + ' <small>chưa đăng nhập</small></span>'
+            : '<span class="lh-chua">Chưa có GVCN</span>') + '</td>' +
           '<td class="so c-ss">' + x.siSo + '<span class="lh-dv"> HS</span></td>' +
           '<td class="so c-nn"><span class="lh-dv">Nam </span>' + x.nam + ' / <span class="lh-dv">Nữ </span>' + x.nu + '</td>' +
           '<td class="so c-hn">' + (x.hn ? '<span class="lh-dv">Hoà nhập </span>' + x.hn : '<span class="lh-nhat">0</span>') + '</td>' +
@@ -555,7 +569,7 @@
     if (!d) return;
     var x = demLop(lop), chua = x.siSo - x.nam - x.nu;
     $('#hsp-tieu-de').textContent = 'Lớp ' + lop;
-    $('#hsp-phu').textContent = [CN[lop] ? 'GVCN: ' + CN[lop] : 'Chưa có GVCN', d.em.length + ' học sinh',
+    $('#hsp-phu').textContent = [CN[lop] ? 'GVCN: ' + CN[lop] : (d.cnDuKien ? 'GVCN (dự kiến, chưa đăng nhập): ' + d.cnDuKien : 'Chưa có GVCN'), d.em.length + ' học sinh',
       NHIEU_CS && d.coSo ? d.coSo : '', 'Năm học ' + NAM].filter(Boolean).join(' · ');
 
     $('#hsp-than').innerHTML =
