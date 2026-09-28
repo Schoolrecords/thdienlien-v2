@@ -437,6 +437,26 @@
       // thiếu dữ liệu. Ký tự vô hình làm khoá là tự đặt bẫy cho chính mình.
       var CS_TRONG = '--chua-gan--';
 
+      // ── Ai được MỞ thư mục hồ sơ của ai (thầy Chung chốt 28/9/2026) ──
+      //  BGH/Quản trị: mọi hồ sơ (xem + sửa) · Tổ trưởng, Tổ phó: hồ sơ người
+      //  CÙNG TỔ (chỉ xem) · còn lại: chỉ hồ sơ của chính mình.
+      //  Quyền thật nằm ở chia sẻ Drive; ở đây chỉ ẩn nút mà người xem bấm vào
+      //  sẽ gặp trang "Bạn cần quyền truy cập".
+      var toi = window.NGUOI_DUNG || {};
+      var emToi = String(toi.email || '').trim().toLowerCase();
+      var toiBGH = toi.vai_tro === 'admin' || toi.vai_tro === 'ban_giam_hieu';
+      var khoaToi = emToi, toToi = '', toiDungTo = false;
+      moi.forEach(function (m) {
+        if (String(m.email || '').trim().toLowerCase() !== emToi) return;
+        khoaToi = khoaNguoi(m);
+        toToi = boDau(m.to_chuyen_mon).trim();
+        toiDungTo = toi.vai_tro === 'to_truong' || /^to (truong|pho)\b/.test(boDau(m.chuc_vu));
+      });
+      function moDuoc(g) {
+        if (toiBGH || g.khoa === khoaToi || g.emails.indexOf(emToi) >= 0) return true;
+        return toiDungTo && !!toToi && boDau(g.to_chuyen_mon).trim() === toToi;
+      }
+
       var daVe = {};
       var html = '';
       var soNhomDaVe = 0;   // nhóm đầu tiên CÓ người thì mở sẵn, các nhóm sau đóng
@@ -574,7 +594,10 @@
             // Nút chỉ còn biểu tượng — đúng kiểu nút 📂 ở bảng danh mục hồ sơ,
             // nên thầy cô đã quen. Tên người nằm trong aria-label để trình đọc
             // màn hình không đọc ra 39 nút giống hệt nhau.
-            (link
+            (link && !moDuoc(m)
+              ? '<span class="nut-hs trong" title="Chỉ Ban giám hiệu, tổ trưởng/tổ phó cùng tổ và chính người này mở được"' +
+                ' aria-label="Không có quyền mở hồ sơ của ' + tenDayDu + '">🔒</span>'
+              : link
               ? '<a class="nut-hs" target="_blank" rel="noopener" href="' + thoat(link) + '"' +
                 ' title="Mở thư mục hồ sơ cá nhân trên Drive"' +
                 ' aria-label="Mở thư mục hồ sơ cá nhân của ' + tenDayDu + '">📁</a>'
