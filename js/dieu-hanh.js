@@ -2354,9 +2354,11 @@
   // Máy tính: thanh bên 232px phân nhóm nhiệm vụ. Điện thoại: thanh bên ẩn,
   // thay bằng thanh tab dưới 4 mục chính + hàng chip cho 5 màn còn lại.
   //
-  // Thẻ "Điểm danh HS" ĐÃ ẨN — VNEDU đã làm việc đó. Mã veDiemDanh() và các
-  // hàm dd* GIỮ NGUYÊN, bảng diem_danh_lop/hs_vang cũng giữ; bật lại chỉ cần
-  // trả một mục vào DS_NHOM.
+  // Thẻ "Điểm danh HS" ở đây ĐÃ ẨN. 29/9/2026 thầy Chung chốt: trường ĐIỂM DANH
+  // TRÊN APP (không dùng vnEdu) — nhưng làm ở SỔ CHỦ NHIỆM (so-chu-nhiem.js, thẻ
+  // Theo dõi hằng ngày; GVCN bấm "Điểm danh" ở trang chủ). Cùng hai bảng
+  // diem_danh_lop / hs_vang → ĐỪNG bật lại thẻ này: hai lối nhập cho một việc.
+  // Mã veDiemDanh() và các hàm dd* để nguyên.
   var TAB = 'tongquan';
   // ⚠️ THAY ĐỔI 15/8/2026 theo yêu cầu thầy Chung:
   //  · "Điểm danh GV" + "Bảng công tháng" GỘP MỘT MỤC — vốn là hai tầng của

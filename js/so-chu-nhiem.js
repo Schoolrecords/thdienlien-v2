@@ -1010,7 +1010,7 @@
 
   // ── Theo dõi hằng ngày ──
   function veTheoDoi() {
-    if (!D.ngayTD) D.ngayTD = homNay();
+    if (!D.ngayTD) { D.ngayTD = homNay(); D.buoiTD = buoiMacDinh(); }
     var ngay = D.ngayTD, ghi = coGhi(ngay), S = D.so;
     var h = '<div class="scn-hang">' +
       '<button class="scn-nut phu nho" data-lui="-1" aria-label="Ngày trước">‹</button><input type="date" id="td-ngay" class="scn-o" value="' + ngay + '">' +
@@ -1036,7 +1036,7 @@
           }).join('') + '</span>' +
           (v ? '<input class="scn-o scn-ly-do" data-ly="' + thoat(hs.ma) + '" value="' + thoat(D.ddTam.ly[hs.ma] || '') + '" placeholder="Lý do (ốm, việc gia đình…)"' + (ghi ? '' : ' disabled') + '>' : '') + '</div>';
       }).join('') + '</div>' +
-      (ghi ? '<div class="scn-hang"><button class="scn-nut" data-act="luu-dd">Lưu điểm danh · vắng ' + soV + '/' + D.hs.length + '</button></div>' : '')));
+      (ghi ? '<div class="scn-hang scn-dd-luu"><button class="scn-nut" data-act="luu-dd">' + (soV ? 'Lưu điểm danh · vắng ' + soV + '/' + D.hs.length : 'Lưu: cả lớp có mặt (' + D.hs.length + ')') + '</button></div>' : '')));
     // Ghi nhanh
     var n = Object.keys(D.chon).filter(function (m) { return D.chon[m]; }).length;
     if (ghi) {
@@ -2537,24 +2537,44 @@
   // Thay thẻ module lớn "Sổ chủ nhiệm" ở trang chủ. GVCN: sổ lớp mình + kỳ nộp
   // tháng này; tổ trưởng/tổ phó được giao, BGH: số sổ đang chờ. Người khác: trống.
   var NHAC = { khoa: '', html: '' };
-  function dongNhacGV(lop, moi, ky) {
+  // Buổi mặc định theo giờ: sau 12 giờ trưa là buổi chiều (GV mở điện thoại điểm danh
+  // đầu buổi chiều khỏi phải bấm đổi buổi).
+  function buoiMacDinh() { return new Date().getHours() >= 12 ? 'chieu' : 'sang'; }
+  function laNgayHoc(iso) { var t = new Date(iso + 'T00:00:00').getDay(); return t >= 1 && t <= 5; }
+  var TEN_BUOI = { sang: 'buổi sáng', chieu: 'buổi chiều' };
+  function dongNhacGV(lop, moi, ky, dd, buoi, ngayHoc) {
     var tt = !moi ? 'chưa nộp' : moi.trang_thai === 'da_nop' ? 'đã nộp, chờ kiểm tra' : moi.trang_thai === 'yeu_cau_bo_sung' ? '<b class="scn-nhac-do">cần bổ sung</b>' : 'đã kiểm tra';
-    return '<div class="scn-nhac"><span class="scn-nhac-chu"><b>Sổ chủ nhiệm lớp ' + thoat(lop) + '</b> · ' + thoat(TEN_KY_NOP[ky] || ky) + ': ' + tt + '</span>' +
-      '<span class="scn-nhac-nut"><button type="button" data-scn-nhac="theo-doi" data-lop="' + thoat(lop) + '">Ghi theo dõi hôm nay</button>' +
+    var ddChu = !ngayHoc ? '' : dd
+      ? '<span class="scn-nhac-dd xong">Điểm danh ' + TEN_BUOI[buoi] + ': vắng ' + dd.so_vang + '/' + dd.si_so + '</span>'
+      : '<span class="scn-nhac-dd chua">Chưa điểm danh ' + TEN_BUOI[buoi] + '</span>';
+    return '<div class="scn-nhac"><span class="scn-nhac-chu"><b>Sổ chủ nhiệm lớp ' + thoat(lop) + '</b> · ' + thoat(TEN_KY_NOP[ky] || ky) + ': ' + tt +
+      (ddChu ? '<br>' + ddChu : '') + '</span>' +
+      '<span class="scn-nhac-nut"><button type="button" data-scn-nhac="theo-doi" data-lop="' + thoat(lop) + '">' + (ngayHoc && !dd ? 'Điểm danh' : 'Điểm danh, ghi theo dõi') + '</button>' +
       '<button type="button" data-scn-nhac="mo" data-lop="' + thoat(lop) + '">Mở sổ</button></span></div>';
   }
   function dongNhacKT(n, bgh) {
     return '<div class="scn-nhac"><span class="scn-nhac-chu"><b>' + n + ' sổ chủ nhiệm</b> đang chờ ' + (bgh ? 'kiểm tra, duyệt' : 'tổ kiểm tra') + '</span>' +
       '<span class="scn-nhac-nut"><button type="button" data-scn-nhac="kiemtra">Mở kiểm tra sổ</button></span></div>';
   }
+  // BGH: điểm danh toàn trường buổi hiện tại (điểm danh do GVCN làm trong sổ — thầy Chung chốt 29/9/2026)
+  function dongNhacDDTruong(dsLop, ddl, buoi) {
+    var da = {}, vang = 0;
+    ddl.forEach(function (d) { if (d.buoi === buoi) { da[chuanLop(d.lop)] = 1; vang += +d.so_vang || 0; } });
+    var chua = dsLop.filter(function (l) { return !da[chuanLop(l)]; });
+    var soDa = dsLop.length - chua.length;
+    return '<div class="scn-nhac"><span class="scn-nhac-chu"><b>Điểm danh ' + TEN_BUOI[buoi] + ' hôm nay: ' + soDa + '/' + dsLop.length + ' lớp</b>' +
+      (soDa ? ' · vắng ' + vang + ' em' : '') +
+      (chua.length ? '<details class="scn-nhac-ct"><summary>' + chua.length + ' lớp chưa điểm danh</summary>' + chua.map(thoat).join(', ') + '</details>' : ' · đủ các lớp') +
+      '</span></div>';
+  }
   function veNhacHome() {
     var o = document.getElementById('scn-nhac-home');
     if (!o) return;
-    var nam = (window.CAU_HINH || {}).NAM_HOC || '', ky = kyGoiY(homNay());
-    if (!may()) { o.innerHTML = dongNhacGV('4A', null, ky); return; }   // xem thử: khớp lớp mẫu 4A
+    var nam = (window.CAU_HINH || {}).NAM_HOC || '', ky = kyGoiY(homNay()), hn = homNay(), buoi = buoiMacDinh(), ngayHoc = laNgayHoc(hn);
+    if (!may()) { o.innerHTML = dongNhacGV('4A', null, ky, null, buoi, ngayHoc); return; }   // xem thử: khớp lớp mẫu 4A
     var u = toi();
     if (!u || !u.id || !nam) { o.innerHTML = ''; return; }
-    var khoa = u.id + '|' + nam + '|' + homNay();
+    var khoa = u.id + '|' + nam + '|' + hn + '|' + buoi;
     if (NHAC.khoa === khoa) { o.innerHTML = NHAC.html; return; }
     NHAC.khoa = khoa;
     var bgh = vaiTro() === 'admin' || vaiTro() === 'ban_giam_hieu';
@@ -2563,18 +2583,29 @@
       may().from('phan_cong_day').select('lop').eq('nam_hoc', nam).eq('la_chu_nhiem', true).eq('nguoi_dung_id', u.id),
       // RLS: người không phải BGH chỉ đọc được dòng giao của chính mình
       may().from('scn_nguoi_duyet').select('email, khoi, co_so_ma').eq('nam_hoc', nam),
-      may().from('scn_nop').select('lop, ky, lan, trang_thai, khoi, co_so_ma').eq('nam_hoc', nam).order('id').limit(5000)
+      may().from('scn_nop').select('lop, ky, lan, trang_thai, khoi, co_so_ma').eq('nam_hoc', nam).order('id').limit(5000),
+      ngayHoc ? may().from('diem_danh_lop').select('lop, buoi, si_so, so_vang').eq('ngay', hn).eq('nam_hoc', nam).limit(2000) : null,
+      ngayHoc && bgh ? may().from('lop_hoc').select('lop').eq('nam_hoc', nam) : null
     ]).then(function (r) {
       var lopToi = [];
       rongNeuLoi(r[0]).forEach(function (p) { if (lopToi.indexOf(p.lop) < 0) lopToi.push(p.lop); });
       lopToi.sort(function (a, b) { return chuanLop(a).localeCompare(chuanLop(b), 'vi', { numeric: true }); });
       var em = String(u.email || '').trim().toLowerCase();
       var giao = rongNeuLoi(r[1]).filter(function (d) { return String(d.email || '').toLowerCase() === em; });
+      // Báo vai cho hàng thẻ Lớp học + nút "Mở sổ" ở Hồ sơ số (trước khi mở màn sổ)
+      window.SCN_QUYEN = { gvcn: lopToi.length > 0, toKT: giao.length > 0 };
       var moi = nopMoiNhat(rongNeuLoi(r[2]));
+      var ddl = rongNeuLoi(r[3]);
       var laLopToi = function (lop) { return lopToi.some(function (l) { return chuanLop(l) === chuanLop(lop); }); };
       var h = lopToi.map(function (l) {
-        return dongNhacGV(l, moi.filter(function (n) { return chuanLop(n.lop) === chuanLop(l) && n.ky === ky; })[0], ky);
+        var dd = ddl.filter(function (d) { return chuanLop(d.lop) === chuanLop(l) && d.buoi === buoi; })[0];
+        return dongNhacGV(l, moi.filter(function (n) { return chuanLop(n.lop) === chuanLop(l) && n.ky === ky; })[0], ky, dd, buoi, ngayHoc);
       }).join('');
+      if (bgh && ngayHoc) {
+        var dsLop = rongNeuLoi(r[4]).map(function (l) { return l.lop; })
+          .sort(function (a, b) { return chuanLop(a).localeCompare(chuanLop(b), 'vi', { numeric: true }); });
+        if (dsLop.length) h += dongNhacDDTruong(dsLop, ddl, buoi);
+      }
       if (bgh || giao.length) {
         var cho = moi.filter(function (n) {
           if (laLopToi(n.lop)) return false;   // không tự kiểm tra lớp mình chủ nhiệm
@@ -2585,6 +2616,7 @@
       }
       if (NHAC.khoa !== khoa) return;
       NHAC.html = h; o.innerHTML = h;
+      if (window.veTatCa && document.querySelector('#mh-hoso.hien')) window.veTatCa();
     }, function () { NHAC.khoa = ''; });
   }
   function ganNhacHome() {
@@ -2645,6 +2677,7 @@
     // Chỉ nhảy tới lớp nằm trong phạm vi người này được xem — không nạp trộm.
     D.che = 'so';
     if (tab) D.tabMuon = tab;
+    if (tab === 'theo-doi') { D.ngayTD = homNay(); D.buoiTD = buoiMacDinh(); D.ddTam = null; }
     if (lop && D.khoiTao && !D.dangNap) {
       if (apLopMuon(lop)) { D.dangNap = true; napLop().then(function () { ve(); }); } else ve();
     } else if (lop) D.lopMuon = lop;

@@ -148,6 +148,22 @@
     return (window.HS_BAN_GHI && window.HS_BAN_GHI[ma]) || null;
   }
 
+  // Mục "Sổ chủ nhiệm" (H08, MC.3.4.08 bên tiểu học): nút mở sổ điện tử
+  // (js/so-chu-nhiem.js) cạnh 📂 Drive — 29/9/2026. Nhận theo mã HOẶC tên vì
+  // danh mục THCS mã khác. Chỉ hiện với người mở được sổ: BGH/QT, GVCN, tổ trưởng
+  // được giao (window.SCN_QUYEN do lối tắt trang chủ điền ngay sau đăng nhập).
+  function laSoChuNhiem(h) { return h.ma === 'MC.3.4.08' || /^sổ chủ nhiệm$/i.test(String(h.ten || '').trim()); }
+  function duocMoSoCN() {
+    if (!window.MAY_CHU) return true;   // xem thử
+    var vt = (window.NGUOI_DUNG || {}).vai_tro || '', q = window.SCN_QUYEN || {};
+    return vt === 'admin' || vt === 'ban_giam_hieu' || !!q.gvcn || !!q.toKT;
+  }
+  window.moSoChuNhiemDienTu = function () {
+    if (window.dongLopPhu) { try { window.dongLopPhu(); } catch (e) { /* lớp phủ chưa mở */ } }
+    if (window.SO_CHU_NHIEM && window.SO_CHU_NHIEM.moLop) window.SO_CHU_NHIEM.moLop();
+    else chuyenManHinh('sochunhiem');
+  };
+
   // Một dòng minh chứng trong bảng
   function dongBang(h, hienHop) {
     var hs = banGhi(h.ma);
@@ -166,6 +182,10 @@
       }).join('') + '</span></td>' +
       '<td class="owner">' + thoatHTML(h.phuTrach || (window.HOP[h.hop] || {}).phuTrach || '—') + '</td>' +
       '<td class="tdst"><span class="st st-' + h.tt + '">' + ST_LABEL[h.tt] + '</span>' +
+      // KHÔNG gắn class .drive: toMau() lấy phần tử .drive ĐẦU TIÊN trong dòng để tô 📂
+      (laSoChuNhiem(h) && duocMoSoCN()
+        ? '<button type="button" class="mo-so-dt" title="Mở sổ chủ nhiệm điện tử" onclick="event.stopPropagation();window.moSoChuNhiemDienTu()">📓 Mở sổ</button>'
+        : '') +
       (link
         ? '<a class="drive" href="' + thoatHTML(link) + '" target="_blank" rel="noopener" title="Mở thư mục trên Drive" onclick="event.stopPropagation()">📂</a>'
         : '<button class="drive mo" title="Chưa gán thư mục Drive" onclick="event.stopPropagation();window.notify(\'Hồ sơ này chưa được gán thư mục trên Drive.\')">📂</button>') +

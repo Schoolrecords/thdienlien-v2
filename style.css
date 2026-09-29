@@ -4058,3 +4058,19 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .scn-nhac-nut button:hover { filter: brightness(.96); }
 @media (max-width: 640px) { .scn-nhac-nut { width: 100%; } .scn-nhac-nut button { flex: 1; } }
 @media print { #scn-nhac-home { display: none; } }
+/* Hồ sơ số: nút mở sổ chủ nhiệm điện tử ở mục Sổ chủ nhiệm (js/app.js, 29/9/2026) — KHÔNG dùng class .drive */
+.rec-tbl .mo-so-dt { height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--dam); background: var(--dam); color: #fff;
+  font: inherit; font-size: 13px; font-weight: 700; margin-left: 8px; vertical-align: middle; cursor: pointer; white-space: nowrap; }
+.rec-tbl .mo-so-dt:hover { filter: brightness(1.12); }
+@media (hover: none) { .rec-tbl .mo-so-dt { height: 44px; margin-left: 6px; } }
+/* Lối tắt trang chủ: tình trạng điểm danh hôm nay; BGH xem lớp chưa điểm danh */
+.scn-nhac-dd { font-size: 13px; }
+.scn-nhac-dd.chua { color: var(--vang-sam); font-weight: 700; }
+.scn-nhac-dd.xong { color: var(--chu-mo); }
+.scn-nhac-ct { margin-top: 4px; font-size: 13px; }
+.scn-nhac-ct summary { cursor: pointer; color: var(--vang-sam); font-weight: 700; }
+/* Điểm danh trên điện thoại: nút Lưu dính đáy màn, khỏi cuộn hết danh sách 35 em */
+.scn-dd-luu { position: sticky; bottom: 0; z-index: 2; background: var(--the, #fff); padding: 8px 0; margin-top: 0; box-shadow: 0 -6px 12px -8px rgba(0,0,0,.25); }
+.scn-dd-luu .scn-nut { width: 100%; min-height: 44px; font-size: 15px; }
+@media (min-width: 761px) { .scn-dd-luu .scn-nut { width: auto; } }
+@media (max-width: 640px) { .scn-dd-nut button { min-width: 52px; min-height: 42px; } }
