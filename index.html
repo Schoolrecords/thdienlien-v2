@@ -98,6 +98,42 @@
     <div class="dang-cho">Đang tải…</div>
   </div>
 </div>
+<!-- BÁO ĐƯỜNG TRUYỀN CHẬM (29/9/2026, sổ dự án mục 105). Tối 29/9 cả trường
+     Quảng Châu 1 nhìn màn "Đang tải…" đứng 30–50 giây mà không biết máy còn
+     chạy hay đã treo, nên bấm tải lại liên tục — mỗi lần lại tải lại từ đầu.
+     Viết THẲNG trong HTML, style cài sẵn trên thẻ: chính style.css và các tệp
+     js có thể là thứ đang kẹt. Chỉ hiện khi cổng vẫn ở dòng "Đang tải…"; cổng
+     đã sang đăng nhập / báo lỗi / thử lại máy chủ thì tự gỡ, mở khoá thì dừng. -->
+<script>
+(function () {
+  var dem = setInterval(function () {
+    if (!document.body || !document.body.classList.contains('dang-khoa')) { clearInterval(dem); return; }
+    var hop = document.getElementById('cong-hop');
+    if (!hop) return;
+    var cho = hop.querySelector('.dang-cho'), bao = document.getElementById('bao-cham');
+    var dangTai = cho && /^Đang tải/.test(cho.textContent || '');
+    if (!dangTai) { if (bao) bao.parentNode.removeChild(bao); return; }
+    var giay = Math.round(performance.now() / 1000);
+    if (giay < 15) return;
+    // Dựng MỘT lần (cổng vẽ lại thì dựng lại); mỗi giây chỉ đổi con số, để
+    // nút Tải lại không bị thay giữa lúc đang bấm.
+    if (!bao) {
+      bao = document.createElement('div');
+      bao.id = 'bao-cham';
+      bao.style.cssText = 'margin-top:14px;padding:11px 13px;border-radius:11px;font-size:13.5px;line-height:1.6;' +
+        'text-align:left;background:#fff8e6;color:#7a5a00;border:1px solid #f1e2b5';
+      bao.innerHTML = 'Đường truyền đang chậm, hệ thống vẫn đang tải (<span class="bc-giay"></span> giây). ' +
+        'Thầy cô cứ để yên màn hình, <b>đừng bấm tải lại liên tục</b> — mỗi lần tải lại là tải từ đầu.' +
+        '<span class="bc-lau" style="display:none"><br>Quá lâu? Thử đổi mạng (Wi-Fi ↔ 4G) rồi ' +
+        '<button type="button" onclick="location.reload()" style="font:inherit;padding:3px 10px;border-radius:8px;' +
+        'border:1px solid #d9b95c;background:#fff;color:inherit;cursor:pointer">↻ Tải lại trang</button></span>';
+      hop.appendChild(bao);
+    }
+    bao.querySelector('.bc-giay').textContent = giay;
+    if (giay >= 60) bao.querySelector('.bc-lau').style.display = '';
+  }, 1000);
+})();
+</script>
 
 <header class="dau-trang">
   <div class="khung">
@@ -478,12 +514,25 @@
   © <span id="dien-nam-ban-quyen">2026</span> Hệ thống quản trị số - Thiết kế ChungTran
 </footer>
 
+<!-- ══════════ MÃ APP: MỘT TỆP GỘP (29/9/2026, sổ dự án mục 105) ══════════
+     Trình duyệt chỉ tải js/goi.min.js — gộp + rút gọn từ các tệp js/*.js liệt
+     kê trong <template id="goi-nguon"> ngay dưới, ĐÚNG thứ tự ấy. 44 lượt tải
+     còn 1: tối 29/9 đường Cloudflare buổi tối chậm, mỗi tệp lẻ mất 10–23 giây.
+     🔴 Sửa bất kỳ tệp js nào trong danh sách → chạy lại
+        node ../thdienlien-v2-tailieu/dong-goi.js  (tự đổi số ?v= của gói).
+        Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
+     supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
+     trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
+<script src="js/goi.min.js?v=8d1d298b94"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<template id="goi-nguon">
+<!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
+     goi.min.js (dong-goi.js đọc) và của bài quét quet-app.js. -->
 <script src="js/cauhinh.js?v=2026092918"></script>
 <!-- Cổng chung nhiều trường. PHẢI đứng ngay sau cauhinh.js và TRƯỚC mọi tệp
      khác: nó dựng lại CAU_HINH cho chế độ xem thử, và giữ trang ở trạng thái
      khóa khi chưa biết người vào thuộc trường nào. -->
 <script src="js/cong-truong.js?v=2026092918"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/du-lieu-demo.js?v=2026092918"></script>
 <script src="js/du-lieu-sql.js?v=2026092918"></script>
 <script src="js/quan-tri.js?v=2026092918"></script>
@@ -564,6 +613,7 @@
      Quản trị số KHÔNG xếp lịch, chỉ đọc bản đã xếp. Sổ dự án 91.13. -->
 
 <script src="js/du-gio.js?v=2026092918"></script>
+</template>
 <!-- Giữ sẵn mã app trên máy thầy cô (29/9/2026) — xem đầu sw.js. Chỉ giữ tệp
      có ?v= và thư viện supabase-js; trang HTML, cấu hình trường và dữ liệu
      vẫn đi thẳng lên mạng. Mở tệp từ ổ đĩa (file:) thì bỏ qua. -->
