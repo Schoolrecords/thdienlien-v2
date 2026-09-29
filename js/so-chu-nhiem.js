@@ -2594,7 +2594,6 @@
       var giao = rongNeuLoi(r[1]).filter(function (d) { return String(d.email || '').toLowerCase() === em; });
       // Báo vai cho hàng thẻ Lớp học + nút "Mở sổ" ở Hồ sơ số (trước khi mở màn sổ)
       window.SCN_QUYEN = { gvcn: lopToi.length > 0, toKT: giao.length > 0 };
-      if (window.VIEC_NHANH) window.VIEC_NHANH.ve();   // hàng Việc hằng ngày: GVCN có nút Sổ chủ nhiệm
       var moi = nopMoiNhat(rongNeuLoi(r[2]));
       var ddl = rongNeuLoi(r[3]);
       var laLopToi = function (lop) { return lopToi.some(function (l) { return chuanLop(l) === chuanLop(lop); }); };

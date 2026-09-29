@@ -4075,35 +4075,6 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 @media (min-width: 761px) { .scn-dd-luu .scn-nut { width: auto; } }
 @media (max-width: 640px) { .scn-dd-nut button { min-width: 52px; min-height: 42px; } }
 
-/* ══ VIỆC HẰNG NGÀY — hàng nút đầu trang chủ (js/viec-nhanh.js, 29/9/2026) ══
-   Máy tính: 4 nút to đầu trang chủ. Điện thoại: thanh CỐ ĐỊNH ở đáy — #viec-nhanh nằm
-   trong #mh-home nên rời trang chủ là thanh tự ẩn theo. */
-.vn-hang { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
-.vn-dau { padding: 14px 0 0; }
-.vn-dau > .khung { max-width: var(--rong-khung); margin: 0 auto; padding: 0 16px; }
-.vn-dau:has(#viec-nhanh:empty) { display: none; }
-.vn-nut { position: relative; display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 14px;
-  border: 1px solid var(--dam); border-radius: 14px; background: var(--dam); color: #fff;
-  font: inherit; font-weight: 700; font-size: 15px; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(20, 48, 107, .06); }
-.vn-nut:hover { filter: brightness(1.18); }
-.vn-bi { font-size: 22px; line-height: 1; }
-.vn-chu { line-height: 1.25; }
-.vn-so { position: absolute; top: -7px; right: -5px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
-  background: var(--thieu, #b91c1c); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
-@media (max-width: 760px) {
-  .vn-hang { position: fixed; left: 0; right: 0; bottom: 0; z-index: 150; margin: 0; gap: 0;
-    padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); background: var(--the, #fff);
-    border-top: 1px solid var(--vien); box-shadow: 0 -4px 14px rgba(20, 48, 107, .12); }
-  .vn-dau { padding-top: 10px; }
-  .vn-nut { flex-direction: column; justify-content: center; gap: 3px; min-height: 60px; padding: 6px 2px;
-    border: 0; border-radius: 10px; box-shadow: none; font-size: 11.5px; text-align: center; background: transparent; color: var(--dam); }
-  .vn-nut:hover { filter: none; background: #f1f5fb; }
-  .vn-bi { font-size: 21px; }
-  .vn-so { top: 2px; right: calc(50% - 26px); }
-  body:has(.vn-hang) main { padding-bottom: 84px; }
-  body:has(#vn-dau:not([style*="none"]) .vn-hang) .toast { bottom: 96px; }
-}
-
 /* ══ Dạy thay 29/9/2026: phạm vi phân hiệu · báo nghỉ thay GV · đơn chờ duyệt · đã nhận ══ */
 .dt-pham-vi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 .dt-bao-nghi-mo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; }
@@ -4122,7 +4093,7 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .dt-nhac-nut { display: flex; gap: 10px; align-items: center; }
 .dt-nhac-nut a { font-weight: 700; color: inherit; }
 
-/* ══ Khung "Việc cần xử lý" ở trang chủ (js/viec-nhanh.js) — BGH / phụ trách điểm trường ══ */
+/* ══ Khung "Việc cần xử lý" đầu Điều hành › Tổng quan (js/viec-nhanh.js) — BGH / phụ trách điểm trường ══ */
 .vcl { background: var(--the, #fff); border: 1px solid var(--vien); border-left: 5px solid var(--dam); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; }
 .vcl-dau { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-bottom: 6px; }
 .vcl-dau > b { font-size: 16.5px; color: var(--dam); }

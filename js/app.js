@@ -43,7 +43,6 @@
       b.classList.toggle('dang-chon', b.getAttribute('data-di') === nutSang);
     });
     $('#hero').style.display = (ma === 'home') ? '' : 'none';
-    if ($('#vn-dau')) $('#vn-dau').style.display = (ma === 'home') ? '' : 'none';   // Việc hằng ngày (js/viec-nhanh.js)
     dongBangMenu();          // chọn xong thì bảng ☰ tự đóng
     window.scrollTo(0, 0);
   }

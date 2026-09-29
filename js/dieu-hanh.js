@@ -674,7 +674,7 @@
         '<div class="chu"><b>' + ds.length + ' người vắng ' + tenBuoi(b) + ' nay:</b> ' + ten +
         (ds.length > 3 ? ' và ' + (ds.length - 3) + ' người nữa' : '') +
         '<span>Bấm để xem các tiết bị trống theo thời khóa biểu và chọn người dạy thay theo gợi ý.</span></div>' +
-        '<a class="nut" href="#" onclick="DAY_THAY.moNgay();DH.moTab(\'tkb\');TKB_XEM.moDayThay();return false;">' +
+        '<a class="nut" href="#" onclick="DAY_THAY.moKhung(\'bo-tri\');return false;">' +
         '👨‍🏫 Bố trí dạy thay</a></div>';
     }
     if (!(window.CAU_HINH || {}).URL_TKB) return '';
@@ -2099,9 +2099,9 @@
   function veDayThay() {
     if (window.DAY_THAY && window.TKB_XEM) {
       return '<div class="dh-tieu-de" style="margin-top:26px">👨‍🏫 Dạy thay theo tiết</div>' +
-        '<div class="hd-kiem xanh" style="margin-top:0">Bố trí dạy thay ở màn <b>Thời khóa biểu › Dạy thay</b> — ' +
+        '<div class="hd-kiem xanh" style="margin-top:0">Bố trí dạy thay ở màn <b>Điều hành › Báo nghỉ – Dạy thay</b> — ' +
         'app đọc sổ vắng và thời khóa biểu, tự liệt kê tiết trống và gợi ý người thay. ' +
-        '<a href="#" onclick="DAY_THAY.moNgay();DH.moTab(\'tkb\');TKB_XEM.moDayThay();return false;">Mở màn Dạy thay ›</a></div>';
+        '<a href="#" onclick="DAY_THAY.moKhung(\'bo-tri\');return false;">Mở màn Dạy thay ›</a></div>';
     }
     var url = (window.CAU_HINH || {}).URL_TKB;
     if (!url) return '';
@@ -2373,6 +2373,9 @@
   var DS_NHOM = [
     { nhom: 'HÔM NAY', muc: [
       { ma: 'tongquan', ten: 'Tổng quan', bi: '🏠', ngan: 'Hôm nay' },
+      // 29/9/2026 thầy Chung: báo nghỉ – bố trí dạy thay là việc HẰNG NGÀY của Ban giám hiệu / phụ trách
+      // phân hiệu → thẻ riêng trong nhóm HÔM NAY (trước nằm sâu ở Thời khóa biểu › Dạy thay). js/day-thay.js vẽ.
+      { ma: 'daythay', ten: 'Báo nghỉ – Dạy thay', bi: '👨‍🏫', ngan: 'Dạy thay' },
       { ma: 'baoviec', ten: 'Báo việc', bi: '⚡', ngan: 'Báo việc' } ] },
     { nhom: 'NHÂN SỰ', muc: [
       { ma: 'baocao', ten: 'Điểm danh & Chấm công', bi: '🧑‍🏫', ngan: 'Chấm công' } ] },
@@ -2393,7 +2396,8 @@
       { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
-  var TAB_MOBILE = ['tongquan', 'baocao', 'dexuat', 'baoviec'];
+  // 29/9/2026: 'daythay' thay chỗ 'baocao' (Chấm công là màn XEM, còn trong hàng chip) — thầy Chung
+  var TAB_MOBILE = ['tongquan', 'daythay', 'dexuat', 'baoviec'];
 
   function moiMuc() {
     var ds = [];
@@ -2410,6 +2414,7 @@
       return laQT() ? (DL.deXuat || []).filter(function (d) { return d.tt === 'cho_duyet'; }).length : 0;
     }
     if (ma === 'thongbao') return (DL.thongBao || []).filter(tbCanToiXN).length;
+    if (ma === 'daythay') return laQT() ? gvVangBuoi(buoiXem()).length : 0;   // người vắng buổi đang xem
     if (ma === 'baoviec') {
       return laQT() ? (DL.suViec || []).filter(function (s) { return s.tt === 'moi'; }).length : 0;
     }
@@ -2423,7 +2428,8 @@
   // trạng thái cũ thì đưa về Tổng quan, đừng để rơi vào màn trắng không tab
   // nào sáng.
   // (14/9/2026: 'tkb' là màn thật trở lại — bỏ khỏi bảng này.)
-  var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao', daythay: 'lichtuan',
+  // 'daythay' là màn THẬT trở lại từ 29/9/2026 (thẻ Báo nghỉ – Dạy thay) — bỏ khỏi bảng này.
+  var MAN_CU = { bangcong: 'baocao', diemdanh: 'baocao',
                  dugio: 'tongquan', homnay: 'tongquan' };
 
   function veDieuHanh() {
@@ -2519,7 +2525,7 @@
       : '';
 
     var noiDung =
-      TAB === 'tongquan' ? veTongQuan() :
+      TAB === 'tongquan' ? '<div id="dh-viec-can-lam"></div>' + veTongQuan() :
       // ── CHIA VIỆC GIỮA HAI MÀN (thầy Chung chốt 15/8/2026) ──
       // "Báo việc"            = nơi NHẬP  → báo cáo đầu buổi (an toàn · cơ sở
       //                          vật chất · ai vắng) + sự việc đột xuất +
@@ -2545,7 +2551,8 @@
       // bật lại màn Điểm danh HS / Dự giờ chỉ cần bỏ dòng tương ứng khỏi
       // MAN_CU và trả mục vào DS_NHOM (mục 11.2, 15/8 sổ dự án). Chú thích cũ
       // nói "đưa về đúng màn mới" ở đây là sai — việc đó do MAN_CU làm.
-      TAB === 'daythay' ? ((window.veLichTuan ? window.veLichTuan() : '') + veDayThay()) :
+      // Thẻ Báo nghỉ – Dạy thay (29/9/2026): js/day-thay.js tự nạp + vẽ vào chỗ trống này (cuối veDieuHanh)
+      TAB === 'daythay' ? '<div id="dh-day-thay"><div class="the-thong-bao">Đang tải…</div></div>' :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       // Màn TKB tự nạp dữ liệu (bất đồng bộ) nên ở đây chỉ dựng chỗ trống;
       // TKB_XEM.ve() điền vào ngay sau khi gắn HTML (cuối veDieuHanh).
@@ -2573,6 +2580,9 @@
       '<div class="dh-noi-dung">' + noiDung + '</div>' +
       veNhatKyKhoi() + tabM + '</div></div>';
     if (TAB === 'tkb' && window.TKB_XEM) window.TKB_XEM.ve(document.getElementById('tkb-xem'));
+    if (TAB === 'daythay' && window.DAY_THAY) window.DAY_THAY.ve(document.getElementById('dh-day-thay'));
+    // Khung "Việc cần xử lý" đầu Tổng quan (js/viec-nhanh.js — BGH / phụ trách điểm trường)
+    if (TAB === 'tongquan' && window.VIEC_NHANH) window.VIEC_NHANH.veKhung(document.getElementById('dh-viec-can-lam'));
     veNhaCard();
     // "Hôm nay thầy/cô dạy thay N tiết" trên trang chủ (js/day-thay.js) — chỉ khi chạy thật
     if (THAT && window.DAY_THAY) window.DAY_THAY.ganNhac(document.getElementById('dt-nhac-home'));

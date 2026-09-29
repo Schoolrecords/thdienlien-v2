@@ -175,6 +175,8 @@
   function ve(el) {
     if (el) EL = el;
     if (!EL || !document.body.contains(EL)) return;
+    // Người không bố trí được (giáo viên) mở thẻ lần đầu → thấy tiết dạy thay của mình
+    if (!D.khungChon) { D.khungChon = true; if (!laQT() && may()) D.khung = 'cua-toi'; }
     if (!L()) { EL.innerHTML = '<div class="hd-kiem do">Thiếu tệp js/day-thay-luat.js — tải lại trang.</div>'; return; }
     var khungNut = [['bo-tri', 'Bố trí theo ngày'], ['danh-sach', 'Danh sách dạy thay'], ['cua-toi', 'Tiết dạy thay của tôi']];
     var dau = '<div class="dt-dau"><div class="tkb-buoi">' + khungNut.map(function (k) {
@@ -368,7 +370,7 @@
   // SỰ KIỆN + GHI
   // ══════════════════════════════════════════════════════════════
   function tat(sel, fn) { Array.prototype.slice.call(EL.querySelectorAll(sel)).forEach(function (b) { b.addEventListener('click', function () { fn(b); }); }); }
-  function ganKhung() { tat('[data-khung]', function (b) { D.khung = b.getAttribute('data-khung'); ve(); }); }
+  function ganKhung() { tat('[data-khung]', function (b) { D.khung = b.getAttribute('data-khung'); D.khungChon = true; ve(); }); }
   function ganNgay() {
     var o = document.getElementById('dt-chon-ngay');
     if (o) o.addEventListener('change', function () { if (/^\d{4}-\d{2}-\d{2}$/.test(o.value)) { D.ngay = o.value; D.mo = ''; D.moPA = ''; ve(); } });
@@ -748,7 +750,8 @@
       var bao = khung === 'bao-nghi';   // mở sẵn form Báo nghỉ thay giáo viên
       D.khung = bao ? 'bo-tri' : (khung || 'bo-tri');
       if (D.khung === 'bo-tri') { D.ngay = ngay || homNayISO(); D.moBao = bao; }
-      if (window.DH) window.DH.moTab('tkb');
-      if (window.TKB_XEM && window.TKB_XEM.moDayThay) window.TKB_XEM.moDayThay();
+      D.khungChon = true;
+      // 29/9/2026: thẻ riêng Điều hành › Báo nghỉ – Dạy thay (trước: Thời khóa biểu › Dạy thay)
+      if (window.DH) window.DH.moTab('daythay');
     } };
 })();
