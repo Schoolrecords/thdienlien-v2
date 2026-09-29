@@ -3767,6 +3767,9 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 }
 
 /* ── Hàng tiêu đề sổ: tiêu đề trái, nút "Xem sổ chủ nhiệm" góc phải (28/9/2026) ── */
+/* Dải báo "đang xem bản lưu trên máy" của Sổ chủ nhiệm (js/kho-may.js, 29/9/2026) */
+.scn-may { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 13px; line-height: 1.45; padding: 6px 12px; margin: 0 0 10px; border-radius: 8px; background: #eef3fb; color: #14306b; }
+.scn-may.canh { background: #fff4e0; color: #7a4f00; }
 .scn-dau-tieu { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
 .scn-dau-tieu > div { flex: 1 1 240px; min-width: 0; }
 .scn-nut-xem {

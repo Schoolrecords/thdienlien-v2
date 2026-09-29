@@ -142,6 +142,122 @@
     });
   }
 
+  // ══════════ ÁP DỮ LIỆU CHUNG LÊN TRANG ══════════
+  // tho = [cau_hinh, nhom_ho_so, nhom_con, ho_so, tieu_chi, nguoi_dung] — đúng
+  // thứ tự sáu câu hỏi của napDuLieuThat. Tách riêng (29/9/2026) để lúc VÀO
+  // NHANH áp được bản lưu trên máy (window.apDuLieuMay) rồi mới hỏi máy chủ.
+  var THO_DA_AP = '';
+  function apDuLieu(tho) {
+    var cauHinh = tho[0] || [], boPhan = tho[1] || [], nhomCon = tho[2] || [],
+        hoSo = tho[3] || [], tieuChi = tho[4] || [], taiKhoan = tho[5] || [];
+
+    // Danh sách tài khoản hoạt động — cho ô "giao quyền sửa" trong hoso-sua.js
+    window.DS_TAI_KHOAN = taiKhoan || [];
+
+    // 1. Cấu hình trường
+    var ch = {};
+    cauHinh.forEach(function (d) { ch[d.khoa] = d.gia_tri; });
+    if (ch.ten_truong) window.CAU_HINH.TEN_TRUONG = ch.ten_truong;
+    if (ch.slogan) window.CAU_HINH.SLOGAN = ch.slogan;
+    // Năm học: mặc định TỰ TÍNH theo mốc trong CSDL (01/08).
+    // Chỉ khi quản trị đặt nam_hoc_tu_dong = 'khong' thì mới lấy giá trị
+    // ghi cứng ở cột nam_hoc — để phòng trường hợp Sở lùi/đẩy năm học.
+    if (ch.moc_doi_nam_hoc) window.CAU_HINH.MOC_DOI_NAM_HOC = ch.moc_doi_nam_hoc;
+    if (ch.nam_hoc_tu_dong === 'khong' && ch.nam_hoc) {
+      window.CAU_HINH.NAM_HOC = ch.nam_hoc;
+    } else {
+      window.CAU_HINH.NAM_HOC = window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
+    }
+    if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
+    if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
+    if (ch.muc_tieu_chuan_qg) window.CAU_HINH.MUC_TIEU_CHUAN_QG = ch.muc_tieu_chuan_qg;
+    // Bảy khoá dưới đây trước bị BỎ QUÊN: có trong bảng cau_hinh nhưng không
+    // ai đọc, nên sửa trên CSDL không có tác dụng gì. Vá 17/8/2026.
+    // ⚠️ ch.dia_chi là ĐỊA CHỈ TRƯỜNG, còn CAU_HINH.DIA_CHI là địa chỉ
+    //    Supabase — trùng tên, gán nhầm là mất kết nối CSDL.
+    if (ch.co_quan_quan_ly) window.CAU_HINH.CO_QUAN_QUAN_LY = ch.co_quan_quan_ly;
+    if (ch.chu_quan_thuong) window.CAU_HINH.CHU_QUAN_THUONG = ch.chu_quan_thuong;
+    if (ch.co_quan_thuong) window.CAU_HINH.CO_QUAN_THUONG = ch.co_quan_thuong;
+    if (ch.dia_chi) window.CAU_HINH.DIA_CHI_TRUONG = ch.dia_chi;
+    if (ch.dia_danh) window.CAU_HINH.DIA_DANH = ch.dia_danh;
+    if (ch.pho_hieu_truong) window.CAU_HINH.PHO_HIEU_TRUONG = ch.pho_hieu_truong;
+    if (ch.dien_thoai) window.CAU_HINH.DIEN_THOAI = ch.dien_thoai;
+    if (ch.email_truong) window.CAU_HINH.EMAIL_TRUONG = ch.email_truong;
+    if (ch.so_cbgv) window.CAU_HINH.SO_CBGV = parseInt(ch.so_cbgv, 10);
+    if (ch.muc_chuan_qg) window.CAU_HINH.MUC_CHUAN_QG = ch.muc_chuan_qg;
+    // Tổ chức đảng: chi_bo | dang_bo | khong. Giá trị lạ (gõ tay vào bảng
+    // cau_hinh) thì BỎ QUA chứ không nhận — window.tuNguDang() sẽ lùi về
+    // chi_bo, còn nhận vào đây thì màn Quản trị hiện một ô chọn rỗng.
+    if (ch.to_chuc_dang && ['chi_bo','dang_bo','khong'].indexOf(ch.to_chuc_dang) >= 0) {
+      window.CAU_HINH.TO_CHUC_DANG = ch.to_chuc_dang;
+    }
+    if (ch.so_dang_vien) window.CAU_HINH.SO_DANG_VIEN = parseInt(ch.so_dang_vien, 10) || 0;
+    // URL dịch vụ đếm tệp Drive (sql/07 + quan-tri/kiem-tra-tep-drive.gs)
+    // cho nút "🔄 Kiểm tra ngay". Gán không điều kiện: trường xoá URL trong
+    // cau_hinh thì nút phải lùi về đếm theo trạng thái, không dùng URL cũ.
+    window.CAU_HINH.LINK_KIEM_TRA_DRIVE = ch.link_kiem_tra_drive || '';
+    // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
+    // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
+    // sửa mã — tránh mỗi nơi một con số.
+    if (ch.so_lop) window.CAU_HINH.SO_LOP = parseInt(ch.so_lop, 10);
+    if (ch.so_hoc_sinh) window.CAU_HINH.SO_HOC_SINH = parseInt(ch.so_hoc_sinh, 10);
+    // Điền lại tên trường, địa chỉ, logo, tiêu đề tab… theo CẤU HÌNH TRÊN CSDL
+    // (nguồn chuẩn), đè lên bản dự phòng trong js/cauhinh.js.
+    if (typeof window.datNhanDienTruong === 'function') window.datNhanDienTruong();
+    var oSlogan = document.getElementById('dien-slogan');
+    if (oSlogan) oSlogan.textContent = window.CAU_HINH.SLOGAN;
+    var oNamHoc = document.getElementById('dien-nam-hoc');
+    if (oNamHoc) oNamHoc.textContent = window.CAU_HINH.NAM_HOC;
+
+    // 2. Danh mục hồ sơ 3 tầng
+    var maHop = {}; // id nhom_con -> 'H01'
+    var HOP = {};
+    nhomCon.forEach(function (nc) {
+      maHop[nc.id] = nc.ma;
+      var mau = HOP_MAU[nc.ma] || {};
+      HOP[nc.ma] = {
+        ten: nc.ten.replace(/^Hộp\s*\d+\s*·\s*/, ''),
+        moTa: mau.moTa || '',
+        phuTrach: mau.phuTrach || ''
+      };
+    });
+    window.BO_PHAN = boPhan.map(function (bp) {
+      return {
+        soTT: bp.so_tt, ten: bp.ten, icon: bp.bieu_tuong || '🗂',
+        hop: nhomCon.filter(function (nc) { return nc.nhom_id === bp.id; }).map(function (nc) { return nc.ma; })
+      };
+    });
+    window.HOP = HOP;
+    window.HS_BAN_GHI = {}; // ma -> bản ghi đầy đủ trong CSDL (cho ô sửa)
+    window.HO_SO = hoSo.map(function (h) {
+      window.HS_BAN_GHI[h.ma] = h;
+      return {
+        hop: maHop[h.nhom_con_id], ma: h.ma, maCu: h.ma_cu || '', ten: h.ten,
+        tc: h.tieu_chi || [], tt: h.trang_thai, link: h.link_drive || '',
+        phuTrach: h.nguoi_phu_trach || ''
+      };
+    });
+
+    // 3. Tiêu chí TT57 (tên + bắt buộc + nguyên văn 2 mức từ CSDL)
+    if (tieuChi.length) {
+      window.TIEU_CHI = tieuChi.map(function (t) {
+        return { ma: t.ma, ten: t.ten, batBuoc: !!t.bat_buoc, m1: t.muc_1 || '', m2: t.muc_2 || '' };
+      });
+    }
+
+    window.veTatCa && window.veTatCa();
+    window.khoiDongTCQG && window.khoiDongTCQG();
+  }
+  function baoChuaCapNhat(m) {
+    window.baoTrangThai && window.baoTrangThai('loi',
+      '⚠️ Chưa cập nhật được dữ liệu mới từ máy chủ: ' + thoat(m) +
+      '. Số liệu đang hiện là bản đã lưu trước đó — thầy cô kiểm tra mạng rồi tải lại trang.');
+  }
+  window.apDuLieuMay = function (tho) {
+    apDuLieu(tho);
+    THO_DA_AP = JSON.stringify(tho);
+  };
+
   window.napDuLieuThat = function () {
     if (daNap || !window.MAY_CHU) return;
     daNap = true;
@@ -177,6 +293,9 @@
       if (daBaoCho && !loi.length) { daBaoCho = false; window.baoTrangThai && window.baoTrangThai(null); }
       if (loi.length) {
         console.error('Lỗi nạp dữ liệu:', loi[0].error);
+        // Trang đang hiện dữ liệu THẬT của trường (bản lưu trên máy lúc vào
+        // nhanh, hoặc lượt nạp trước) → giữ nguyên, chỉ báo là chưa cập nhật.
+        if (THO_DA_AP) { daNap = false; baoChuaCapNhat(loi[0].error.message); return; }
         window.baoTrangThai && window.baoTrangThai('loi',
           '⚠️ KHÔNG ĐỌC ĐƯỢC DỮ LIỆU CỦA NHÀ TRƯỜNG: ' + thoat(loi[0].error.message) +
           ' — <b>những con số đang hiện KHÔNG phải của trường</b>. Thầy cô tải lại trang.');
@@ -197,105 +316,13 @@
         try { window.veTatCa && window.veTatCa(); } catch (e) { /* vẽ lỗi thì thôi, băng đỏ vẫn còn */ }
         return;
       }
-      var cauHinh = kq[0].data, boPhan = kq[1].data, nhomCon = kq[2].data,
-          hoSo = kq[3].data, tieuChi = kq[4].data, taiKhoan = kq[5].data;
-
-      // Danh sách tài khoản hoạt động — cho ô "giao quyền sửa" trong hoso-sua.js
-      window.DS_TAI_KHOAN = taiKhoan || [];
-
-      // 1. Cấu hình trường
-      var ch = {};
-      cauHinh.forEach(function (d) { ch[d.khoa] = d.gia_tri; });
-      if (ch.ten_truong) window.CAU_HINH.TEN_TRUONG = ch.ten_truong;
-      if (ch.slogan) window.CAU_HINH.SLOGAN = ch.slogan;
-      // Năm học: mặc định TỰ TÍNH theo mốc trong CSDL (01/08).
-      // Chỉ khi quản trị đặt nam_hoc_tu_dong = 'khong' thì mới lấy giá trị
-      // ghi cứng ở cột nam_hoc — để phòng trường hợp Sở lùi/đẩy năm học.
-      if (ch.moc_doi_nam_hoc) window.CAU_HINH.MOC_DOI_NAM_HOC = ch.moc_doi_nam_hoc;
-      if (ch.nam_hoc_tu_dong === 'khong' && ch.nam_hoc) {
-        window.CAU_HINH.NAM_HOC = ch.nam_hoc;
-      } else {
-        window.CAU_HINH.NAM_HOC = window.tinhNamHoc(window.CAU_HINH.MOC_DOI_NAM_HOC);
-      }
-      if (ch.hieu_truong) window.CAU_HINH.HIEU_TRUONG = ch.hieu_truong;
-      if (ch.don_vi_chu_quan) window.CAU_HINH.DON_VI_CHU_QUAN = ch.don_vi_chu_quan;
-      if (ch.muc_tieu_chuan_qg) window.CAU_HINH.MUC_TIEU_CHUAN_QG = ch.muc_tieu_chuan_qg;
-      // Bảy khoá dưới đây trước bị BỎ QUÊN: có trong bảng cau_hinh nhưng không
-      // ai đọc, nên sửa trên CSDL không có tác dụng gì. Vá 17/8/2026.
-      // ⚠️ ch.dia_chi là ĐỊA CHỈ TRƯỜNG, còn CAU_HINH.DIA_CHI là địa chỉ
-      //    Supabase — trùng tên, gán nhầm là mất kết nối CSDL.
-      if (ch.co_quan_quan_ly) window.CAU_HINH.CO_QUAN_QUAN_LY = ch.co_quan_quan_ly;
-      if (ch.chu_quan_thuong) window.CAU_HINH.CHU_QUAN_THUONG = ch.chu_quan_thuong;
-      if (ch.co_quan_thuong) window.CAU_HINH.CO_QUAN_THUONG = ch.co_quan_thuong;
-      if (ch.dia_chi) window.CAU_HINH.DIA_CHI_TRUONG = ch.dia_chi;
-      if (ch.dia_danh) window.CAU_HINH.DIA_DANH = ch.dia_danh;
-      if (ch.pho_hieu_truong) window.CAU_HINH.PHO_HIEU_TRUONG = ch.pho_hieu_truong;
-      if (ch.dien_thoai) window.CAU_HINH.DIEN_THOAI = ch.dien_thoai;
-      if (ch.email_truong) window.CAU_HINH.EMAIL_TRUONG = ch.email_truong;
-      if (ch.so_cbgv) window.CAU_HINH.SO_CBGV = parseInt(ch.so_cbgv, 10);
-      if (ch.muc_chuan_qg) window.CAU_HINH.MUC_CHUAN_QG = ch.muc_chuan_qg;
-      // Tổ chức đảng: chi_bo | dang_bo | khong. Giá trị lạ (gõ tay vào bảng
-      // cau_hinh) thì BỎ QUA chứ không nhận — window.tuNguDang() sẽ lùi về
-      // chi_bo, còn nhận vào đây thì màn Quản trị hiện một ô chọn rỗng.
-      if (ch.to_chuc_dang && ['chi_bo','dang_bo','khong'].indexOf(ch.to_chuc_dang) >= 0) {
-        window.CAU_HINH.TO_CHUC_DANG = ch.to_chuc_dang;
-      }
-      if (ch.so_dang_vien) window.CAU_HINH.SO_DANG_VIEN = parseInt(ch.so_dang_vien, 10) || 0;
-      // URL dịch vụ đếm tệp Drive (sql/07 + quan-tri/kiem-tra-tep-drive.gs)
-      // cho nút "🔄 Kiểm tra ngay". Gán không điều kiện: trường xoá URL trong
-      // cau_hinh thì nút phải lùi về đếm theo trạng thái, không dùng URL cũ.
-      window.CAU_HINH.LINK_KIEM_TRA_DRIVE = ch.link_kiem_tra_drive || '';
-      // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
-      // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
-      // sửa mã — tránh mỗi nơi một con số.
-      if (ch.so_lop) window.CAU_HINH.SO_LOP = parseInt(ch.so_lop, 10);
-      if (ch.so_hoc_sinh) window.CAU_HINH.SO_HOC_SINH = parseInt(ch.so_hoc_sinh, 10);
-      // Điền lại tên trường, địa chỉ, logo, tiêu đề tab… theo CẤU HÌNH TRÊN CSDL
-      // (nguồn chuẩn), đè lên bản dự phòng trong js/cauhinh.js.
-      if (typeof window.datNhanDienTruong === 'function') window.datNhanDienTruong();
-      var oSlogan = document.getElementById('dien-slogan');
-      if (oSlogan) oSlogan.textContent = window.CAU_HINH.SLOGAN;
-      var oNamHoc = document.getElementById('dien-nam-hoc');
-      if (oNamHoc) oNamHoc.textContent = window.CAU_HINH.NAM_HOC;
-
-      // 2. Danh mục hồ sơ 3 tầng
-      var maHop = {}; // id nhom_con -> 'H01'
-      var HOP = {};
-      nhomCon.forEach(function (nc) {
-        maHop[nc.id] = nc.ma;
-        var mau = HOP_MAU[nc.ma] || {};
-        HOP[nc.ma] = {
-          ten: nc.ten.replace(/^Hộp\s*\d+\s*·\s*/, ''),
-          moTa: mau.moTa || '',
-          phuTrach: mau.phuTrach || ''
-        };
-      });
-      window.BO_PHAN = boPhan.map(function (bp) {
-        return {
-          soTT: bp.so_tt, ten: bp.ten, icon: bp.bieu_tuong || '🗂',
-          hop: nhomCon.filter(function (nc) { return nc.nhom_id === bp.id; }).map(function (nc) { return nc.ma; })
-        };
-      });
-      window.HOP = HOP;
-      window.HS_BAN_GHI = {}; // ma -> bản ghi đầy đủ trong CSDL (cho ô sửa)
-      window.HO_SO = hoSo.map(function (h) {
-        window.HS_BAN_GHI[h.ma] = h;
-        return {
-          hop: maHop[h.nhom_con_id], ma: h.ma, maCu: h.ma_cu || '', ten: h.ten,
-          tc: h.tieu_chi || [], tt: h.trang_thai, link: h.link_drive || '',
-          phuTrach: h.nguoi_phu_trach || ''
-        };
-      });
-
-      // 3. Tiêu chí TT57 (tên + bắt buộc + nguyên văn 2 mức từ CSDL)
-      if (tieuChi.length) {
-        window.TIEU_CHI = tieuChi.map(function (t) {
-          return { ma: t.ma, ten: t.ten, batBuoc: !!t.bat_buoc, m1: t.muc_1 || '', m2: t.muc_2 || '' };
-        });
-      }
-
-      window.veTatCa && window.veTatCa();
-      window.khoiDongTCQG && window.khoiDongTCQG();
+      var tho = kq.map(function (r) { return r.data; });
+      var chuoi = JSON.stringify(tho);
+      // Vào nhanh (js/supabase-ket-noi.js) đã vẽ đúng bản này từ kho trên máy
+      // thì thôi, khỏi vẽ lại cả trang; khác thì vẽ bản mới.
+      if (chuoi !== THO_DA_AP) apDuLieu(tho);
+      THO_DA_AP = chuoi;
+      if (window.KHO_MAY && window.NGUOI_DUNG) window.KHO_MAY.ghi(window.NGUOI_DUNG.id + '|vao|du-lieu', tho);
       napCBGV(may);
       demQuyMoThat(may);
     }, function (e) {
@@ -303,6 +330,7 @@
       // {error} — nhánh lỗi ở trên không chạy. Không có chỗ này thì trang mở ra
       // với 94 hồ sơ MẪU của một trường không có thật, mà không một lời cảnh báo.
       console.error('Lỗi nạp dữ liệu:', e);
+      if (THO_DA_AP) { daNap = false; baoChuaCapNhat((e && e.message) || e); return; }
       window.baoTrangThai && window.baoTrangThai('loi',
         '⚠️ KHÔNG GỌI ĐƯỢC MÁY CHỦ: ' + thoat((e && e.message) || e) +
         ' — <b>những con số đang hiện KHÔNG phải của trường</b>. Thầy cô kiểm tra ' +

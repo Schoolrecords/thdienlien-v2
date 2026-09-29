@@ -471,12 +471,6 @@
     }
     return trang();
   }
-  function motNguon(ten, hua) {
-    return Promise.resolve(hua).then(function (r) {
-      if (r && r.error) throw r.error;
-      return r && r.data !== undefined ? r.data : r;
-    }).catch(function (e) { D.loi[ten] = loiChu(e); return null; });
-  }
 
   // Bước 1: biết mình là GVCN lớp nào; quản lý thì lấy danh sách lớp + điểm trường
   function napKhung() {
@@ -547,47 +541,65 @@
   }
 
   // Bước 2: nạp một lớp
-  function napLop() {
-    var lop = D.lop, khoa = D.nam + '|' + lop;
-    D.khoaNap = khoa; D.loi = {}; D.so = soTrong(); D.hs = []; D.ddTam = null; D.chon = {}; D.hsMo = ''; D.sua = null;
+  // napLop = xoá trạng thái đang làm dở của lớp cũ + docLop + áp. docLop CHỈ
+  // đọc (không đụng D) để lượt cập nhật ngầm sau khi hiện bản lưu trên máy
+  // (moSo/napNgam) dùng lại được mà không xoá bảng điểm danh đang chấm dở.
+  function datThongTinLop(lop) {
     var tt = D.dsLop.filter(function (l) { return l.lop === lop; })[0] || {};
     D.khoi = tt.khoi || +String(lop).charAt(0) || 0; D.coSoTen = tt.coSoTen || '';
     D.gvcnTen = D.gvcnCua[chuanLop(lop)] || '';
+  }
+  function napLop() {
+    var lop = D.lop, khoa = D.nam + '|' + lop;
+    D.khoaNap = khoa; D.loi = {}; D.so = soTrong(); D.hs = []; D.ddTam = null; D.chon = {}; D.hsMo = ''; D.sua = null; D.moiCho = null;
+    datThongTinLop(lop);
     if (!may()) { mauLop(); D.dangNap = false; return Promise.resolve(); }
     if (!lop) { D.dangNap = false; return Promise.resolve(); }
     D.dangNap = true;
-    var N = [['nam_hoc', D.nam], ['lop', lop]];
-    var S = D.so;
+    return docLop(lop).then(function (m) {
+      if (D.khoaNap !== khoa) return;   // đã chuyển sang lớp khác giữa chừng
+      D.hs = m.hs; D.so = m.so; D.loi = m.loi; D.dangNap = false;
+    });
+  }
+  // → { hs, so, loi } của một lớp. Lỗi từng nguồn ghi vào loi, không ném.
+  function docLop(lop) {
+    var nam = D.nam, N = [['nam_hoc', nam], ['lop', lop]];
+    var S = soTrong(), L = {}, M = { hs: [], so: S, loi: L };
+    function nguon(ten, hua) {
+      return Promise.resolve(hua).then(function (r) {
+        if (r && r.error) throw r.error;
+        return r && r.data !== undefined ? r.data : r;
+      }).catch(function (e) { L[ten] = loiChu(e); return null; });
+    }
     // 29/9/2026: các bảng lọc theo (năm, lớp) KHÔNG cần danh sách học sinh →
     // gửi CÙNG LÚC với hoc_sinh_lop. Trước đây chúng xếp hàng chờ danh sách về
     // mới đi, mất thêm một lượt chờ máy chủ mỗi lần mở sổ. Chỉ 4 bảng lọc theo
     // mã học sinh (hoàn cảnh, đánh giá) mới phải chờ.
     var theoLop = Promise.all([
-      motNguon('scn', may().from('scn_lop').select('*').eq('nam_hoc', D.nam).eq('lop', lop).maybeSingle()).then(function (d) { S.lop = d || null; }),
-      motNguon('scn', taiHet('scn_ke_hoach', '*', N)).then(function (d) { S.keHoach = d || []; }),
-      motNguon('scn', taiHet('scn_theo_doi', '*', N)).then(function (d) { S.theoDoi = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.id - a.id; }); }),
-      motNguon('scn', taiHet('scn_lien_lac', '*', N)).then(function (d) { S.lienLac = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }); }),
-      motNguon('hoTro', taiHet('scn_ho_tro', '*', N)).then(function (d) { S.hoTro = d || []; }),
-      motNguon('scn', taiHet('scn_tong_ket', '*', N)).then(function (d) { S.tongKet = {}; (d || []).forEach(function (x) { S.tongKet[x.ky] = x; }); }),
-      motNguon('vang', taiHet('hs_vang', 'id, ngay, buoi, hoc_sinh_ma, phep, ghi_chu, nguoi_ghi_id', N)).then(function (d) { S.vang = d || []; }),
-      motNguon('vang', taiHet('diem_danh_lop', 'id, ngay, buoi, si_so, so_vang, ghi_luc', N)).then(function (d) { S.ddl = d || []; })
+      nguon('scn', may().from('scn_lop').select('*').eq('nam_hoc', nam).eq('lop', lop).maybeSingle()).then(function (d) { S.lop = d || null; }),
+      nguon('scn', taiHet('scn_ke_hoach', '*', N)).then(function (d) { S.keHoach = d || []; }),
+      nguon('scn', taiHet('scn_theo_doi', '*', N)).then(function (d) { S.theoDoi = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.id - a.id; }); }),
+      nguon('scn', taiHet('scn_lien_lac', '*', N)).then(function (d) { S.lienLac = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }); }),
+      nguon('hoTro', taiHet('scn_ho_tro', '*', N)).then(function (d) { S.hoTro = d || []; }),
+      nguon('scn', taiHet('scn_tong_ket', '*', N)).then(function (d) { S.tongKet = {}; (d || []).forEach(function (x) { S.tongKet[x.ky] = x; }); }),
+      nguon('vang', taiHet('hs_vang', 'id, ngay, buoi, hoc_sinh_ma, phep, ghi_chu, nguoi_ghi_id', N)).then(function (d) { S.vang = d || []; }),
+      nguon('vang', taiHet('diem_danh_lop', 'id, ngay, buoi, si_so, so_vang, ghi_luc', N)).then(function (d) { S.ddl = d || []; })
     ]);
     var theoHs = taiHet('hoc_sinh_lop', 'id, hoc_sinh_ma, lop, khoi, trang_thai, hoc_sinh(ma, ho_ten, ngay_sinh, gioi_tinh, dan_toc, khuyet_tat_hoa_nhap)', N)
       .then(function (ds) {
-        D.hs = ds.filter(function (d) { return d.hoc_sinh && (!d.trang_thai || d.trang_thai === 'dang_hoc'); })
+        M.hs = ds.filter(function (d) { return d.hoc_sinh && (!d.trang_thai || d.trang_thai === 'dang_hoc'); })
           .map(function (d) { return d.hoc_sinh; }).sort(sapTen);
-        var ma = D.hs.map(function (h) { return h.ma; });
+        var ma = M.hs.map(function (h) { return h.ma; });
         var coMa = ma.length ? [['hoc_sinh_ma', ma]] : null;
         return Promise.all([
-          coMa ? motNguon('hoanCanh', taiHet('scn_hoan_canh', '*', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.hoanCanh = {}; (d || []).forEach(function (x) { S.hoanCanh[x.hoc_sinh_ma] = x; }); }) : null,
-          coMa ? motNguon('danhGia', taiHet('hs_ket_qua', 'id, ky, hoc_sinh_ma, mon_ma, muc', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.kq = d || []; }) : null,
-          coMa ? motNguon('danhGia', taiHet('hs_nl_pc', 'id, ky, hoc_sinh_ma, tieu_chi_ma, muc', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.nlpc = d || []; }) : null,
-          coMa ? motNguon('danhGia', taiHet('hs_tong_hop', 'id, hoc_sinh_ma, hoan_thanh_lop, khen_thuong', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.th = d || []; }) : null
+          coMa ? nguon('hoanCanh', taiHet('scn_hoan_canh', '*', [['nam_hoc', nam]], coMa)).then(function (d) { S.hoanCanh = {}; (d || []).forEach(function (x) { S.hoanCanh[x.hoc_sinh_ma] = x; }); }) : null,
+          coMa ? nguon('danhGia', taiHet('hs_ket_qua', 'id, ky, hoc_sinh_ma, mon_ma, muc', [['nam_hoc', nam]], coMa)).then(function (d) { S.kq = d || []; }) : null,
+          coMa ? nguon('danhGia', taiHet('hs_nl_pc', 'id, ky, hoc_sinh_ma, tieu_chi_ma, muc', [['nam_hoc', nam]], coMa)).then(function (d) { S.nlpc = d || []; }) : null,
+          coMa ? nguon('danhGia', taiHet('hs_tong_hop', 'id, hoc_sinh_ma, hoan_thanh_lop, khen_thuong', [['nam_hoc', nam]], coMa)).then(function (d) { S.th = d || []; }) : null
         ]);
       })
-      .catch(function (e) { D.loi.hs = loiChu(e); });
-    return Promise.all([theoLop, theoHs])
-      .then(function () { if (D.khoaNap === khoa) D.dangNap = false; });
+      .catch(function (e) { L.hs = loiChu(e); });
+    return Promise.all([theoLop, theoHs]).then(function () { return M; });
   }
 
   // Bước 3: các lần nộp + nhật ký kiểm tra của năm (RLS lọc: GVCN lớp mình, tổ
@@ -613,6 +625,143 @@
       D.dv.duyet = (r[1] && !r[1].error && r[1].data) || [];
       if (!thieuBang(D.dv.loi)) D.dv.loi = '';
     }).catch(function (e) { D.dv.loi = loiChu(e); D.dv.nop = []; D.dv.duyet = []; });
+  }
+
+  // ══════════ MỞ SỔ + NHỚ TRÊN MÁY (js/kho-may.js, 29/9/2026) ══════════
+  // Có bản lưu của đúng người + năm + lớp → vẽ NGAY rồi hỏi máy chủ (napNgam).
+  // Trong lúc hỏi (D.capNhat) nút ghi tạm khoá — không ai ghi đè dựa trên bản
+  // cũ. Bản mới về mà khác bản đang xem: vẽ lại; riêng khi thầy cô đang gõ /
+  // chấm dở (D.daCham) thì giữ nguyên chữ đang gõ, hiện nút "Cập nhật".
+  // Không có bản lưu (lần đầu, lớp khác, quá 7 ngày) → napMang như trước.
+  var HAN_NGAM = 20000;   // máy chủ im quá 20 giây → mở khoá ghi, báo đang xem bản lưu
+  function kho() { return window.KHO_MAY && may() && toi() ? window.KHO_MAY : null; }
+  function khoaMay(phan) { return [toi().id, 'scn', D.nam, phan].join('|'); }
+  function chupKhung() {
+    return { dsLop: D.dsLop, lopCuaToi: D.lopCuaToi, gvcnCua: D.gvcnCua, sdtCua: D.sdtCua || {}, coSo: D.coSo,
+      nguoiDuyet: D.dv.nguoiDuyet, toCuaToi: D.toCuaToi, laToKT: D.laToKT, dsLopKT: D.dsLopKT, co71: D.co71, dvLoi: D.dv.loi, lop: D.lop };
+  }
+  function apKhung(k) {
+    D.dsLop = k.dsLop || []; D.lopCuaToi = k.lopCuaToi || []; D.gvcnCua = k.gvcnCua || {}; D.sdtCua = k.sdtCua || {};
+    D.coSo = k.coSo || []; D.dv.nguoiDuyet = k.nguoiDuyet || []; D.toCuaToi = k.toCuaToi || []; D.laToKT = !!k.laToKT;
+    D.dsLopKT = k.dsLopKT || []; D.co71 = k.co71 !== false; D.dv.loi = k.dvLoi || ''; D.loiKhung = '';
+    window.SCN_QUYEN = { gvcn: D.lopCuaToi.length > 0, toKT: D.laToKT };
+    if (!D.lop || !D.dsLop.some(function (l) { return l.lop === D.lop; })) D.lop = k.lop || '';
+  }
+  // Bảng điểm danh / ô sửa đã dựng từ dữ liệu cũ → bỏ để dựng lại theo bản mới
+  function apMoi(m, datLai) {
+    D.hs = m.hs; D.so = m.so; D.loi = m.loi; D.moiCho = null; D.ddTam = null; D.sua = null;
+    if (datLai) { D.chon = {}; D.hsMo = ''; }
+  }
+
+  function moSo() {
+    D.nam = (window.CAU_HINH || {}).NAM_HOC || '';
+    var K = kho(), lan = D.lanMo = (D.lanMo || 0) + 1;
+    D.capNhat = false; D.loiNgam = false; D.moiCho = null; D.daCham = false;
+    if (!K || D.boQuaMay) { D.boQuaMay = false; return napMang(); }
+    return K.doc(khoaMay('khung')).then(function (bk) {
+      if (lan !== D.lanMo) return;
+      if (!bk) return napMang();
+      apKhung(bk.v);
+      if (D.lopMuon) { apLopMuon(D.lopMuon); D.lopMuon = ''; }
+      return Promise.all([K.doc(khoaMay('duyet')), D.lop ? K.doc(khoaMay('lop|' + D.lop)) : null]).then(function (x) {
+        if (lan !== D.lanMo) return;
+        if (D.lop && !x[1]) return napMang();   // lớp này chưa từng mở trên máy
+        if (x[0]) { D.dv.nop = x[0].v.nop || []; D.dv.duyet = x[0].v.duyet || []; }
+        D.khoaNap = D.nam + '|' + D.lop; D.ddTam = null; D.chon = {}; D.hsMo = ''; D.sua = null;
+        datThongTinLop(D.lop);
+        D.hs = x[1] ? x[1].v.hs || [] : []; D.so = x[1] ? x[1].v.so || soTrong() : soTrong(); D.loi = x[1] ? x[1].v.loi || {} : {};
+        D.luuLuc = Math.min(bk.t, x[1] ? x[1].t : bk.t);
+        D.dangNap = false; D.capNhat = true;
+        ve();
+        return napNgam(lan);
+      });
+    });
+  }
+
+  // Nạp hết từ máy chủ. 29/9/2026: trước đây khung → duyệt → lớp nối đuôi;
+  // nay câu hỏi duyệt gửi ngay cùng khung, khung về thì nạp lớp và áp duyệt
+  // song song — không bên nào cần kết quả bên kia.
+  function napMang() {
+    var huaDuyet = docDuyet();
+    return napKhung().then(function () {
+      if (D.lopMuon) { apLopMuon(D.lopMuon); D.lopMuon = ''; }
+      D.dangNap = false;
+      return Promise.all([napDuyet(huaDuyet), D.lop ? napLop() : null]);
+    }).then(function () { ve(); });
+  }
+
+  // Đang hiện bản lưu → hỏi máy chủ, so, vẽ lại nếu khác.
+  function napNgam(lan) {
+    var lop = D.lop, khoa0 = D.khoaNap, khungTruoc = chupKhung();
+    var cu = JSON.stringify({ hs: D.hs, so: D.so, loi: D.loi });
+    var ho = setTimeout(function () {
+      if (lan === D.lanMo && D.capNhat) { D.capNhat = false; D.loiNgam = true; veHoacDai(); }
+    }, HAN_NGAM);
+    // Đã biết lớp từ bản lưu → hỏi lớp CÙNG LÚC với khung (không chờ khung về);
+    // khung về mà lớp đổi (mất quyền lớp cũ) thì mới hỏi lại lớp mới.
+    var huaDuyet = docDuyet(), huaLop = lop ? docLop(lop) : null;
+    return napKhung().then(function () {
+      if (D.loiKhung) { apKhung(khungTruoc); D.loiKhung = ''; throw new Error('khung'); }   // mất mạng: giữ bản lưu
+      return Promise.all([napDuyet(huaDuyet), !D.lop ? null : D.lop === lop ? huaLop : docLop(D.lop)]);
+    }).then(function (r) {
+      clearTimeout(ho);
+      if (lan !== D.lanMo) return;
+      D.capNhat = false; D.loiNgam = false;
+      var m = r[1] || { hs: [], so: soTrong(), loi: {} };
+      if (D.khoaNap !== khoa0) { ve(); return; }            // thầy cô đã tự chuyển lớp — napLop của lớp đó lo
+      if (D.lop !== lop) {                                  // phân công đổi: lớp cũ không còn quyền xem
+        D.khoaNap = D.nam + '|' + D.lop; datThongTinLop(D.lop); apMoi(m, true);
+      } else {
+        if (JSON.stringify(m) !== cu) { if (D.daCham) D.moiCho = m; else apMoi(m, false); }
+        veHoacDai(); return;
+      }
+      ve();
+    }).catch(function () {
+      clearTimeout(ho);
+      if (lan !== D.lanMo) return;
+      D.capNhat = false; D.loiNgam = true; veHoacDai();
+    });
+  }
+  // Thầy cô đang gõ / chấm dở → CHỈ thay dải báo, không vẽ lại cả sổ (vẽ lại
+  // là mất chữ đang gõ trong ô). Không làm dở thì vẽ lại bình thường.
+  function veHoacDai() {
+    if (!D.daCham || !EL) { ve(); return; }
+    var cu = EL.querySelector('.scn-may'), h = bangMay();
+    if (cu) { if (h) cu.outerHTML = h; else cu.parentNode.removeChild(cu); return; }
+    var dau = EL.querySelector('.scn-dau');
+    if (h && dau) dau.insertAdjacentHTML('afterend', h);
+  }
+
+  var henLuuMay = null;
+  function henLuu() {
+    if (!kho()) return;
+    clearTimeout(henLuuMay);
+    henLuuMay = setTimeout(luuMay, 800);
+  }
+  // Chỉ lưu bản đã khớp máy chủ: không lưu khi đang hiện bản cũ chờ cập nhật
+  // (capNhat) hay không lấy được bản mới (loiNgam) — kẻo bản cũ tự gia hạn mãi.
+  function luuMay() {
+    var K = kho();
+    if (!K || !D.nam || D.dangNap || D.capNhat || D.loiNgam || D.loiKhung) return;
+    K.ghi(khoaMay('khung'), chupKhung());
+    K.ghi(khoaMay('duyet'), { nop: D.dv.nop, duyet: D.dv.duyet });
+    if (D.lop && D.so && D.khoaNap === D.nam + '|' + D.lop && !D.loi.hs) K.ghi(khoaMay('lop|' + D.lop), { hs: D.hs, so: D.so, loi: D.loi });
+  }
+  function gioLuu() {
+    var d = new Date(D.luuLuc || Date.now()), h = function (n) { return (n < 10 ? '0' : '') + n; };
+    return h(d.getHours()) + ':' + h(d.getMinutes()) + ' ngày ' + d.getDate() + '/' + (d.getMonth() + 1);
+  }
+  function bangMay() {
+    if (D.capNhat) return '<div class="scn-may">Đang lấy dữ liệu mới nhất… (đang xem bản lưu trên máy lúc ' + gioLuu() + ' — nút ghi tạm khoá vài giây)</div>';
+    if (D.moiCho) return '<div class="scn-may">Máy chủ có dữ liệu mới hơn bản đang xem. <button type="button" class="scn-nut nho" data-act="ap-moi">Cập nhật</button></div>';
+    if (D.loiNgam) return '<div class="scn-may canh">Chưa lấy được dữ liệu mới từ máy chủ — đang xem bản lưu trên máy lúc ' + gioLuu() + '. Thầy cô kiểm tra mạng rồi tải lại trang trước khi ghi.</div>';
+    return '';
+  }
+  // Nút ghi lên máy chủ — tạm khoá khi đang xem bản lưu chờ cập nhật
+  function laNutGhi(b) {
+    var act = b.getAttribute('data-act') || '';
+    return /^(luu-|nop-ky$|nd-them$|khoa$|mo-khoa$)/.test(act) ||
+      ['data-xoa-td', 'data-xoa-ll', 'data-xoa-ht', 'data-kq', 'data-nd-xoa'].some(function (k) { return b.hasAttribute(k); });
   }
 
   // ══════════ DỮ LIỆU MẪU (bản xem thử — không tên thật) ══════════
@@ -731,18 +880,11 @@
     if (!D.khoiTao) {
       D.khoiTao = true; D.dangNap = true;
       EL.innerHTML = dauMan() + '<div class="the-thong-bao">Đang tải sổ chủ nhiệm…</div>';
-      // 29/9/2026: trước đây khung → duyệt → lớp nối đuôi (3 lượt chờ máy chủ,
-      // chưa kể lượt trong napLop). Nay câu hỏi duyệt gửi ngay cùng khung; khung
-      // về thì nạp lớp và áp duyệt song song — không bên nào cần kết quả bên kia.
-      var huaDuyet = docDuyet();
-      napKhung().then(function () {
-        if (D.lopMuon) { apLopMuon(D.lopMuon); D.lopMuon = ''; }
-        D.dangNap = false;
-        return Promise.all([napDuyet(huaDuyet), D.lop ? napLop() : null]);
-      }).then(function () { ve(); });
+      moSo();
       return;
     }
     if (D.dangNap) { EL.innerHTML = dauMan() + '<div class="the-thong-bao">Đang tải…</div>'; ganChung(); return; }
+    henLuu();
     var h = dauMan();
     if (D.loiKhung) { EL.innerHTML = h + '<div class="hd-kiem do">' + thoat(D.loiKhung) + '</div>'; ganChung(); return; }
     if (D.che !== 'kiemtra' && !D.lop && D.laToKT) {
@@ -772,7 +914,8 @@
     ganChung();
   }
 
-  function dauMan() {
+  function dauMan() { return dauManGoc() + bangMay(); }
+  function dauManGoc() {
     // Một tầng: đường dẫn "Trang chủ / Lớp học / …" + MỘT tiêu đề. Không vẽ lại
     // tiêu đề "Lớp học" và hàng thẻ của trang Lớp học ở đây (29/9/2026).
     var vet = window.LOP_HOC_VET ? window.LOP_HOC_VET(D.che === 'kiemtra' ? 'kiemtra' : 'sochunhiem') : '';
@@ -2305,6 +2448,8 @@
     var b = e.target.closest ? e.target.closest('button') : null;
     if (!b || !EL.contains(b) || b.disabled) return;
     var a = function (k) { return b.getAttribute(k); };
+    if (D.capNhat && laNutGhi(b)) { bao('Đang lấy dữ liệu mới nhất từ máy chủ — thầy cô đợi vài giây rồi bấm lại.'); return; }
+    if (['data-dd', 'data-chon', 'data-sua-ll', 'data-sua-ht', 'data-goi-y', 'data-goi-y-ht'].some(function (k) { return b.hasAttribute(k); })) D.daCham = true;
     if (a('data-tab')) { D.tab = a('data-tab'); D.sua = null; ve(); return; }
     if (a('data-cap')) { D.capKH = a('data-cap'); ve(); return; }
     if (a('data-buoi')) { D.buoiTD = a('data-buoi'); ve(); return; }
@@ -2329,6 +2474,7 @@
     if (!act) return;
     var H = {
       'hom-nay': function () { D.ngayTD = homNay(); ve(); },
+      'ap-moi': function () { if (D.moiCho) apMoi(D.moiCho, false); D.daCham = false; ve(); },
       'chon-het': function () { D.hs.forEach(function (h) { D.chon[h.ma] = true; }); ve(); },
       'bo-chon': function () { D.chon = {}; ve(); },
       'huy-sua': function () { D.sua = null; ve(); },
@@ -2669,6 +2815,7 @@
     if (!mh || !vung) return;
     EL = vung;
     vung.addEventListener('click', khiBam);
+    vung.addEventListener('input', function () { D.daCham = true; });
     if (window.MutationObserver) new MutationObserver(khiHien).observe(mh, { attributes: true, attributeFilter: ['class'] });
     khiHien();
   }
@@ -2711,7 +2858,7 @@
     if (D.khoiTao && !D.dangNap) ve();
     if (window.chuyenManHinh) window.chuyenManHinh('sochunhiem');
   }
-  window.SO_CHU_NHIEM = { ve: ve, moLop: moLop, moKiemTra: moKiemTra, taiLai: function () { D.khoiTao = false; khiHien(); },
+  window.SO_CHU_NHIEM = { ve: ve, moLop: moLop, moKiemTra: moKiemTra, taiLai: function () { D.khoiTao = false; D.boQuaMay = true; khiHien(); },
     // cho bài thử: dựng HTML bản Word từ một mô hình (vd. bản chụp máy chủ trả về)
     wordHtml: function (m, tc) { return wordSo(m, tc || {}); }, moHinh: function () { return dungMoHinh(); },
     moXem: moXem, dongXem: dongXem };

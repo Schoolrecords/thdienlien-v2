@@ -318,32 +318,116 @@
     });
   }
 
+  // Xoá kho trên máy (js/kho-may.js — dữ liệu sổ chủ nhiệm) TRƯỚC khi đăng
+  // xuất: máy phòng giáo viên dùng chung, người sau không được thấy lớp của
+  // người trước. Kho hỏng/không có thì vẫn đăng xuất bình thường.
   function dangXuat() {
-    may.auth.signOut().then(function () { location.reload(); });
+    var xoa = window.KHO_MAY ? window.KHO_MAY.xoaHet() : Promise.resolve();
+    xoa.catch(function () {}).then(function () { return may.auth.signOut(); })
+      .then(function () { location.reload(); });
   }
 
   // ── Xử lý phiên đăng nhập ──
   var idPhienDaXuLy = null;
 
+  // ══════════ VÀO NHANH (29/9/2026) ══════════
+  // Thầy Chung: "sau khi đăng nhập được rồi thì lần sau mở ra ngay". Trước đây
+  // mỗi lần mở trang đều đứng ở cổng "Đang tải dữ liệu nhà trường…" chờ ĐỦ ba
+  // lượt mạng: kiểm phiên Google → đọc hồ sơ tài khoản → nạp dữ liệu chung.
+  // Nay: lần vào trước đã lưu hồ sơ tài khoản + dữ liệu chung vào kho trên máy
+  // (js/kho-may.js). Mở trang mà trình duyệt còn giữ phiên của ĐÚNG người đó →
+  // mở khoá NGAY bằng bản lưu, rồi mới hỏi máy chủ:
+  //   · máy chủ nói tài khoản bị khoá / chờ duyệt / phiên hết → xoá kho, tải
+  //     lại trang → cổng đăng nhập như cũ;
+  //   · vai trò hay hồ sơ tài khoản đổi → lưu bản mới, tải lại trang;
+  //   · dữ liệu chung đổi → du-lieu-sql.js vẽ lại, không tải lại trang;
+  //   · mất mạng → băng vàng/đỏ dưới đầu trang, KHÔNG đóng cổng giữa chừng.
+  // Không có bản lưu (lần đầu, quá 7 ngày, vừa đăng xuất) → đường cũ.
+  var vaoNhanh = '', daVaoMang = false, phienHuy = false;
+
+  // Đọc id tài khoản từ phiên supabase-js cất trong localStorage — KHÔNG chờ
+  // getSession(), vì vé hết hạn (quá 1 giờ) thì getSession đi làm mới vé qua
+  // mạng rồi mới trả lời. Đọc hỏng thì thôi, getSession vẫn lo như cũ.
+  function uidDaNho() {
+    try {
+      var ref = new URL(window.CAU_HINH.DIA_CHI).hostname.split('.')[0];
+      var o = JSON.parse(localStorage.getItem('sb-' + ref + '-auth-token') || 'null');
+      var u = o && (o.user || (o.currentSession && o.currentSession.user));
+      return u && u.id ? String(u.id) : '';
+    } catch (e) { return ''; }
+  }
+  function thuVaoNhanh(uid) {
+    var K = window.KHO_MAY;
+    if (!K || !uid || !window.apDuLieuMay) return Promise.resolve(false);
+    return Promise.all([K.doc(uid + '|vao|nd'), K.doc(uid + '|vao|du-lieu')]).then(function (x) {
+      if (daVaoMang || vaoNhanh || phienHuy || (idPhienDaXuLy && idPhienDaXuLy !== uid)) return false;
+      if (!x[0] || !x[1] || !x[0].v || x[0].v.id !== uid || x[0].v.trang_thai !== 'hoat_dong') return false;
+      vaoNhanh = uid;
+      window.NGUOI_DUNG = x[0].v;
+      veKhuTaiKhoan();
+      try { window.apDuLieuMay(x[1].v); } catch (e) { console.error('[Vào nhanh] áp bản lưu lỗi:', e); }
+      moKhoa();
+      document.dispatchEvent(new Event('dangnhap-xong'));
+      window.veQuanTri && window.veQuanTri();
+      return true;
+    });
+  }
+  // Các trường chỉ máy chủ tự ghi (lần vào cuối, dấu thời gian) không tính là "đổi"
+  function khacNguoi(a, b) {
+    function gon(o) {
+      var r = {};
+      Object.keys(o || {}).sort().forEach(function (k) { if (!/lan_vao|_luc$|_at$|anh_dai_dien/.test(k)) r[k] = o[k]; });
+      return JSON.stringify(r);
+    }
+    return gon(a) !== gon(b);
+  }
+  function xoaVaTaiLai() {
+    var xoa = window.KHO_MAY ? window.KHO_MAY.xoaHet() : Promise.resolve();
+    xoa.catch(function () {}).then(function () { location.reload(); });
+  }
+
   function xuLyPhien(phien) {
     if (!phien) {
       window.NGUOI_DUNG = null;
       idPhienDaXuLy = null;
+      phienHuy = true;
+      // Đã mở trang bằng bản lưu mà phiên hoá ra đã hết → xoá kho, tải lại
+      // trang cho cổng đăng nhập hiện ra sạch sẽ.
+      if (vaoNhanh) { vaoNhanh = ''; xoaVaTaiLai(); return; }
+      // Hết phiên (đăng xuất ở thẻ khác, vé hết hạn) → không ai đứng tên máy này
+      if (window.KHO_MAY) window.KHO_MAY.xoaHet();
       veCongDangNhap();
       return;
     }
     if (idPhienDaXuLy === phien.user.id) return; // tránh xử lý lặp khi đổi tab
+    // Đã vào nhanh bằng tài khoản A mà phiên thật là tài khoản B → làm lại từ đầu
+    if (vaoNhanh && vaoNhanh !== phien.user.id) { vaoNhanh = ''; xoaVaTaiLai(); return; }
     idPhienDaXuLy = phien.user.id;
+    // Người khác đăng nhập trên máy này → xoá kho của người trước (kho-may.js)
+    if (window.KHO_MAY) window.KHO_MAY.giuNguoi(phien.user.id);
+    thuVaoNhanh(phien.user.id);   // song song với lượt đọc mạng dưới đây
+    var uid = phien.user.id;
 
     // Lượt đọc ĐẦU TIÊN sau khi Google trả về — cũng là lượt hay vấp lỗi lệch
     // đồng hồ nhất, vì vé vừa được ký xong đúng giây trước đó.
     window.thuLaiSQL(function () {
       return may.from('nguoi_dung').select('*').eq('id', phien.user.id).maybeSingle();
     }, function (lan) {
+      if (vaoNhanh === uid) {
+        window.baoTrangThai('cho', '⏳ Máy chủ của nhà trường đang khởi động lại, hệ thống tự thử lại (lần ' + lan +
+          ')… Thầy cô đang xem dữ liệu đã lưu trên máy — chờ kết nối xong rồi hãy ghi.');
+        return;
+      }
       veCongDangTai('Máy chủ của nhà trường đang khởi động lại. ' +
         'Hệ thống tự thử lại (lần ' + lan + ')… thầy cô cứ để yên màn hình, ' +
         'KHÔNG cần bấm tải lại trang.');
     }).then(function (r) {
+      if (r.error && vaoNhanh === uid) {
+        idPhienDaXuLy = null;
+        window.baoTrangThai('loi', '⚠️ Chưa kết nối được máy chủ: ' + thoat(r.error.message || '') +
+          '. Thầy cô đang xem dữ liệu đã lưu trên máy — <b>tải lại trang trước khi ghi</b>.');
+        return;
+      }
       if (r.error) {
         idPhienDaXuLy = null;
         // Đã tự thử lại hết thang chờ mà vẫn hỏng: nói rõ máy đã thử rồi, để
@@ -358,10 +442,23 @@
       // Đăng nhập Google được nhưng CHƯA có dòng trong nguoi_dung: trigger tạo
       // hồ sơ chạy ngay sau khi Google trả về, đôi khi chậm hơn lần đọc này.
       // Coi như chờ duyệt và cho đăng xuất — KHÔNG mở khóa trang.
+      if (vaoNhanh === uid && (!r.data || r.data.trang_thai !== 'hoat_dong')) { vaoNhanh = ''; xoaVaTaiLai(); return; }
       if (!r.data) {
         veCongChoDuyet(phien.user.email || '', false);
         return;
       }
+      if (r.data.trang_thai === 'hoat_dong' && window.KHO_MAY) window.KHO_MAY.ghi(uid + '|vao|nd', r.data);
+      // Đã vào nhanh: trang đang mở rồi, chỉ đối chiếu. Hồ sơ tài khoản đổi
+      // (vai trò, điểm trường…) thì tải lại trang để mọi màn dựng theo quyền mới.
+      if (vaoNhanh === uid) {
+        if (khacNguoi(window.NGUOI_DUNG, r.data)) { location.reload(); return; }
+        window.NGUOI_DUNG = r.data;
+        window.baoTrangThai(null);
+        may.from('nguoi_dung').update({ lan_vao_cuoi: new Date().toISOString() }).eq('id', r.data.id).then(function () {});
+        if (window.napDuLieuThat) window.napDuLieuThat();   // khác bản lưu thì tự vẽ lại
+        return;
+      }
+      if (r.data.trang_thai === 'hoat_dong') daVaoMang = true;
       window.NGUOI_DUNG = r.data;
       veKhuTaiKhoan();
 
@@ -396,6 +493,11 @@
       // Đứt mạng giữa chừng thì lời hứa bị TỪ CHỐI chứ không trả về {error} —
       // không có nhánh này thì cổng đứng mãi ở dòng "Đang tự thử lại lần 6…".
       idPhienDaXuLy = null;
+      if (vaoNhanh === uid) {
+        window.baoTrangThai('loi', '⚠️ Mất kết nối tới máy chủ. Thầy cô đang xem dữ liệu đã lưu trên máy — ' +
+          '<b>kiểm tra mạng rồi tải lại trang trước khi ghi</b>.');
+        return;
+      }
       veCongLoi('Không gọi được máy chủ khi đọc hồ sơ tài khoản: ' +
         ((e && e.message) || e) + '. Thầy cô kiểm tra đường mạng rồi tải lại trang.');
     });
@@ -454,6 +556,7 @@
     window.MAY_CHU = may;
 
     veKhuTaiKhoan();
+    thuVaoNhanh(uidDaNho());
     may.auth.getSession().then(function (r) { xuLyPhien(r.data ? r.data.session : null); });
     may.auth.onAuthStateChange(function (suKien, phien) {
       if (suKien === 'SIGNED_IN' || suKien === 'INITIAL_SESSION' || suKien === 'TOKEN_REFRESHED') xuLyPhien(phien);

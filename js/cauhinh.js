@@ -299,8 +299,25 @@ window.CAU_HINH.DA_NOI = false;
   //   đối tượng  — đọc được
   //   'khong-co' — máy chủ trả 404, tức KHÔNG có trường nào mang mã/tên miền đó
   //   null       — lỗi mạng hoặc tệp hỏng (KHÁC HẲN 404, đừng gộp làm một)
+  //
+  // 29/9/2026 — DÙNG BẢN NHỚ TRƯỚC: máy đã từng tải được tệp này thì trả NGAY
+  // bản nhớ, còn lượt tải mạng vẫn chạy ngầm để cập nhật bản nhớ cho lần sau.
+  // Mở trang khỏi phải chờ một hai lượt mạng chỉ để biết mình là trường nào.
+  // Đổi cấu hình trên máy chủ thì máy thầy cô nhận ở lần mở THỨ HAI. Tệp bị
+  // gỡ (404) thì xoá bản nhớ → lần sau đi đường mạng như trường chưa từng vào.
   function tai(duongDan, tenNho) {
     if (typeof fetch !== 'function') return Promise.resolve(null);
+    var nho = tenNho ? docNho(tenNho) : null;
+    var mang = taiMang(duongDan, tenNho);
+    if (nho && typeof nho === 'object') {
+      mang.then(function (o) {
+        if (o === 'khong-co') { try { localStorage.removeItem(khoaNho(tenNho)); } catch (e) { /* bỏ qua */ } }
+      });
+      return Promise.resolve(nho);
+    }
+    return mang;
+  }
+  function taiMang(duongDan, tenNho) {
     return fetch(duongDan, { cache: 'no-cache' }).then(function (r) {
       if (r.status === 404) return 'khong-co';
       if (!r.ok) return null;
