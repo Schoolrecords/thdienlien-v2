@@ -557,41 +557,57 @@
     if (!lop) { D.dangNap = false; return Promise.resolve(); }
     D.dangNap = true;
     var N = [['nam_hoc', D.nam], ['lop', lop]];
-    return taiHet('hoc_sinh_lop', 'id, hoc_sinh_ma, lop, khoi, trang_thai, hoc_sinh(ma, ho_ten, ngay_sinh, gioi_tinh, dan_toc, khuyet_tat_hoa_nhap)', N)
+    var S = D.so;
+    // 29/9/2026: các bảng lọc theo (năm, lớp) KHÔNG cần danh sách học sinh →
+    // gửi CÙNG LÚC với hoc_sinh_lop. Trước đây chúng xếp hàng chờ danh sách về
+    // mới đi, mất thêm một lượt chờ máy chủ mỗi lần mở sổ. Chỉ 4 bảng lọc theo
+    // mã học sinh (hoàn cảnh, đánh giá) mới phải chờ.
+    var theoLop = Promise.all([
+      motNguon('scn', may().from('scn_lop').select('*').eq('nam_hoc', D.nam).eq('lop', lop).maybeSingle()).then(function (d) { S.lop = d || null; }),
+      motNguon('scn', taiHet('scn_ke_hoach', '*', N)).then(function (d) { S.keHoach = d || []; }),
+      motNguon('scn', taiHet('scn_theo_doi', '*', N)).then(function (d) { S.theoDoi = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.id - a.id; }); }),
+      motNguon('scn', taiHet('scn_lien_lac', '*', N)).then(function (d) { S.lienLac = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }); }),
+      motNguon('hoTro', taiHet('scn_ho_tro', '*', N)).then(function (d) { S.hoTro = d || []; }),
+      motNguon('scn', taiHet('scn_tong_ket', '*', N)).then(function (d) { S.tongKet = {}; (d || []).forEach(function (x) { S.tongKet[x.ky] = x; }); }),
+      motNguon('vang', taiHet('hs_vang', 'id, ngay, buoi, hoc_sinh_ma, phep, ghi_chu, nguoi_ghi_id', N)).then(function (d) { S.vang = d || []; }),
+      motNguon('vang', taiHet('diem_danh_lop', 'id, ngay, buoi, si_so, so_vang, ghi_luc', N)).then(function (d) { S.ddl = d || []; })
+    ]);
+    var theoHs = taiHet('hoc_sinh_lop', 'id, hoc_sinh_ma, lop, khoi, trang_thai, hoc_sinh(ma, ho_ten, ngay_sinh, gioi_tinh, dan_toc, khuyet_tat_hoa_nhap)', N)
       .then(function (ds) {
         D.hs = ds.filter(function (d) { return d.hoc_sinh && (!d.trang_thai || d.trang_thai === 'dang_hoc'); })
           .map(function (d) { return d.hoc_sinh; }).sort(sapTen);
         var ma = D.hs.map(function (h) { return h.ma; });
         var coMa = ma.length ? [['hoc_sinh_ma', ma]] : null;
-        var S = D.so;
         return Promise.all([
-          motNguon('scn', may().from('scn_lop').select('*').eq('nam_hoc', D.nam).eq('lop', lop).maybeSingle()).then(function (d) { S.lop = d || null; }),
-          motNguon('scn', taiHet('scn_ke_hoach', '*', N)).then(function (d) { S.keHoach = d || []; }),
           coMa ? motNguon('hoanCanh', taiHet('scn_hoan_canh', '*', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.hoanCanh = {}; (d || []).forEach(function (x) { S.hoanCanh[x.hoc_sinh_ma] = x; }); }) : null,
-          motNguon('scn', taiHet('scn_theo_doi', '*', N)).then(function (d) { S.theoDoi = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.id - a.id; }); }),
-          motNguon('scn', taiHet('scn_lien_lac', '*', N)).then(function (d) { S.lienLac = (d || []).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }); }),
-          motNguon('hoTro', taiHet('scn_ho_tro', '*', N)).then(function (d) { S.hoTro = d || []; }),
-          motNguon('scn', taiHet('scn_tong_ket', '*', N)).then(function (d) { S.tongKet = {}; (d || []).forEach(function (x) { S.tongKet[x.ky] = x; }); }),
-          motNguon('vang', taiHet('hs_vang', 'id, ngay, buoi, hoc_sinh_ma, phep, ghi_chu, nguoi_ghi_id', N)).then(function (d) { S.vang = d || []; }),
-          motNguon('vang', taiHet('diem_danh_lop', 'id, ngay, buoi, si_so, so_vang, ghi_luc', N)).then(function (d) { S.ddl = d || []; }),
           coMa ? motNguon('danhGia', taiHet('hs_ket_qua', 'id, ky, hoc_sinh_ma, mon_ma, muc', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.kq = d || []; }) : null,
           coMa ? motNguon('danhGia', taiHet('hs_nl_pc', 'id, ky, hoc_sinh_ma, tieu_chi_ma, muc', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.nlpc = d || []; }) : null,
           coMa ? motNguon('danhGia', taiHet('hs_tong_hop', 'id, hoc_sinh_ma, hoan_thanh_lop, khen_thuong', [['nam_hoc', D.nam]], coMa)).then(function (d) { S.th = d || []; }) : null
         ]);
       })
-      .catch(function (e) { D.loi.hs = loiChu(e); })
+      .catch(function (e) { D.loi.hs = loiChu(e); });
+    return Promise.all([theoLop, theoHs])
       .then(function () { if (D.khoaNap === khoa) D.dangNap = false; });
   }
 
   // Bước 3: các lần nộp + nhật ký kiểm tra của năm (RLS lọc: GVCN lớp mình, tổ
   // trưởng lớp thuộc tổ, BGH mọi lớp). KHÔNG kéo ban_chup ở đây — mở mới tải.
-  function napDuyet() {
-    if (!may() || !toi()) return Promise.resolve();
+  // docDuyet() chỉ GỬI câu hỏi; napDuyet(hua) áp kết quả. Lúc mở sổ, ve() gửi
+  // docDuyet() cùng lúc với napKhung() cho khỏi xếp hàng, nhưng vẫn ÁP sau
+  // napKhung — vì napKhung ghi D.dv.loi (thiếu sql/71) mà ở đây phải đọc lại.
+  function docDuyet() {
+    if (!may() || !toi()) return null;
+    var nam = (window.CAU_HINH || {}).NAM_HOC || D.nam;
     return Promise.all([
       may().from('scn_nop').select('id, nam_hoc, lop, ky, lan, trang_thai, ma_bam, nop_luc, ho_ten_nop, khoi, co_so_ma, den_ngay')
-        .eq('nam_hoc', D.nam).order('id').limit(5000),
-      may().from('scn_duyet').select('*').eq('nam_hoc', D.nam).order('id').limit(10000)
-    ]).then(function (r) {
+        .eq('nam_hoc', nam).order('id').limit(5000),
+      may().from('scn_duyet').select('*').eq('nam_hoc', nam).order('id').limit(10000)
+    ]);
+  }
+  function napDuyet(hua) {
+    hua = hua || docDuyet();
+    if (!hua) return Promise.resolve();
+    return hua.then(function (r) {
       if (r[0].error) throw r[0].error;
       D.dv.nop = r[0].data || [];
       D.dv.duyet = (r[1] && !r[1].error && r[1].data) || [];
@@ -715,9 +731,14 @@
     if (!D.khoiTao) {
       D.khoiTao = true; D.dangNap = true;
       EL.innerHTML = dauMan() + '<div class="the-thong-bao">Đang tải sổ chủ nhiệm…</div>';
-      napKhung().then(napDuyet).then(function () {
+      // 29/9/2026: trước đây khung → duyệt → lớp nối đuôi (3 lượt chờ máy chủ,
+      // chưa kể lượt trong napLop). Nay câu hỏi duyệt gửi ngay cùng khung; khung
+      // về thì nạp lớp và áp duyệt song song — không bên nào cần kết quả bên kia.
+      var huaDuyet = docDuyet();
+      napKhung().then(function () {
         if (D.lopMuon) { apLopMuon(D.lopMuon); D.lopMuon = ''; }
-        D.dangNap = false; return D.lop ? napLop() : null;
+        D.dangNap = false;
+        return Promise.all([napDuyet(huaDuyet), D.lop ? napLop() : null]);
       }).then(function () { ve(); });
       return;
     }
