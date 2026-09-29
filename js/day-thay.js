@@ -34,8 +34,25 @@
     khung: 'bo-tri', ngay: homNayISO(), mo: '', moPA: '',
     ds: null, dl: null, pb: null, vang: [], dayThay: [], dayThayThang: [], quanLy: {}, coSo: [],
     dangNap: false, loi: '', khoa: '',
-    dsTu: '', dsDen: '', dsDong: null
+    dsTu: '', dsDen: '', dsDong: null,
+    // 29/9/2026 (thầy Chung): PHT điểm trường báo nghỉ thay GV ngay ở đây, đơn xin nghỉ
+    // chờ duyệt hiện ngay ở đây, mặc định chỉ xem phân hiệu mình phụ trách.
+    cs: null,          // null = chưa đặt (lần nạp đầu tự chọn phân hiệu mình); '' = toàn trường
+    cbgv: [], donCho: [], moBao: false
   };
+  var LY_DO_VANG = ['Nghỉ ốm', 'Nghỉ phép', 'Công tác', 'Việc riêng', 'Khác'];
+  var LOAI_DON = { nghi_phep: 'Nghỉ phép', nghi_om: 'Nghỉ ốm', cong_tac: 'Công tác', viec_rieng: 'Việc riêng' };
+  function tenBuoiVang(b) { return b === 'ca_ngay' ? 'cả ngày' : b === 'sang' ? 'buổi sáng' : 'buổi chiều'; }
+  // Trạng thái một tiết đã phân: đã nhận (người thay bấm, sql/74) · đã báo · chưa báo
+  function chipTT(d) {
+    return d.trang_thai === 'da_nhan' ? '<span class="tkb-chip xanh">✓ đã nhận</span>'
+      : d.trang_thai === 'da_bao' ? '<span class="tkb-chip vang">đã báo · chờ nhận</span>'
+      : '<span class="tkb-chip xam">chưa báo</span>';
+  }
+  function phanHieuCuaToi() {
+    var e = toiEmail();
+    return D.coSo.filter(function (c) { return !!e && String(c.phu_trach_email || '').toLowerCase() === e; });
+  }
   var EL = null;
 
   // ══════════════════════════════════════════════════════════════
@@ -49,7 +66,9 @@
       var mau = window.TKB_XEM.duLieuMau();
       D.dl = mau; D.pb = { id: 0, ap_dung_tu: ngay, cong_bo: true };
       D.vang = [{ id: -1, ho_ten: 'Nguyễn Thị Mai', email: '', buoi: 'ca_ngay', co_so_ma: '', ly_do: 'Nghỉ ốm' }];
-      D.dayThay = []; D.dayThayThang = []; D.quanLy = {}; D.coSo = [];
+      D.dayThay = []; D.dayThayThang = []; D.quanLy = {}; D.coSo = []; D.cs = '';
+      D.cbgv = [{ ho_ten: 'Nguyễn Thị Mai', email: 'mai@vidu.vn', co_so_ma: '' }, { ho_ten: 'Trần Văn Bình', email: 'binh@vidu.vn', co_so_ma: '' }];
+      D.donCho = [{ id: -9, loai: 'nghi_phep', noi_dung: 'Việc gia đình', tu_ngay: congNgay(ngay, 1), den_ngay: null, buoi: 'ca_ngay', co_so_ma: '', nguoi_gui_ten: 'Trần Văn Bình' }];
       D.dangNap = false;
       return Promise.resolve();
     }
@@ -60,13 +79,17 @@
       D.pb = pb;
       return Promise.all([
         pb ? window.TKB_XEM.docPhienBan(pb) : Promise.resolve(null),
-        may().from('gv_vang').select('id, ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay')
+        may().from('gv_vang').select('id, ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay, de_xuat_id, ghi_luc')
           .lte('ngay', ngay).or('and(den_ngay.is.null,ngay.eq.' + ngay + '),den_ngay.gte.' + ngay),
         may().from('day_thay').select('*').eq('ngay', ngay).neq('trang_thai', 'huy').order('buoi').order('tiet'),
         may().from('day_thay').select('id, ngay, buoi, tiet, lop, gv_thay_email, gv_thay_nhan, trang_thai')
           .gte('ngay', dauThang).lte('ngay', cuoiThang).neq('trang_thai', 'huy'),
         may().from('co_so').select('ma, ten, phu_trach_email').eq('hoat_dong', true).order('so_tt'),
-        may().from('nguoi_dung').select('email, vai_tro').in('vai_tro', ['admin', 'ban_giam_hieu'])
+        may().from('nguoi_dung').select('email, vai_tro').in('vai_tro', ['admin', 'ban_giam_hieu']),
+        may().from('moi_tai_khoan').select('ho_ten, email, chuc_vu, co_so_ma').order('ho_ten'),
+        // Đơn xin nghỉ chờ duyệt — chỉ BGH/quản trị duyệt được (duyet_de_xuat đòi la_admin)
+        laQT() ? may().from('de_xuat').select('id, loai, noi_dung, tu_ngay, den_ngay, buoi, co_so_ma, nguoi_gui_ten, gui_luc')
+          .eq('trang_thai', 'cho_duyet').in('loai', Object.keys(LOAI_DON)).order('tu_ngay').limit(100) : null
       ]);
     }).then(function (r) {
       if (D.khoa !== khoa) return;
@@ -79,6 +102,9 @@
       D.coSo = (r[4] && r[4].data) || [];
       D.quanLy = {};
       ((r[5] && r[5].data) || []).forEach(function (u) { D.quanLy[String(u.email || '').toLowerCase()] = true; });
+      D.cbgv = ((r[6] && r[6].data) || []).filter(function (c) { return c.ho_ten; });
+      D.donCho = (r[7] && r[7].data) || [];
+      if (D.cs === null) { var cua = phanHieuCuaToi(); D.cs = cua.length ? cua[0].ma : ''; }
     }).catch(function (e) {
       var m = String((e && (e.message || e.details)) || e || '');
       D.loi = /day_thay|does not exist|schema cache|Could not find/i.test(m)
@@ -137,38 +163,85 @@
 
     var h = dau + chonNgay;
     if (D.loi) { EL.innerHTML = h + '<div class="hd-kiem do">' + thoat(D.loi) + '</div>'; ganKhung(); ganNgay(); return; }
+    // Phạm vi: PHT mặc định phân hiệu mình; ai cũng bấm xem được điểm khác / toàn trường
+    if (D.coSo.length > 1) {
+      h += '<div class="dt-pham-vi">' + [{ ma: '', ten: 'Toàn trường' }].concat(D.coSo).map(function (c) {
+        return '<button class="chip-loc' + (D.cs === c.ma ? ' on' : '') + '" data-cs="' + thoat(c.ma) + '">' + thoat(c.ten) + '</button>';
+      }).join('') + '</div>';
+    }
+    var trongPham = function (ma) { return !D.cs || ma === D.cs; };
+    var dsVang = D.vang.filter(function (v) { return trongPham(v.co_so_ma); });
+    var coQuyenBao = laPhuTrachNao();
+    if (coQuyenBao) h += veBaoNghi();
+    if (laQT()) h += veDonCho(D.donCho.filter(function (d) { return trongPham(d.co_so_ma); }));
     var thu = L().thuCuaNgay(D.ngay);
     if (!D.pb || !D.dl) {
       EL.innerHTML = h + '<div class="the-thong-bao">Chưa có thời khóa biểu <b>đã công bố</b> áp dụng cho ngày này — ' +
         'không biết lớp nào học tiết nào để bố trí.</div>';
-      ganKhung(); ganNgay(); return;
+      ganKhung(); ganNgay(); ganPhamVi(); return;
     }
-    if (thu === 8) { EL.innerHTML = h + '<div class="the-thong-bao">Chủ nhật — không có tiết học.</div>'; ganKhung(); ganNgay(); return; }
+    if (thu === 8) { EL.innerHTML = h + '<div class="the-thong-bao">Chủ nhật — không có tiết học.</div>'; ganKhung(); ganNgay(); ganPhamVi(); return; }
 
     var bc = boiCanh();
     var tong = 0, chua = 0;
-    var the = D.vang.map(function (v) {
+    var the = dsVang.map(function (v) {
       var dsTiet = L().tietCanThay(bc, v);
       tong += dsTiet.length;
       chua += dsTiet.filter(function (x) { return !x.daPhan; }).length;
       return veNguoiVang(bc, v, dsTiet);
     });
+    var dtPham = D.dayThay.filter(function (d) { return trongPham(d.co_so_ma); });
+    var chuaNhan = dtPham.filter(function (d) { return (d.gv_thay_email || d.gv_thay_nhan) && d.trang_thai !== 'da_nhan'; }).length;
 
     h += '<div class="tkb-tom">' +
-      '<div><span class="tkb-nhan">Người vắng</span><b class="so">' + D.vang.length + '</b><small>theo sổ vắng ngày này</small></div>' +
+      '<div><span class="tkb-nhan">Người vắng</span><b class="so">' + dsVang.length + '</b><small>theo sổ vắng ngày này</small></div>' +
       '<div><span class="tkb-nhan">Tiết cần thay</span><b class="so">' + tong + '</b><small>theo TKB áp dụng từ ' + ngayVN(D.pb.ap_dung_tu) + '</small></div>' +
       '<div><span class="tkb-nhan">Chưa bố trí</span><b class="so" style="color:' + (chua ? 'var(--thieu)' : 'var(--ok)') + '">' + chua + '</b><small>' + (chua ? 'tiết' : 'đã đủ') + '</small></div>' +
-      (D.dayThay.length ? '<div class="dt-nut-tom"><button class="dh-nut-nho" id="dt-zalo">📋 Chép tin Zalo</button>' +
+      (dtPham.length ? '<div><span class="tkb-nhan">Chưa nhận</span><b class="so" style="color:' + (chuaNhan ? 'var(--thieu)' : 'var(--ok)') + '">' + chuaNhan + '</b><small>' + (chuaNhan ? 'tiết — người thay chưa bấm Đã nhận' : 'đều đã nhận') + '</small></div>' : '') +
+      (dtPham.length ? '<div class="dt-nut-tom"><button class="dh-nut-nho" id="dt-zalo">📋 Chép tin Zalo</button>' +
         // Máy chủ (dt_sua) cho cả người phụ trách điểm; RLS tự lọc đúng tiết điểm của họ.
-        (D.dayThay.some(function (d) { return d.trang_thai === 'da_phan' && duocBoTri(d.co_so_ma); }) ?'<button class="dh-nut-nho" id="dt-da-bao">✓ Đánh dấu đã báo</button>' : '') + '</div>' : '') +
+        (dtPham.some(function (d) { return d.trang_thai === 'da_phan' && duocBoTri(d.co_so_ma); }) ? '<button class="dh-nut-nho" id="dt-da-bao">✓ Đánh dấu đã báo</button>' : '') + '</div>' : '') +
       '</div>';
 
-    if (!D.vang.length) {
-      h += '<div class="hd-kiem xanh">🟢 Không có ai trong sổ vắng ngày ' + ngayVN(D.ngay) + ' — chưa phải bố trí dạy thay. ' +
-        'Người vắng khai ở <b>Điểm danh &amp; Chấm công</b> (hoặc đơn nghỉ đã duyệt) sẽ hiện ra đây.</div>';
+    if (!dsVang.length) {
+      h += '<div class="hd-kiem xanh">🟢 Không có ai ' + (D.cs ? 'của ' + thoat(tenCoSo(D.cs)) + ' ' : '') + 'trong sổ vắng ngày ' + ngayVN(D.ngay) + ' — chưa phải bố trí dạy thay.' +
+        (coQuyenBao ? ' Có giáo viên xin nghỉ thì bấm <b>🙋 Báo nghỉ thay giáo viên</b> ở trên.' : '') + '</div>';
     }
     EL.innerHTML = h + the.join('');
-    ganKhung(); ganNgay(); ganBoTri(bc);
+    ganKhung(); ganNgay(); ganPhamVi(); ganBoTri(bc);
+  }
+  function tenCoSo(ma) { var c = D.coSo.filter(function (x) { return x.ma === ma; })[0]; return c ? c.ten : ma; }
+
+  // ── Báo nghỉ thay giáo viên (PHT điểm trường / BGH) → ghi thẳng sổ vắng gv_vang,
+  //    KHÔNG qua duyệt (thầy Chung 29/9/2026). RLS gvv_them: quản trị/BGH, hoặc phụ trách đúng điểm.
+  function dsBaoNghi() { return D.cbgv.filter(function (c) { return (!D.cs || c.co_so_ma === D.cs) && (laQT() || duocBoTri(c.co_so_ma)); }); }
+  function veBaoNghi() {
+    if (!D.moBao) return '<div class="dt-bao-nghi-mo"><button class="nut-chinh" id="dt-mo-bao">🙋 Báo nghỉ thay giáo viên</button>' +
+      '<small>Giáo viên gọi điện, nhắn tin xin nghỉ — ghi vào sổ vắng ngay rồi bố trí dạy thay bên dưới.</small></div>';
+    var ds = dsBaoNghi();
+    return '<section class="dt-the dt-form-bao"><header><div><b>🙋 Báo nghỉ thay giáo viên</b><small>ghi thẳng sổ vắng — bảng công và dạy thay cập nhật ngay</small></div>' +
+      '<button class="dh-nut-nho" id="dt-dong-bao">Đóng</button></header>' +
+      '<div class="dt-form-luoi">' +
+      '<label>Giáo viên<select id="dt-bao-nguoi" class="tkb-chon"><option value="">— chọn —</option>' + ds.map(function (c, i) {
+        return '<option value="' + i + '">' + thoat(c.ho_ten) + (c.chuc_vu ? ' · ' + thoat(c.chuc_vu) : '') + (!D.cs && c.co_so_ma ? ' · ' + thoat(tenCoSo(c.co_so_ma)) : '') + '</option>';
+      }).join('') + '</select></label>' +
+      '<label>Từ ngày<input type="date" id="dt-bao-tu" class="tkb-chon" value="' + D.ngay + '"></label>' +
+      '<label>Đến ngày <small>(nếu nghỉ nhiều ngày)</small><input type="date" id="dt-bao-den" class="tkb-chon"></label>' +
+      '<label>Buổi<select id="dt-bao-buoi" class="tkb-chon"><option value="ca_ngay">Cả ngày</option><option value="sang">Buổi sáng</option><option value="chieu">Buổi chiều</option></select></label>' +
+      '<label>Lý do<select id="dt-bao-ly" class="tkb-chon">' + LY_DO_VANG.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></label>' +
+      '</div><div class="dt-form-nut"><button class="nut-chinh" id="dt-ghi-bao">Ghi báo nghỉ</button></div></section>';
+  }
+
+  function veDonCho(ds) {
+    if (!ds.length) return '';
+    return '<section class="dt-the dt-don-cho"><header><div><b>📝 Đơn xin nghỉ chờ duyệt (' + ds.length + ')</b>' +
+      '<small>duyệt xong là vào sổ vắng, bố trí dạy thay được ngay</small></div></header>' + ds.map(function (d) {
+        return '<div class="dt-don"><div><b>' + thoat(d.nguoi_gui_ten) + '</b> · ' + thoat(LOAI_DON[d.loai] || d.loai) +
+          '<small>' + ngayVN(d.tu_ngay) + (d.den_ngay && d.den_ngay !== d.tu_ngay ? ' → ' + ngayVN(d.den_ngay) : '') + ' · ' + tenBuoiVang(d.buoi) +
+          (d.co_so_ma && !D.cs ? ' · ' + thoat(tenCoSo(d.co_so_ma)) : '') + (d.noi_dung ? ' · ' + thoat(d.noi_dung) : '') + '</small></div>' +
+          '<span class="dt-hanh"><button class="nut-chinh" data-duyet="' + d.id + '" data-tu="' + thoat(d.tu_ngay || '') + '">Duyệt</button>' +
+          '<button class="dh-nut-nho" data-tu-choi="' + d.id + '">Không duyệt</button></span></div>';
+      }).join('') + '</section>';
   }
 
   function veNguoiVang(bc, v, dsTiet) {
@@ -177,8 +250,11 @@
       (khop[0] && khop[0].nhan !== v.ho_ten ? ' <small>(' + thoat(khop[0].nhan) + ')</small>' : '') +
       '<small>' + thoat(v.ly_do || '') + ' · ' + (v.buoi === 'ca_ngay' ? 'cả ngày' : v.buoi === 'sang' ? 'buổi sáng' : 'buổi chiều') +
       (v.den_ngay && v.den_ngay !== v.ngay ? ' · ' + ngayVN(v.ngay) + ' → ' + ngayVN(v.den_ngay) : '') + '</small></div>' +
-      '<span class="tkb-chip ' + (dsTiet.every(function (x) { return x.daPhan; }) ? 'xanh' : 'do') + '">' +
-      dsTiet.filter(function (x) { return x.daPhan; }).length + '/' + dsTiet.length + ' tiết đã bố trí</span></header>';
+      '<span class="dt-hanh"><span class="tkb-chip ' + (dsTiet.every(function (x) { return x.daPhan; }) ? 'xanh' : 'do') + '">' +
+      dsTiet.filter(function (x) { return x.daPhan; }).length + '/' + dsTiet.length + ' tiết đã bố trí</span>' +
+      // Xoá báo nghỉ: chỉ dòng KHÔNG sinh từ đơn đã duyệt; RLS gvv_xoa cho phụ trách trong 2 ngày, quản trị luôn
+      (v.id > 0 && !v.de_xuat_id && duocBoTri(v.co_so_ma) ? '<button class="dh-nut-nho" data-xoa-vang="' + v.id + '" title="Báo nhầm — xoá khỏi sổ vắng">Xoá báo nghỉ</button>' : '') +
+      '</span></header>';
     if (!khop.length) {
       return h + '<div class="hd-kiem vang" style="margin:10px 0 0">Không tìm thấy người này trong thời khóa biểu (không có tiết, hoặc email/họ tên khác với tệp Smart Scheduler). ' +
         'Nếu người này có dạy, ghép lại tên ở <b>Quản trị › 🗓️ Thời khóa biểu</b>.</div></section>';
@@ -200,9 +276,10 @@
         h += '<div class="dt-tiet' + (d ? ' da' : '') + '"><span class="dt-ki">' + kiHieuTiet(x.buoi, x.tiet) + '</span>' +
           '<span class="dt-lop"><b>' + thoat(x.lop) + '</b> · ' + thoat(x.mon) + '</span>' +
           '<span class="dt-ai">' + (d ? (d.gv_thay_email || d.gv_thay_nhan ? '👤 <b>' + thoat(d.gv_thay_ten || d.gv_thay_nhan) + '</b>' : '<i>Lớp tự quản</i>') +
-            (d.trang_thai === 'da_bao' ? ' <span class="tkb-chip xanh">đã báo</span>' : '') : '<span class="tkb-chip do">chưa có người</span>') + '</span>' +
+            (d.gv_thay_email || d.gv_thay_nhan ? ' ' + chipTT(d) : '') : '<span class="tkb-chip do">chưa có người</span>') + '</span>' +
           (coQuyen ? '<span class="dt-hanh">' + (d
-            ? '<button class="dh-nut-nho" data-mo="' + thoat(k) + '">Đổi</button><button class="dh-nut-nho" data-huy="' + d.id + '">Huỷ</button>'
+            ? ((d.gv_thay_email || d.gv_thay_nhan) ? '<button class="dh-nut-nho" data-zalo-nguoi="' + thoat(d.gv_thay_email || d.gv_thay_nhan) + '" title="Chép tin nhắn riêng cho người này">📋</button>' : '') +
+              '<button class="dh-nut-nho" data-mo="' + thoat(k) + '">Đổi</button><button class="dh-nut-nho" data-huy="' + d.id + '">Huỷ</button>'
             : '<button class="dh-nut-nho" data-mo="' + thoat(k) + '">' + (D.mo === k ? 'Ẩn' : 'Gợi ý') + '</button>') + '</span>' : '') +
           '</div>';
         if (coQuyen && D.mo === k) h += veGoiY(bc, x, v);
@@ -293,6 +370,71 @@
     });
   }
   function taiLai() { D.khoa = ''; D.mo = ''; D.moPA = ''; ve(); }
+
+  function ganPhamVi() {
+    tat('[data-cs]', function (b) { D.cs = b.getAttribute('data-cs'); D.mo = ''; D.moPA = ''; ve(); });
+    var mo = document.getElementById('dt-mo-bao'); if (mo) mo.addEventListener('click', function () { D.moBao = true; ve(); });
+    var dong = document.getElementById('dt-dong-bao'); if (dong) dong.addEventListener('click', function () { D.moBao = false; ve(); });
+    var ghiB = document.getElementById('dt-ghi-bao'); if (ghiB) ghiB.addEventListener('click', function () { ghiBaoNghi(ghiB); });
+    tat('[data-duyet]', function (b) { duyetDon(+b.getAttribute('data-duyet'), true, b, b.getAttribute('data-tu')); });
+    tat('[data-tu-choi]', function (b) { duyetDon(+b.getAttribute('data-tu-choi'), false, b, ''); });
+    tat('[data-xoa-vang]', function (b) { xoaVang(+b.getAttribute('data-xoa-vang'), b); });
+    tat('[data-zalo-nguoi]', function (b) {
+      var k = b.getAttribute('data-zalo-nguoi');
+      chepZalo(D.ngay, D.dayThay.filter(function (d) { return (d.gv_thay_email || d.gv_thay_nhan) === k; }));
+    });
+  }
+
+  function giaTri(id) { var o = document.getElementById(id); return o ? o.value : ''; }
+  function ghiBaoNghi(nut) {
+    var c = dsBaoNghi()[+giaTri('dt-bao-nguoi')];
+    var tu = giaTri('dt-bao-tu'), den = giaTri('dt-bao-den'), buoi = giaTri('dt-bao-buoi') || 'ca_ngay', ly = giaTri('dt-bao-ly') || 'Khác';
+    if (giaTri('dt-bao-nguoi') === '' || !c) { bao('Chọn giáo viên nghỉ.'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tu)) { bao('Chọn ngày bắt đầu nghỉ.'); return; }
+    if (den && den < tu) { bao('"Đến ngày" đang trước "Từ ngày" — chọn lại.'); return; }
+    if (!c.co_so_ma && may()) { bao(c.ho_ten + ' chưa được gán điểm trường — sửa ở Quản trị › Tài khoản rồi báo lại.'); return; }
+    var dong = { ngay: tu, den_ngay: den && den > tu ? den : null, buoi: buoi, ho_ten: c.ho_ten, email: c.email || null,
+      co_so_ma: c.co_so_ma, ly_do: ly, ghi_chu: 'Báo nghỉ ở màn Dạy thay', nguoi_ghi_id: (window.NGUOI_DUNG || {}).id || null };
+    if (!may()) {
+      D.vang.push(Object.assign({ id: -2 - D.vang.length }, dong)); D.moBao = false; D.ngay = tu; ve();
+      bao('Đã ghi (bản xem thử).'); return;
+    }
+    nut.disabled = true;
+    may().from('gv_vang').insert(dong).select('id').then(function (r) {
+      nut.disabled = false;
+      if (r.error) { bao('Không ghi được: ' + (/row-level|policy/i.test(r.error.message) ? 'thầy cô không phụ trách điểm trường của người này.' : r.error.message)); return; }
+      bao('✅ Đã ghi ' + c.ho_ten + ' nghỉ ' + tenBuoiVang(buoi) + ' ' + ngayVN(tu) + (dong.den_ngay ? ' → ' + ngayVN(dong.den_ngay) : '') + '. Bố trí dạy thay bên dưới.');
+      D.moBao = false; D.ngay = tu; taiLai();
+    });
+  }
+  function duyetDon(id, dongY, nut, tuNgay) {
+    var hoi = window.hopHoi ? window.hopHoi(dongY ? 'Duyệt đơn xin nghỉ? Người này sẽ vào sổ vắng và hiện ra để bố trí dạy thay.' : 'Không duyệt đơn này?',
+      { tieuDe: 'Đơn xin nghỉ', nutOK: dongY ? 'Duyệt' : 'Không duyệt' }) : Promise.resolve(window.confirm(dongY ? 'Duyệt đơn?' : 'Không duyệt đơn?'));
+    hoi.then(function (ok) {
+      if (!ok) return;
+      if (!may()) { D.donCho = D.donCho.filter(function (d) { return d.id !== id; }); ve(); return; }
+      nut.disabled = true;
+      may().rpc('duyet_de_xuat', { p_id: id, p_dong_y: dongY, p_ghi_chu: null }).then(function (r) {
+        if (r.error) { nut.disabled = false; bao('Không duyệt được: ' + r.error.message); return; }
+        bao(dongY ? '✅ Đã duyệt — đã vào sổ vắng.' : 'Đã ghi: không duyệt.');
+        if (dongY && /^\d{4}-\d{2}-\d{2}$/.test(tuNgay || '')) D.ngay = tuNgay;
+        taiLai();
+      });
+    });
+  }
+  function xoaVang(id, nut) {
+    var hoi = window.hopHoi ? window.hopHoi('Xoá báo nghỉ này khỏi sổ vắng? Chỉ dùng khi báo nhầm — các tiết đã bố trí dạy thay vẫn giữ, huỷ riêng từng tiết nếu cần.',
+      { tieuDe: 'Xoá báo nghỉ', nutOK: 'Xoá' }) : Promise.resolve(window.confirm('Xoá báo nghỉ?'));
+    hoi.then(function (ok) {
+      if (!ok) return;
+      if (!may()) { D.vang = D.vang.filter(function (v) { return v.id !== id; }); ve(); return; }
+      nut.disabled = true;
+      may().from('gv_vang').delete().eq('id', id).select('id').then(function (r) {
+        if (r.error || !r.data || !r.data.length) { nut.disabled = false; bao('Không xoá được — quá 2 ngày kể từ lúc ghi, tháng đã chốt công, hoặc không đủ quyền. Nhờ quản trị xoá.'); return; }
+        bao('Đã xoá báo nghỉ.'); taiLai();
+      });
+    });
+  }
 
   // gan = [{ tiet: {buoi,tiet,lop,mon,gvNhan,coSo,daPhan}, gv: {nhan,ten,email} | null }]
   function ghi(gan, v, nut) {
@@ -404,7 +546,7 @@
         ds.map(function (d) {
           return '<tr><td>' + thoat(tenNgay(d.ngay)) + '</td><td class="ma">' + kiHieuTiet(d.buoi, d.tiet) + '</td><td><b>' + thoat(d.lop) + '</b> · ' + thoat(d.mon) + '</td>' +
             '<td>' + thoat(d.gv_vang_ten || '') + '</td><td>' + (d.gv_thay_email || d.gv_thay_nhan ? thoat(d.gv_thay_ten || d.gv_thay_nhan) : '<i>Lớp tự quản</i>') + '</td>' +
-            '<td>' + (d.trang_thai === 'da_bao' ? '<span class="tkb-chip xanh">đã báo</span>' : '<span class="tkb-chip vang">chưa báo</span>') + '</td>' +
+            '<td>' + (d.gv_thay_email || d.gv_thay_nhan ? chipTT(d) : '') + '</td>' +
             '<td><button class="dh-nut-nho" data-toi-ngay="' + d.ngay + '">Mở ngày</button></td></tr>';
         }).join('') + '</tbody></table></div>';
       Array.prototype.slice.call(bang.querySelectorAll('[data-toi-ngay]')).forEach(function (b) {
@@ -438,6 +580,28 @@
   }
 
   // ══════════════════════════════════════════════════════════════
+  // NGƯỜI DẠY THAY BẤM "ĐÃ NHẬN" (sql/74, hàm nhan_day_thay — chỉ đổi dòng của chính mình)
+  // ══════════════════════════════════════════════════════════════
+  function nhan(ids, nut, xong) {
+    if (!ids.length) return;
+    if (nut) nut.disabled = true;
+    may().rpc('nhan_day_thay', { p_ids: ids }).then(function (r) {
+      if (r.error) {
+        if (nut) nut.disabled = false;
+        bao(/nhan_day_thay|does not exist|Could not find/i.test(r.error.message)
+          ? 'Nhà trường chưa bật nút "Đã nhận" — người phụ trách hệ thống cần chạy sql/74-day-thay-da-nhan.sql.'
+          : 'Không xác nhận được: ' + r.error.message);
+        return;
+      }
+      bao('✅ Đã xác nhận ' + (r.data || 0) + ' tiết dạy thay — người bố trí thấy ngay.');
+      NHAC.khoa = '';
+      if (window.VIEC_NHANH) window.VIEC_NHANH.ve(true);
+      if (xong) xong();
+    });
+  }
+  function daNhan(d) { return d.trang_thai === 'da_nhan'; }
+
+  // ══════════════════════════════════════════════════════════════
   // TIẾT DẠY THAY CỦA TÔI
   // ══════════════════════════════════════════════════════════════
   function veCuaToi(vung) {
@@ -445,45 +609,98 @@
     if (!may() || !e) { vung.innerHTML = '<div class="the-thong-bao">Đăng nhập để xem tiết dạy thay của mình.</div>'; return; }
     var hn = homNayISO();
     vung.innerHTML = '<div class="the-thong-bao">Đang tải…</div>';
-    may().from('day_thay').select('*').eq('gv_thay_email', e).neq('trang_thai', 'huy')
-      .gte('ngay', hn.slice(0, 8) + '01').order('ngay').order('buoi').order('tiet').limit(300)
-      .then(function (r) {
+    Promise.all([
+      may().from('day_thay').select('*').eq('gv_thay_email', e).neq('trang_thai', 'huy')
+        .gte('ngay', hn.slice(0, 8) + '01').order('ngay').order('buoi').order('tiet').limit(300),
+      // Tiết của CHÍNH MÌNH (mình vắng) đã có người thay — GV vắng biết ai dạy lớp mình
+      may().from('day_thay').select('ngay, buoi, tiet, lop, mon, gv_thay_ten, gv_thay_nhan, gv_thay_email, trang_thai')
+        .eq('gv_vang_email', e).neq('trang_thai', 'huy').gte('ngay', hn).order('ngay').order('buoi').order('tiet').limit(100)
+    ]).then(function (rr) {
+        var r = rr[0];
         if (r.error) throw r.error;
         var ds = r.data || [];
         var sap = ds.filter(function (d) { return d.ngay >= hn; });
+        var chuaNhan = sap.filter(function (d) { return !daNhan(d); });
         var thangNay = ds.filter(function (d) { return d.ngay.slice(0, 7) === hn.slice(0, 7); }).length;
+        var cuaMinh = (rr[1] && rr[1].data) || [];
         vung.innerHTML = '<div class="tkb-tom"><div><span class="tkb-nhan">Sắp tới</span><b class="so">' + sap.length + ' tiết</b><small>từ hôm nay</small></div>' +
-          '<div><span class="tkb-nhan">Tháng này</span><b class="so">' + thangNay + ' tiết</b><small>đã và sẽ dạy thay</small></div></div>' +
+          '<div><span class="tkb-nhan">Tháng này</span><b class="so">' + thangNay + ' tiết</b><small>đã và sẽ dạy thay</small></div>' +
+          (chuaNhan.length ? '<div class="dt-nut-tom"><button class="nut-chinh" id="dt-nhan-het">✓ Đã nhận ' + chuaNhan.length + ' tiết</button></div>' : '') + '</div>' +
           (sap.length ? '<div class="dt-cua-toi">' + sap.map(function (d) {
             return '<div class="dt-tiet' + (d.ngay === hn ? ' hom-nay' : '') + '"><span class="dt-ki">' + kiHieuTiet(d.buoi, d.tiet) + '</span>' +
               '<span class="dt-lop"><b>' + thoat(d.lop) + '</b> · ' + thoat(d.mon) + '</span>' +
-              '<span class="dt-ai">' + thoat(tenNgay(d.ngay)) + (d.ngay === hn ? ' · <b>hôm nay</b>' : '') + '</span>' +
-              '<span class="dt-hanh"><small>thay ' + thoat(d.gv_vang_ten || '') + '</small></span></div>';
-          }).join('') + '</div>' : '<div class="hd-kiem xanh">Thầy cô chưa được phân dạy thay tiết nào sắp tới.</div>');
+              '<span class="dt-ai">' + thoat(tenNgay(d.ngay)) + (d.ngay === hn ? ' · <b>hôm nay</b>' : '') + ' <small>thay ' + thoat(d.gv_vang_ten || '') + '</small></span>' +
+              '<span class="dt-hanh">' + (daNhan(d) ? '<span class="tkb-chip xanh">✓ đã nhận</span>' : '<button class="dh-nut-nho" data-nhan="' + d.id + '">Đã nhận</button>') + '</span></div>';
+          }).join('') + '</div>' : '<div class="hd-kiem xanh">Thầy cô chưa được phân dạy thay tiết nào sắp tới.</div>') +
+          (cuaMinh.length ? '<div class="dh-tieu-de" style="margin-top:18px">Tiết của thầy cô đã có người dạy thay</div><div class="dt-cua-toi">' + cuaMinh.map(function (d) {
+            var ai = d.gv_thay_email || d.gv_thay_nhan ? thoat(d.gv_thay_ten || d.gv_thay_nhan) : '<i>Lớp tự quản</i>';
+            return '<div class="dt-tiet"><span class="dt-ki">' + kiHieuTiet(d.buoi, d.tiet) + '</span><span class="dt-lop"><b>' + thoat(d.lop) + '</b> · ' + thoat(d.mon) + '</span>' +
+              '<span class="dt-ai">' + thoat(tenNgay(d.ngay)) + ' → ' + ai + '</span></div>';
+          }).join('') + '</div>' : '');
+        var het = document.getElementById('dt-nhan-het');
+        if (het) het.addEventListener('click', function () { nhan(chuaNhan.map(function (d) { return d.id; }), het, function () { veCuaToi(vung); }); });
+        Array.prototype.slice.call(vung.querySelectorAll('[data-nhan]')).forEach(function (b) {
+          b.addEventListener('click', function () { nhan([+b.getAttribute('data-nhan')], b, function () { veCuaToi(vung); }); });
+        });
       }).catch(function (err) { vung.innerHTML = '<div class="hd-kiem do">Không tải được: ' + thoat((err && err.message) || err) + '</div>'; });
   }
 
   // ══════════════════════════════════════════════════════════════
-  // NHẮC TRÊN TRANG CHỦ — "Hôm nay thầy/cô dạy thay N tiết"
+  // NHẮC TRÊN TRANG CHỦ — tiết dạy thay HÔM NAY VÀ 7 NGÀY TỚI (29/9/2026: trước chỉ hôm nay,
+  // phân tối nay cho sáng mai thì người thay không biết) + nút "Đã nhận" ngay tại chỗ.
+  // Người VẮNG cũng thấy tiết của mình đã có ai thay.
   // ══════════════════════════════════════════════════════════════
-  var NHAC = { khoa: '', html: '' };
+  var NHAC = { khoa: '', html: '', ids: [] };
   function ganNhac(vung) {
     if (!vung || !may()) return;
     var e = toiEmail(), hn = homNayISO(), khoa = e + '|' + hn;
     if (!e) { vung.innerHTML = ''; return; }
-    if (NHAC.khoa === khoa) { vung.innerHTML = NHAC.html; return; }
+    if (NHAC.khoa === khoa) { vung.innerHTML = NHAC.html; ganNutNhac(vung); return; }
     NHAC.khoa = khoa;
-    may().from('day_thay').select('buoi, tiet, lop, mon, gv_vang_ten').eq('gv_thay_email', e).eq('ngay', hn).neq('trang_thai', 'huy')
-      .order('buoi').order('tiet').then(function (r) {
-        if (r.error || !(r.data || []).length) { NHAC.html = ''; vung.innerHTML = ''; return; }
-        var ds = r.data;
-        NHAC.html = '<a class="dt-nhac" href="#" onclick="DH.moTab(\'tkb\');window.TKB_XEM&&TKB_XEM.moDayThay();return false;">' +
-          '<b>👩‍🏫 Hôm nay thầy cô dạy thay ' + ds.length + ' tiết:</b> ' +
-          ds.map(function (d) { return kiHieuTiet(d.buoi, d.tiet) + ' ' + thoat(d.lop) + ' ' + thoat(d.mon) + (d.gv_vang_ten ? ' (thay ' + thoat(d.gv_vang_ten) + ')' : ''); }).join(' · ') +
-          ' <span>Xem ›</span></a>';
-        vung.innerHTML = NHAC.html;
-      }, function () { NHAC.khoa = ''; });
+    var den = congNgay(hn, 7);
+    Promise.all([
+      may().from('day_thay').select('id, ngay, buoi, tiet, lop, mon, gv_vang_ten, trang_thai').eq('gv_thay_email', e)
+        .gte('ngay', hn).lte('ngay', den).neq('trang_thai', 'huy').order('ngay').order('buoi').order('tiet'),
+      may().from('day_thay').select('ngay, buoi, tiet, lop, gv_thay_ten, gv_thay_nhan, gv_thay_email').eq('gv_vang_email', e)
+        .gte('ngay', hn).lte('ngay', den).neq('trang_thai', 'huy').order('ngay').order('buoi').order('tiet')
+    ]).then(function (rr) {
+      if (NHAC.khoa !== khoa) return;
+      var ds = (rr[0] && !rr[0].error && rr[0].data) || [], cuaMinh = (rr[1] && !rr[1].error && rr[1].data) || [];
+      var h = '';
+      if (ds.length) {
+        var chua = ds.filter(function (d) { return !daNhan(d); });
+        NHAC.ids = chua.map(function (d) { return d.id; });
+        var theoNgay = {};
+        ds.forEach(function (d) { (theoNgay[d.ngay] = theoNgay[d.ngay] || []).push(d); });
+        h += '<div class="dt-nhac' + (chua.length ? ' can-nhan' : '') + '"><div class="dt-nhac-chu"><b>👩‍🏫 Thầy cô được phân dạy thay ' + ds.length + ' tiết</b>' +
+          Object.keys(theoNgay).map(function (n) {
+            return '<div>' + (n === hn ? '<b>Hôm nay</b>' : n === congNgay(hn, 1) ? '<b>Ngày mai</b>' : thoat(tenNgay(n))) + ': ' + theoNgay[n].map(function (d) {
+              return kiHieuTiet(d.buoi, d.tiet) + ' ' + thoat(d.lop) + ' ' + thoat(d.mon) + (d.gv_vang_ten ? ' (thay ' + thoat(d.gv_vang_ten) + ')' : '') + (daNhan(d) ? ' ✓' : '');
+            }).join(' · ') + '</div>';
+          }).join('') + '</div><div class="dt-nhac-nut">' +
+          (chua.length ? '<button class="nut-chinh" data-nhac-nhan="1">✓ Đã nhận</button>' : '<span class="tkb-chip xanh">✓ đã nhận hết</span>') +
+          '<a href="#" onclick="DAY_THAY.moKhung(\'cua-toi\');return false;">Xem ›</a></div></div>';
+      } else NHAC.ids = [];
+      if (cuaMinh.length) {
+        h += '<div class="dt-nhac nhe"><div class="dt-nhac-chu"><b>Tiết của thầy cô đã có người dạy thay:</b> ' + cuaMinh.map(function (d) {
+          return (d.ngay === hn ? 'hôm nay' : thoat(ngayVN(d.ngay).slice(0, 5))) + ' ' + kiHieuTiet(d.buoi, d.tiet) + ' ' + thoat(d.lop) + ' → ' +
+            (d.gv_thay_email || d.gv_thay_nhan ? thoat(d.gv_thay_ten || d.gv_thay_nhan) : 'lớp tự quản');
+        }).join(' · ') + '</div></div>';
+      }
+      NHAC.html = h; vung.innerHTML = h; ganNutNhac(vung);
+    }, function () { NHAC.khoa = ''; });
+  }
+  function ganNutNhac(vung) {
+    var b = vung.querySelector('[data-nhac-nhan]');
+    if (b) b.addEventListener('click', function () { nhan(NHAC.ids, b, function () { ganNhac(vung); }); });
   }
 
-  window.DAY_THAY = { ve: ve, ganNhac: ganNhac, moNgay: function (ngay) { D.ngay = ngay || homNayISO(); D.khung = 'bo-tri'; } };
+  window.DAY_THAY = { ve: ve, ganNhac: ganNhac, moNgay: function (ngay) { D.ngay = ngay || homNayISO(); D.khung = 'bo-tri'; },
+    // Mở thẳng một khung của thẻ Dạy thay từ nơi khác (trang chủ, hàng Việc hằng ngày)
+    moKhung: function (khung) {
+      D.khung = khung || 'bo-tri';
+      if (D.khung === 'bo-tri') D.ngay = homNayISO();
+      if (window.DH) window.DH.moTab('tkb');
+      if (window.TKB_XEM && window.TKB_XEM.moDayThay) window.TKB_XEM.moDayThay();
+    } };
 })();

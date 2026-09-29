@@ -4074,3 +4074,45 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .scn-dd-luu .scn-nut { width: 100%; min-height: 44px; font-size: 15px; }
 @media (min-width: 761px) { .scn-dd-luu .scn-nut { width: auto; } }
 @media (max-width: 640px) { .scn-dd-nut button { min-width: 52px; min-height: 42px; } }
+
+/* ══ VIỆC HẰNG NGÀY — hàng nút đầu trang chủ (js/viec-nhanh.js, 29/9/2026) ══
+   Máy tính: 4 nút to đầu trang chủ. Điện thoại: thanh CỐ ĐỊNH ở đáy — #viec-nhanh nằm
+   trong #mh-home nên rời trang chủ là thanh tự ẩn theo. */
+.vn-hang { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
+.vn-nut { position: relative; display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 14px;
+  border: 1px solid var(--vien); border-radius: 14px; background: var(--the, #fff); color: var(--dam);
+  font: inherit; font-weight: 700; font-size: 15px; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(20, 48, 107, .06); }
+.vn-nut:hover { border-color: var(--dam); background: #f5f8fd; }
+.vn-bi { font-size: 22px; line-height: 1; }
+.vn-chu { line-height: 1.25; }
+.vn-so { position: absolute; top: -7px; right: -5px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
+  background: var(--thieu, #b91c1c); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+@media (max-width: 760px) {
+  .vn-hang { position: fixed; left: 0; right: 0; bottom: 0; z-index: 150; margin: 0; gap: 0;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); background: var(--the, #fff);
+    border-top: 1px solid var(--vien); box-shadow: 0 -4px 14px rgba(20, 48, 107, .12); }
+  .vn-nut { flex-direction: column; justify-content: center; gap: 3px; min-height: 60px; padding: 6px 2px;
+    border: 0; border-radius: 10px; box-shadow: none; font-size: 11.5px; text-align: center; }
+  .vn-bi { font-size: 21px; }
+  .vn-so { top: 2px; right: calc(50% - 26px); }
+  #mh-home.hien { padding-bottom: 84px; }
+  body:has(#mh-home.hien .vn-hang) .toast { bottom: 96px; }
+}
+
+/* ══ Dạy thay 29/9/2026: phạm vi phân hiệu · báo nghỉ thay GV · đơn chờ duyệt · đã nhận ══ */
+.dt-pham-vi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.dt-bao-nghi-mo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; }
+.dt-bao-nghi-mo small { color: var(--chu-mo); }
+.dt-form-luoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 10px; }
+.dt-form-luoi label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--chu-mo); }
+.dt-form-luoi label small { font-size: 11.5px; }
+.dt-form-luoi .tkb-chon { min-height: 40px; width: 100%; }
+.dt-form-nut { margin-top: 10px; display: flex; justify-content: flex-end; }
+.dt-don-cho { border-color: #f1e2b5; background: #fffcf3; }
+.dt-don { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px dashed var(--vien); }
+.dt-don small { display: block; color: var(--chu-mo); font-size: 12.5px; }
+.dt-nhac.can-nhan, .dt-nhac.nhe { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: space-between; align-items: center; }
+.dt-nhac.nhe { background: #f5f8fd; color: var(--dam); border-color: var(--vien); }
+.dt-nhac-chu div { margin-top: 2px; }
+.dt-nhac-nut { display: flex; gap: 10px; align-items: center; }
+.dt-nhac-nut a { font-weight: 700; color: inherit; }
