@@ -3354,6 +3354,13 @@
 
     // ── Đề xuất ──
     dxLoai: function (ma) { DX_LOAI = DX_LOAI === ma ? null : ma; veGiu(); },
+    // Nút "Xin nghỉ" ở hàng Việc hằng ngày (js/viec-nhanh.js): mở thẳng form đơn nghỉ phép, không bật/tắt
+    moXinNghi: function () {
+      window.DH.moTab('dexuat');
+      DX_LOAI = 'nghi_phep'; veGiu();
+      var o = document.getElementById('dh-dx-tu');
+      if (o && o.scrollIntoView) o.scrollIntoView({ block: 'center' });
+    },
     dxGui: function () {
       if (!DX_LOAI) { window.notify('Chọn loại đề xuất trước.'); return; }
       var laNghi = LOAI_DX_NGHI.indexOf(DX_LOAI) >= 0;

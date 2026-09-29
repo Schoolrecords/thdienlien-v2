@@ -113,6 +113,44 @@
     }).then(function () { if (D.khoa === khoa) D.dangNap = false; });
   }
 
+  // ── Tóm tắt dạy thay MỘT NGÀY cho khung "Việc cần xử lý" ở trang chủ (js/viec-nhanh.js).
+  //    Đọc riêng, KHÔNG đụng D (màn Dạy thay có thể đang mở ngày khác).
+  //    dsCS: mảng mã phân hiệu cần xem ([] = toàn trường).
+  //    → { coTKB, vang, tong, chua, chuaNhan, nguoi: [{ ten, tong, chua }] }
+  function tomTat(ngay, dsCS) {
+    var trong = function (ma) { return !dsCS || !dsCS.length || dsCS.indexOf(ma) >= 0; };
+    var tinh = function (dl, vang, dayThay) {
+      var kq = { coTKB: !!dl, vang: 0, tong: 0, chua: 0, chuaNhan: 0, nguoi: [] };
+      vang = vang.filter(function (v) { return trong(v.co_so_ma); });
+      kq.vang = vang.length;
+      kq.chuaNhan = dayThay.filter(function (d) { return trong(d.co_so_ma) && (d.gv_thay_email || d.gv_thay_nhan) && d.trang_thai !== 'da_nhan'; }).length;
+      if (!dl || L().thuCuaNgay(ngay) === 8) { kq.coTKB = !!dl; kq.nguoi = vang.map(function (v) { return { ten: v.ho_ten, tong: 0, chua: 0 }; }); return kq; }
+      var bc = L().boiCanh({ ngay: ngay, tiet: dl.tiet, gv: dl.gv, lopCoSo: dl.lopCoSo, vang: vang, dayThay: dayThay, dayThayThang: [], quanLy: {} });
+      vang.forEach(function (v) {
+        var ds = L().tietCanThay(bc, v), chua = ds.filter(function (x) { return !x.daPhan; }).length;
+        kq.tong += ds.length; kq.chua += chua;
+        kq.nguoi.push({ ten: v.ho_ten, tong: ds.length, chua: chua });
+      });
+      return kq;
+    };
+    if (!may()) {
+      return Promise.resolve(tinh(window.TKB_XEM.duLieuMau(),
+        [{ id: -1, ho_ten: 'Nguyễn Thị Mai', email: '', buoi: 'ca_ngay', co_so_ma: '', ly_do: 'Nghỉ ốm' }], []));
+    }
+    return window.TKB_XEM.docDsPhienBan().then(function (ds) {
+      var pb = window.TKB_XEM.phienBanNgay(ds, ngay);
+      return Promise.all([
+        pb ? window.TKB_XEM.docPhienBan(pb) : Promise.resolve(null),
+        may().from('gv_vang').select('id, ho_ten, email, co_so_ma, ly_do, buoi, ngay, den_ngay')
+          .lte('ngay', ngay).or('and(den_ngay.is.null,ngay.eq.' + ngay + '),den_ngay.gte.' + ngay),
+        may().from('day_thay').select('*').eq('ngay', ngay).neq('trang_thai', 'huy')
+      ]);
+    }).then(function (r) {
+      if (r[1].error) throw r[1].error;
+      return tinh(r[0], r[1].data || [], (r[2] && !r[2].error && r[2].data) || []);
+    });
+  }
+
   function duocBoTri(coSoMa) {
     if (laQT()) return true;
     var e = toiEmail();
@@ -268,7 +306,8 @@
       var conTrong = tiet.filter(function (x) { return !x.daPhan; });
       var khoaPA = v.id + '|' + b;
       h += '<div class="dt-buoi"><div class="dt-buoi-dau"><span>' + (b === 'sang' ? 'Buổi sáng' : 'Buổi chiều') + '</span>' +
-        (coQuyen && conTrong.length > 1 ? '<button class="dh-nut-nho" data-pa="' + thoat(khoaPA) + '">' + (D.moPA === khoaPA ? 'Ẩn phương án' : '✨ Phương án cả buổi') + '</button>' : '') + '</div>';
+        (coQuyen && conTrong.length ? '<button class="' + (D.moPA === khoaPA ? 'dh-nut-nho' : 'nut-chinh') + ' dt-nut-pa" data-pa="' + thoat(khoaPA) + '">' +
+          (D.moPA === khoaPA ? 'Ẩn phương án' : '🧩 Phương án dạy thay (' + conTrong.length + ' tiết)') + '</button>' : '') + '</div>';
       if (coQuyen && D.moPA === khoaPA) h += vePhuongAn(bc, tiet, khoaPA);
       tiet.forEach(function (x) {
         var k = [x.buoi, x.tiet, x.lop].join('|');
@@ -294,10 +333,13 @@
   }
   function veGoiY(bc, x, v) {
     var boQua = x.daPhan ? [x.daPhan.id] : [];
-    var uv = L().ungVien(bc, x, boQua).slice(0, 5);
+    var uv = L().ungVien(bc, x, boQua).slice(0, 8);
     var k = [x.buoi, x.tiet, x.lop].join('|');
+    var nhomTruoc = 0;
     return '<div class="dt-goi-y">' + (uv.length ? uv.map(function (u, i) {
-      return '<div class="dt-uv' + (i === 0 ? ' nhat' : '') + '"><div><b>' + thoat(u.gv.ten) + '</b> <small>' + thoat(u.gv.nhan) + '</small>' +
+      var dauNhom = u.nhom !== nhomTruoc ? '<div class="dt-nhom-uv">' + u.nhom + '. ' + thoat((L().TEN_NHOM || {})[u.nhom] || '') + '</div>' : '';
+      nhomTruoc = u.nhom;
+      return dauNhom + '<div class="dt-uv' + (i === 0 ? ' nhat' : '') + '"><div><b>' + thoat(u.gv.ten) + '</b> <small>' + thoat(u.gv.nhan) + '</small>' +
         '<div class="dt-ly-do">' + chips(u.lyDo) + '</div></div>' +
         '<button class="' + (i === 0 ? 'nut-chinh' : 'dh-nut-nho') + '" data-phan="' + thoat(k) + '" data-gv="' + thoat(u.gv.nhan) + '" data-vang="' + v.id + '">Phân</button></div>';
     }).join('') : '<div class="hd-kiem vang" style="margin:0">Không còn ai hợp lệ cho tiết này (đều đang có tiết, vắng, ở điểm trường khác hoặc đã đủ ' + L().GIOI_HAN_BUOI + ' tiết/buổi).</div>') +
@@ -306,14 +348,19 @@
   }
   function vePhuongAn(bc, tiet, khoaPA) {
     var pa = L().phuongAn(bc, tiet);
-    if (!pa.length) return '<div class="dt-goi-y"><div class="hd-kiem vang" style="margin:0">Không ghép được phương án cả buổi — dùng nút Gợi ý từng tiết.</div></div>';
+    if (!pa.length) return '<div class="dt-goi-y"><div class="hd-kiem vang" style="margin:0">Không còn ai hợp lệ để ghép đủ các tiết — dùng nút Gợi ý từng tiết hoặc chọn Lớp tự quản.</div></div>';
     PA_TAM[khoaPA] = pa;
-    return '<div class="dt-goi-y">' + pa.map(function (p, i) {
-      return '<div class="dt-uv' + (i === 0 ? ' nhat' : '') + '"><div><b>' + thoat(p.tieuDe) + '</b>' +
-        '<div class="dt-ly-do">' + chips(p.lyDo || []) + '</div>' +
-        (p.loai === 'ghep' ? '<small>' + p.gan.map(function (g) { return kiHieuTiet(g.tiet.buoi, g.tiet.tiet) + ' ' + thoat(g.gv.ten); }).join(' · ') + '</small>' : '') +
-        '</div><button class="' + (i === 0 ? 'nut-chinh' : 'dh-nut-nho') + '" data-chon-pa="' + thoat(khoaPA) + '" data-i="' + i + '">Chọn</button></div>';
-    }).join('') + '</div>';
+    return '<div class="dt-goi-y dt-pa-ds"><div class="dt-pa-chu">Ưu tiên: <b>cùng khối</b> → <b>GV đang có tiết buổi này</b> (chỉ trống đúng tiết đó) → hết người mới đến GV <b>không có tiết buổi này</b> (phải đến trường).</div>' +
+      pa.map(function (p, i) {
+        return '<div class="dt-pa' + (i === 0 ? ' nhat' : '') + '"><div class="dt-pa-dau"><b>' + thoat(p.tieuDe) + '</b>' +
+          '<button class="' + (i === 0 ? 'nut-chinh' : 'dh-nut-nho') + '" data-chon-pa="' + thoat(khoaPA) + '" data-i="' + i + '">Chọn phương án này</button></div>' +
+          '<div class="dt-ly-do">' + chips(p.lyDo || []) + '</div>' +
+          '<div class="dt-pa-tiet">' + p.gan.map(function (g) {
+            return '<div><span class="dt-ki">' + kiHieuTiet(g.tiet.buoi, g.tiet.tiet) + '</span> ' + thoat(g.tiet.lop) + ' · ' + thoat(g.tiet.mon) +
+              ' → <b>' + thoat(g.gv.ten) + '</b> <span class="tkb-chip ' + (g.nhom <= 2 ? 'xanh' : g.nhom <= 4 ? 'vang' : 'xam') + '">' +
+              thoat((L().TEN_NHOM || {})[g.nhom] || '') + '</span></div>';
+          }).join('') + '</div></div>';
+      }).join('') + '</div>';
   }
   var PA_TAM = {};
 
@@ -369,7 +416,7 @@
       });
     });
   }
-  function taiLai() { D.khoa = ''; D.mo = ''; D.moPA = ''; ve(); }
+  function taiLai() { D.khoa = ''; D.mo = ''; D.moPA = ''; if (window.VIEC_NHANH && window.VIEC_NHANH.lamCu) window.VIEC_NHANH.lamCu(); ve(); }
 
   function ganPhamVi() {
     tat('[data-cs]', function (b) { D.cs = b.getAttribute('data-cs'); D.mo = ''; D.moPA = ''; ve(); });
@@ -695,11 +742,12 @@
     if (b) b.addEventListener('click', function () { nhan(NHAC.ids, b, function () { ganNhac(vung); }); });
   }
 
-  window.DAY_THAY = { ve: ve, ganNhac: ganNhac, moNgay: function (ngay) { D.ngay = ngay || homNayISO(); D.khung = 'bo-tri'; },
+  window.DAY_THAY = { ve: ve, ganNhac: ganNhac, tomTat: tomTat, moNgay: function (ngay) { D.ngay = ngay || homNayISO(); D.khung = 'bo-tri'; },
     // Mở thẳng một khung của thẻ Dạy thay từ nơi khác (trang chủ, hàng Việc hằng ngày)
-    moKhung: function (khung) {
-      D.khung = khung || 'bo-tri';
-      if (D.khung === 'bo-tri') D.ngay = homNayISO();
+    moKhung: function (khung, ngay) {
+      var bao = khung === 'bao-nghi';   // mở sẵn form Báo nghỉ thay giáo viên
+      D.khung = bao ? 'bo-tri' : (khung || 'bo-tri');
+      if (D.khung === 'bo-tri') { D.ngay = ngay || homNayISO(); D.moBao = bao; }
       if (window.DH) window.DH.moTab('tkb');
       if (window.TKB_XEM && window.TKB_XEM.moDayThay) window.TKB_XEM.moDayThay();
     } };
