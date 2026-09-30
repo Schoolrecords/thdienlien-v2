@@ -2900,13 +2900,6 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .lh-so > div.canh dd { color: var(--canh); }
 .lh-ghi { font-size: 12.5px; color: var(--chu-mo); margin: 8px 0 0; line-height: 1.6; }
 .lh-cho, .lh-rong { padding: 24px 0; color: var(--chu-mo); font-size: 14px; }
-.lh-cua-toi {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 14px 0 0; padding: 8px 14px;
-  background: #fff; border: 1px solid var(--vien); border-left: 3px solid var(--dam); border-radius: 4px; font-size: 14px;
-}
-.lh-cua-toi .nhan { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--chu-mo); }
-.lh-cua-toi b { color: var(--chu); }
-.lh-cua-toi > span:not(.nhan) { color: var(--chu-mo); }
 .lh-lien {
   font: inherit; font-size: 14px; font-weight: 600; color: var(--chinh); background: none; border: 0;
   padding: 4px 0; margin-right: 16px; cursor: pointer; white-space: nowrap;
@@ -2941,6 +2934,10 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .lh-dong:hover td { background: #f7f9fc; }
 .lh-dong:focus-visible { outline: 2px solid var(--chinh); outline-offset: -2px; }
 .lh-dong .c-lop b { font-weight: 700; }
+.lh-nhom-toi td { color: var(--dam); }
+.lh-dong.lh-toi td { background: #eef4ff; }
+.lh-dong.lh-toi td:first-child { box-shadow: inset 3px 0 0 var(--dam); }
+.lh-dong.lh-toi:hover td { background: #e3edff; }
 .lh-dong .c-lop small { display: block; font-size: 12px; color: var(--chu-mo); line-height: 1.3; padding-bottom: 4px; }
 .lh-chua { color: var(--canh); font-size: 13px; font-weight: 600; }
 .lh-nhat { color: var(--chu-nhat); }

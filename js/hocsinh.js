@@ -525,14 +525,6 @@
       }).join('') + '</dl>' +
       (coLoc ? '<p class="lh-ghi">Số liệu theo bộ lọc đang chọn.</p>' : '');
 
-    // "Lớp của tôi" — người đang xem là GVCN (năm đang xem)
-    LOP_TOI.filter(function (l) { return LOP[l]; }).forEach(function (l) {
-      h += '<div class="lh-cua-toi"><span class="nhan">Lớp của tôi</span><b>Lớp ' + thoat(l) + '</b>' +
-        '<span>' + LOP[l].em.length + ' học sinh</span>' +
-        '<button type="button" class="lh-lien" data-lh-scn="' + thoat(l) + '">Mở sổ chủ nhiệm</button>' +
-        '<button type="button" class="lh-lien" data-lh-lop="' + thoat(l) + '">Danh sách học sinh</button></div>';
-    });
-
     if (!ds.length) {
       o.innerHTML = h + '<p class="lh-rong">Không có lớp nào khớp bộ lọc.</p>';
       return;
@@ -565,12 +557,28 @@
         '<span class="lh-mui">' + (dang ? (SAP.chieu > 0 ? '▲' : '▼') : '') + '</span></button></th>';
     }).join('') + '<th class="tt"><span class="lh-an">Thao tác</span></th></tr></thead><tbody>';
 
+    // "Lớp chủ nhiệm của tôi" GHIM ĐẦU BẢNG (cô Hoàn Mỹ 5E QC1 đề xuất 1/10/2026:
+    // trường 60 lớp, cuộn tìm lớp mình rất khó). Lớp vẫn nằm ở khối của nó (tô
+    // nền) để số lớp/HS mỗi khối không lệch; dòng ghim không đánh số TT. Đang gõ
+    // ô tìm thì không ghim — kết quả đã ngắn, ghim chỉ thành dòng lặp.
+    var toi = LOC.tim.trim() ? [] : ds.filter(function (x) { return LOP_TOI.indexOf(x.lop) >= 0; });
+    if (toi.length) {
+      h += '<tr class="lh-nhom lh-nhom-toi"><td colspan="' + soCot + '">Lớp chủ nhiệm của tôi</td></tr>';
+      toi.forEach(function (x) { h += dongLop(x, '★'); });
+    }
+
     Object.keys(theoKhoi).sort(function (a, b) { return a - b; }).forEach(function (k) {
       var nhom = theoKhoi[k].sort(so), tk = tong(nhom);
       h += '<tr class="lh-nhom"><td colspan="' + soCot + '">Khối ' + thoat(k) + ' <span>· ' + tk.lop + ' lớp · ' + tk.hs + ' HS</span></td></tr>';
-      nhom.forEach(function (x) {
-        h += '<tr class="lh-dong" data-lh-lop="' + thoat(x.lop) + '" tabindex="0" title="Bấm để xem danh sách học sinh lớp ' + thoat(x.lop) + '">' +
-          '<td class="so c-stt">' + (++stt) + '</td>' +
+      nhom.forEach(function (x) { h += dongLop(x, ++stt); });
+    });
+    h += '</tbody></table></div>';
+    o.innerHTML = h;
+
+    function dongLop(x, soTT) {
+      var cuaToi = LOP_TOI.indexOf(x.lop) >= 0;
+      return '<tr class="lh-dong' + (cuaToi ? ' lh-toi' : '') + '" data-lh-lop="' + thoat(x.lop) + '" tabindex="0" title="Bấm để xem danh sách học sinh lớp ' + thoat(x.lop) + '">' +
+          '<td class="so c-stt">' + soTT + '</td>' +
           '<td class="c-lop"><b>' + thoat(x.lop) + '</b>' +
           (x.khopHs.length ? '<small>' + x.khopHs.slice(0, 2).map(thoat).join(', ') +
             (x.khopHs.length > 2 ? ' và ' + (x.khopHs.length - 2) + ' em khác' : '') + '</small>' : '') + '</td>' +
@@ -582,10 +590,7 @@
           '<td class="so c-nn"><span class="lh-dv">Nam </span>' + x.nam + ' / <span class="lh-dv">Nữ </span>' + x.nu + '</td>' +
           '<td class="so c-hn">' + (x.hn ? '<span class="lh-dv">Hoà nhập </span>' + x.hn : '<span class="lh-nhat">0</span>') + '</td>' +
           '<td class="tt c-tt">' + oSo(x.lop) + oDuyet(x.lop) + O_SDB + '</td></tr>';
-      });
-    });
-    h += '</tbody></table></div>';
-    o.innerHTML = h;
+    }
   }
 
   // ── Bảng tổng hợp điểm trường × khối (thu gọn dưới bảng lớp) ──
