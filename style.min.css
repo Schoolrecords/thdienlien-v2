@@ -3187,3 +3187,4 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-nut { display: flex; width: 100%; }
   .scn-dd-nut button { flex: 1 1 0; min-height: 46px; font-size: 14.5px; }
 }
+#bm-xt .scn-xt-hop { width: min(1240px, 100%); }

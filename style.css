@@ -4244,3 +4244,7 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-nut { display: flex; width: 100%; }
   .scn-dd-nut button { flex: 1 1 0; min-height: 46px; font-size: 14.5px; }
 }
+
+/* Khung xem trước BIỂU MẪU (js/bieu-mau.js, #bm-xt) rộng hơn khung Sổ chủ nhiệm ~19% — thầy Chung 30/9/2026:
+   "cửa sổ Danh mục Hồ sơ hơi hẹp, chỉnh rộng thêm 15–20%". Tờ A4 ngang (29,7 cm ≈ 1123 px) vừa trọn, không phải cuộn ngang. */
+#bm-xt .scn-xt-hop { width: min(1240px, 100%); }
