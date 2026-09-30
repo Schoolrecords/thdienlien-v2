@@ -464,6 +464,23 @@
       return Promise.resolve(q).then(function (r) { return r || { data: [] }; }, function () { return { data: [] }; });
     } catch (e) { return Promise.resolve({ data: [] }); }
   }
+  // GVCN DỰ KIẾN theo Gmail (sql/70, lop_hoc.gvcn_email). 🔴 BẮT BUỘC ĐỌC THÊM:
+  //  phan_cong_day cần nguoi_dung_id, nên người CHƯA ĐĂNG NHẬP lần nào không có
+  //  dòng chủ nhiệm nào ở đó → bản 30/9 đẩy cả loạt cô chủ nhiệm (Đặng Thị Dung
+  //  lớp 3 QC1…) sang "Giáo viên khác", các cô không tìm thấy tên mình.
+  //  Trường chưa chạy sql/70 (thiếu cột) → lỗi → coi như rỗng, không hỏng danh bạ.
+  function docGvcnDuKien(may, nam) {
+    if (!nam) return Promise.resolve({ data: [] });
+    try {
+      return Promise.resolve(may.from('lop_hoc').select('lop,gvcn_email,gvcn_ten').eq('nam_hoc', nam))
+        .then(function (r) { return r || { data: [] }; }, function () { return { data: [] }; });
+    } catch (e) { return Promise.resolve({ data: [] }); }
+  }
+  // Khối của một tên lớp: "3A" → 3 · "Lớp 3A" / "DL-3A" → 3. Không ra 1…5 thì 0.
+  function khoiCuaLop(lop) {
+    var m = String(lop || '').trim().match(/(?:^|[^0-9])([1-5])(?![0-9])/);
+    return m ? +m[1] : 0;
+  }
 
   function napCBGV(may) {
     var nam = (window.CAU_HINH || {}).NAM_HOC || '';
@@ -475,7 +492,8 @@
       may.from('co_so').select('ma,ten,loai,so_tt').eq('hoat_dong', true).order('so_tt'),
       // Phân công năm nay: lớp chủ nhiệm → khối; môn NN1 → giáo viên Tiếng Anh.
       // Hỏng (chưa có bảng, RLS) thì chia theo tổ / chức vụ — không làm hỏng danh bạ.
-      docPhanCong(may, nam)
+      docPhanCong(may, nam),
+      docGvcnDuKien(may, nam)
     ]).then(function (kq) {
       if (kq[0].error) return; // GV chưa hoạt động thì RLS chặn — bỏ qua im lặng
       var moi = kq[0].data || [];
@@ -492,9 +510,33 @@
         var e = emailCuaId[p.nguoi_dung_id];
         if (!e) return;
         var x = pc[e] = pc[e] || { khoi: 0, ta: false };
-        var k = +String(p.lop || '').trim().charAt(0);
-        if (p.la_chu_nhiem && k >= 1 && k <= 5) { coPhanCongCN = true; if (!x.khoi || k < x.khoi) x.khoi = k; }
+        var k = khoiCuaLop(p.lop);
+        if (p.la_chu_nhiem && k) { coPhanCongCN = true; if (!x.khoi || k < x.khoi) x.khoi = k; }
         if (p.mon_ma === 'NN1') x.ta = true;
+      });
+      // GVCN dự kiến (người chưa đăng nhập): khớp theo Gmail ở danh sách mời.
+      // Lớp chưa ghi Gmail mà gvcn_ten trùng ĐÚNG MỘT người trong danh sách mời
+      // thì mới nhận theo tên — hai người trùng tên thì bỏ, không đoán.
+      var soTen = {}, emailTheoTen = {};
+      moi.forEach(function (m) {
+        var t = boDau(m.ho_ten).replace(/\s+/g, ' ').trim();
+        if (!t || m.la_ky_thuat) return;
+        var k = String(m.email_chinh || m.email || '').trim().toLowerCase();
+        if (emailTheoTen[t] === undefined) { emailTheoTen[t] = k; soTen[t] = 1; }
+        else if (emailTheoTen[t] !== k) soTen[t]++;
+      });
+      ((kq[4] && !kq[4].error && kq[4].data) || []).forEach(function (l) {
+        var k = khoiCuaLop(l.lop);
+        if (!k) return;
+        var e = String(l.gvcn_email || '').trim().toLowerCase();
+        if (!e) {
+          var t = boDau(l.gvcn_ten).replace(/\s+/g, ' ').trim();
+          if (!t || soTen[t] !== 1) return;
+          e = emailTheoTen[t];
+        }
+        coPhanCongCN = true;
+        var x = pc[e] = pc[e] || { khoi: 0, ta: false };
+        if (!x.khoi || k < x.khoi) x.khoi = k;
       });
 
       var TEN_VAI_TRO = {
