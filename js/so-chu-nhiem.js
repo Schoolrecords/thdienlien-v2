@@ -590,6 +590,9 @@
       .then(function (ds) {
         M.hs = ds.filter(function (d) { return d.hoc_sinh && (!d.trang_thai || d.trang_thai === 'dang_hoc'); })
           .map(function (d) { return d.hoc_sinh; }).sort(sapTen);
+        // 30/9/2026: em đã rời lớp vẫn hiện ở thẻ Học sinh để GVCN bấm "Học lại" nếu đánh dấu nhầm
+        S.hsRoi = ds.filter(function (d) { return d.hoc_sinh && d.trang_thai && d.trang_thai !== 'dang_hoc'; })
+          .map(function (d) { return Object.assign({}, d.hoc_sinh, { trang_thai: d.trang_thai }); }).sort(sapTen);
         var ma = M.hs.map(function (h) { return h.ma; });
         var coMa = ma.length ? [['hoc_sinh_ma', ma]] : null;
         return Promise.all([
@@ -1120,7 +1123,15 @@
         '<label class="scn-nhan ngang">Ngày bầu <input type="date" id="bcs-ngay" class="scn-o" value="' + thoat((S.lop && S.lop.ngay_bau) || '') + '"></label>' +
         '<button class="scn-nut" data-act="luu-bcs">Lưu ban cán sự</button></div>'
       : (bcs.length ? '<ul class="scn-ds">' + bcs.map(function (b) { return '<li>' + thoat(b.chuc_vu) + ': <b>' + thoat(b.ho_ten || tenHS(b.hoc_sinh_ma)) + '</b></li>'; }).join('') + '</ul>' : rong('Chưa ghi ban cán sự.'))));
-    if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.');
+    // 30/9/2026 thầy Chung: "sửa và thêm thông tin học sinh" — nhập cả lớp một bảng (dán từ Excel),
+    // sửa họ tên / ngày sinh…, thêm em chuyển đến, đánh dấu chuyển đi (sql/75).
+    var suaHS = quyenSuaHS();
+    h += '<div class="scn-hang scn-hs-cong-cu">' +
+      (ghi && !nhayCam ? '<button class="scn-nut' + (D.hsLuoi ? ' phu' : '') + '" data-act="hs-luoi">' + (D.hsLuoi ? 'Đóng bảng nhập' : '✏ Nhập thông tin cả lớp') + '</button>' : '') +
+      (suaHS ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') + '</div>';
+    if (suaHS && D.hsThem) h += veFormThemHS();
+    if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.') + veHSRoi(suaHS);
+    if (D.hsLuoi && ghi && !nhayCam) return h + veLuoiHS() + veHSRoi(suaHS);
     h += '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>TT</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới</th><th>Ghi chú</th></tr></thead><tbody>' +
       D.hs.map(function (hs, i) {
         var c = S.hoanCanh[hs.ma] || {}, chip = [];
@@ -1131,10 +1142,67 @@
         var mo = D.hsMo === hs.ma;
         return '<tr class="' + (mo ? 'mo' : '') + '"><td>' + (i + 1) + '</td><td><button class="scn-lien" data-hs="' + thoat(hs.ma) + '">' + thoat(hs.ho_ten) + '</button></td>' +
           '<td>' + ngayVN(hs.ngay_sinh) + '</td><td>' + thoat(hs.gioi_tinh || '') + '</td><td>' + chip.map(function (x) { return '<span class="scn-chip">' + thoat(x) + '</span>'; }).join(' ') + '</td></tr>' +
-          (mo ? '<tr class="scn-mo-rong"><td colspan="5">' + (nhayCam ? rong('Không đủ quyền xem hồ sơ hoàn cảnh (dữ liệu nhạy cảm — chỉ GVCN và Ban giám hiệu).') : veFormHoanCanh(hs, c, ghi)) + '</td></tr>' : '');
+          (mo ? '<tr class="scn-mo-rong"><td colspan="5">' + (suaHS ? veFormCoBan(hs) : '') + (nhayCam ? rong('Không đủ quyền xem hồ sơ hoàn cảnh (dữ liệu nhạy cảm — chỉ GVCN và Ban giám hiệu).') : veFormHoanCanh(hs, c, ghi)) + '</td></tr>' : '');
       }).join('') + '</tbody></table></div>';
+    h += veHSRoi(suaHS);
     h += '<p class="scn-ghi-chu">Hồ sơ hoàn cảnh là dữ liệu cá nhân nhạy cảm (Luật Bảo vệ dữ liệu cá nhân 2025): chỉ GVCN lớp và Ban giám hiệu xem; không chia sẻ lên nhóm Zalo. Số định danh cá nhân không hiển thị ở đây.</p>';
     return h;
+  }
+  // ── Sửa / thêm học sinh (sql/75: GVCN lớp đúng năm hoặc Ban giám hiệu) ──
+  function quyenSuaHS() { return !may() || laGVCNLopNay() || laBGH(); }
+  var TEN_ROI = { chuyen_di: 'Chuyển đi', thoi_hoc: 'Thôi học', bao_luu: 'Bảo lưu' };
+  function oCoBan(p, hs) {
+    return '<div class="scn-hang">' + oNgan(p + 'ten', hs.ho_ten, 'Họ và tên', '', ' autocomplete="off"') +
+      '<label class="scn-nhan ngang">Ngày sinh <input type="date" id="' + p + 'ns" class="scn-o" value="' + thoat(hs.ngay_sinh || '') + '"></label>' +
+      '<label class="scn-nhan ngang">Giới tính ' + oChon(p + 'gt', [['', '—'], 'Nam', 'Nữ'], hs.gioi_tinh || '') + '</label>' +
+      oNgan(p + 'dt', hs.dan_toc, 'Dân tộc') +
+      '<label class="scn-nhan ngang"><input type="checkbox" id="' + p + 'hn"' + (hs.khuyet_tat_hoa_nhap ? ' checked' : '') + '> Học hòa nhập</label></div>';
+  }
+  function veFormThemHS() {
+    return the('Thêm học sinh vào lớp ' + thoat(D.lop), '<div class="scn-form">' + oCoBan('them-', { dan_toc: 'Kinh' }) +
+      '<div class="scn-hang"><button class="scn-nut" data-act="luu-them">Thêm vào lớp</button></div>' +
+      '<p class="scn-ghi-chu">Dùng cho học sinh chuyển đến. Em mới mang <b>mã tạm (TAM-…)</b> cho tới khi có mã trên CSDL ngành — Ban giám hiệu đổi sang mã thật ở màn nạp Học sinh.</p></div>');
+  }
+  function veFormCoBan(hs) {
+    return '<div class="scn-form scn-co-ban"><p class="scn-nhan"><b>Thông tin cơ bản</b></p>' + oCoBan('cb-', hs) +
+      '<div class="scn-hang"><button class="scn-nut" data-act="luu-cb" data-ma="' + thoat(hs.ma) + '">Lưu thông tin cơ bản</button>' +
+      oChon('cb-tt', [['chuyen_di', 'Chuyển đi'], ['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']], 'chuyen_di') +
+      '<button class="scn-nut phu" data-act="doi-tt" data-ma="' + thoat(hs.ma) + '">Đánh dấu rời lớp</button></div>' +
+      (/^TAM-/.test(hs.ma) ? '<p class="scn-ghi-chu">Em đang mang mã tạm ' + thoat(hs.ma) + '.</p>' : '') + '</div>';
+  }
+  function veHSRoi(suaHS) {
+    var ds = (D.so && D.so.hsRoi) || [];
+    if (!ds.length) return '';
+    return the('Học sinh đã rời lớp (' + ds.length + ')', '<ul class="scn-ds">' + ds.map(function (x) {
+      return '<li><b>' + thoat(x.ho_ten) + '</b> · ' + thoat(TEN_ROI[x.trang_thai] || x.trang_thai) +
+        (suaHS ? ' <button class="scn-nut phu nho" data-act="hoc-lai" data-ma="' + thoat(x.ma) + '">Học lại lớp này</button>' : '') + '</li>';
+    }).join('') + '</ul>');
+  }
+  // Bảng nhập cả lớp — đúng các cột trang "Thông tin về học sinh" + các diện đếm ở trang "Thông tin cơ bản về lớp"
+  var COT_LUOI = [['sdt', 'Số điện thoại'], ['dia_chi', 'Địa chỉ'], ['xom', 'Xóm'], ['hoan_canh_gd', 'Hoàn cảnh gia đình', 1],
+    ['dac_diem', 'Đặc điểm cá nhân (khả năng vượt trội, hạn chế về học tập, NL, PC)', 1]];
+  var CS_LUOI = [['ho_ngheo', 'Hộ nghèo'], ['can_ngheo', 'Cận nghèo'], ['mo_coi', 'Mồ côi'], ['nguoi_co_cong', 'Con TB, LS, người có công']];
+  function veLuoiHS() {
+    var S = D.so;
+    var o = function (c, k, j) {
+      var gt = thoat(c[k[0]] || '');
+      return '<td>' + (k[2] ? '<textarea class="scn-o" rows="2" data-lc="' + k[0] + '" data-cot="' + j + '">' + gt + '</textarea>'
+        : '<input class="scn-o" data-lc="' + k[0] + '" data-cot="' + j + '" value="' + gt + '"' + (k[0] === 'sdt' ? ' inputmode="tel"' : '') + '>') + '</td>';
+    };
+    var tich = function (k, co) { return '<td class="scn-luoi-tich"><input type="checkbox" data-lc="' + k + '"' + (co ? ' checked' : '') + '></td>'; };
+    return '<p class="scn-ghi-chu">Gõ thẳng vào ô rồi bấm <b>Lưu thông tin cả lớp</b> (chỉ dòng có thay đổi mới được ghi). Có sẵn trong Excel: bôi đen các ô theo đúng thứ tự cột ' +
+      '<b>Số điện thoại → Địa chỉ → Xóm → Hoàn cảnh → Đặc điểm</b> (không kèm cột họ tên), Ctrl+C, bấm vào ô của em đầu tiên ở đây rồi Ctrl+V — app rải xuống các dòng.</p>' +
+      (D.co71 === false ? '<div class="hd-kiem vang">Cơ sở dữ liệu của trường chưa chạy <b>sql/71</b> — các cột này chưa lưu được.</div>' : '') +
+      '<div class="scn-bang-boc"><table class="scn-bang scn-luoi"><thead><tr><th>TT</th><th>Họ và tên</th>' +
+      COT_LUOI.map(function (k) { return '<th>' + thoat(k[1]) + '</th>'; }).join('') + '<th>Ngoài xã</th>' +
+      CS_LUOI.map(function (k) { return '<th>' + thoat(k[1]) + '</th>'; }).join('') + '<th>Cần quan tâm</th></tr></thead><tbody>' +
+      D.hs.map(function (hs, i) {
+        var c = S.hoanCanh[hs.ma] || {}, cs = c.dien_chinh_sach || [];
+        return '<tr data-luoi="' + thoat(hs.ma) + '"><td>' + (i + 1) + '</td><td class="scn-luoi-ten">' + thoat(hs.ho_ten) + '</td>' +
+          COT_LUOI.map(function (k, j) { return o(c, k, j); }).join('') + tich('ngoai_xa', c.ngoai_xa) +
+          CS_LUOI.map(function (k) { return tich('cs_' + k[0], cs.indexOf(k[0]) >= 0); }).join('') + tich('can_quan_tam', c.can_quan_tam) + '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="scn-hang"><button class="scn-nut" data-act="luu-luoi">Lưu thông tin cả lớp</button><button class="scn-nut phu" data-act="hs-luoi">Đóng, không lưu</button></div>';
   }
   function oNgan(id, gt, nhan, k, them) {
     return '<label class="scn-nhan ngang">' + thoat(nhan) + ' <input id="' + id + '" class="scn-o" value="' + thoat(gt || '') + '"' + (them || '') + (k || '') + '></label>';
@@ -2495,6 +2563,12 @@
       'luu-ht': function () { luuHoTro(a('data-id'), b); }, 'luu-tk': function () { luuTongKet(b); },
       'khoa': function () { datKhoa(giaTri('scn-khoa') || null, b); }, 'mo-khoa': function () { datKhoa(null, b); },
       'xem-so': function () { moXem(); }, 'xem-bc': xemBanChup,
+      'hs-luoi': function () { D.hsLuoi = !D.hsLuoi; D.daCham = D.hsLuoi; ve(); },
+      'hs-them-mo': function () { D.hsThem = !D.hsThem; ve(); },
+      'luu-luoi': function () { luuLuoi(b); }, 'luu-them': function () { luuCoBan(null, b); },
+      'luu-cb': function () { luuCoBan(a('data-ma'), b); },
+      'doi-tt': function () { doiTrangThaiHS(a('data-ma'), giaTri('cb-tt') || 'chuyen_di', b); },
+      'hoc-lai': function () { doiTrangThaiHS(a('data-ma'), 'dang_hoc', b); },
       'dd-thang': function () {
         if (!window.BIEU_MAU || !D.lop || !D.so) return;
         window.BIEU_MAU.diemDanhLop({ lop: D.lop, nam: D.nam, ym: a('data-ym'), hs: D.hs, vang: D.so.vang, ddl: D.so.ddl,
@@ -2565,6 +2639,106 @@
     var hoi = ngay ? 'Khoá sổ lớp ' + D.lop + ' đến hết ngày ' + ngayVN(ngay) + '? Giáo viên sẽ không sửa được các mục có ngày từ đó trở về trước.' : 'Mở khoá sổ lớp ' + D.lop + '?';
     var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Khoá sổ chủ nhiệm', nutOK: ngay ? 'Khoá sổ' : 'Mở khoá' }) : Promise.resolve(window.confirm(hoi));
     xn.then(function (ok) { if (ok) luuSCNLop({ khoa_den: ngay }, nut, ngay ? 'Đã khoá sổ đến ' + ngayVN(ngay) + '.' : 'Đã mở khoá sổ.'); });
+  }
+  // ── Lưu bảng nhập cả lớp: một lượt upsert các dòng có thay đổi ──
+  function luuLuoi(nut) {
+    var S = D.so, ds = [];
+    var giong = function (x, y) { return (x == null || x === '' ? null : x) === (y == null || y === '' ? null : y); };
+    Array.prototype.slice.call(EL.querySelectorAll('tr[data-luoi]')).forEach(function (tr) {
+      var ma = tr.getAttribute('data-luoi'), c = S.hoanCanh[ma] || {};
+      var v = function (k) { var o = tr.querySelector('[data-lc="' + k + '"]'); return !o ? null : o.type === 'checkbox' ? o.checked : (String(o.value || '').trim() || null); };
+      var cs = (c.dien_chinh_sach || []).filter(function (x) { return !CS_LUOI.some(function (k) { return k[0] === x; }); });
+      CS_LUOI.forEach(function (k) { if (v('cs_' + k[0])) cs.push(k[0]); });
+      var moi = { sdt: v('sdt'), dia_chi: v('dia_chi'), xom: v('xom'), hoan_canh_gd: v('hoan_canh_gd'), dac_diem: v('dac_diem'),
+        ngoai_xa: !!v('ngoai_xa'), can_quan_tam: !!v('can_quan_tam'), dien_chinh_sach: cs };
+      var doi = !giong(moi.sdt, c.sdt) || !giong(moi.dia_chi, c.dia_chi) || !giong(moi.xom, c.xom) || !giong(moi.hoan_canh_gd, c.hoan_canh_gd) ||
+        !giong(moi.dac_diem, c.dac_diem) || moi.ngoai_xa !== !!c.ngoai_xa || moi.can_quan_tam !== !!c.can_quan_tam ||
+        cs.slice().sort().join() !== (c.dien_chinh_sach || []).slice().sort().join();
+      if (doi) ds.push(Object.assign({ nam_hoc: D.nam, hoc_sinh_ma: ma, lop: D.lop }, moi));
+    });
+    if (!ds.length) { bao('Chưa có ô nào thay đổi.'); return; }
+    if (D.co71 === false) { bao('Cơ sở dữ liệu của trường chưa chạy sql/71 — chưa lưu được các cột này.'); return; }
+    var ap = function (rows) { rows.forEach(function (r) { S.hoanCanh[r.hoc_sinh_ma] = Object.assign({}, S.hoanCanh[r.hoc_sinh_ma] || {}, r); }); };
+    if (!may()) return xemThu(function () { ap(ds); D.hsLuoi = false; D.daCham = false; });
+    ghiMay(may().from('scn_hoan_canh').upsert(ds, { onConflict: 'nam_hoc,hoc_sinh_ma' }).select(), nut, function (d) {
+      ap(d && d.length ? d : ds); D.hsLuoi = false; D.daCham = false;
+      bao('Đã lưu thông tin ' + ds.length + ' học sinh.'); ve();
+    });
+  }
+  // Dán khối ô từ Excel vào bảng nhập: rải sang phải theo cột, xuống dưới theo dòng
+  document.addEventListener('paste', function (e) {
+    var o = e.target;
+    if (!o || !o.getAttribute || o.getAttribute('data-cot') === null || !o.closest || !o.closest('.scn-luoi')) return;
+    var cd = e.clipboardData || window.clipboardData;
+    var chu = String((cd && cd.getData('text')) || '').replace(/\r/g, '').replace(/\n+$/, '');
+    if (!/[\t\n]/.test(chu)) return;
+    e.preventDefault();
+    var tr = o.closest('tr'), dsTr = Array.prototype.slice.call(tr.parentNode.children), i0 = dsTr.indexOf(tr), c0 = +o.getAttribute('data-cot');
+    var dong = chu.split('\n'), n = 0, soDong = 0;
+    dong.forEach(function (d, di) {
+      var t = dsTr[i0 + di]; if (!t) return; soDong++;
+      d.split('\t').forEach(function (gt, dj) {
+        var x = t.querySelector('[data-cot="' + (c0 + dj) + '"]');
+        if (x) { x.value = gt.replace(/^"([\s\S]*)"$/, '$1').trim(); n++; }
+      });
+    });
+    D.daCham = true;
+    bao('Đã dán ' + n + ' ô vào ' + soDong + ' dòng — kiểm tra lại rồi bấm Lưu thông tin cả lớp.' +
+      (dong.length > soDong ? ' ' + (dong.length - soDong) + ' dòng thừa (nhiều hơn số học sinh còn lại) đã bỏ qua.' : ''));
+  });
+  // Gọi hàm sql/75; thiếu hàm thì nói rõ tệp cần chạy
+  function goiHam(ten, tham, nut, xong) {
+    if (nut) nut.disabled = true;
+    may().rpc(ten, tham).then(function (r) {
+      if (r.error) throw r.error;
+      xong(r.data);
+    }).catch(function (e) {
+      var m = loiChu(e);
+      if (nut) nut.disabled = false;
+      bao('Chưa lưu được: ' + (/Could not find the function|does not exist|schema cache/i.test(m)
+        ? 'cơ sở dữ liệu của trường chưa chạy sql/75-scn-sua-hoc-sinh.sql — nhờ người phụ trách hệ thống chạy.' : m));
+    });
+  }
+  function napLaiLop() { D.dangNap = true; ve(); napLop().then(function () { ve(); }); }
+  function luuCoBan(ma, nut) {
+    var p = ma ? 'cb-' : 'them-', o = document.getElementById(p + 'hn');
+    var tt = { ho_ten: giaTri(p + 'ten').replace(/\s+/g, ' '), ngay_sinh: giaTri(p + 'ns') || null, gioi_tinh: giaTri(p + 'gt') || null,
+      dan_toc: giaTri(p + 'dt') || null, khuyet_tat_hoa_nhap: !!(o && o.checked) };
+    if (!tt.ho_ten) { bao('Nhập họ và tên học sinh.'); return; }
+    if (!may()) {
+      return xemThu(function () {
+        if (ma) Object.assign(D.hs.filter(function (x) { return x.ma === ma; })[0] || {}, tt);
+        else D.hs.push(Object.assign({ ma: 'TAM-MAU-' + (D.hs.length + 1) }, tt));
+        D.hs.sort(sapTen); D.hsThem = false;
+      });
+    }
+    goiHam('scn_luu_hoc_sinh', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_ho_ten: tt.ho_ten, p_ngay_sinh: tt.ngay_sinh,
+      p_gioi_tinh: tt.gioi_tinh, p_dan_toc: tt.dan_toc, p_khuyet_tat: tt.khuyet_tat_hoa_nhap }, nut, function (maMoi) {
+      bao(ma ? 'Đã sửa thông tin ' + tt.ho_ten + '.' : 'Đã thêm ' + tt.ho_ten + ' vào lớp ' + D.lop + ' (mã tạm ' + maMoi + ').');
+      D.hsThem = false; napLaiLop();
+    });
+  }
+  function doiTrangThaiHS(ma, tt, nut) {
+    var roi = ((D.so && D.so.hsRoi) || []).filter(function (x) { return x.ma === ma; })[0];
+    var ten = roi ? roi.ho_ten : tenHS(ma);
+    var hoi = tt === 'dang_hoc' ? 'Đưa ' + ten + ' trở lại danh sách đang học của lớp ' + D.lop + '?'
+      : 'Đánh dấu ' + ten + ': ' + (TEN_ROI[tt] || tt).toLowerCase() + '? Em sẽ không còn trong sĩ số, điểm danh của lớp; hồ sơ, điểm danh cũ vẫn giữ.';
+    var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Học sinh lớp ' + D.lop, nutOK: 'Đồng ý' }) : Promise.resolve(window.confirm(hoi));
+    xn.then(function (ok) {
+      if (!ok) return;
+      if (!may()) {
+        return xemThu(function () {
+          var S = D.so; S.hsRoi = S.hsRoi || [];
+          if (tt === 'dang_hoc') { S.hsRoi = S.hsRoi.filter(function (h) { return h.ma !== ma; }); if (roi) { D.hs.push(roi); D.hs.sort(sapTen); } }
+          else { var y = D.hs.filter(function (h) { return h.ma === ma; })[0]; D.hs = D.hs.filter(function (h) { return h.ma !== ma; }); if (y) S.hsRoi.push(Object.assign({}, y, { trang_thai: tt })); }
+          D.hsMo = '';
+        });
+      }
+      goiHam('scn_doi_trang_thai_hs', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_trang_thai: tt }, nut, function () {
+        bao(tt === 'dang_hoc' ? 'Đã đưa ' + ten + ' trở lại lớp.' : 'Đã ghi ' + ten + ': ' + (TEN_ROI[tt] || tt).toLowerCase() + '.');
+        napLaiLop();
+      });
+    });
   }
   function luuHoanCanh(ma, nut) {
     var cs = Array.prototype.slice.call(EL.querySelectorAll('[data-cs]')).filter(function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-cs'); });

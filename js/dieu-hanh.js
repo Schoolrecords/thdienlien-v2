@@ -3714,60 +3714,89 @@
       if (!W) { window.notify('Chưa nạp được bộ xuất Word (js/xuat-word.js).'); return; }
       if (!CONG_KQ || CONG_KQ.thang !== CONG_THANG) { window.notify('Bảng công chưa tính xong.'); return; }
       if (!laQT()) { window.notify('Chỉ Ban giám hiệu mới xuất được bảng công toàn trường.'); return; }
-      var k = CONG_KQ, nhieuCS = DL.coSo.length > 1;
-      // Bảng gắn class "co-dinh" thì PHẢI khai bề rộng từng cột, nếu không
-      // Word tự dàn theo nội dung: cột họ tên co lại còn hơn 4cm, "Nguyễn Thị
-      // Thanh Huyền" bị bẻ ba dòng trong khi năm cột số bỏ trống một nửa.
-      var rTen = nhieuCS ? 20 : 26, rCS = nhieuCS ? 12 : 0;
-      var rLyDo = 8, rCuoi = (100 - rTen - rCS - rLyDo * CONG_LY_DO.length) / 3;
-      var dau = '<tr><th style="text-align:left;width:' + rTen + '%">Họ và tên</th>' +
-        (nhieuCS ? '<th style="width:' + rCS + '%">Cơ sở</th>' : '') +
-        CONG_LY_DO.map(function (l) {
-          return '<th style="width:' + rLyDo + '%">' + W.chan(l) + '</th>';
-        }).join('') +
-        '<th style="width:' + rCuoi + '%">Tổng vắng</th>' +
-        '<th style="width:' + rCuoi + '%">Có mặt</th>' +
-        '<th style="width:' + rCuoi + '%">Báo muộn</th></tr>';
-      var than = k.hang.map(function (h, i) {
-        return '<tr><td>' + (i + 1) + '. ' + W.chan(h.ten) + '</td>' +
-          (nhieuCS ? '<td class="giua">' + W.chan(tenCoSo(h.coSo)) + '</td>' : '') +
+      var k = CONG_KQ, ym = CONG_THANG, nhieuCS = DL.coSo.length > 1;
+      // 30/9/2026 (sổ dự án 107): cộng thêm SỐ TIẾT DẠY THAY trong tháng của từng người — đọc
+      // bảng day_thay (người thay đã được phân, không tính tiết huỷ / lớp tự quản).
+      var docDT = function () {
+        if (!THAT || !window.MAY_CHU) return Promise.resolve({ ok: false, email: {}, ten: {} });
+        var p = ym.split('-'), cuoi = ym + '-' + String(new Date(+p[0], +p[1], 0).getDate()).padStart(2, '0');
+        return window.MAY_CHU.from('day_thay').select('gv_thay_email, gv_thay_ten, gv_thay_nhan')
+          .gte('ngay', ym + '-01').lte('ngay', cuoi).neq('trang_thai', 'huy').limit(5000)
+          .then(function (r) {
+            if (r.error) return { ok: false, email: {}, ten: {} };
+            var kq = { ok: true, email: {}, ten: {} };
+            (r.data || []).forEach(function (d) {
+              var e = String(d.gv_thay_email || '').toLowerCase(), t = String(d.gv_thay_ten || d.gv_thay_nhan || '').trim();
+              if (e) kq.email[e] = (kq.email[e] || 0) + 1;
+              else if (t) kq.ten[t] = (kq.ten[t] || 0) + 1;
+            });
+            return kq;
+          }, function () { return { ok: false, email: {}, ten: {} }; });
+      };
+      var dung = function (dt) {
+        var soDT = function (h) { return (dt.email[String(h.email || '').toLowerCase()] || 0) + (dt.ten[String(h.ten || '').trim()] || 0); };
+        // Bảng gắn class "co-dinh" thì PHẢI khai bề rộng từng cột, nếu không
+        // Word tự dàn theo nội dung: cột họ tên co lại còn hơn 4cm, "Nguyễn Thị
+        // Thanh Huyền" bị bẻ ba dòng trong khi năm cột số bỏ trống một nửa.
+        var rTen = nhieuCS ? 20 : 26, rCS = nhieuCS ? 12 : 0;
+        var rLyDo = 7, rCuoi = (100 - rTen - rCS - rLyDo * CONG_LY_DO.length) / 4;
+        var dau = '<tr><th style="text-align:left;width:' + rTen + '%">Họ và tên</th>' +
+          (nhieuCS ? '<th style="width:' + rCS + '%">Cơ sở</th>' : '') +
           CONG_LY_DO.map(function (l) {
-            return '<td class="giua">' + (h.theo[l] || '') + '</td>';
+            return '<th style="width:' + rLyDo + '%">' + W.chan(l) + '</th>';
           }).join('') +
-          '<td class="giua">' + (h.tong || '') + '</td>' +
-          '<td class="giua"><b>' + h.coMat + '</b></td>' +
-          '<td class="giua">' + (h.baoMuon || '') + '</td></tr>';
-      }).join('');
-      var dsNghi = k.nghi.length
-        ? '<p style="margin-top:10pt"><b>Ngày nghỉ trong tháng:</b> ' +
-          k.nghi.map(function (n) {
-            return W.chan(ngayVN(n.ngay) + ' (' + n.ten + ')' + (n.loai === 'lam_bu' ? ' — đi làm bù' : ''));
-          }).join(' · ') + '.</p>'
-        : '';
-      var thanBai = W.theThuc() +
-        '<p class="giua" style="margin-top:18pt"><b style="font-size:14pt">BẢNG TỔNG HỢP NGÀY CÔNG</b></p>' +
-        '<p class="giua" style="margin-top:2pt"><b>Tháng ' + thangSo(CONG_THANG) + ' năm ' + CONG_THANG.slice(0, 4) + '</b></p>' +
-        (k.dangDienRa
-          ? '<p class="giua nghieng" style="margin-top:2pt">(Tháng chưa kết thúc — tính đến hết ngày ' +
-            W.chan(ngayVN(k.tinhDen)) + ')</p>'
-          : '') +
-        '<p style="margin-top:12pt">Đơn vị tính: <b>buổi</b> (mỗi ngày 2 buổi). ' +
-        (k.dangDienRa ? 'Tính đến ngày ' + W.chan(ngayVN(k.tinhDen)) + ', tháng này đã qua <b>'
-                      : 'Tháng này có <b>') +
-        k.soNgayLam + '</b> ngày làm việc, tương ứng <b>' + k.buoiChuan + '</b> buổi chuẩn. ' +
-        'Số liệu tổng hợp từ sổ theo dõi vắng hằng ngày của các điểm trường; danh sách gồm <b>' +
-        k.hang.length + '</b> cán bộ, giáo viên, nhân viên có tên trong danh sách nhân sự nhà trường.</p>' +
-        '<table class="co-dinh"><thead>' + dau + '</thead><tbody>' + than + '</tbody></table>' +
-        dsNghi +
-        '<p class="nghieng" style="margin-top:10pt;font-size:12pt">Ghi chú: bảng chưa bao gồm số tiết dạy thay ' +
-        'và giờ dạy vượt định mức.' +
-        (k.dangDienRa ? ' Đây <b>chưa phải bản chốt tháng</b>.' : '') + '</p>' +
-        W.khoiKy('NGƯỜI LẬP BẢNG', THAT ? tenToi() : '');
-      var html = W.khungWord('Bảng công ' + thangChu(CONG_THANG), thanBai, true), tenTep = 'bang-cong-' + CONG_THANG + '.doc';
+          '<th style="width:' + rCuoi + '%">Tổng vắng</th>' +
+          '<th style="width:' + rCuoi + '%">Có mặt</th>' +
+          '<th style="width:' + rCuoi + '%">Báo muộn</th>' +
+          '<th style="width:' + rCuoi + '%">Tiết dạy thay</th></tr>';
+        var tongDT = 0;
+        var than = k.hang.map(function (h, i) {
+          var n = soDT(h); tongDT += n;
+          return '<tr><td>' + (i + 1) + '. ' + W.chan(h.ten) + '</td>' +
+            (nhieuCS ? '<td class="giua">' + W.chan(tenCoSo(h.coSo)) + '</td>' : '') +
+            CONG_LY_DO.map(function (l) {
+              return '<td class="giua">' + (h.theo[l] || '') + '</td>';
+            }).join('') +
+            '<td class="giua">' + (h.tong || '') + '</td>' +
+            '<td class="giua"><b>' + h.coMat + '</b></td>' +
+            '<td class="giua">' + (h.baoMuon || '') + '</td>' +
+            '<td class="giua">' + (n || '') + '</td></tr>';
+        }).join('');
+        var dsNghi = k.nghi.length
+          ? '<p style="margin-top:10pt"><b>Ngày nghỉ trong tháng:</b> ' +
+            k.nghi.map(function (n) {
+              return W.chan(ngayVN(n.ngay) + ' (' + n.ten + ')' + (n.loai === 'lam_bu' ? ' — đi làm bù' : ''));
+            }).join(' · ') + '.</p>'
+          : '';
+        var thanBai = W.theThuc() +
+          '<p class="giua" style="margin-top:18pt"><b style="font-size:14pt">BẢNG TỔNG HỢP NGÀY CÔNG</b></p>' +
+          '<p class="giua" style="margin-top:2pt"><b>Tháng ' + thangSo(ym) + ' năm ' + ym.slice(0, 4) + '</b></p>' +
+          (k.dangDienRa
+            ? '<p class="giua nghieng" style="margin-top:2pt">(Tháng chưa kết thúc — tính đến hết ngày ' +
+              W.chan(ngayVN(k.tinhDen)) + ')</p>'
+            : '') +
+          '<p style="margin-top:12pt">Đơn vị tính: <b>buổi</b> (mỗi ngày 2 buổi); cột cuối tính bằng <b>tiết</b>. ' +
+          (k.dangDienRa ? 'Tính đến ngày ' + W.chan(ngayVN(k.tinhDen)) + ', tháng này đã qua <b>'
+                        : 'Tháng này có <b>') +
+          k.soNgayLam + '</b> ngày làm việc, tương ứng <b>' + k.buoiChuan + '</b> buổi chuẩn. ' +
+          'Số liệu tổng hợp từ sổ theo dõi vắng hằng ngày của các điểm trường; danh sách gồm <b>' +
+          k.hang.length + '</b> cán bộ, giáo viên, nhân viên có tên trong danh sách nhân sự nhà trường.</p>' +
+          '<table class="co-dinh"><thead>' + dau + '</thead><tbody>' + than + '</tbody></table>' +
+          dsNghi +
+          '<p class="nghieng" style="margin-top:10pt;font-size:12pt">Ghi chú: cột "Tiết dạy thay" lấy từ danh sách bố trí dạy thay trong tháng' +
+          (dt.ok ? ' (tổng <b>' + tongDT + '</b> tiết; không tính tiết lớp tự quản, tiết đã huỷ); chi tiết xem Danh sách giáo viên dạy thay.'
+                 : ' — <b>chưa đọc được</b> dữ liệu dạy thay nên cột để trống.') +
+          ' Bảng chưa bao gồm giờ dạy vượt định mức.' +
+          (k.dangDienRa ? ' Đây <b>chưa phải bản chốt tháng</b>.' : '') + '</p>' +
+          W.khoiKy('NGƯỜI LẬP BẢNG', THAT ? tenToi() : '');
+        return W.khungWord('Bảng công ' + thangChu(ym), thanBai, true);
+      };
+      var tenTep = 'bang-cong-' + ym + '.doc', hua = null;
+      var lay = function () { return (hua || (hua = docDT())).then(dung); };
       // 30/9/2026: xem trực tiếp trước rồi mới tải (js/bieu-mau.js); thiếu tệp đó thì tải thẳng như cũ
-      if (window.BIEU_MAU) window.BIEU_MAU.xem({ tieuDe: 'Bảng tổng hợp ngày công · ' + thangChu(CONG_THANG),
-        dung: function () { return html; }, tenTep: function () { return tenTep; } });
-      else W.taiVe(html, tenTep);
+      if (window.BIEU_MAU) window.BIEU_MAU.xem({ tieuDe: 'Bảng tổng hợp ngày công · ' + thangChu(ym),
+        dung: lay, tenTep: function () { return tenTep; } });
+      else lay().then(function (html) { W.taiVe(html, tenTep); });
     }
   };
 
