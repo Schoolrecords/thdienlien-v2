@@ -269,6 +269,8 @@
       '<div class="email">' + thoat(nd.email) + '</div>' +
       '<span class="the-vai-tro">' + (TEN_VAI_TRO[nd.vai_tro] || '') + '</span></div>' +
       (laQT ? '<button class="muc-menu" id="muc-quan-tri">⚙️ Quản trị hệ thống</button>' : '') +
+      // 30/9/2026: cài app lên màn hình chính (js/cai-app.js tự ẩn khi đã mở từ màn hình chính)
+      '<button class="muc-menu" id="muc-cai-app" hidden>📲 Cài app lên điện thoại</button>' +
       '<a class="muc-menu" href="huong-dan.html" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng</a>' +
       '<button class="muc-menu thoat" id="muc-dang-xuat">↩ Đăng xuất</button></div>';
 
@@ -284,6 +286,7 @@
       window.chuyenManHinh('quantri');
     });
     document.getElementById('muc-dang-xuat').addEventListener('click', dangXuat);
+    if (window.CAI_APP) window.CAI_APP.ganMenu(document.getElementById('muc-cai-app'));
     // Thẻ "Quản trị hệ thống" ở trang chủ: chỉ BGH/quản trị (js/app.js, mục 100)
     if (window.apQuyenGiaoDien) window.apQuyenGiaoDien();
   }

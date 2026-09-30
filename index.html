@@ -27,8 +27,11 @@
   <!-- manifest cho Android/Chrome: thiếu nó thì "Thêm vào Màn hình chính" ra
        Ô CHỮ CÁI đầu tiêu đề (chữ Q) thay vì logo. iOS thì đi theo
        apple-touch-icon ở trên. -->
-  <link rel="manifest" href="manifest.webmanifest?v=2026093002">
+  <link rel="manifest" href="manifest.webmanifest?v=2026093003">
   <meta name="theme-color" content="#062d72">
+  <!-- Tên dưới biểu tượng khi iPhone "Thêm vào MH chính" (js/cai-app.js hướng dẫn). KHÔNG khai
+       apple-mobile-web-app-capable: iPhone phải mở trong Safari để giữ đăng nhập Google. -->
+  <meta name="apple-mobile-web-app-title" content="Quản trị số">
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        THẺ CHIA SẺ (Zalo · Facebook · Messenger · Google)
@@ -79,8 +82,8 @@
   <!-- Phông UTM Avo nhúng sẵn trong tệp (base64) — giống hệt bản THCS Bạch Liêu.
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
-  <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093002">
-  <link rel="stylesheet" href="style.css?v=2026093002">
+  <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093003">
+  <link rel="stylesheet" href="style.css?v=2026093003">
 </head>
 <body class="dang-khoa">
 
@@ -525,90 +528,92 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=18df28f900"></script>
+<script src="js/goi.min.js?v=469ca62a02"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
      goi.min.js (dong-goi.js đọc) và của bài quét quet-app.js. -->
-<script src="js/cauhinh.js?v=2026093002"></script>
+<script src="js/cauhinh.js?v=2026093003"></script>
 <!-- Cổng chung nhiều trường. PHẢI đứng ngay sau cauhinh.js và TRƯỚC mọi tệp
      khác: nó dựng lại CAU_HINH cho chế độ xem thử, và giữ trang ở trạng thái
      khóa khi chưa biết người vào thuộc trường nào. -->
-<script src="js/cong-truong.js?v=2026093002"></script>
-<script src="js/du-lieu-demo.js?v=2026093002"></script>
-<script src="js/du-lieu-sql.js?v=2026093002"></script>
-<script src="js/quan-tri.js?v=2026093002"></script>
+<script src="js/cong-truong.js?v=2026093003"></script>
+<script src="js/du-lieu-demo.js?v=2026093003"></script>
+<script src="js/du-lieu-sql.js?v=2026093003"></script>
+<script src="js/quan-tri.js?v=2026093003"></script>
 <!-- Nạp NGAY SAU quan-tri.js để ba thẻ Cài đặt · Thông tin trường · Danh sách
      mời đứng đầu hàng thẻ — trường mới mở Quản trị là thấy việc phải làm. -->
-<script src="js/thiet-lap.js?v=2026093002"></script>
+<script src="js/thiet-lap.js?v=2026093003"></script>
 <!-- Thẻ 🚩 Tổ chức đảng — ngay sau thiet-lap.js: số đảng viên khai ở thẻ
      ⚙️ Thông tin trường, thẻ này đọc lại con số đó để nhắc ngưỡng 30. -->
-<script src="js/to-chuc-dang.js?v=2026093002"></script>
+<script src="js/to-chuc-dang.js?v=2026093003"></script>
 <!-- Kho trên máy (IndexedDB) cho Sổ chủ nhiệm hiện ngay bản đã lưu. TRƯỚC
      supabase-ket-noi.js: đăng xuất / đổi tài khoản phải xoá được kho. -->
-<script src="js/kho-may.js?v=2026093002"></script>
-<script src="js/supabase-ket-noi.js?v=2026093002"></script>
+<script src="js/kho-may.js?v=2026093003"></script>
+<script src="js/supabase-ket-noi.js?v=2026093003"></script>
 <!-- Hộp thoại dùng chung (window.hopNhap / window.hopHoi) — nạp trước các
      module dùng nó. Chỉ khai báo hàm, không đụng DOM lúc nạp. -->
-<script src="js/hop-thoai.js?v=2026093002"></script>
+<script src="js/hop-thoai.js?v=2026093003"></script>
 <!-- Thẻ Sao lưu — gói Supabase miễn phí KHÔNG có sao lưu tự động, mất là mất
      hẳn. Đăng ký thẻ qua window.qtTabPhu (cần quan-tri.js đã nạp) và dùng
      window.hopHoi, nên đứng sau cả hai. -->
-<script src="js/sao-luu.js?v=2026093002"></script>
+<script src="js/sao-luu.js?v=2026093003"></script>
 <!-- Sổ phân công – ủy quyền (CV 5555/BGDĐT-GDPT, trường sau sắp xếp). Cùng
      điều kiện nạp như sao-luu.js: cần quan-tri.js cho window.qtTabPhu và
      hop-thoai.js cho window.hopHoi. -->
-<script src="js/phan-cong.js?v=2026093002"></script>
-<script src="js/app.js?v=2026093002"></script>
-<script src="js/hoso-sua.js?v=2026093002"></script>
-<script src="js/xuat-word.js?v=2026093002"></script>
+<script src="js/phan-cong.js?v=2026093003"></script>
+<script src="js/app.js?v=2026093003"></script>
+<script src="js/hoso-sua.js?v=2026093003"></script>
+<script src="js/xuat-word.js?v=2026093003"></script>
 <!-- Biểu mẫu trích xuất: khung xem trước + Word (dạy thay, điểm danh tháng, danh mục hồ sơ) — 30/9/2026 -->
-<script src="js/bieu-mau.js?v=2026093002"></script>
+<script src="js/bieu-mau.js?v=2026093003"></script>
+<!-- Cài app lên màn hình chính (Android: hộp Cài của máy; iPhone: hướng dẫn) — 30/9/2026 -->
+<script src="js/cai-app.js?v=2026093003"></script>
 <!-- Lớp soi từng địa điểm cho tự đánh giá (CV 5555). Nạp TRƯỚC tcqg.js để
      window.TCQG_CO_SO đã có lúc tcqg.js tải dữ liệu; thiếu tệp này thì màn
      Trường chuẩn Quốc gia vẫn chạy đầy đủ, chỉ không có thẻ Địa điểm. -->
-<script src="js/tcqg-co-so.js?v=2026093002"></script>
-<script src="js/tcqg.js?v=2026093002"></script>
-<script src="js/tcqg-hoidong.js?v=2026093002"></script>
-<script src="js/tcqg-word.js?v=2026093002"></script>
-<script src="js/bach-lieu-shim.js?v=2026093002"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=2026093002"></script>
-<script src="js/co-so.js?v=2026093002"></script>
-<script src="js/len-lop.js?v=2026093002"></script>
+<script src="js/tcqg-co-so.js?v=2026093003"></script>
+<script src="js/tcqg.js?v=2026093003"></script>
+<script src="js/tcqg-hoidong.js?v=2026093003"></script>
+<script src="js/tcqg-word.js?v=2026093003"></script>
+<script src="js/bach-lieu-shim.js?v=2026093003"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=2026093003"></script>
+<script src="js/co-so.js?v=2026093003"></script>
+<script src="js/len-lop.js?v=2026093003"></script>
 <!-- Màn Đối sánh của Đảm bảo chất lượng — phần DUY NHẤT của module đó đã nối
      dữ liệu thật (sql/42). Nạp trước dbcl.js để window.DBCL_DOI_SANH đã có
      khi dbcl.js vẽ lần đầu. -->
 <!-- Chỉ tiêu chất lượng đầu năm (sql/43) — nguồn cho cột "Đã cam kết" của
      màn Đối sánh, nên nạp trước cả hai tệp kia. -->
-<script src="js/danh-muc-sua.js?v=2026093002"></script>
-<script src="js/csvc.js?v=2026093002"></script>
-<script src="js/dbcl-chi-tieu.js?v=2026093002"></script>
-<script src="js/dbcl-to.js?v=2026093002"></script>
-<script src="js/dbcl-doi-sanh.js?v=2026093002"></script>
-<script src="js/dbcl.js?v=2026093002"></script>
-<script src="js/link-cbgv.js?v=2026093002"></script>
-<script src="js/hocsinh.js?v=2026093002"></script>
+<script src="js/danh-muc-sua.js?v=2026093003"></script>
+<script src="js/csvc.js?v=2026093003"></script>
+<script src="js/dbcl-chi-tieu.js?v=2026093003"></script>
+<script src="js/dbcl-to.js?v=2026093003"></script>
+<script src="js/dbcl-doi-sanh.js?v=2026093003"></script>
+<script src="js/dbcl.js?v=2026093003"></script>
+<script src="js/link-cbgv.js?v=2026093003"></script>
+<script src="js/hocsinh.js?v=2026093003"></script>
 <!-- Sổ chủ nhiệm (28/9/2026, sql/69): tự vẽ khi màn #mh-sochunhiem bật; xuất Word
      dùng window.WORD_TIEN_ICH (xuat-word.js nạp phía trên). -->
-<script src="js/so-chu-nhiem.js?v=2026093002"></script>
+<script src="js/so-chu-nhiem.js?v=2026093003"></script>
 <!-- Nạp dữ liệu từ Excel CSDL ngành. Sau quan-tri.js (nơi tạo window.qtTabPhu). -->
 <!-- Bộ đóng gói .xlsx + ba tệp mẫu nhập dữ liệu (CBGV · Học sinh · Chia lớp
      tuyển sinh) cho nút "Tải mẫu Excel" ở thẻ Nạp dữ liệu. Nạp TRƯỚC nap-du-lieu.js. -->
-<script src="js/xuat-excel.js?v=2026093002"></script>
-<script src="js/mau-nhap-excel.js?v=2026093002"></script>
-<script src="js/nap-du-lieu.js?v=2026093002"></script>
+<script src="js/xuat-excel.js?v=2026093003"></script>
+<script src="js/mau-nhap-excel.js?v=2026093003"></script>
+<script src="js/nap-du-lieu.js?v=2026093003"></script>
 <!-- THỜI KHÓA BIỂU (14/9/2026, sổ dự án 91.13 — đảo quyết định gỡ 15/8): nạp tệp
      Smart Scheduler kết xuất. tkb-doc.js = bộ đọc thuần · tkb-nap.js = thẻ Quản trị
      (sau quan-tri.js, dùng xuat-excel.js) · tkb-xem.js = màn xem, TRƯỚC dieu-hanh.js. -->
-<script src="js/tkb-doc.js?v=2026093002"></script>
-<script src="js/tkb-nap.js?v=2026093002"></script>
-<script src="js/tkb-xem.js?v=2026093002"></script>
+<script src="js/tkb-doc.js?v=2026093003"></script>
+<script src="js/tkb-nap.js?v=2026093003"></script>
+<script src="js/tkb-xem.js?v=2026093003"></script>
 <!-- Dạy thay (giai đoạn 2, sql/65): luật thuần + màn. Trước dieu-hanh.js. -->
-<script src="js/day-thay-luat.js?v=2026093002"></script>
-<script src="js/day-thay.js?v=2026093002"></script>
-<script src="js/viec-nhanh.js?v=2026093002"></script>
-<script src="js/dieu-hanh.js?v=2026093002"></script>
-<script src="js/lich-tuan.js?v=2026093002"></script>
+<script src="js/day-thay-luat.js?v=2026093003"></script>
+<script src="js/day-thay.js?v=2026093003"></script>
+<script src="js/viec-nhanh.js?v=2026093003"></script>
+<script src="js/dieu-hanh.js?v=2026093003"></script>
+<script src="js/lich-tuan.js?v=2026093003"></script>
 <!-- SheetJS đọc tệp Excel thời khóa biểu. Bản CHO TRÌNH DUYỆT: chỉ có
      XLSX.read(mảng byte), KHÔNG có readFile. Nạp trước thoi-khoa-bieu.js. -->
 <!-- Module thời khóa biểu CŨ (js/thoi-khoa-bieu.js, gỡ 15/8/2026) vẫn KHÔNG nạp.
@@ -616,7 +621,7 @@
      tkb-nap.js · tkb-xem.js (nạp ở trên), đọc tệp Smart Scheduler kết xuất —
      Quản trị số KHÔNG xếp lịch, chỉ đọc bản đã xếp. Sổ dự án 91.13. -->
 
-<script src="js/du-gio.js?v=2026093002"></script>
+<script src="js/du-gio.js?v=2026093003"></script>
 </template>
 <!-- Giữ sẵn mã app trên máy thầy cô (29/9/2026) — xem đầu sw.js. Chỉ giữ tệp
      có ?v= và thư viện supabase-js; trang HTML, cấu hình trường và dữ liệu
