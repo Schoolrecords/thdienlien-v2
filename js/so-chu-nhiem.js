@@ -1127,7 +1127,7 @@
     // sửa họ tên / ngày sinh…, thêm em chuyển đến, đánh dấu chuyển đi (sql/75).
     var suaHS = quyenSuaHS();
     h += '<div class="scn-hang scn-hs-cong-cu">' +
-      (ghi && !nhayCam ? '<button class="scn-nut' + (D.hsLuoi ? ' phu' : '') + '" data-act="hs-luoi">' + (D.hsLuoi ? 'Đóng bảng nhập' : '✏ Nhập thông tin cả lớp') + '</button>' : '') +
+      (ghi && !nhayCam ? '<button class="scn-nut' + (D.hsLuoi ? ' phu' : '') + '" data-act="hs-luoi">' + (D.hsLuoi ? 'Đóng bảng nhập' : '📝 Nhập thông tin cả lớp') + '</button>' : '') +
       (suaHS ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') + '</div>';
     if (suaHS && D.hsThem) h += veFormThemHS();
     if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.') + veHSRoi(suaHS);
