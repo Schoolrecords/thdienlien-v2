@@ -4204,3 +4204,11 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .the-cbgv .nhan-toi { display: inline-block; margin: 2px 0 0; padding: 1px 8px; border-radius: 999px;
   background: var(--chinh); color: #fff; font-size: 11.5px; font-weight: 700; width: fit-content; }
 @media (max-width: 640px) { .sub-head .sub-phu { display: none; } }
+
+/* ═══ Sổ chủ nhiệm › điểm danh: màu nút nhẹ (thầy Chung 30/9/2026 — "nút Có mặt nền navy nặng nề") ═══
+   Có mặt = xanh lá nhạt · P (có phép) = cam nhạt · K (không phép) = đỏ nhạt. Chữ đậm màu cùng tông
+   để vẫn đọc rõ ngoài nắng; một dòng toàn nút trắng nghĩa là chưa chọn. */
+.scn-dd-nut button.on[data-gt=""] { background: #e3f5e8; color: #1c7a3d; }
+.scn-dd-nut button.on[data-gt="co_phep"] { background: #fff0d9; color: #a35a00; }
+.scn-dd-nut button.on[data-gt="khong_phep"] { background: #fde6e4; color: #b3261e; }
+.scn-dd-nut button:not(.on):not(:disabled):hover { background: #f4f6fa; }
