@@ -29,6 +29,8 @@
        apple-touch-icon ở trên. -->
   <link rel="manifest" href="manifest.webmanifest?v=2026093005">
   <meta name="theme-color" content="#062d72">
+  <!-- Gói phụ tải chậm (js/nap-luoi.js đọc; dong-goi.js tự ghi số băm) -->
+  <meta name="goi-phu" content="js/goi-phu.min.js?v=053aa912e8">
   <!-- Tên dưới biểu tượng khi iPhone "Thêm vào MH chính" (js/cai-app.js hướng dẫn). KHÔNG khai
        apple-mobile-web-app-capable: iPhone phải mở trong Safari để giữ đăng nhập Google. -->
   <meta name="apple-mobile-web-app-title" content="Quản trị số">
@@ -83,7 +85,7 @@
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
   <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093005">
-  <link rel="stylesheet" href="style.css?v=2026093005">
+  <link rel="stylesheet" href="style.min.css?v=5faa4ad90c">
 </head>
 <body class="dang-khoa">
 
@@ -528,7 +530,7 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=4e0924d585"></script>
+<script src="js/goi.min.js?v=713122857a"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
@@ -565,8 +567,8 @@
 <script src="js/app.js?v=2026093005"></script>
 <script src="js/hoso-sua.js?v=2026093005"></script>
 <script src="js/xuat-word.js?v=2026093005"></script>
-<!-- Biểu mẫu trích xuất: khung xem trước + Word (dạy thay, điểm danh tháng, danh mục hồ sơ) — 30/9/2026 -->
-<script src="js/bieu-mau.js?v=2026093005"></script>
+<!-- Cửa thay cho phần xuất biểu nằm ở gói phụ (bieu-mau · tcqg-word · xuat-bao-cao-tdg) — 30/9/2026, sổ dự án 110 -->
+<script src="js/nap-luoi.js?v=2026093005"></script>
 <!-- Cài app lên màn hình chính (Android: hộp Cài của máy; iPhone: hướng dẫn) — 30/9/2026 -->
 <script src="js/cai-app.js?v=2026093005"></script>
 <!-- Lớp soi từng địa điểm cho tự đánh giá (CV 5555). Nạp TRƯỚC tcqg.js để
@@ -575,9 +577,7 @@
 <script src="js/tcqg-co-so.js?v=2026093005"></script>
 <script src="js/tcqg.js?v=2026093005"></script>
 <script src="js/tcqg-hoidong.js?v=2026093005"></script>
-<script src="js/tcqg-word.js?v=2026093005"></script>
 <script src="js/bach-lieu-shim.js?v=2026093005"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=2026093005"></script>
 <script src="js/co-so.js?v=2026093005"></script>
 <script src="js/len-lop.js?v=2026093005"></script>
 <!-- Màn Đối sánh của Đảm bảo chất lượng — phần DUY NHẤT của module đó đã nối
@@ -622,6 +622,15 @@
      Quản trị số KHÔNG xếp lịch, chỉ đọc bản đã xếp. Sổ dự án 91.13. -->
 
 <script src="js/du-gio.js?v=2026093005"></script>
+</template>
+<!-- GÓI PHỤ js/goi-phu.min.js (30/9/2026, sổ dự án 110): phần xuất biểu CHỈ chạy khi bấm nút —
+     tải chậm qua js/nap-luoi.js (cửa thay trong gói chính). dong-goi.js dựng từ khối này.
+     Thêm tệp vào đây thì thêm tên hàm nó đưa ra ngoài vào CUA trong nap-luoi.js. -->
+<template id="goi-nguon-phu">
+<script src="js/tcqg-word.js?v=2026093005"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=2026093005"></script>
+<!-- Biểu mẫu trích xuất: khung xem trước + Word/Excel (dạy thay, điểm danh, danh mục hồ sơ) -->
+<script src="js/bieu-mau.js?v=2026093005"></script>
 </template>
 <!-- Giữ sẵn mã app trên máy thầy cô (29/9/2026) — xem đầu sw.js. Chỉ giữ tệp
      có ?v= và thư viện supabase-js; trang HTML, cấu hình trường và dữ liệu
