@@ -1882,7 +1882,7 @@
       : '';
 
     var nutWord = qt
-      ? '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.congWord()">📄 Xuất Word (A4 ngang)</button>' +
+      ? '<button class="dh-nut-nho" style="margin-top:8px" onclick="DH.congWord()">📄 Xem &amp; tải Word (A4 ngang)</button>' +
         (k.dangDienRa
           ? '<div class="dh-ghi-chu-nho">Xuất giữa tháng thì bản Word ghi rõ "tính đến ngày ' +
             ngayVN(k.tinhDen) + '" — đợi hết tháng mới là bản chốt.</div>'
@@ -2393,7 +2393,11 @@
       // 14/9/2026 (sổ dự án 91.13): Thời khóa biểu VỀ LẠI thành màn trong app —
       // nạp từ tệp Smart Scheduler (js/tkb-nap.js), xem ở js/tkb-xem.js.
       { ma: 'tkb', ten: 'Thời khóa biểu', bi: '🗓️', ngan: 'TKB' },
-      { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] }
+      { ma: 'thongbao', ten: 'Thông báo', bi: '📢' } ] },
+    // 30/9/2026 thầy Chung: các biểu cần trích file (dạy thay, điểm danh tháng, danh mục hồ sơ…)
+    // xem trực tiếp + tải Word ở MỘT chỗ — js/bieu-mau.js vẽ.
+    { nhom: 'BÁO CÁO', muc: [
+      { ma: 'bieumau', ten: 'Biểu mẫu – Trích xuất', bi: '📄', ngan: 'Biểu mẫu' } ] }
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
   // 29/9/2026: 'daythay' thay chỗ 'baocao' (Chấm công là màn XEM, còn trong hàng chip) — thầy Chung
@@ -2552,6 +2556,7 @@
       // MAN_CU và trả mục vào DS_NHOM (mục 11.2, 15/8 sổ dự án). Chú thích cũ
       // nói "đưa về đúng màn mới" ở đây là sai — việc đó do MAN_CU làm.
       // Thẻ Báo nghỉ – Dạy thay (29/9/2026): js/day-thay.js tự nạp + vẽ vào chỗ trống này (cuối veDieuHanh)
+      TAB === 'bieumau' ? '<div id="dh-bieu-mau"><div class="the-thong-bao">Đang tải…</div></div>' :
       TAB === 'daythay' ? '<div id="dh-day-thay"><div class="the-thong-bao">Đang tải…</div></div>' :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       // Màn TKB tự nạp dữ liệu (bất đồng bộ) nên ở đây chỉ dựng chỗ trống;
@@ -2581,6 +2586,7 @@
       veNhatKyKhoi() + tabM + '</div></div>';
     if (TAB === 'tkb' && window.TKB_XEM) window.TKB_XEM.ve(document.getElementById('tkb-xem'));
     if (TAB === 'daythay' && window.DAY_THAY) window.DAY_THAY.ve(document.getElementById('dh-day-thay'));
+    if (TAB === 'bieumau' && window.BIEU_MAU) window.BIEU_MAU.ve(document.getElementById('dh-bieu-mau'));
     // Khung "Việc cần xử lý" đầu Tổng quan (js/viec-nhanh.js — BGH / phụ trách điểm trường)
     if (TAB === 'tongquan' && window.VIEC_NHANH) window.VIEC_NHANH.veKhung(document.getElementById('dh-viec-can-lam'));
     veNhaCard();
@@ -3757,8 +3763,11 @@
         'và giờ dạy vượt định mức.' +
         (k.dangDienRa ? ' Đây <b>chưa phải bản chốt tháng</b>.' : '') + '</p>' +
         W.khoiKy('NGƯỜI LẬP BẢNG', THAT ? tenToi() : '');
-      W.taiVe(W.khungWord('Bảng công ' + thangChu(CONG_THANG), thanBai, true),
-        'bang-cong-' + CONG_THANG + '.doc');
+      var html = W.khungWord('Bảng công ' + thangChu(CONG_THANG), thanBai, true), tenTep = 'bang-cong-' + CONG_THANG + '.doc';
+      // 30/9/2026: xem trực tiếp trước rồi mới tải (js/bieu-mau.js); thiếu tệp đó thì tải thẳng như cũ
+      if (window.BIEU_MAU) window.BIEU_MAU.xem({ tieuDe: 'Bảng tổng hợp ngày công · ' + thangChu(CONG_THANG),
+        dung: function () { return html; }, tenTep: function () { return tenTep; } });
+      else W.taiVe(html, tenTep);
     }
   };
 

@@ -560,7 +560,7 @@
       '<button class="chip-loc" data-tam="thang-truoc">Tháng trước</button>' +
       '<label>Từ <input type="date" id="dt-tu" class="tkb-chon" value="' + D.dsTu + '"></label>' +
       '<label>đến <input type="date" id="dt-den" class="tkb-chon" value="' + D.dsDen + '"></label>' +
-      (laPhuTrachNao() ? '<button class="dh-nut-nho" id="dt-in">🖨️ In</button>' : '') + '</div><div id="dt-ds-bang"><div class="the-thong-bao">Đang tải…</div></div>';
+      (laPhuTrachNao() ? '<button class="dh-nut-nho" id="dt-in">📄 Xem &amp; tải Word</button>' : '') + '</div><div id="dt-ds-bang"><div class="the-thong-bao">Đang tải…</div></div>';
     vung.innerHTML = h;
     function doi(tu, den) { D.dsTu = tu; D.dsDen = den; veDanhSach(vung); }
     Array.prototype.slice.call(vung.querySelectorAll('[data-tam]')).forEach(function (b) {
@@ -602,30 +602,16 @@
         b.addEventListener('click', function () { D.ngay = b.getAttribute('data-toi-ngay'); D.khung = 'bo-tri'; ve(); });
       });
       var nutIn = document.getElementById('dt-in');
-      if (nutIn) nutIn.onclick = function () { inDanhSach(ds, theoNguoi, tuQuan); };
+      if (nutIn) nutIn.onclick = function () { inDanhSach(); };
     }).catch(function (e) { bang.innerHTML = '<div class="hd-kiem do">Không tải được: ' + thoat((e && e.message) || e) + '</div>'; });
   }
 
-  function inDanhSach(ds, theoNguoi, tuQuan) {
-    if (!laPhuTrachNao()) { bao('Chỉ Ban giám hiệu hoặc người phụ trách điểm trường mới in được danh sách dạy thay.'); return; }
-    var w = window.open('', '_blank');
-    if (!w) { bao('Trình duyệt chặn cửa sổ in — cho phép cửa sổ bật lên rồi bấm lại.'); return; }
-    var ten = (window.CAU_HINH || {}).TEN_TRUONG || '';
-    w.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Danh sách dạy thay</title><style>' +
-      '@page{size:A4 portrait;margin:15mm 15mm 15mm 25mm}body{font:13px "Times New Roman",serif;color:#000}' +
-      'h1{font-size:15px;text-align:center;margin:10px 0 2px}.phu{text-align:center;font-style:italic;margin-bottom:10px}' +
-      'table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:3px 5px;vertical-align:top}th{background:#eee}' +
-      '.tong{margin:8px 0}.tong span{margin-right:14px}.ky{display:flex;justify-content:flex-end;margin-top:24px;text-align:center}' +
-      '</style></head><body><div><b>' + thoat(String(ten).toUpperCase()) + '</b></div>' +
-      '<h1>DANH SÁCH BỐ TRÍ DẠY THAY</h1><div class="phu">Từ ngày ' + ngayVN(D.dsTu) + ' đến ngày ' + ngayVN(D.dsDen) + '</div>' +
-      '<table><thead><tr><th>TT</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn</th><th>Người vắng</th><th>Người dạy thay</th></tr></thead><tbody>' +
-      ds.map(function (d, i) {
-        return '<tr><td>' + (i + 1) + '</td><td>' + ngayVN(d.ngay) + '</td><td>' + kiHieuTiet(d.buoi, d.tiet) + '</td><td>' + thoat(d.lop) + '</td><td>' + thoat(d.mon) + '</td>' +
-          '<td>' + thoat(d.gv_vang_ten || '') + '</td><td>' + (d.gv_thay_ten || d.gv_thay_nhan ? thoat(d.gv_thay_ten || d.gv_thay_nhan) : 'Lớp tự quản') + '</td></tr>';
-      }).join('') + '</tbody></table><div class="tong"><b>Tổng hợp:</b> ' + Object.keys(theoNguoi).map(function (k) { return '<span>' + thoat(k) + ': ' + theoNguoi[k] + ' tiết</span>'; }).join('') +
-      (tuQuan ? '<span>Lớp tự quản: ' + tuQuan + ' tiết</span>' : '') + '</div>' +
-      '<div class="ky"><div><b>NGƯỜI LẬP</b><br><br><br><br></div></div></body></html>');
-    w.document.close(); w.focus(); setTimeout(function () { w.print(); }, 250);
+  // 30/9/2026: bản in thô (cửa sổ in, không thể thức) → khung xem trước + Word thể thức NĐ 30
+  // (js/bieu-mau.js): chi tiết từng tiết + tổng hợp số tiết từng người có cột ký nhận.
+  function inDanhSach() {
+    if (!laPhuTrachNao()) { bao('Chỉ Ban giám hiệu hoặc người phụ trách điểm trường mới xuất được danh sách dạy thay.'); return; }
+    if (!window.BIEU_MAU) { bao('Chưa tải được bộ biểu mẫu — tải lại trang.'); return; }
+    window.BIEU_MAU.dayThay({ tu: D.dsTu, den: D.dsDen, coSo: D.coSo, cs: D.cs || '' });
   }
 
   // ══════════════════════════════════════════════════════════════

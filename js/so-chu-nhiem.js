@@ -520,6 +520,7 @@
         .map(function (l) { return theoChuan[chuanLop(l.lop)]; });
       // báo cho hàng thẻ trang Lớp học (hocsinh.js) biết ai thấy thẻ nào
       window.SCN_QUYEN = { gvcn: D.lopCuaToi.length > 0, toKT: D.laToKT };
+      window.SCN_LOP_TOI = D.lopCuaToi.slice();   // thẻ Biểu mẫu (js/bieu-mau.js) biết lớp chủ nhiệm
       if (laQuanLy()) {
         D.dsLop = Object.keys(theoChuan).map(function (k) { return theoChuan[k]; });
         if (!D.dsLop.length) {
@@ -645,6 +646,7 @@
     D.coSo = k.coSo || []; D.dv.nguoiDuyet = k.nguoiDuyet || []; D.toCuaToi = k.toCuaToi || []; D.laToKT = !!k.laToKT;
     D.dsLopKT = k.dsLopKT || []; D.co71 = k.co71 !== false; D.dv.loi = k.dvLoi || ''; D.loiKhung = '';
     window.SCN_QUYEN = { gvcn: D.lopCuaToi.length > 0, toKT: D.laToKT };
+    window.SCN_LOP_TOI = D.lopCuaToi.slice();   // thẻ Biểu mẫu (js/bieu-mau.js) biết lớp chủ nhiệm
     if (!D.lop || !D.dsLop.some(function (l) { return l.lop === D.lop; })) D.lop = k.lop || '';
   }
   // Bảng điểm danh / ô sửa đã dựng từ dữ liệu cũ → bỏ để dựng lại theo bản mới
@@ -1223,11 +1225,14 @@
     // Tổng hợp chuyên cần tháng
     var ym = ngay.slice(0, 7), cc = tongHopChuyenCan(S.vang, ym + '-01', ym + '-31');
     var ma = Object.keys(cc.theoHS);
-    h += the('Chuyên cần ' + TEN_THANG(ym).toLowerCase(), ma.length
+    // 30/9/2026: bảng điểm danh tháng (lưới ngày × học sinh) xem + tải Word — js/bieu-mau.js
+    var nutDD = window.BIEU_MAU ? '<p class="scn-dd-thang"><button type="button" class="dh-nut-nho" data-act="dd-thang" data-ym="' + ym + '">📄 Bảng điểm danh ' +
+      TEN_THANG(ym).toLowerCase() + ' — xem &amp; tải Word</button></p>' : '';
+    h += the('Chuyên cần ' + TEN_THANG(ym).toLowerCase(), nutDD + (ma.length
       ? '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>Học sinh</th><th>P</th><th>K</th><th>Chưa rõ</th><th>Tổng buổi</th></tr></thead><tbody>' +
         ma.sort(function (a, b) { return cc.theoHS[b].tong - cc.theoHS[a].tong; }).map(function (m) { var x = cc.theoHS[m]; return '<tr><td>' + thoat(tenHS(m)) + '</td><td>' + x.P + '</td><td>' + x.K + '</td><td>' + x.R + '</td><td><b>' + x.tong + '</b></td></tr>'; }).join('') +
         '</tbody></table></div>'
-      : rong('Tháng này chưa có buổi vắng nào được ghi.'));
+      : rong('Tháng này chưa có buổi vắng nào được ghi.')));
     return h;
   }
   function dsTheoDoi(ds, choXoa) {
@@ -2490,6 +2495,11 @@
       'luu-ht': function () { luuHoTro(a('data-id'), b); }, 'luu-tk': function () { luuTongKet(b); },
       'khoa': function () { datKhoa(giaTri('scn-khoa') || null, b); }, 'mo-khoa': function () { datKhoa(null, b); },
       'xem-so': function () { moXem(); }, 'xem-bc': xemBanChup,
+      'dd-thang': function () {
+        if (!window.BIEU_MAU || !D.lop || !D.so) return;
+        window.BIEU_MAU.diemDanhLop({ lop: D.lop, nam: D.nam, ym: a('data-ym'), hs: D.hs, vang: D.so.vang, ddl: D.so.ddl,
+          gvcn: (D.gvcnCua || {})[chuanLop(D.lop)] || '' });
+      },
       'nop-ky': function () { nopKy(b); }, 'nd-them': function () { ndThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
       'mo-so': function () { var l = a('data-lop'); D.moNop = null; D.che = 'so'; D.lop = l; D.tab = 'tong-quan'; D.dangNap = true; ve(); napLop().then(function () { ve(); }); },
       'them-ct': function () { var v = document.getElementById('kh-cuoc-thi'); if (v) { var d = document.createElement('div'); d.innerHTML = dongCuocThi(false)({}); v.appendChild(d.firstChild); } },
