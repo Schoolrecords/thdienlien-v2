@@ -61,8 +61,8 @@
   var NGAT_TRANG = '<p class="bm-ngat" style="page-break-before:always;margin:0;font-size:1pt;line-height:1">&nbsp;</p>';
 
   // ── KỲ BÁO CÁO ──
-  // Mốc học kỳ theo khung năm học của Sổ chủ nhiệm (2026-2027: sơ kết HK I 18/01/2027,
-  // tổng kết 31/5/2027). Năm khác lấy cùng ngày tương ứng — đủ cho biểu thống kê.
+  // Mốc học kỳ: lấy từ khung năm học của Sổ chủ nhiệm (window.SCN_KHUNG_KY — 2026-2027 HK I 07/9/2026 → 10/01/2027).
+
   var TEN_KY = [['thang', 'Tháng'], ['tuan', 'Tuần này'], ['tuan-truoc', 'Tuần trước'], ['hk1', 'Học kỳ I'], ['hk2', 'Học kỳ II'], ['nam', 'Cả năm học']];
   function khoangKy(ky, ym) {
     var y = namDau(), hn = homNayISO();
@@ -70,9 +70,14 @@
       var dau = congNgay(hn, -((taoNgay(hn).getDay() + 6) % 7) - (ky === 'tuan-truoc' ? 7 : 0)), cuoi = congNgay(dau, 6);
       return { tu: dau, den: cuoi, nhan: 'Tuần từ ngày ' + ngayVN(dau) + ' đến ngày ' + ngayVN(cuoi), ma: 'tuan-' + dau };
     }
-    if (ky === 'hk1') return { tu: y + '-09-01', den: (y + 1) + '-01-17', nhan: 'Học kỳ I năm học ' + namHoc(), ma: 'hk1-' + namHoc() };
-    if (ky === 'hk2') return { tu: (y + 1) + '-01-18', den: (y + 1) + '-05-31', nhan: 'Học kỳ II năm học ' + namHoc(), ma: 'hk2-' + namHoc() };
-    if (ky === 'nam') return { tu: y + '-09-01', den: (y + 1) + '-05-31', nhan: 'Năm học ' + namHoc(), ma: 'nam-' + namHoc() };
+    // Mốc lấy từ khung năm học của Sổ chủ nhiệm (window.SCN_KHUNG_KY) — cùng một nguồn với
+    // phần tổng kết của sổ. Chưa nạp sổ thì dùng mốc dự phòng cũ.
+    var kk = window.SCN_KHUNG_KY ? window.SCN_KHUNG_KY(namHoc()) : null;
+    var bd = kk ? kk.batDau : y + '-09-01', h1 = kk ? kk.hetHK1 : (y + 1) + '-01-17',
+        h2 = kk ? kk.dauHK2 : (y + 1) + '-01-18', tk = kk ? kk.tongKet : (y + 1) + '-05-31';
+    if (ky === 'hk1') return { tu: bd, den: h1, nhan: 'Học kỳ I năm học ' + namHoc(), ma: 'hk1-' + namHoc() };
+    if (ky === 'hk2') return { tu: h2, den: tk, nhan: 'Học kỳ II năm học ' + namHoc(), ma: 'hk2-' + namHoc() };
+    if (ky === 'nam') return { tu: bd, den: tk, nhan: 'Năm học ' + namHoc(), ma: 'nam-' + namHoc() };
     ym = ym || hn.slice(0, 7);
     return { tu: ym + '-01', den: cuoiThang(ym), nhan: tenThang(ym), ma: ym };
   }

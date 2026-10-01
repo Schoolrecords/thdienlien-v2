@@ -130,7 +130,7 @@
           ? 'Cột "Cơ sở công tác" CHỌN trong danh sách (trường có ' + coSo.length + ' cơ sở/điểm trường). Để trống là chưa gắn cơ sở — gán sau ở thẻ Tài khoản.'
           : 'Cột "Cơ sở công tác" chỉ dùng cho trường có phân hiệu, điểm trường lẻ (ghi tên hoặc mã cơ sở đã khai ở thẻ Cơ sở & Sáp nhập). Trường một điểm thì để trống.'),
         { o: [o('', 'thuong'), o('', 'thuong')] },
-        hdRow('!', 'Hệ thống KHÔNG thu thập ngày sinh, số căn cước, điện thoại, địa chỉ, lương, ngạch bậc của cán bộ — mẫu này cố ý không có các cột đó.'),
+        hdRow('!', 'Mẫu nạp này cố ý KHÔNG có các cột ngày sinh, số căn cước, điện thoại, địa chỉ, lương, ngạch bậc của cán bộ — hệ thống không cần các thông tin đó. (Riêng số điện thoại GVCN do chính thầy cô tự ghi trong Sổ chủ nhiệm nếu muốn.)'),
         hdRow('!', 'Người đã nghỉ hưu, chuyển công tác thì đừng đưa vào. Muốn thêm/bớt người sau này: nạp lại tệp (máy không xoá ai, không hạ quyền ai) hoặc sửa ở thẻ Danh sách mời.')
       ]
     };
@@ -206,7 +206,7 @@
         hdRow('H', 'Cột "Loại khuyết tật" chỉ ghi với em học hoà nhập có hồ sơ (ví dụ: Trí tuệ, Vận động). Cột "Trạng thái HS" để trống là Đang học; em đã chuyển đi / thôi học thì chọn tương ứng.'),
         hdRow('J', 'Cột "Số định danh cá nhân" (căn cước) KHÔNG bắt buộc. Máy chỉ lưu khi người nạp tích ô "Nạp cả số định danh" ở bước soi thử, và chỉ quản trị đọc được.'),
         { o: [o('', 'thuong'), o('', 'thuong')] },
-        hdRow('!', 'Hệ thống KHÔNG thu thập số điện thoại, họ tên - nghề nghiệp cha mẹ, địa chỉ, nơi sinh — mẫu này cố ý không có các cột đó (Luật Bảo vệ dữ liệu cá nhân 2025).')
+        hdRow('!', 'Mẫu nạp này cố ý KHÔNG có các cột số điện thoại, họ tên - nghề nghiệp cha mẹ, địa chỉ, nơi sinh (Luật Bảo vệ dữ liệu cá nhân 2025). Thông tin liên lạc gia đình do GVCN ghi trong Sổ chủ nhiệm — chỉ GVCN của lớp và Ban giám hiệu xem được.')
       ]
     };
 

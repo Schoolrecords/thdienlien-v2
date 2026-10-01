@@ -160,12 +160,21 @@
         // chừng thì màn vẫn giữ nguyên số của năm cũ, khớp với ô chọn được trả về.
         LOP = kq[0];
         CN = {}; CN_ID = {};
+        // Tên lớp ở phân công / lop_hoc có thể khác hoa thường, khoảng trắng với danh sách học
+        // sinh ("4a" ≠ "4A") — so khớp như sổ chủ nhiệm (chuanLop), kẻo GVCN mất nút Sổ chủ nhiệm
+        // và lớp hiện "Chưa có GVCN" (rà toàn app 1/10/2026).
+        var chuan = function (x) { return String(x == null ? '' : x).replace(/\s+/g, '').toUpperCase(); };
+        var khoaLop = {};
+        Object.keys(LOP).forEach(function (l) { khoaLop[chuan(l)] = l; });
+        var tenLop = function (x) { return khoaLop[chuan(x)] || x; };
         (kq[1] || []).forEach(function (p) {
-          if (p.nguoi_dung && p.nguoi_dung.ho_ten) CN[p.lop] = p.nguoi_dung.ho_ten;
-          if (p.nguoi_dung_id) (CN_ID[p.lop] = CN_ID[p.lop] || []).push(p.nguoi_dung_id);
+          var l = tenLop(p.lop);
+          if (p.nguoi_dung && p.nguoi_dung.ho_ten) CN[l] = p.nguoi_dung.ho_ten;
+          if (p.nguoi_dung_id) (CN_ID[l] = CN_ID[l] || []).push(p.nguoi_dung_id);
         });
         var nhieuCoSo = {};
-        (kq[2] || []).forEach(function (l) {
+        (kq[2] || []).forEach(function (l0) {
+          var l = Object.assign({}, l0, { lop: tenLop(l0.lop) });
           if (LOP[l.lop]) {
             LOP[l.lop].coSoMa = l.co_so_ma || '';
             LOP[l.lop].cnDuKien = l.gvcn_ten || '';

@@ -265,6 +265,14 @@
   var TEN_KY_NOP = {}; KY_NOP.forEach(function (x) { TEN_KY_NOP[x[0]] = x[1]; });
   var TEN_TT_NOP = { da_nop: 'Đã nộp, chờ kiểm tra', da_kiem_tra: 'Đã kiểm tra', yeu_cau_bo_sung: 'Yêu cầu bổ sung', da_duyet: 'Đã duyệt', thay_the: 'Đã thay bằng lần nộp sau' };
   function laKyThang(ky) { return /^thang-/.test(String(ky || '')); }
+  // MỘT nguồn mốc học kỳ cho cả app (rà toàn app 1/10/2026): Biểu mẫu trước đây tự đặt HK I
+  // 01/9 → 17/01, sổ tính 07/9 → hết tuần 18 (10/01/2027) → số chuyên cần HK I hai nơi KHÁC nhau.
+  if (typeof window !== 'undefined') window.SCN_KHUNG_KY = function (nam) {   // tệp còn được require trong Node (bài thử)
+    var k = khungNam(nam);
+    if (!k) return null;
+    var hetHK1 = congNgay(ngayDauTuan(nam, k.tuanHK1), 6);
+    return { batDau: k.batDau, hetHK1: hetHK1, dauHK2: congNgay(hetHK1, 1), tongKet: k.tongKet, suyTam: !!k.suyTam };
+  };
   // Kỳ nên nộp ở ngày này: tháng 9 → 5 là kỳ tháng đó; ngoài thời gian học → cả năm
   function kyGoiY(iso) { var m = +String(iso || '').slice(5, 7); return (m >= 9 || m <= 5) && m ? 'thang-' + m : 'ca-nam'; }
   // Ngày cuối kỳ — mốc đề nghị khoá sổ sau khi BGH duyệt
