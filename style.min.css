@@ -3238,6 +3238,9 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .tkb-sua-nut .dh-nut-nho.on { background: #fff3cd; border-color: #e0a800; }
 .tkb-bang-sua { margin: 8px 0; }
 .tkb-luoi td.tkb-sua-o { cursor: pointer; }
+.tkb-rong td.tkb-sua-o { cursor: pointer; }
+.tkb-rong td.tkb-sua-o:hover { outline: 2px solid #3b82f6; outline-offset: -2px; }
+.tkb-rong td.dang-mo { outline: 3px solid #e0a800; outline-offset: -3px; background: #fffbea; }
 .tkb-luoi td.tkb-sua-o:hover { outline: 2px solid #3b82f6; outline-offset: -2px; }
 .tkb-luoi td.dang-mo { outline: 3px solid #e0a800; outline-offset: -3px; background: #fffbea; }
 .tkb-them { display: block; text-align: center; color: #9aa3b2; font-size: 18px; line-height: 1; }
