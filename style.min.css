@@ -3122,6 +3122,25 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .scn-luoi.nhom-lien_lac [data-nhom="lien_lac"], .scn-luoi.nhom-hoan_canh [data-nhom="hoan_canh"],
 .scn-luoi.nhom-hoc_tap [data-nhom="hoc_tap"], .scn-luoi.nhom-tat [data-nhom] { display: table-cell; }
 .scn-luoi-nhom { margin-bottom: 6px; }
+@media (max-width: 640px) {
+  .scn-luoi thead { display: none; }
+  .scn-luoi, .scn-luoi tbody { display: block; width: 100%; }
+  .scn-luoi tr { display: block; border: 1px solid var(--vien); border-radius: 10px; margin-bottom: 10px; padding: 6px 10px 8px; background: #fff; }
+  .scn-luoi td { display: block; border: 0 !important; padding: 3px 0 !important; }
+  .scn-luoi td:first-child { display: none; }
+  .scn-luoi .scn-luoi-ten { position: static; font-size: 15px; padding-bottom: 4px !important; border-bottom: 1px dashed var(--vien) !important; margin-bottom: 4px; }
+  .scn-luoi td[data-nhan]::before { content: attr(data-nhan); display: block; font-size: 12px; color: #5b6475; margin-bottom: 2px; }
+  .scn-luoi [data-nhom] { display: none; }
+  .scn-luoi.nhom-lien_lac [data-nhom="lien_lac"], .scn-luoi.nhom-hoan_canh [data-nhom="hoan_canh"],
+  .scn-luoi.nhom-hoc_tap [data-nhom="hoc_tap"], .scn-luoi.nhom-tat [data-nhom] { display: block; }
+  .scn-luoi.nhom-lien_lac td.scn-luoi-tich[data-nhom="lien_lac"], .scn-luoi.nhom-hoan_canh td.scn-luoi-tich[data-nhom="hoan_canh"],
+  .scn-luoi.nhom-hoc_tap td.scn-luoi-tich[data-nhom="hoc_tap"], .scn-luoi.nhom-tat td.scn-luoi-tich { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 8px; text-align: left !important; }
+  .scn-luoi td.scn-luoi-tich::before { display: inline; margin: 0; font-size: 13.5px; color: inherit; }
+  .scn-luoi .scn-o, .scn-luoi textarea.scn-o { min-width: 0; width: 100%; font-size: 15px; }
+  .scn-luoi-nhom button { flex: 1 1 auto; }
+  .scn-dd-them { margin: 4px 0 0; }
+  .scn-dd-them button { font-size: 13.5px; padding: 7px 14px; min-height: 34px; }
+}
 .scn-viec { list-style: none; margin: 0; padding: 0; }
 .scn-viec li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--vien); }
 .scn-viec li:last-child { border-bottom: 0; }

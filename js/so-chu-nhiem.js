@@ -1377,12 +1377,14 @@
         : '<input class="scn-o"' + cot + ' value="' + gt + '"' + (k[0] === 'sdt' ? ' inputmode="tel"' : '') + '>';
     };
     var tich = function (k, co) { return '<input type="checkbox" data-lc="' + k + '"' + (co ? ' checked' : '') + '>'; };
+    // data-nhan: nhãn cột — trên điện thoại bảng thành thẻ từng em, nhãn hiện trước mỗi ô (style.css)
     var o1 = function (c, cs, ma, k, g, j) {
-      if (k[2] === 'c' || k[2] === 'v') return '<td data-nhom="' + g + '">' + o(c, k, g, j) + '</td>';
-      if (k[2] === 't') return '<td data-nhom="' + g + '" class="scn-luoi-tich">' + tich(k[0], c[k[0]]) + '</td>';
-      if (k[2] === 'cs') return '<td data-nhom="' + g + '" class="scn-luoi-tich">' + tich('cs_' + k[0], cs.indexOf(k[0]) >= 0) + '</td>';
+      var td = '<td data-nhom="' + g + '" data-nhan="' + thoat(k[1]) + '"';
+      if (k[2] === 'c' || k[2] === 'v') return td + '>' + o(c, k, g, j) + '</td>';
+      if (k[2] === 't') return td + ' class="scn-luoi-tich">' + tich(k[0], c[k[0]]) + '</td>';
+      if (k[2] === 'cs') return td + ' class="scn-luoi-tich">' + tich('cs_' + k[0], cs.indexOf(k[0]) >= 0) + '</td>';
       var dang = htDangTheoDoi(ma);
-      return '<td data-nhom="' + g + '">' + oChon('', HT_LUOI, '').replace('<select id=""', '<select data-lc="ht"') +
+      return td + '>' + oChon('', HT_LUOI, '').replace('<select id=""', '<select data-lc="ht"') +
         (dang.length ? '<small class="scn-luoi-dang">Đang: ' + dang.map(function (l) { return thoat((TEN_HT[l] || l).split(' (')[0]); }).join(', ') + '</small>' : '') + '</td>';
     };
     return '<div class="scn-chips scn-luoi-nhom">' + NHOM_LUOI.concat([['tat', 'Tất cả cột']]).map(function (n) {
