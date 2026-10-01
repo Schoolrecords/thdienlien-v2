@@ -4160,6 +4160,20 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .scn-luoi-ten { white-space: nowrap; font-weight: 600; position: sticky; left: 0; background: #fff; z-index: 1; }
 .scn-luoi-tich { text-align: center !important; vertical-align: middle !important; }
 .scn-luoi-tich input { width: 18px; height: 18px; accent-color: var(--dam); }
+/* Bảng nhập cả lớp chia nhóm cột (1/10/2026): chỉ hiện cột của nhóm đang chọn */
+.scn-luoi [data-nhom] { display: none; }
+.scn-luoi.nhom-lien_lac [data-nhom="lien_lac"], .scn-luoi.nhom-hoan_canh [data-nhom="hoan_canh"],
+.scn-luoi.nhom-hoc_tap [data-nhom="hoc_tap"], .scn-luoi.nhom-tat [data-nhom] { display: table-cell; }
+.scn-luoi-nhom { margin-bottom: 6px; }
+/* Việc cần làm ở Tổng quan (1/10/2026) */
+.scn-viec { list-style: none; margin: 0; padding: 0; }
+.scn-viec li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--vien); }
+.scn-viec li:last-child { border-bottom: 0; }
+.scn-viec li .scn-nut { flex: 0 0 auto; }
+/* Điểm danh: đi muộn / về sớm */
+.scn-dd-them { display: inline-flex; gap: 4px; margin-left: 6px; }
+.scn-dd-them button { font-size: 12px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--vien); background: #fff; cursor: pointer; }
+.scn-dd-them button.on { background: #fff3cd; border-color: #e0a800; font-weight: 600; }
 .scn-luoi-dang { display: block; margin-top: 3px; font-size: 11.5px; color: var(--dam); line-height: 1.3; }
 .scn-co-ban { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px dashed var(--vien); }
 .bm-khoang { font-size: 13.5px; color: var(--dam); }
