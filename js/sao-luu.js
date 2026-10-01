@@ -34,7 +34,13 @@
     'so_lieu_tien_than', 'su_viec', 'tdg_co_so', 'tdg_noi_ham', 'thanh_vien_hoi_dong',
     'thanh_vien_to_dbcl', 'to_dbcl',
     'thong_bao', 'thong_bao_nhan', 'tieu_chi', 'tieu_chuan', 'truc_tuan',
-    'truong_tien_than', 'tu_danh_gia'
+    'truong_tien_than', 'tu_danh_gia',
+    // 16 bảng BỊ SÓT đến 1/10/2026 (rà toàn app): bản sao lưu không có sổ chủ nhiệm,
+    // TKB, dạy thay. Từ nay quet-app.js mục 15 chặn nếu sql/ có bảng mà đây không có.
+    'day_thay', 'ho_so_truoc_2026',
+    'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
+    'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
+    'tkb_giao_vien', 'tkb_phien_ban', 'tkb_ten_goi', 'tkb_tiet'
   ];
 
   // Số định danh cá nhân của học sinh nằm ở bảng riêng và MẶC ĐỊNH KHÔNG kèm
@@ -280,7 +286,10 @@
     // to_dbcl phải đứng trước thanh_vien_to_dbcl. Không khai ở đây thì cả hai
     // rơi vào nhóm "còn lại" xếp theo bảng chữ cái — mà 'thanh_vien_to_dbcl'
     // đứng TRƯỚC 'to_dbcl', nên phục hồi là gãy khoá ngoại ngay bảng đầu.
-    'to_dbcl'
+    'to_dbcl',
+    // Cha của các bảng thêm 1/10/2026 — xếp ABC thì con đứng trước cha:
+    // day_thay → gv_vang · tkb_giao_vien/tkb_tiet → tkb_phien_ban · scn_duyet → scn_nop.
+    'gv_vang', 'tkb_phien_ban', 'scn_nop'
   ];
 
   function sqlGiaTri(v) {
