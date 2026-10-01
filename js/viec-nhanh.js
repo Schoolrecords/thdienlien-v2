@@ -20,8 +20,14 @@
   function pad(n) { return ('0' + n).slice(-2); }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function homNay() { return iso(new Date()); }
-  // Ngày học kế tiếp (bỏ Chủ nhật) — thứ Bảy có trường còn học nên giữ
-  function ngayHocSau(tu) { var p = tu.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + 1); if (d.getDay() === 0) d.setDate(d.getDate() + 1); return iso(d); }
+  // Ngày học kế tiếp theo cau_hinh.ngay_lam_viec (ISO 1..7, mặc định T2–T6; trường học sáng thứ Bảy
+  // có 6) — Điều hành nạp và đưa ra qua window.DH_NGAY_LAM. Chưa nạp thì coi T2–T6.
+  function ngayHocSau(tu) {
+    var lam = (window.DH_NGAY_LAM && window.DH_NGAY_LAM()) || [1, 2, 3, 4, 5];
+    var p = tu.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + 1);
+    for (var i = 0; i < 7 && lam.indexOf(d.getDay() === 0 ? 7 : d.getDay()) < 0; i++) d.setDate(d.getDate() + 1);
+    return iso(d);
+  }
   var TEN_THU = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   function tenNgay(s) { var p = s.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]); return TEN_THU[d.getDay()] + ' ' + p[2] + '/' + p[1]; }
   function ngayVN(s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] : ''; }
@@ -87,7 +93,10 @@
               '<span class="vcl-nut"><button type="button" class="nut-chinh" data-vcl-duyet="' + d.id + '">✓ Duyệt</button>' +
               '<button type="button" class="dh-nut-nho" data-vcl-tu-choi="' + d.id + '">Không duyệt</button></span></div>';
           }).join('');
-        } else h += '<div class="vcl-dong xanh"><div>📝 Không có đơn xin nghỉ nào chờ duyệt' + (cs.length ? ' ở ' + thoat(tenPham) : '') + '.</div></div>';
+        } else if (laQuanLy()) h += '<div class="vcl-dong xanh"><div>📝 Không có đơn xin nghỉ nào chờ duyệt' + (cs.length ? ' ở ' + thoat(tenPham) : '') + '.</div></div>';
+        // Phụ trách điểm KHÔNG thuộc BGH: máy không đọc đơn chờ duyệt (đơn do BGH duyệt) — trước 1/10/2026
+        // dòng trên vẫn hiện "Không có đơn…" dù có đơn, tức là nói sai. Nay im lặng, chỉ dẫn lối xem.
+        else h += '<div class="vcl-phu">Đơn xin nghỉ do Ban giám hiệu duyệt — <a href="#" data-vcl="de-xuat">xem ở Đề xuất – duyệt ›</a></div>';
         if (donKhac > 0) h += '<div class="vcl-phu">' + donKhac + ' đơn của phân hiệu khác — <a href="#" data-vcl="de-xuat">xem ở Đề xuất – duyệt ›</a></div>';
         h += '</section>';
         KHUNG.html = h;

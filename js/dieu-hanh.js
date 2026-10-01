@@ -868,6 +868,14 @@
   // thứ Bảy tự thêm 6); ngày trong bảng ngay_nghi cũng nghỉ, riêng 'lam_bu'
   // là NGÀY LÀM đè lên tất (cùng luật ưu tiên với bảng công, sql/30).
   var NGAY_LAM = [1, 2, 3, 4, 5];   // nạp từ cau_hinh lúc taiLai
+  // CHẶN BẤM HAI LẦN (rà toàn app 1/10/2026): mạng chậm, thầy cô bấm "Gửi" lần nữa là
+  // thành HAI đơn / hai lượt vắng / hai việc. Mỗi thao tác ghi giữ một khoá đến khi xong.
+  var DANG_GUI = {};
+  function khoaGui(k) { if (DANG_GUI[k]) { window.notify('Đang gửi, thầy cô chờ một chút…'); return false; } DANG_GUI[k] = 1; return true; }
+  function moGui(k) { delete DANG_GUI[k]; }
+  // Cho khung "Việc cần xử lý" (viec-nhanh.js) biết ngày học kế tiếp — trước 1/10/2026 khung đó
+  // chỉ bỏ Chủ nhật nên chiều thứ Sáu "Ngày mai" là thứ Bảy (trường không học) thay vì thứ Hai.
+  window.DH_NGAY_LAM = function () { return NGAY_LAM.slice(); };
   var NGHI_HOM_NAY = null;          // bản ghi ngay_nghi của hôm nay (null = không có)
   function laNgayHoc() {
     if (NGHI_HOM_NAY) return NGHI_HOM_NAY.loai === 'lam_bu';
@@ -1221,7 +1229,13 @@
       vang[khoaGV(g.email, g.ten)] = g;
     });
     var nhieuCS = DL.coSo.length > 1;
-    var hang = (DL.gvDs || []).map(function (g) {
+    // Người VẮNG lên đầu, rồi người cùng điểm trường với tôi (rà toàn app 1/10/2026):
+    // trường ~100 CBGV, ba điểm — trước đây phải cuộn cả bảng mới thấy ai vắng.
+    var csToi = coSoCuaToi();
+    var thuTu = (DL.gvDs || []).map(function (g, i) {
+      return { g: g, i: i, v: vang[khoaGV(g.email, g.ten)] ? 0 : 1, cs: csToi && g.coSo === csToi ? 0 : 1 };
+    }).sort(function (a, b) { return a.v - b.v || a.cs - b.cs || a.i - b.i; });
+    var hang = thuTu.map(function (x) { return x.g; }).map(function (g) {
       var v = vang[khoaGV(g.email, g.ten)];
       // 🔴 19/8/2026 — BỎ HẲN việc nhìn `bao_cao_dau_buoi` ở bảng nhân sự.
       //
@@ -1313,7 +1327,8 @@
         '<div class="hd-kiem vang">Phần này cần chạy <b>sql/25-dieu-hanh-dot-2.sql</b> trên Supabase rồi tải lại trang.</div>';
     }
     if (!KT_CS || !DL.coSo.filter(function (c) { return c.ma === KT_CS; }).length) {
-      KT_CS = (DL.coSo[0] || {}).ma || '';
+      var csToiKT = coSoCuaToi();
+      KT_CS = (csToiKT && DL.coSo.some(function (c) { return c.ma === csToiKT; })) ? csToiKT : ((DL.coSo[0] || {}).ma || '');
     }
     var chonCS = DL.coSo.length > 1
       ? '<div class="dh-chon-hang">' + DL.coSo.map(function (c) {
@@ -2244,9 +2259,10 @@
         '</div>';
     }).join('') || '<div class="the-thong-bao">Chưa có sự việc nào.</div>';
 
+    var csToiBV = coSoCuaToi();   // mặc định điểm trường của tôi, không phải điểm đầu danh sách
     var chonCSBV = DL.coSo.length > 1
       ? '<select class="dh-o-nhap" id="dh-bv-coso" style="margin:8px 0 0">' + DL.coSo.map(function (c) {
-          return '<option value="' + thoat(c.ma) + '">' + thoat(c.ten) + '</option>';
+          return '<option value="' + thoat(c.ma) + '"' + (c.ma === csToiBV ? ' selected' : '') + '>' + thoat(c.ten) + '</option>';
         }).join('') + '</select>'
       : '';
 
@@ -3153,14 +3169,16 @@
         window.notify('Đã lưu (bản mẫu — chưa ghi cơ sở dữ liệu).');
         return;
       }
+      if (!khoaGui('guiVang')) return;
       window.MAY_CHU.from('gv_vang').insert(dsVang)
         .then(function (r) {
+          moGui('guiVang');
           if (r.error) throw r.error;
           BC_GV_VANG = {}; BC_MO_CHON_GV = false;
           window.notify('✅ Đã lưu ' + dsVang.length + ' người vắng — bảng công tháng cộng lại ngay.');
           return taiLai();
         })
-        .catch(baoLoi);
+        .catch(function (e) { moGui('guiVang'); baoLoi(e); });
     },
 
     // ── Điểm danh HS ──
@@ -3305,10 +3323,12 @@
         veDieuHanh(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.');
         return;
       }
+      if (!khoaGui('vGiao')) return;
       window.MAY_CHU.from('cong_viec').insert({
         noi_dung: noiDung, nguoi_email: email || null, nguoi_ten: g.ten || email,
         co_so_ma: g.coSo || null, han: han, muc: muc, tao_boi_id: idToi()
       }).then(function (r) {
+        moGui('vGiao');
         if (r.error) { baoLoi(r.error); return; }
         window.notify('✅ Đã giao việc cho ' + (g.ten || email) + '.');
         taiLai();
@@ -3397,11 +3417,13 @@
         DX_LOAI = null; veDieuHanh(); window.notify('Bản mẫu — chưa ghi cơ sở dữ liệu.');
         return;
       }
+      if (!khoaGui('dxGui')) return;
       window.MAY_CHU.from('de_xuat').insert({
         loai: DX_LOAI, noi_dung: noiDung, tu_ngay: tu || null, den_ngay: den || null,
         buoi: buoi, co_so_ma: coSo || null,
         nguoi_gui_id: idToi(), nguoi_gui_ten: tenToi(), nguoi_gui_email: emailToi() || null
       }).then(function (r) {
+        moGui('dxGui');
         if (r.error) { baoLoi(r.error); return; }
         DX_LOAI = null;
         window.notify('✅ Đã gửi — Ban giám hiệu sẽ thấy ở "Cần tôi xử lý".');
@@ -3425,8 +3447,10 @@
         }
         veGiu(); return;
       }
+      if (!khoaGui('duyet' + id)) return;
       window.MAY_CHU.rpc('duyet_de_xuat', { p_id: id, p_dong_y: dongY, p_ghi_chu: ghiChu })
         .then(function (r) {
+          moGui('duyet' + id);
           if (r.error) { baoLoi(r.error); return; }
           window.notify(dongY
             ? '✅ Đã duyệt — đơn nghỉ được tự ghi vào danh sách vắng, khỏi báo lại.'

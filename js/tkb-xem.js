@@ -36,6 +36,7 @@
     napXong: false,    // đã hỏi máy chủ xong (kể cả khi trường CHƯA có phiên bản nào)
     cheDo: null,       // 'toi' | 'lop' | 'gv' | 'truong'
     lop: '', gv: '', buoi: 'ca', coSo: 'all', timGV: '',
+    daMacDinhCoSo: false,  // đã đặt điểm trường mặc định = điểm của tôi (chỉ một lần, sau đó theo người dùng chọn)
     mau: false         // đang dùng dữ liệu mẫu (chưa nối CSDL)
   };
   var EL = null;
@@ -351,8 +352,17 @@
     if (!S.cheDo) S.cheDo = cuaToi.length ? 'toi' : (laQT() ? 'truong' : 'lop');
     if (S.cheDo === 'toi' && !cuaToi.length && !S.mau) S.cheDo = 'lop';
     var dsLop = lopDanhSach();
-    if (!S.lop || dsLop.indexOf(S.lop) < 0) S.lop = dsLop[0] || '';
-    if (!S.gv || !dsGV.some(function (g) { return g.gv_nhan === S.gv; })) S.gv = dsGV[0] ? dsGV[0].gv_nhan : '';
+    // "CỦA TÔI TRƯỚC" (rà toàn app 1/10/2026, cùng loại đề xuất cô Hoàn Mỹ 5E QC1): trường 60 lớp
+    // mà mở ra là lớp 1A, người đầu danh sách, "Toàn trường" thì GV phải cuộn tìm mỗi lần.
+    // Mặc định: lớp mình chủ nhiệm · chính mình · điểm trường của mình.
+    var lopToi = lopCuaToi(cuaToi, dsLop);
+    if (!S.lop || dsLop.indexOf(S.lop) < 0) S.lop = lopToi[0] || dsLop[0] || '';
+    if (!S.gv || !dsGV.some(function (g) { return g.gv_nhan === S.gv; })) S.gv = cuaToi[0] ? cuaToi[0].gv_nhan : (dsGV[0] ? dsGV[0].gv_nhan : '');
+    if (!S.daMacDinhCoSo) {
+      S.daMacDinhCoSo = true;
+      var csToi = (window.NGUOI_DUNG || {}).co_so_ma || (lopToi[0] && dl.lopCoSo[lopToi[0]]) || '';
+      if (csToi && dl.coSo.some(function (c) { return c.ma === csToi; })) S.coSo = csToi;
+    }
 
     var dsC = dsChon();
     var pb = dsC.filter(function (x) { return x.id === S.pbId; })[0] || {};
@@ -417,6 +427,17 @@
     dl.tiet.forEach(function (x) { if (x.gv_nhan && !theoNhan[x.gv_nhan]) theoNhan[x.gv_nhan] = { gv_nhan: x.gv_nhan, ho_ten: x.gv_nhan, email: String(x.gv_email || '').toLowerCase() }; });
     return Object.keys(theoNhan).map(function (k) { return theoNhan[k]; })
       .sort(function (a, b) { return tenCuoi(a.ho_ten).localeCompare(tenCuoi(b.ho_ten), 'vi') || a.ho_ten.localeCompare(b.ho_ten, 'vi'); });
+  }
+  // Lớp tôi chủ nhiệm (theo cột lop_cn của tệp Smart Scheduler), so không phân biệt hoa thường
+  function lopCuaToi(cuaToi, dsLop) {
+    var ra = [];
+    cuaToi.forEach(function (g) {
+      String(g.lop_cn || '').split(/\s*,\s*/).forEach(function (l) {
+        var khop = dsLop.filter(function (x) { return x.toLowerCase() === l.toLowerCase(); })[0];
+        if (khop && ra.indexOf(khop) < 0) ra.push(khop);
+      });
+    });
+    return ra;
   }
   function tenCuoi(s) { var p = String(s || '').trim().split(/\s+/); return p[p.length - 1] || ''; }
   function lopDanhSach() {
@@ -494,10 +515,16 @@
     gvDanhSach().forEach(function (g) { gvCua[g.gv_nhan] = g; });
     var m = chiMuc(function (x) { return x.lop === S.lop; });
     var cn = gvDanhSach().filter(function (g) { return g.lop_cn && String(g.lop_cn).split(/\s*,\s*/).indexOf(S.lop) >= 0; })[0];
+    var lopToi = lopCuaToi(gvDanhSach().filter(function (g) { return g.email && g.email === toiEmail(); }), dsLop);
     var theoKhoi = {};
     dsLop.forEach(function (l) { var k = (String(l).match(/^\d+/) || ['Khác'])[0]; (theoKhoi[k] = theoKhoi[k] || []).push(l); });
     return '<div class="tkb-hai-cot">' +
-      '<nav class="tkb-ds-lop" aria-label="Chọn lớp">' + Object.keys(theoKhoi).sort(soSanhLop).map(function (k) {
+      '<nav class="tkb-ds-lop" aria-label="Chọn lớp">' +
+      // Lớp tôi chủ nhiệm GHIM ĐẦU danh sách nút lớp
+      (lopToi.length ? '<div class="tkb-khoi tkb-khoi-toi"><span>Lớp của tôi</span>' + lopToi.map(function (l) {
+        return '<button class="' + (l === S.lop ? 'on' : '') + '" data-lop="' + thoat(l) + '">★ ' + thoat(l) + '</button>';
+      }).join('') + '</div>' : '') +
+      Object.keys(theoKhoi).sort(soSanhLop).map(function (k) {
         return '<div class="tkb-khoi"><span>' + (isFinite(+k) ? 'Khối ' + k : k) + '</span>' + theoKhoi[k].map(function (l) {
           return '<button class="' + (l === S.lop ? 'on' : '') + '" data-lop="' + thoat(l) + '">' + thoat(l) + '</button>';
         }).join('') + '</div>';

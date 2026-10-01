@@ -407,12 +407,15 @@
       });
     });
     var z = document.getElementById('dt-zalo');
-    if (z) z.addEventListener('click', function () { chepZalo(D.ngay, D.dayThay); });
+    // Chỉ phân hiệu đang lọc (rà toàn app 1/10/2026: trước đây chép cả trường dù đang xem một điểm)
+    if (z) z.addEventListener('click', function () { chepZalo(D.ngay, D.dayThay.filter(function (d) { return !D.cs || d.co_so_ma === D.cs; })); });
     var db = document.getElementById('dt-da-bao');
     if (db) db.addEventListener('click', function () {
       if (!may()) return;
       db.disabled = true;
-      may().from('day_thay').update({ trang_thai: 'da_bao' }).eq('ngay', D.ngay).eq('trang_thai', 'da_phan').select('id').then(function (r) {
+      var q = may().from('day_thay').update({ trang_thai: 'da_bao' }).eq('ngay', D.ngay).eq('trang_thai', 'da_phan');
+      if (D.cs) q = q.eq('co_so_ma', D.cs);   // đang lọc một phân hiệu thì chỉ đánh dấu phân hiệu đó
+      q.select('id').then(function (r) {
         if (r.error) { db.disabled = false; bao('Không lưu được: ' + r.error.message); return; }
         bao('Đã đánh dấu ' + (r.data || []).length + ' tiết là đã báo.'); taiLai();
       });

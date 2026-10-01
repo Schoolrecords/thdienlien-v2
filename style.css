@@ -3440,6 +3440,7 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tkb-ds-lop, .tkb-ds-gv { background: var(--the); border: 1px solid var(--vien); border-radius: 12px; padding: 10px; position: sticky; top: 8px; }
 .tkb-khoi { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
 .tkb-khoi > span { flex-basis: 100%; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--chu-nhat); }
+.tkb-khoi-toi > span { color: var(--dam); }   /* lớp tôi chủ nhiệm ghim đầu */
 .tkb-ds-lop button { font: inherit; font-size: 13px; font-weight: 700; min-width: 44px; padding: 6px 8px; border-radius: 8px;
   border: 1px solid var(--vien); background: #fff; color: var(--chu); cursor: pointer; }
 .tkb-ds-lop button.on, .tkb-ds-gv button.on { background: var(--dam); color: #fff; border-color: var(--dam); }
