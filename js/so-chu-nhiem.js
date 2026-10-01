@@ -1264,8 +1264,18 @@
   }
   // Bảng nhập cả lớp — đúng các cột trang "Thông tin về học sinh" + các diện đếm ở trang "Thông tin cơ bản về lớp"
   var COT_LUOI = [['sdt', 'Số điện thoại'], ['dia_chi', 'Địa chỉ'], ['xom', 'Xóm'], ['hoan_canh_gd', 'Hoàn cảnh gia đình', 1],
-    ['dac_diem', 'Đặc điểm cá nhân (khả năng vượt trội, hạn chế về học tập, NL, PC)', 1]];
-  var CS_LUOI = [['ho_ngheo', 'Hộ nghèo'], ['can_ngheo', 'Cận nghèo'], ['mo_coi', 'Mồ côi'], ['nguoi_co_cong', 'Con TB, LS, người có công']];
+    ['dac_diem', 'Đặc điểm cá nhân (khả năng vượt trội, hạn chế về học tập, NL, PC)', 1], ['nang_khieu', 'Năng khiếu, sở thích']];
+  // 1/10/2026 thầy Chung: GV báo "không tự nhập được học sinh đặc biệt, năng khiếu, cần theo dõi" —
+  // các mục ấy chỉ có ở form từng em và thẻ Hỗ trợ HS, bảng cả lớp (chỗ GV thật sự dùng) không có.
+  // Thêm vào bảng: Khuyết tật + Hoàn cảnh đặc biệt khác + cột chọn "Đưa vào theo dõi" (tạo dòng scn_ho_tro).
+  var CS_LUOI = [['ho_ngheo', 'Hộ nghèo'], ['can_ngheo', 'Cận nghèo'], ['mo_coi', 'Mồ côi'], ['nguoi_co_cong', 'Con TB, LS, người có công'],
+    ['khuyet_tat', 'Khuyết tật'], ['khac', 'Hoàn cảnh đặc biệt khác']];
+  var HT_LUOI = [['', '—'], ['noi_troi', 'Năng khiếu (bồi dưỡng)'], ['hoc_tap', 'Cần giúp đỡ học tập'], ['nguy_co_bo_hoc', 'Nguy cơ bỏ học'],
+    ['tam_ly', 'Tâm lý cần theo dõi'], ['suc_khoe', 'Sức khỏe cần theo dõi'], ['khac', 'Cần theo dõi khác']];
+  // Loại hỗ trợ đang theo dõi của một em (để cột "Đưa vào theo dõi" không tạo trùng)
+  function htDangTheoDoi(ma) {
+    return D.so.hoTro.filter(function (x) { return x.hoc_sinh_ma === ma && x.trang_thai === 'dang_theo_doi'; }).map(function (x) { return x.loai; });
+  }
   function veLuoiHS() {
     var S = D.so;
     var o = function (c, k, j) {
@@ -1275,16 +1285,19 @@
     };
     var tich = function (k, co) { return '<td class="scn-luoi-tich"><input type="checkbox" data-lc="' + k + '"' + (co ? ' checked' : '') + '></td>'; };
     return '<p class="scn-ghi-chu">Gõ thẳng vào ô rồi bấm <b>Lưu thông tin cả lớp</b> (chỉ dòng có thay đổi mới được ghi). Có sẵn trong Excel: bôi đen các ô theo đúng thứ tự cột ' +
-      '<b>Số điện thoại → Địa chỉ → Xóm → Hoàn cảnh → Đặc điểm</b> (không kèm cột họ tên), Ctrl+C, bấm vào ô của em đầu tiên ở đây rồi Ctrl+V — app rải xuống các dòng.</p>' +
+      '<b>Số điện thoại → Địa chỉ → Xóm → Hoàn cảnh → Đặc điểm → Năng khiếu</b> (không kèm cột họ tên), Ctrl+C, bấm vào ô của em đầu tiên ở đây rồi Ctrl+V — app rải xuống các dòng.</p>' +
+      '<p class="scn-ghi-chu">Học sinh <b>năng khiếu</b> cần bồi dưỡng, em <b>cần giúp đỡ</b> hay <b>cần theo dõi</b>: chọn ở cột cuối <b>Đưa vào theo dõi</b> — em sẽ có tên ở thẻ <b>Hỗ trợ HS</b>, vào đó ghi thêm biểu hiện, biện pháp khi cần.</p>' +
       (D.co71 === false ? '<div class="hd-kiem vang">Cơ sở dữ liệu của trường chưa chạy <b>sql/71</b> — các cột này chưa lưu được.</div>' : '') +
       '<div class="scn-bang-boc"><table class="scn-bang scn-luoi"><thead><tr><th>TT</th><th>Họ và tên</th>' +
       COT_LUOI.map(function (k) { return '<th>' + thoat(k[1]) + '</th>'; }).join('') + '<th>Ngoài xã</th>' +
-      CS_LUOI.map(function (k) { return '<th>' + thoat(k[1]) + '</th>'; }).join('') + '<th>Cần quan tâm</th></tr></thead><tbody>' +
+      CS_LUOI.map(function (k) { return '<th>' + thoat(k[1]) + '</th>'; }).join('') + '<th>Cần quan tâm</th><th>Đưa vào theo dõi</th></tr></thead><tbody>' +
       D.hs.map(function (hs, i) {
-        var c = S.hoanCanh[hs.ma] || {}, cs = c.dien_chinh_sach || [];
+        var c = S.hoanCanh[hs.ma] || {}, cs = c.dien_chinh_sach || [], dang = htDangTheoDoi(hs.ma);
         return '<tr data-luoi="' + thoat(hs.ma) + '"><td>' + (i + 1) + '</td><td class="scn-luoi-ten">' + thoat(hs.ho_ten) + '</td>' +
           COT_LUOI.map(function (k, j) { return o(c, k, j); }).join('') + tich('ngoai_xa', c.ngoai_xa) +
-          CS_LUOI.map(function (k) { return tich('cs_' + k[0], cs.indexOf(k[0]) >= 0); }).join('') + tich('can_quan_tam', c.can_quan_tam) + '</tr>';
+          CS_LUOI.map(function (k) { return tich('cs_' + k[0], cs.indexOf(k[0]) >= 0); }).join('') + tich('can_quan_tam', c.can_quan_tam) +
+          '<td>' + oChon('', HT_LUOI, '').replace('<select id=""', '<select data-lc="ht"') +
+          (dang.length ? '<small class="scn-luoi-dang">Đang: ' + dang.map(function (l) { return thoat((TEN_HT[l] || l).split(' (')[0]); }).join(', ') + '</small>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<div class="scn-hang"><button class="scn-nut" data-act="luu-luoi">Lưu thông tin cả lớp</button><button class="scn-nut phu" data-act="hs-luoi">Đóng, không lưu</button></div>';
   }
@@ -2728,27 +2741,44 @@
   }
   // ── Lưu bảng nhập cả lớp: một lượt upsert các dòng có thay đổi ──
   function luuLuoi(nut) {
-    var S = D.so, ds = [];
+    var S = D.so, ds = [], dsHT = [];
     var giong = function (x, y) { return (x == null || x === '' ? null : x) === (y == null || y === '' ? null : y); };
     Array.prototype.slice.call(EL.querySelectorAll('tr[data-luoi]')).forEach(function (tr) {
       var ma = tr.getAttribute('data-luoi'), c = S.hoanCanh[ma] || {};
       var v = function (k) { var o = tr.querySelector('[data-lc="' + k + '"]'); return !o ? null : o.type === 'checkbox' ? o.checked : (String(o.value || '').trim() || null); };
       var cs = (c.dien_chinh_sach || []).filter(function (x) { return !CS_LUOI.some(function (k) { return k[0] === x; }); });
       CS_LUOI.forEach(function (k) { if (v('cs_' + k[0])) cs.push(k[0]); });
-      var moi = { sdt: v('sdt'), dia_chi: v('dia_chi'), xom: v('xom'), hoan_canh_gd: v('hoan_canh_gd'), dac_diem: v('dac_diem'),
+      var moi = { sdt: v('sdt'), dia_chi: v('dia_chi'), xom: v('xom'), hoan_canh_gd: v('hoan_canh_gd'), dac_diem: v('dac_diem'), nang_khieu: v('nang_khieu'),
         ngoai_xa: !!v('ngoai_xa'), can_quan_tam: !!v('can_quan_tam'), dien_chinh_sach: cs };
       var doi = !giong(moi.sdt, c.sdt) || !giong(moi.dia_chi, c.dia_chi) || !giong(moi.xom, c.xom) || !giong(moi.hoan_canh_gd, c.hoan_canh_gd) ||
-        !giong(moi.dac_diem, c.dac_diem) || moi.ngoai_xa !== !!c.ngoai_xa || moi.can_quan_tam !== !!c.can_quan_tam ||
+        !giong(moi.dac_diem, c.dac_diem) || !giong(moi.nang_khieu, c.nang_khieu) || moi.ngoai_xa !== !!c.ngoai_xa || moi.can_quan_tam !== !!c.can_quan_tam ||
         cs.slice().sort().join() !== (c.dien_chinh_sach || []).slice().sort().join();
       if (doi) ds.push(Object.assign({ nam_hoc: D.nam, hoc_sinh_ma: ma, lop: D.lop }, moi));
+      // Cột "Đưa vào theo dõi": em chưa có dòng đang theo dõi cùng loại thì thêm một dòng Hỗ trợ HS
+      var ht = v('ht');
+      if (ht && htDangTheoDoi(ma).indexOf(ht) < 0) dsHT.push({ nam_hoc: D.nam, lop: D.lop, hoc_sinh_ma: ma, loai: ht, ngay: homNay(),
+        moc: mocGoiY(homNay()) || null, trang_thai: 'dang_theo_doi', bieu_hien: ht === 'noi_troi' ? moi.nang_khieu : null });
     });
-    if (!ds.length) { bao('Chưa có ô nào thay đổi.'); return; }
+    if (!ds.length && !dsHT.length) { bao('Chưa có ô nào thay đổi.'); return; }
     if (D.co71 === false) { bao('Cơ sở dữ liệu của trường chưa chạy sql/71 — chưa lưu được các cột này.'); return; }
     var ap = function (rows) { rows.forEach(function (r) { S.hoanCanh[r.hoc_sinh_ma] = Object.assign({}, S.hoanCanh[r.hoc_sinh_ma] || {}, r); }); };
-    if (!may()) return xemThu(function () { ap(ds); D.hsLuoi = false; D.daCham = false; });
-    ghiMay(may().from('scn_hoan_canh').upsert(ds, { onConflict: 'nam_hoc,hoc_sinh_ma' }).select(), nut, function (d) {
-      ap(d && d.length ? d : ds); D.hsLuoi = false; D.daCham = false;
-      bao('Đã lưu thông tin ' + ds.length + ' học sinh.'); ve();
+    var xong = function () {
+      D.hsLuoi = false; D.daCham = false;
+      bao('Đã lưu' + (ds.length ? ' thông tin ' + ds.length + ' học sinh' : '') + (ds.length && dsHT.length ? ',' : '') +
+        (dsHT.length ? ' đưa ' + dsHT.length + ' em vào danh sách theo dõi (thẻ Hỗ trợ HS)' : '') + '.');
+    };
+    if (!may()) return xemThu(function () {
+      ap(ds); S.hoTro = dsHT.map(function (r, i) { return Object.assign({ id: -Date.now() - i }, r); }).concat(S.hoTro); xong();
+    });
+    var buocHC = ds.length ? may().from('scn_hoan_canh').upsert(ds, { onConflict: 'nam_hoc,hoc_sinh_ma' }).select() : { data: [] };
+    ghiMay(buocHC, nut, function (d) {
+      if (ds.length) ap(d && d.length ? d : ds);
+      if (!dsHT.length) { xong(); ve(); return; }
+      // Ghi lần hai cho Hỗ trợ HS. Hồ sơ đã lưu ở trên; bước này lỗi thì bảng vẫn mở, nút Lưu bật lại,
+      // bấm lại chỉ còn ghi phần theo dõi (phần hồ sơ đã khớp nên không tính là thay đổi).
+      ghiMay(may().from('scn_ho_tro').insert(dsHT.map(function (r) { return boCotMoi('scn_ho_tro', r); })).select(), nut, function (h) {
+        S.hoTro = (h && h.length ? h : dsHT).concat(S.hoTro); xong(); ve();
+      });
     });
   }
   // Dán khối ô từ Excel vào bảng nhập: rải sang phải theo cột, xuống dưới theo dòng
