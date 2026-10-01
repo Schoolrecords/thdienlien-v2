@@ -216,6 +216,7 @@
       maHop[nc.id] = nc.ma;
       var mau = HOP_MAU[nc.ma] || {};
       HOP[nc.ma] = {
+        id: nc.id,          // ô sửa hồ sơ cần id để CHUYỂN hồ sơ sang hộp khác
         ten: nc.ten.replace(/^Hộp\s*\d+\s*·\s*/, ''),
         moTa: mau.moTa || '',
         phuTrach: mau.phuTrach || ''

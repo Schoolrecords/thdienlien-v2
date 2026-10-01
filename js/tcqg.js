@@ -250,6 +250,7 @@
   window.duLieuTuDanhGia = function () {
     var mcTheoTC = {};
     window.HO_SO.forEach(function (h) {
+      if (h.tt === 'da_dong') return;   // hồ sơ đã đóng không còn là minh chứng
       var banGhi = (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) || {};
       (h.tc || []).forEach(function (ma) {
         (mcTheoTC[ma] = mcTheoTC[ma] || []).push({
@@ -632,7 +633,7 @@
 
   // Nhập theo nội hàm — mỗi yêu cầu một thẻ, tự lưu onblur, chip minh chứng
   function oHienTrang(c, muc, dsNH) {
-    var mcTC = window.HO_SO.filter(function (h) { return (h.tc || []).indexOf(c.ma) >= 0; });
+    var mcTC = window.HO_SO.filter(function (h) { return h.tt !== 'da_dong' && (h.tc || []).indexOf(c.ma) >= 0; });
     return dsNH.map(function (n, i) {
       var h = HT_NH[n.id] || {};
       var daGan = h.ma_minh_chung || [];
@@ -664,7 +665,7 @@
   }
 
   function dongMinhChungGon(c) {
-    var mc = window.HO_SO.filter(function (h) { return (h.tc || []).indexOf(c.ma) >= 0; });
+    var mc = window.HO_SO.filter(function (h) { return h.tt !== 'da_dong' && (h.tc || []).indexOf(c.ma) >= 0; });
     var co = mc.filter(function (h) { return h.tt === 'co'; }).length;
     return '<div class="mc-dong">📎 Minh chứng: <b>' + co + '/' + mc.length + '</b> đã có trong kho' +
       (mc.length - co ? ' · <b style="color:var(--thieu)">' + (mc.length - co) + ' chưa có</b>' : '') +
@@ -673,7 +674,7 @@
 
   // ── Tab Minh chứng ──
   function oMinhChung(c) {
-    var mc = window.HO_SO.filter(function (h) { return (h.tc || []).indexOf(c.ma) >= 0; });
+    var mc = window.HO_SO.filter(function (h) { return h.tt !== 'da_dong' && (h.tc || []).indexOf(c.ma) >= 0; });
     if (!mc.length) return '<div class="the-thong-bao">Kho hồ sơ chưa có minh chứng nào gắn với tiêu chí ' + c.ma +
       '. Vào <b>Quản trị Hồ sơ</b> → sửa hồ sơ → thêm mã tiêu chí này.</div>';
     var dem = { co: 0, dang: 0, chua: 0 };

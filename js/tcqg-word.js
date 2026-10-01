@@ -124,6 +124,7 @@
     // Gom theo mã — một minh chứng dùng nhiều tiêu chí chỉ vào bảng MỘT lần (Phụ lục IV mục I.3)
     var gom = {};
     window.HO_SO.forEach(function (h) {
+      if (h.tt === 'da_dong') return;   // hồ sơ đã đóng không vào danh mục minh chứng
       var dinh = (h.tc || []).filter(function (ma) { return dsTieuChi.indexOf(ma) >= 0; });
       if (!dinh.length) return;
       if (!gom[h.ma]) gom[h.ma] = { h: h, tc: (h.tc || []).slice() };

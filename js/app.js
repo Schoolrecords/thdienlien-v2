@@ -75,10 +75,12 @@
   })();
 
   // ── Đếm chung ──
+  // Hồ sơ ĐÃ ĐÓNG (hết căn cứ / gộp vào mã khác) đứng NGOÀI mẫu số — trước 1/10/2026
+  // nó bị tính là "Chưa có" nên đóng bớt hồ sơ theo danh mục tinh gọn lại làm TỤT tỉ lệ.
   function demTrangThai(ds) {
-    var co = 0, dang = 0;
-    ds.forEach(function (h) { if (h.tt === 'co') co++; else if (h.tt === 'dang') dang++; });
-    return { co: co, dang: dang, chua: ds.length - co - dang, tong: ds.length };
+    var co = 0, dang = 0, dong = 0;
+    ds.forEach(function (h) { if (h.tt === 'co') co++; else if (h.tt === 'dang') dang++; else if (h.tt === 'da_dong') dong++; });
+    return { co: co, dang: dang, dong: dong, chua: ds.length - co - dang - dong, tong: ds.length - dong };
   }
 
   // ── Trang chủ + thống kê màn Hồ sơ ──
@@ -176,7 +178,7 @@
       // và ô tìm kiếm vẫn tìm ra theo mã cũ — chỉ thôi hiển thị.
       '<td class="code">' + thoatHTML(h.ma) + '</td>' +
       '<td class="rname">' + thoatHTML(h.ten) +
-      (hienHop ? '<span class="hop-phu">' + thoatHTML(window.HOP[h.hop].ten) + '</span>' : '') +
+      (hienHop ? '<span class="hop-phu">' + thoatHTML((window.HOP[h.hop] || {}).ten || h.hop || '') + '</span>' : '') +
       '<span class="crits">' + (h.tc || []).map(function (c) {
         return '<span class="tag-crit" onclick="event.stopPropagation();xemTieuChi(\'' + c + '\')">Tiêu chí ' + c + '</span>';
       }).join('') + '</span></td>' +

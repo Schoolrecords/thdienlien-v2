@@ -1072,6 +1072,7 @@ select.csvc-o { cursor: pointer; }
 .st-co { background: var(--ok-nen); color: var(--ok); }
 .st-dang { background: var(--canh-nen); color: var(--canh); }
 .st-chua { background: var(--thieu-nen); color: var(--thieu); }
+.st-da_dong { background: #eef0f3; color: #475569; }   /* hồ sơ đã đóng / đã gộp — xám, không phải "thiếu" */
 .rec-tbl .drive {
   width: 34px; height: 32px; border-radius: 8px; border: 1px solid #f0e0bb; background: var(--vang-nen);
   display: inline-grid; place-items: center; font-size: 15px; margin-left: 8px; vertical-align: middle;
@@ -1171,6 +1172,7 @@ td.tdst { white-space: nowrap; text-align: right; }
 .hs-tt button.chon[data-tt="co"] { background: var(--ok-nen); border-color: var(--ok); color: var(--ok); }
 .hs-tt button.chon[data-tt="dang"] { background: var(--canh-nen); border-color: var(--canh); color: var(--canh); }
 .hs-tt button.chon[data-tt="chua"] { background: var(--thieu-nen); border-color: var(--thieu); color: var(--thieu); }
+.hs-tt button.chon[data-tt="da_dong"] { background: #eef0f3; border-color: #64748b; color: #334155; }
 .hs-chan {
   padding: 16px 20px; border-top: 1px solid #eef1f6; display: flex; gap: 10px;
   position: sticky; bottom: 0; background: #fff;
