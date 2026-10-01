@@ -3234,3 +3234,18 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-nut button { flex: 1 1 0; min-height: 46px; font-size: 14.5px; }
 }
 #bm-xt .scn-xt-hop { width: min(1240px, 100%); }
+.tkb-sua-nut { margin-left: auto; align-self: center; }
+.tkb-sua-nut .dh-nut-nho.on { background: #fff3cd; border-color: #e0a800; }
+.tkb-bang-sua { margin: 8px 0; }
+.tkb-luoi td.tkb-sua-o { cursor: pointer; }
+.tkb-luoi td.tkb-sua-o:hover { outline: 2px solid #3b82f6; outline-offset: -2px; }
+.tkb-luoi td.dang-mo { outline: 3px solid #e0a800; outline-offset: -3px; background: #fffbea; }
+.tkb-them { display: block; text-align: center; color: #9aa3b2; font-size: 18px; line-height: 1; }
+.tkb-luoi td.tkb-sua-o:hover .tkb-them { color: #3b82f6; }
+.tkb-khung-sua { border: 1px solid #e0a800; background: #fffbea; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.tkb-ks-dau b { font-size: 15px; } .tkb-ks-dau small { display: block; color: #5b6475; margin-top: 2px; }
+.tkb-ks-hang { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 6px; }
+.tkb-ks-hang label { display: flex; flex-direction: column; gap: 3px; font-size: 13px; font-weight: 600; flex: 1 1 220px; }
+.tkb-ks-hang input, .tkb-ks-hang select { padding: 7px 9px; border: 1px solid var(--vien); border-radius: 7px; font: inherit; font-weight: 400; }
+.tkb-ks-trung { color: #b42318; font-size: 13px; min-height: 18px; }
+.tkb-ks-nut { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }

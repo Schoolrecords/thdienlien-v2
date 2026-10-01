@@ -37,7 +37,12 @@
     cheDo: null,       // 'toi' | 'lop' | 'gv' | 'truong'
     lop: '', gv: '', buoi: 'ca', coSo: 'all', timGV: '',
     daMacDinhCoSo: false,  // đã đặt điểm trường mặc định = điểm của tôi (chỉ một lần, sau đó theo người dùng chọn)
-    mau: false         // đang dùng dữ liệu mẫu (chưa nối CSDL)
+    mau: false,        // đang dùng dữ liệu mẫu (chưa nối CSDL)
+    // SỬA TAY (1/10/2026, thầy Chung: "Quản trị sửa được Thời khóa biểu") — chỉ Quản trị/BGH, màn "Từng lớp"
+    sua: false,        // đang bật chế độ sửa
+    oSua: null,        // { thu, buoi, tiet } ô đang mở khung sửa
+    goc: null,         // dữ liệu GỐC của phiên bản chứa lớp đang sửa (tên gọi gốc, chưa thêm hậu tố phân hiệu)
+    gocId: null, dangLuu: false
   };
   var EL = null;
 
@@ -462,7 +467,7 @@
 
   // ── Lưới tuần: hàng = tiết (S1…, C1…), cột = thứ ──
   // o(thu, buoi, tiet) trả { mon, phu, thay } hoặc null
-  function luoiTuan(o, tieuDe) {
+  function luoiTuan(o, tieuDe, sua) {
     var dsThu = thuCo(), mt = soTietBuoi(), hn = thuHomNay();
     var h = '<div class="tkb-cuon"><table class="tkb-luoi"><thead><tr><th class="tkb-o-tiet">Tiết</th>' +
       dsThu.map(function (t) { return '<th class="' + (t === hn ? 'hom-nay' : '') + '">' + TEN_THU[t] + (t === hn ? '<small>hôm nay</small>' : '') + '</th>'; }).join('') +
@@ -473,8 +478,11 @@
           '<td class="tkb-o-tiet">' + (b === 'sang' ? 'S' : 'C') + i + '</td>' +
           dsThu.map(function (t) {
             var v = o(t, b, i);
-            if (!v) return '<td class="' + (t === hn ? 'hom-nay' : '') + '"><div class="tkb-trong"></div></td>';
-            return '<td class="' + (t === hn ? 'hom-nay' : '') + '"><div class="tkb-mon tkb-m-' + nhomMon(v.mon) + (v.trung ? ' trung' : '') + '">' +
+            var oKhoa = t + '|' + b + '|' + i, dangMo = sua && S.oSua && S.oSua.thu === t && S.oSua.buoi === b && S.oSua.tiet === i;
+            var tdMo = '<td class="' + (t === hn ? 'hom-nay' : '') + (sua ? ' tkb-sua-o' : '') + (dangMo ? ' dang-mo' : '') + '"' +
+              (sua ? ' data-o-sua="' + oKhoa + '" title="Bấm để sửa tiết này"' : '') + '>';
+            if (!v) return tdMo + '<div class="tkb-trong">' + (sua ? '<span class="tkb-them">+</span>' : '') + '</div></td>';
+            return tdMo + '<div class="tkb-mon tkb-m-' + nhomMon(v.mon) + (v.trung ? ' trung' : '') + '">' +
               '<b>' + thoat(v.mon) + '</b><i>' + thoat(v.phu || '') + '</i></div></td>';
           }).join('') + '</tr>';
       }
@@ -531,13 +539,137 @@
       }).join('') + '</nav>' +
       '<div class="tkb-phai"><div class="tkb-tom"><div><span class="tkb-nhan">Lớp</span><b>' + thoat(S.lop) + '</b>' +
         (cn ? '<small>Chủ nhiệm: ' + thoat(cn.ho_ten) + '</small>' : '') + '</div>' +
-        '<div><span class="tkb-nhan">Cả tuần</span><b class="so">' + Object.keys(m).length + ' tiết</b></div></div>' +
+        '<div><span class="tkb-nhan">Cả tuần</span><b class="so">' + Object.keys(m).length + ' tiết</b></div>' +
+        (laQT() ? '<div class="tkb-sua-nut"><button class="dh-nut-nho' + (S.sua ? ' on' : '') + '" id="tkb-sua-bat">' + (S.sua ? '✓ Xong, thôi sửa' : '✏️ Sửa TKB lớp này') + '</button></div>' : '') +
+        '</div>' +
+      (S.sua ? veBangSua() : '') +
       luoiTuan(function (t, b, i) {
         var a = m[t + '|' + b + '|' + i];
         if (!a) return null;
         var g = gvCua[a[0].gv_nhan];
         return { mon: a[0].mon, phu: a[0].gv_nhan || '' , ten: g && g.ho_ten };
-      }) + thongKeMot(function (x) { return x.lop === S.lop; }, 'gv') + '</div></div>';
+      }, null, S.sua) + (S.sua && S.oSua ? veKhungSua() : '') + thongKeMot(function (x) { return x.lop === S.lop; }, 'gv') + '</div></div>';
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // SỬA TAY TỪNG TIẾT (Quản trị / BGH) — 1/10/2026
+  // ══════════════════════════════════════════════════════════════
+  // Trước đây (sql/64, 14/9) "KHÔNG có màn sửa tay": muốn đổi một tiết phải sửa Smart Scheduler rồi nạp lại
+  // cả tệp. Nay Quản trị sửa thẳng từng ô ở màn "Từng lớp". Ghi vào ĐÚNG phiên bản chứa lớp đó (lopPB —
+  // trường nhiều phân hiệu thì mỗi phân hiệu một bản). RLS sql/64 vốn cho la_admin() ghi tkb_tiet → không SQL.
+  // Mỗi lần sửa ghi một dòng vào tkb_phien_ban.ghi_chu (trigger nhật ký trên bảng này ghi ai sửa, lúc nào);
+  // tkb_tiet cố ý KHÔNG có trigger (nạp 700 tiết = 700 dòng nhật ký).
+  function pbCuaLop(lop) { return S.mau ? S.pbId : (S.dl.lopPB || {})[lop]; }
+  function napGoc() {
+    var id = pbCuaLop(S.lop);
+    if (S.mau) { S.goc = S.dl; S.gocId = id; return Promise.resolve(); }
+    if (id == null) return Promise.reject(new Error('Không xác định được phiên bản chứa lớp ' + S.lop + '.'));
+    var pb = (S.dsPhienBan || []).filter(function (x) { return x.id === id; })[0];
+    if (!pb) return Promise.reject(new Error('Không tìm thấy phiên bản ' + id + '.'));
+    return docMotBan(pb).then(function (dl) { S.goc = dl; S.gocId = id; });
+  }
+  function pbDangSua() { return (S.dsPhienBan || []).filter(function (x) { return x.id === S.gocId; })[0] || {}; }
+  function veBangSua() {
+    var pb = pbDangSua();
+    return '<div class="hd-kiem vang tkb-bang-sua">✏️ <b>Đang sửa thời khóa biểu lớp ' + thoat(S.lop) + '</b> — bản áp dụng từ ' + ngayVN(pb.ap_dung_tu) +
+      (pb.cong_bo ? ' (<b>đang công bố</b>: sửa xong giáo viên thấy ngay)' : ' (bản nháp)') +
+      '. Bấm vào một ô để đổi môn, giáo viên; ô trống (+) để thêm tiết. ' +
+      '<small>Nạp lại tệp Smart Scheduler sẽ thành bản mới — các chỗ sửa tay ở đây không tự chuyển sang bản đó.</small></div>';
+  }
+  function gvGoc() {
+    var g = S.goc || { gv: [], tiet: [] }, theo = {};
+    g.gv.forEach(function (x) { theo[x.gv_nhan] = { nhan: x.gv_nhan, ten: x.ho_ten || x.gv_nhan, email: String(x.email || '').toLowerCase() }; });
+    g.tiet.forEach(function (x) { if (x.gv_nhan && !theo[x.gv_nhan]) theo[x.gv_nhan] = { nhan: x.gv_nhan, ten: x.gv_nhan, email: String(x.gv_email || '').toLowerCase() }; });
+    return Object.keys(theo).map(function (k) { return theo[k]; }).sort(function (a, b) { return tenCuoi(a.ten).localeCompare(tenCuoi(b.ten), 'vi') || a.ten.localeCompare(b.ten, 'vi'); });
+  }
+  function tietGoc(lop, o) {
+    return ((S.goc && S.goc.tiet) || []).filter(function (x) { return x.lop === lop && x.thu === o.thu && x.buoi === o.buoi && x.tiet === o.tiet; })[0] || null;
+  }
+  // Giáo viên đã dạy lớp KHÁC đúng ô này (cùng phiên bản)
+  function trungTiet(nhan, o) {
+    if (!nhan) return [];
+    return ((S.goc && S.goc.tiet) || []).filter(function (x) { return x.gv_nhan === nhan && x.lop !== S.lop && x.thu === o.thu && x.buoi === o.buoi && x.tiet === o.tiet; })
+      .map(function (x) { return x.lop; });
+  }
+  function veKhungSua() {
+    if (!S.goc) return '<div class="tkb-khung-sua"><p>Đang lấy dữ liệu bản gốc…</p></div>';
+    var o = S.oSua, cu = tietGoc(S.lop, o) || {}, dsMon = {};
+    S.dl.tiet.forEach(function (x) { if (x.mon) dsMon[x.mon] = 1; });
+    var gv = gvGoc(), tr = trungTiet(cu.gv_nhan, o);
+    return '<div class="tkb-khung-sua" id="tkb-khung-sua">' +
+      '<div class="tkb-ks-dau"><b>' + TEN_THU[o.thu] + ' · ' + (o.buoi === 'sang' ? 'Sáng' : 'Chiều') + ' · tiết ' + o.tiet + ' — lớp ' + thoat(S.lop) + '</b>' +
+      (cu.mon ? '<small>Hiện tại: ' + thoat(cu.mon) + (cu.gv_nhan ? ' · ' + thoat(cu.gv_nhan) : '') + '</small>' : '<small>Ô trống — thêm tiết mới</small>') + '</div>' +
+      '<div class="tkb-ks-hang"><label>Môn <input id="tkb-sua-mon" list="tkb-ds-mon" value="' + thoat(cu.mon || '') + '" placeholder="Tiếng Việt, Toán…"></label>' +
+      '<datalist id="tkb-ds-mon">' + Object.keys(dsMon).sort(function (a, b) { return a.localeCompare(b, 'vi'); }).map(function (m) { return '<option value="' + thoat(m) + '">'; }).join('') + '</datalist>' +
+      '<label>Giáo viên <select id="tkb-sua-gv"><option value="">— Không ghi giáo viên —</option>' + gv.map(function (g) {
+        return '<option value="' + thoat(g.nhan) + '"' + (g.nhan === cu.gv_nhan ? ' selected' : '') + '>' + thoat(g.ten + (g.ten !== g.nhan ? ' (' + g.nhan + ')' : '')) + '</option>';
+      }).join('') + '</select></label></div>' +
+      '<div id="tkb-sua-trung" class="tkb-ks-trung">' + (tr.length ? '⚠ Giáo viên này đang dạy lớp ' + thoat(tr.join(', ')) + ' cùng tiết.' : '') + '</div>' +
+      '<div class="tkb-ks-nut"><button class="dh-nut" id="tkb-sua-luu">Lưu tiết</button>' +
+      (cu.mon ? '<button class="dh-nut-nho" id="tkb-sua-xoa">Xoá tiết này</button>' : '') +
+      '<button class="dh-nut-nho" id="tkb-sua-thoi">Thôi</button></div></div>';
+  }
+  function napLaiSauSua(o) {
+    // Giữ phiên bản, chế độ, lớp đang xem; bỏ bộ nhớ để đọc lại tiết đã sửa (màn dạy thay cũng đọc lại)
+    BO_NHO_PB = {}; S.dl = null; S.napXong = false; S.goc = null; S.oSua = o || null;
+    napTatCa(function () { if (S.sua) napGoc().then(function () { ve(); }, function () { ve(); }); else ve(); });
+    ve();
+  }
+  function ghiNhatKySua(dong) {
+    if (S.mau || S.gocId == null) return Promise.resolve();
+    var pb = pbDangSua(), u = window.NGUOI_DUNG || {};
+    var moi = (ngayVN(homNayISO()) + ' ' + (u.email || '') + ': ' + dong + '\n' + (pb.ghi_chu || '')).slice(0, 4000);
+    return Promise.resolve(may().from('tkb_phien_ban').update({ ghi_chu: moi }).eq('id', S.gocId)).then(function (r) { if (!r.error) pb.ghi_chu = moi; });
+  }
+  function baoTKB(s) { if (window.notify) window.notify(s); }
+  function luuO() {
+    if (S.dangLuu) return;
+    var o = S.oSua, mon = String((document.getElementById('tkb-sua-mon') || {}).value || '').trim();
+    var nhan = (document.getElementById('tkb-sua-gv') || {}).value || '';
+    if (!mon) { baoTKB('Chưa ghi tên môn.'); return; }
+    var g = gvGoc().filter(function (x) { return x.nhan === nhan; })[0];
+    var cu = tietGoc(S.lop, o);
+    var tr = trungTiet(nhan, o);
+    var tiep = function () {
+      var dong = { phien_ban_id: S.gocId, lop: S.lop, thu: o.thu, buoi: o.buoi, tiet: o.tiet, mon: mon, gv_nhan: nhan || null, gv_email: (g && g.email) || null };
+      var mo = S.lop + ' ' + TEN_THU[o.thu] + ' ' + (o.buoi === 'sang' ? 'sáng' : 'chiều') + ' tiết ' + o.tiet + ': ' +
+        (cu ? cu.mon + (cu.gv_nhan ? ' (' + cu.gv_nhan + ')' : '') : '(trống)') + ' → ' + mon + (nhan ? ' (' + nhan + ')' : '');
+      if (S.mau) {
+        S.dl.tiet = S.dl.tiet.filter(function (x) { return !(x.lop === S.lop && x.thu === o.thu && x.buoi === o.buoi && x.tiet === o.tiet); }).concat([dong]);
+        S.oSua = null; baoTKB('Bản xem thử — đã đổi trên màn hình: ' + mo); ve(); return;
+      }
+      S.dangLuu = true;
+      Promise.resolve(may().from('tkb_tiet').upsert(dong, { onConflict: 'phien_ban_id,lop,thu,buoi,tiet' })).then(function (r) {
+        if (r.error) throw r.error;
+        return ghiNhatKySua(mo);
+      }).then(function () { S.dangLuu = false; baoTKB('Đã lưu: ' + mo); napLaiSauSua(null); })
+        .catch(function (e) { S.dangLuu = false; baoTKB('Chưa lưu được: ' + ((e && (e.message || e.details)) || e)); });
+    };
+    if (tr.length) {
+      var hoi = 'Giáo viên này đang dạy lớp ' + tr.join(', ') + ' cùng tiết (' + TEN_THU[o.thu] + ' ' + (o.buoi === 'sang' ? 'sáng' : 'chiều') + ' tiết ' + o.tiet + '). Vẫn lưu?';
+      var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Trùng tiết', nutOK: 'Vẫn lưu' }) : Promise.resolve(window.confirm(hoi));
+      xn.then(function (ok) { if (ok) tiep(); });
+    } else tiep();
+  }
+  function xoaO() {
+    var o = S.oSua, cu = tietGoc(S.lop, o);
+    if (!cu || S.dangLuu) return;
+    var mo = S.lop + ' ' + TEN_THU[o.thu] + ' ' + (o.buoi === 'sang' ? 'sáng' : 'chiều') + ' tiết ' + o.tiet + ': xoá ' + cu.mon + (cu.gv_nhan ? ' (' + cu.gv_nhan + ')' : '');
+    var xn = window.hopHoi ? window.hopHoi('Xoá tiết ' + cu.mon + ' của lớp ' + S.lop + ' (' + TEN_THU[o.thu] + ', tiết ' + o.tiet + ')?', { tieuDe: 'Xoá tiết', nutOK: 'Xoá', nguyHiem: true })
+      : Promise.resolve(window.confirm('Xoá tiết này?'));
+    xn.then(function (ok) {
+      if (!ok) return;
+      if (S.mau) {
+        S.dl.tiet = S.dl.tiet.filter(function (x) { return !(x.lop === S.lop && x.thu === o.thu && x.buoi === o.buoi && x.tiet === o.tiet); });
+        S.oSua = null; baoTKB('Bản xem thử — đã xoá trên màn hình.'); ve(); return;
+      }
+      S.dangLuu = true;
+      Promise.resolve(may().from('tkb_tiet').delete().eq('phien_ban_id', S.gocId).eq('lop', S.lop).eq('thu', o.thu).eq('buoi', o.buoi).eq('tiet', o.tiet)).then(function (r) {
+        if (r.error) throw r.error;
+        return ghiNhatKySua(mo);
+      }).then(function () { S.dangLuu = false; baoTKB('Đã xoá: ' + mo); napLaiSauSua(null); })
+        .catch(function (e) { S.dangLuu = false; baoTKB('Chưa xoá được: ' + ((e && (e.message || e.details)) || e)); });
+    });
   }
 
   function veTheoGV(dsGV) {
@@ -687,14 +819,33 @@
 
   function ganSuKien() {
     function tat(sel, fn) { Array.prototype.slice.call(EL.querySelectorAll(sel)).forEach(function (b) { b.addEventListener('click', function () { fn(b); }); }); }
-    tat('[data-che-do]', function (b) { S.cheDo = b.getAttribute('data-che-do'); ve(); });
+    tat('[data-che-do]', function (b) { S.cheDo = b.getAttribute('data-che-do'); S.oSua = null; if (S.cheDo !== 'lop') S.sua = false; ve(); });
     tat('[data-buoi]', function (b) { S.buoi = b.getAttribute('data-buoi'); ve(); });
-    tat('[data-lop]', function (b) { S.lop = b.getAttribute('data-lop'); ve(); });
+    tat('[data-lop]', function (b) { S.lop = b.getAttribute('data-lop'); S.oSua = null; if (S.sua) { S.goc = null; napGoc().then(ve, function (e) { baoTKB(String(e.message || e)); S.sua = false; ve(); }); } ve(); });
+    var batSua = document.getElementById('tkb-sua-bat');
+    if (batSua) batSua.addEventListener('click', function () {
+      S.sua = !S.sua; S.oSua = null;
+      if (S.sua) { S.goc = null; napGoc().then(ve, function (e) { baoTKB(String(e.message || e)); S.sua = false; ve(); }); }
+      ve();
+    });
+    tat('[data-o-sua]', function (b) {
+      var p = b.getAttribute('data-o-sua').split('|');
+      S.oSua = { thu: +p[0], buoi: p[1], tiet: +p[2] }; ve();
+      var k = document.getElementById('tkb-khung-sua'); if (k && k.scrollIntoView) k.scrollIntoView({ block: 'nearest' });
+    });
+    var gvSua = document.getElementById('tkb-sua-gv');
+    if (gvSua) gvSua.addEventListener('change', function () {
+      var tr = trungTiet(gvSua.value, S.oSua), o = document.getElementById('tkb-sua-trung');
+      if (o) o.textContent = tr.length ? '⚠ Giáo viên này đang dạy lớp ' + tr.join(', ') + ' cùng tiết.' : '';
+    });
+    var nLuu = document.getElementById('tkb-sua-luu'); if (nLuu) nLuu.addEventListener('click', luuO);
+    var nXoa = document.getElementById('tkb-sua-xoa'); if (nXoa) nXoa.addEventListener('click', xoaO);
+    var nThoi = document.getElementById('tkb-sua-thoi'); if (nThoi) nThoi.addEventListener('click', function () { S.oSua = null; ve(); });
     tat('[data-gv]', function (b) { S.gv = b.getAttribute('data-gv'); ve(); });
     tat('[data-co-so]', function (b) { S.coSo = b.getAttribute('data-co-so'); ve(); });
     tat('[data-gv-mo]', function (b) { S.gv = b.getAttribute('data-gv-mo'); S.cheDo = 'gv'; ve(); window.scrollTo(0, EL.getBoundingClientRect().top + window.scrollY - 80); });
     var pb = document.getElementById('tkb-pb');
-    if (pb) pb.addEventListener('change', function () { S.pbId = /^\d+$/.test(pb.value) ? +pb.value : pb.value; S.dl = null; S.napXong = false; ve(); });
+    if (pb) pb.addEventListener('change', function () { S.pbId = /^\d+$/.test(pb.value) ? +pb.value : pb.value; S.dl = null; S.napXong = false; S.sua = false; S.oSua = null; S.goc = null; ve(); });
     var tim = document.getElementById('tkb-tim-gv');
     if (tim) tim.addEventListener('input', function () {
       S.timGV = tim.value;
