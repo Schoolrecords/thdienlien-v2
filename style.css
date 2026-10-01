@@ -4185,6 +4185,11 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-them { margin: 4px 0 0; }
   .scn-dd-them button { font-size: 13.5px; padding: 7px 14px; min-height: 34px; }
 }
+/* Tiến độ nhập sổ (BGH, 1/10/2026) */
+.scn-tien-do td { text-align: center; }
+.scn-tien-do td:nth-child(2) { text-align: left; white-space: nowrap; }
+.scn-tien-do td.thieu { background: #fff6d6; }
+.scn-tien-do tr.tong td { background: #f3f5f9; border-top: 2px solid var(--vien); }
 /* Việc cần làm ở Tổng quan (1/10/2026) */
 .scn-viec { list-style: none; margin: 0; padding: 0; }
 .scn-viec li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--vien); }
