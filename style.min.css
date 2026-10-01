@@ -22,6 +22,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { scrollbar-gutter: stable; }
 body {
   font-family: 'UTM Avo', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
   overflow-x: hidden;
@@ -3141,6 +3142,7 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-them { margin: 4px 0 0; }
   .scn-dd-them button { font-size: 13.5px; padding: 7px 14px; min-height: 34px; }
 }
+#vung-sochunhiem .scn-than { min-height: 62vh; }
 .scn-hs-muc { margin-bottom: 10px; }
 .scn-tc select.scn-o { min-width: 96px; }
 .scn-so-do { margin: 6px 0 10px; }

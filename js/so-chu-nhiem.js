@@ -1446,7 +1446,7 @@
   // ── Sơ đồ lớp ──
   function veSoDo(hk, nd, ghi) {
     var n = D.hs.length;
-    var sd = D.sdTam && D.sdTam.hk === hk ? D.sdTam.v : (nd.so_do || { day: 2, cho: 2, hang: Math.max(3, Math.min(15, Math.ceil(n / 4))), o: {} });
+    var sd = D.sdTam && D.sdTam.hk === hk ? D.sdTam.v : (nd.so_do || { day: 3, cho: 2, hang: Math.max(3, Math.min(15, Math.ceil(n / 6))), o: {} });   // 3 dãy bàn đôi là phổ biến (thầy Chung 1/10/2026)
     var k = ghi ? '' : ' disabled', dung = {}, trung = {};
     Object.keys(sd.o || {}).forEach(function (o) { var m = sd.o[o]; if (!m) return; if (dung[m]) trung[m] = 1; dung[m] = 1; });
     var chua = D.hs.filter(function (h) { return !dung[h.ma]; });
@@ -1478,7 +1478,7 @@
       (ghi ? '<div class="scn-hang"><button class="scn-nut" data-act="luu-sd">Lưu sơ đồ học kỳ ' + (hk === 1 ? 'I' : 'II') + '</button></div>' : ''));
   }
   function docSoDo() {
-    var sd = { day: Math.max(1, Math.min(4, +giaTri('sd-day') || 2)), hang: Math.max(3, Math.min(15, +giaTri('sd-hang') || 5)), cho: Math.max(1, Math.min(3, +giaTri('sd-cho') || 2)), o: {} };
+    var sd = { day: Math.max(1, Math.min(4, +giaTri('sd-day') || 3)), hang: Math.max(3, Math.min(15, +giaTri('sd-hang') || 5)), cho: Math.max(1, Math.min(3, +giaTri('sd-cho') || 2)), o: {} };
     Array.prototype.slice.call(EL.querySelectorAll('[data-sd]')).forEach(function (o) {
       var p = o.getAttribute('data-sd').split('-');
       if (o.value && +p[0] <= sd.day && +p[1] <= sd.hang && +p[2] <= sd.cho) sd.o[o.getAttribute('data-sd')] = o.value;
@@ -2760,10 +2760,10 @@
       }
       if (sd && sd.o && Object.keys(sd.o).length) {
         var dsD = [], hangR = [];
-        for (var d = 1; d <= (sd.day || 2); d++) dsD.push('Dãy ' + d);
+        for (var d = 1; d <= (sd.day || 3); d++) dsD.push('Dãy ' + d);
         for (var r = 1; r <= (sd.hang || 5); r++) {
           var o = ['Bàn ' + r];
-          for (var d2 = 1; d2 <= (sd.day || 2); d2++) { var ch = []; for (var q = 1; q <= (sd.cho || 2); q++) { var mq = sd.o[d2 + '-' + r + '-' + q]; ch.push(mq ? tenM(mq) : '…'); } o.push(ch.join(' · ')); }
+          for (var d2 = 1; d2 <= (sd.day || 3); d2++) { var ch = []; for (var q = 1; q <= (sd.cho || 2); q++) { var mq = sd.o[d2 + '-' + r + '-' + q]; ch.push(mq ? tenM(mq) : '…'); } o.push(ch.join(' · ')); }
           hangR.push(o);
         }
         h += nho('Sơ đồ lớp học — học kỳ ' + LA) + '<p class="giua" style="margin:2pt 0"><b>BÀN GIÁO VIÊN</b></p>' +
@@ -3227,7 +3227,7 @@
     var a = function (k) { return b.getAttribute(k); };
     if (D.capNhat && laNutGhi(b)) { bao('Đang lấy dữ liệu mới nhất từ máy chủ — thầy cô đợi vài giây rồi bấm lại.'); return; }
     if (['data-dd', 'data-chon', 'data-sua-ll', 'data-sua-ht', 'data-goi-y', 'data-goi-y-ht'].some(function (k) { return b.hasAttribute(k); })) D.daCham = true;
-    if (a('data-tab')) { D.tab = a('data-tab'); D.sua = null; ve(); return; }
+    if (a('data-tab')) { var g0 = viTriTabs(); D.tab = a('data-tab'); D.sua = null; ve(); giuTabs(g0); return; }
     if (a('data-cap')) { D.capKH = a('data-cap'); ve(); return; }
     if (a('data-buoi')) { D.buoiTD = a('data-buoi'); ve(); return; }
     if (a('data-lui')) { D.ngayTD = congNgay(D.ngayTD || homNay(), +a('data-lui')); ve(); return; }
@@ -3284,8 +3284,8 @@
         Array.prototype.slice.call(EL.querySelectorAll('[data-act="luoi-nhom"]')).forEach(function (x) { x.classList.toggle('on', x === b); });
       },
       'tien-do': function () { napTienDo(); }, 'tien-do-tai': function () { taiTienDo(); },
-      'hs-muc': function () { D.hsMuc = a('data-muc'); D.tcTam = null; D.sdTam = null; ve(); },
-      'hk-chon': function () { D.hk = +a('data-hk'); D.tcTam = null; D.sdTam = null; ve(); },
+      'hs-muc': function () { var g = viTriTabs(); D.hsMuc = a('data-muc'); D.tcTam = null; D.sdTam = null; ve(); giuTabs(g); },
+      'hk-chon': function () { var g = viTriTabs(); D.hk = +a('data-hk'); D.tcTam = null; D.sdTam = null; ve(); giuTabs(g); },
       'tc-ap': function () { D.tcTam = { hk: D.hk || hkMacDinh(), v: docToChuc() }; ve(); },
       'tc-chia': function () {
         var v = docToChuc(), n = D.hs.length;
@@ -3318,7 +3318,7 @@
       'nam-truoc-dien': function () { dienNamTruoc(b); },
       'ph-het': function () { Array.prototype.slice.call(EL.querySelectorAll('[data-ph-hop]')).forEach(function (x) { x.classList.add('on'); }); demPH(); },
       'ph-bo': function () { Array.prototype.slice.call(EL.querySelectorAll('[data-ph-hop]')).forEach(function (x) { x.classList.remove('on'); }); demPH(); },
-      'mo-the': function () { D.tab = a('data-the'); D.sua = null; ve(); },
+      'mo-the': function () { var g = viTriTabs(); D.tab = a('data-the'); D.sua = null; ve(); giuTabs(g); },
       'mo-kh': function () { D.tab = 'ke-hoach'; D.capKH = a('data-cap'); ve(); },
       'mo-luoi': function () { D.tab = 'hoc-sinh'; D.hsLuoi = true; D.daCham = true; D.luoiNhom = a('data-nhom') || D.luoiNhom; ve(); },
       'hs-them-mo': function () { D.hsThem = !D.hsThem; ve(); },
@@ -3337,6 +3337,18 @@
       'xoa-ct': function () { var d = b.closest('.scn-ct-dong'); if (d) d.parentNode.removeChild(d); }
     };
     if (H[act]) H[act]();
+  }
+  // 1/10/2026 thầy Chung: "từ thẻ này sang thẻ khác nó có vẻ giật giật… trang bị di chuyển khó chịu".
+  // Đổi thẻ là vẽ lại cả vùng: thẻ mới ngắn hơn thì trình duyệt kéo trang lên (lại còn TRƯỢT vì
+  // html { scroll-behavior: smooth }). Giữ thanh thẻ đứng nguyên chỗ cũ trên màn hình, cuộn TỨC THÌ.
+  function viTriTabs() { var t = EL.querySelector('.scn-tabs'); return t ? t.getBoundingClientRect().top : null; }
+  function giuTabs(cu) {
+    var t = EL.querySelector('.scn-tabs');
+    if (cu == null || !t) return;
+    var lech = t.getBoundingClientRect().top - cu;
+    if (Math.abs(lech) < 1) return;
+    var y = window.pageYOffset + lech;
+    try { window.scrollTo({ top: y, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, y); }
   }
   function capNhatNutGhi() {
     var n = Object.keys(D.chon).filter(function (m) { return D.chon[m]; }).length;

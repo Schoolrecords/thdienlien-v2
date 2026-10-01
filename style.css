@@ -35,6 +35,8 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+/* 1/10/2026: luôn chừa chỗ thanh cuộn — trang ngắn/dài đổi qua lại không còn xô ngang cả menu */
+html { scrollbar-gutter: stable; }
 body {
   font-family: 'UTM Avo', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
   overflow-x: hidden;   /* chặn trượt ngang ngoài ý muốn trên điện thoại */
@@ -4185,6 +4187,8 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-them { margin: 4px 0 0; }
   .scn-dd-them button { font-size: 13.5px; padding: 7px 14px; min-height: 34px; }
 }
+/* Sổ chủ nhiệm: thân sổ cao tối thiểu — đổi sang thẻ ngắn không kéo chân trang nhảy lên (1/10/2026) */
+#vung-sochunhiem .scn-than { min-height: 62vh; }
 /* Thẻ Học sinh: mục con + tổ, ban + sơ đồ lớp (1/10/2026) */
 .scn-hs-muc { margin-bottom: 10px; }
 .scn-tc select.scn-o { min-width: 96px; }
