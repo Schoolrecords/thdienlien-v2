@@ -4185,6 +4185,16 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
   .scn-dd-them { margin: 4px 0 0; }
   .scn-dd-them button { font-size: 13.5px; padding: 7px 14px; min-height: 34px; }
 }
+/* Thẻ Học sinh: mục con + tổ, ban + sơ đồ lớp (1/10/2026) */
+.scn-hs-muc { margin-bottom: 10px; }
+.scn-tc select.scn-o { min-width: 96px; }
+.scn-so-do { margin: 6px 0 10px; }
+.scn-sd-gv { text-align: center; font-weight: 600; border: 1px dashed var(--vien); border-radius: 8px; padding: 6px 10px; max-width: 260px; margin: 0 auto 8px; background: #f7f9fc; }
+.scn-sd { margin: 0 auto; border-collapse: separate; border-spacing: 6px; }
+.scn-sd th { font-size: 12.5px; color: #5b6475; font-weight: 600; }
+.scn-sd-ban { background: #f3f6fb; border: 1px solid var(--vien); border-radius: 8px; padding: 4px 6px; vertical-align: top; }
+.scn-sd-ban select.scn-o { display: block; width: 100%; min-width: 118px; margin: 3px 0; font-size: 13px; padding: 4px 6px; }
+.scn-sd-ban select.trung { border-color: #d9534f; background: #fff1f0; }
 /* Tiến độ nhập sổ (BGH, 1/10/2026) */
 .scn-tien-do td { text-align: center; }
 .scn-tien-do td:nth-child(2) { text-align: left; white-space: nowrap; }
