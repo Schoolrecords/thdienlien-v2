@@ -1955,7 +1955,9 @@
         var c = S.hoanCanh[h.ma] || {};
         return { ma: h.ma, ho_ten: h.ho_ten, ngay_sinh: h.ngay_sinh, gioi_tinh: h.gioi_tinh, dan_toc: h.dan_toc, hoa_nhap: !!h.khuyet_tat_hoa_nhap,
           cha_me_ten: c.cha_me_ten || c.cha_me || '', nghe_nghiep: c.nghe_nghiep || '', sdt: c.sdt || '', dia_chi: c.dia_chi || '',
-          xom: c.xom || '', hoan_canh_gd: c.hoan_canh_gd || '', dac_diem: c.dac_diem || '' };
+          xom: c.xom || '', hoan_canh_gd: c.hoan_canh_gd || '',
+          // Năng khiếu in chung cột "Đặc điểm cá nhân (khả năng vượt trội…)" — cùng bị lược ở bản nộp tổ
+          dac_diem: [c.dac_diem, c.nang_khieu ? 'Năng khiếu, sở thích: ' + c.nang_khieu : ''].filter(Boolean).join('; ') };
       }),
       giao_vien: [],
       ban_can_su: ((S.lop && S.lop.ban_can_su) || []).map(function (b) { return { chuc_vu: b.chuc_vu, ho_ten: b.ho_ten || tenHs(b.hoc_sinh_ma) }; }),
@@ -2012,7 +2014,14 @@
   var NGAT = '<p style="margin:0;font-size:1pt;line-height:1pt;page-break-before:always">&nbsp;</p>';
   var CHAM = new Array(126).join('.');
   function tiLe(so, mau) { return mau > 0 && so != null && so !== '' ? String(Math.round(so * 1000 / mau) / 10).replace('.', ',') + '%' : ''; }
-  function mocCua(x) { return x.moc || mocGoiY(x.ngay || '') || ''; }
+  // Mốc in vào sổ: mốc GV chọn; "Trong năm" thì xếp vào mốc KẾ TIẾP theo ngày ghi
+  // (9–10 đầu năm · 11–01 cuối HK I · 02–08 cuối năm). Trước 1/10/2026 dùng mocGoiY
+  // nên em ghi tháng 11 hay 2–4 không thuộc mốc nào → rơi khỏi bảng nổi trội / cần giúp.
+  function mocCua(x) {
+    if (x.moc) return x.moc;
+    var t = +String(x.ngay || '').slice(5, 7);
+    return !t ? '' : t >= 9 && t <= 10 ? 'dau_nam' : (t >= 11 || t === 1) ? 'hk1' : 'cuoi_nam';
+  }
   function khoiKyDuLieu(dsNop, dsDuyet) {
     var sau = function (a, b) { return String(a.luc || a.nop_luc) < String(b.luc || b.nop_luc) ? -1 : 1; };
     var bgh = dsDuyet.filter(function (x) { return x.vai === 'bgh' && x.ket_qua === 'da_duyet'; })
@@ -2180,6 +2189,8 @@
       dong('- Dân tộc thiểu số: ' + so(ss.dtts) + '; Học sinh khuyết tật học hòa nhập: ' + so(ss.hoa_nhap)) +
       dong('- Con gia đình chính sách (thương binh, liệt sĩ, người có công): ' + so(hc.nguoi_co_cong) + '; Con gia đình khó khăn, cần quan tâm: ' + so(hc.can_quan_tam)) +
       dong('- Con hộ nghèo: ' + so(hc.ho_ngheo) + '; Con hộ cận nghèo: ' + so(hc.can_ngheo) + '; Mồ côi: ' + so(hc.mo_coi)) +
+      // 1/10/2026: bảng cả lớp có ô Khuyết tật + Hoàn cảnh đặc biệt khác — đếm ra sổ, chỉ in khi có
+      (so(hc.khuyet_tat) || so(hc.khac) ? dong('- Khuyết tật (theo hồ sơ hoàn cảnh): ' + so(hc.khuyet_tat) + '; Hoàn cảnh đặc biệt khác: ' + so(hc.khac)) : '') +
       dong('- Học sinh trong xã: ' + Math.max(0, siSo - so(hc.ngoai_xa)) + '; ngoài xã: ' + so(hc.ngoai_xa)) +
       '<p class="nghieng" style="font-size:11pt;margin:2pt 0 4pt">Số liệu hoàn cảnh đếm theo hồ sơ giáo viên chủ nhiệm đã ghi trên hệ thống.</p>';
     h += nho('Ban cán sự lớp' + (m.ngay_bau ? ' (bầu ngày ' + ngayVN(m.ngay_bau) + ')' : '')) +
