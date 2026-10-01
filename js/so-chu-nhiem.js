@@ -917,7 +917,83 @@
     h += f() + '</div>';
     EL.innerHTML = h;
     ganChung();
+    nhapKhoiPhuc();
   }
+
+  // ══════════ BẢN NHÁP TỰ LƯU (rà toàn app 1/10/2026) ══════════
+  // Trước đây: đang gõ kế hoạch / tổng kết / hoàn cảnh mà bấm sang thẻ khác, tải lại trang,
+  // điện thoại hết pin… là MẤT chữ — ve() vẽ lại toàn màn từ dữ liệu máy chủ.
+  // Nay mỗi ô chữ (có id hoặc data-*) được giữ trên máy theo NGƯỜI · NĂM · LỚP · THẺ · NGỮ CẢNH
+  // (cấp/tháng/tuần kế hoạch, kỳ tổng kết, em đang mở…). Vẽ lại mà ô còn đúng giá trị cũ
+  // (chưa lưu) thì điền lại chữ nháp; ô đã khác (đã lưu, hoặc máy khác vừa sửa) thì bỏ nháp —
+  // không bao giờ đè lên dữ liệu mới hơn. Nháp quá 7 ngày tự bỏ.
+  var NHAP_HAN = 7 * 864e5, NHAP_GOC = {};
+  function nhapKhoa() {
+    var sua = D.sua && D.sua.dong ? D.sua.bang + ':' + D.sua.dong.id : '';
+    return 'scn-nhap|' + String((toi() || {}).email || 'xem-thu').toLowerCase() + '|' + D.nam + '|' + D.lop + '|' + D.tab + '|' +
+      [D.capKH, D.thangKH, D.tuanKH, D.kyTK, D.hsMo, D.ngayTD, D.buoiTD, sua].join('|');
+  }
+  function nhapTenO(o) {
+    if (!o || !/^(TEXTAREA|INPUT)$/.test(o.tagName)) return '';
+    if (o.tagName === 'INPUT' && !/^(text|tel|number|email|search|)$/.test(o.getAttribute('type') || '')) return '';
+    if (o.id) return '#' + o.id;
+    for (var i = 0; i < o.attributes.length; i++) {
+      var a = o.attributes[i];
+      if (a.name.indexOf('data-') === 0) return '[' + a.name + '="' + a.value + '"]';
+    }
+    return '';
+  }
+  function nhapDoc(k) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v && Date.now() - v.luc < NHAP_HAN ? v : null; } catch (e) { return null; } }
+  function nhapGhi(k, v) {
+    try {
+      if (v && Object.keys(v.o).length) localStorage.setItem(k, JSON.stringify(v)); else localStorage.removeItem(k);
+    } catch (e) { /* bộ nhớ đầy / chế độ riêng tư — bỏ qua, chỉ là lưới an toàn */ }
+  }
+  function nhapKhiGo(e) {
+    var ten = nhapTenO(e.target);
+    if (!ten || !EL || !EL.contains(e.target)) return;
+    var k = nhapKhoa(), v = nhapDoc(k) || { luc: 0, o: {} };
+    var goc = NHAP_GOC[ten] != null ? NHAP_GOC[ten] : '';
+    if (e.target.value === goc) delete v.o[ten];          // gõ trả về như cũ = không còn gì để giữ
+    else v.o[ten] = { v: e.target.value, goc: goc };
+    v.luc = Date.now();
+    nhapGhi(k, v);
+  }
+  function nhapKhoiPhuc() {
+    if (!EL) return;
+    NHAP_GOC = {};
+    var o = EL.querySelectorAll('textarea, input');
+    for (var i = 0; i < o.length; i++) { var t = nhapTenO(o[i]); if (t && !(t in NHAP_GOC)) NHAP_GOC[t] = o[i].value; }
+    var k = nhapKhoa(), v = nhapDoc(k);
+    if (!v) { nhapGhi(k, null); return; }
+    var dien = 0;
+    Object.keys(v.o).forEach(function (ten) {
+      var x = v.o[ten], el = null;
+      try { el = EL.querySelector(ten); } catch (e2) { el = null; }
+      if (!el || el.disabled || el.readOnly) { delete v.o[ten]; return; }   // ô không còn / sổ đã khoá
+      if (el.value === x.v) { delete v.o[ten]; return; }                    // đã lưu đúng chữ này
+      if (el.value !== x.goc) { delete v.o[ten]; return; }                  // máy chủ đã có bản khác — không đè
+      el.value = x.v; dien++;
+    });
+    nhapGhi(k, v);
+    if (!dien) return;
+    D.daCham = true;
+    var bao2 = document.createElement('div');
+    bao2.className = 'hd-kiem vang scn-nhap-bao';
+    bao2.innerHTML = '✍️ Đã điền lại <b>' + dien + ' ô chữ đang gõ dở</b> (chưa lưu) từ lần trước — thầy cô xem lại rồi bấm <b>Lưu</b>. ' +
+      '<button type="button" class="dh-nut-nho" data-nhap-bo="1">Bỏ bản nháp</button>';
+    var than = EL.querySelector('.scn-than');
+    if (than) than.insertBefore(bao2, than.firstChild);
+    bao2.querySelector('[data-nhap-bo]').onclick = function () { nhapGhi(k, null); D.daCham = false; ve(); };
+  }
+  // Trả về hàm bỏ nháp của thẻ đang ghi. Bỏ CẢ THẺ chứ không chỉ khối chứa nút: ô ghi mới
+  // (khen/nhắc…) sau khi lưu trở về trống đúng như lúc đầu — nháp còn sót sẽ điền lại chữ đã
+  // lưu, thầy cô bấm lưu lần nữa là thành dòng TRÙNG. Thà mất nháp ô khác cùng thẻ (như trước).
+  function nhapCuaNut() {
+    var k = nhapKhoa();
+    return function () { nhapGhi(k, null); };
+  }
+  window.SCN_NHAP = { khoa: nhapKhoa };   // cho bài thử
 
   function dauMan() { return dauManGoc() + bangMay(); }
   function dauManGoc() {
@@ -2591,8 +2667,10 @@
   // Mọi lệnh ghi đi qua đây. Bản xem thử: sửa trong bộ nhớ, nói rõ không lưu.
   function ghiMay(hua, nut, xong) {
     if (nut) nut.disabled = true;
+    var boNhap = nhapCuaNut(nut);
     return Promise.resolve(hua).then(function (r) {
       if (r && r.error) throw r.error;
+      boNhap();   // lưu được rồi thì bỏ nháp của khối vừa lưu — TRƯỚC khi vẽ lại
       if (xong) xong(r ? r.data : null);
       return r;
     }).catch(function (e) {
@@ -2610,7 +2688,7 @@
     COT_71[bang].forEach(function (k) { delete r[k]; });
     return r;
   }
-  function xemThu(xong) { if (xong) xong(); bao('Bản xem thử — đã cập nhật trên màn hình, không lưu lên máy chủ.'); ve(); }
+  function xemThu(xong) { nhapCuaNut(null)(); if (xong) xong(); bao('Bản xem thử — đã cập nhật trên màn hình, không lưu lên máy chủ.'); ve(); }
 
   function luuSCNLop(truong, nut, thongBao) {
     var dong = Object.assign({ nam_hoc: D.nam, lop: D.lop }, truong);
@@ -2999,7 +3077,7 @@
     if (!mh || !vung) return;
     EL = vung;
     vung.addEventListener('click', khiBam);
-    vung.addEventListener('input', function () { D.daCham = true; });
+    vung.addEventListener('input', function (e) { D.daCham = true; nhapKhiGo(e); });
     if (window.MutationObserver) new MutationObserver(khiHien).observe(mh, { attributes: true, attributeFilter: ['class'] });
     khiHien();
   }
