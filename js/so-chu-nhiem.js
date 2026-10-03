@@ -1194,7 +1194,7 @@
       var goiY = dacDiemTuSinh();
       var cu = function (key) { return (KH_CU[key] || []).map(function (o) { return nd[o]; }).filter(Boolean).join('\n'); };
       h += the('Kế hoạch chủ nhiệm năm học ' + thoat(D.nam),
-        '<p class="scn-ghi-chu">Theo khung sổ chủ nhiệm của trường: I. Căn cứ · II. Đặc điểm tình hình · III. Chỉ tiêu, biện pháp (8 mục). Hạn nộp theo chương trình sinh hoạt chuyên môn: trước 26/9. Kế hoạch nằm trong sổ, không lập hồ sơ riêng.</p>' +
+        '<p class="scn-ghi-chu">Theo khung sổ chủ nhiệm của trường: I. Căn cứ · II. Đặc điểm tình hình · III. Chỉ tiêu, biện pháp (8 mục). Hạn nộp theo chương trình sinh hoạt chuyên môn: trước 26/9. Kế hoạch nằm trong sổ, không lập hồ sơ riêng.</p>' + nutMau('nam', khoa) +
         oVan('kh-can-cu', nd.can_cu != null ? nd.can_cu : canCuMac(), 'I. Căn cứ xây dựng kế hoạch', 4, khoa) +
         oVan('kh-dac-diem', nd.dac_diem || '', 'II. Đặc điểm tình hình — tình hình chung', 3, khoa) +
         (khoa ? '' : '<button class="scn-nut phu nho" data-act="tu-sinh">Điền gợi ý từ số liệu lớp</button><span class="scn-an" id="kh-goi-y">' + thoat(goiY) + '</span>') +
@@ -1231,7 +1231,7 @@
         '<label class="scn-nhan">Học sinh tăng, giảm trong tháng — lý do<input id="kh-tang-giam" class="scn-o" value="' + thoat(ndT.tang_giam != null ? ndT.tang_giam : tangGiamGoiY(ym)) + '"' + (khoaT ? ' disabled' : '') + ' placeholder="Không có"></label>' +
         '<p class="scn-ghi-chu">Số liệu lưu cùng kế hoạch tháng (nút Lưu bên dưới) — in thành bảng "Theo dõi số lượng học sinh" và "Tình hình lớp" theo mốc trong sổ.</p>');
       h += the('Kế hoạch và nhật ký ' + TEN_THANG(ym).toLowerCase() + ' (theo khung sổ)',
-        oVan('kh-day-hoc', ndT.day_hoc != null ? ndT.day_hoc : (ndT.hoat_dong || ''), '1. Công tác dạy học', 4, khoaT) +
+        nutMau('thang', khoaT) + oVan('kh-day-hoc', ndT.day_hoc != null ? ndT.day_hoc : (ndT.hoat_dong || ''), '1. Công tác dạy học', 4, khoaT) +
         oVan('kh-doi', ndT.doi || '', '2. Công tác Đội', 3, khoaT) +
         oVan('kh-khac', ndT.khac != null ? ndT.khac : (ndT.trong_tam || ''), '3. Công tác khác (họp cha mẹ, an toàn, vệ sinh, phong trào…)', 3, khoaT) +
         oVan('kh-ket-qua', (kt && kt.ket_qua) || '', 'Kết quả (cuối tháng)', 3, khoaT) +
@@ -1247,7 +1247,7 @@
       h += '<div class="scn-hang">' + oChon('kh-tuan', dsU, t) + '<span class="scn-ghi-chu">' + ngayVN(dau) + ' – ' + ngayVN(congNgay(dau, 6)) + '</span></div>';
       if (shdc) h += '<p class="scn-ghi-chu">Sinh hoạt dưới cờ: <b>' + thoat(shdc.ten) + '</b>' + (shdc.truong ? ' (trường chủ trì)' : '') + '</p>';
       h += the('Sinh hoạt lớp tuần ' + t,
-        oVan('kh-so-ket', ndU.so_ket || '', 'Sơ kết tuần (nề nếp, học tập, vệ sinh, tuyên dương)', 4, khoaU) +
+        nutMau('tuan', khoaU) + oVan('kh-so-ket', ndU.so_ket || '', 'Sơ kết tuần (nề nếp, học tập, vệ sinh, tuyên dương)', 4, khoaU) +
         oVan('kh-chu-de', ndU.chu_de != null ? ndU.chu_de : chuDeMac, 'Hoạt động theo chủ đề (mặc định theo SGK Hoạt động trải nghiệm khối ' + (D.khoi || '') + ')', 2, khoaU) +
         oVan('kh-long-ghep', ndU.long_ghep || '', 'Nội dung lồng ghép (an toàn giao thông, kỹ năng sống, đọc sách…)', 2, khoaU) +
         oVan('kh-tuan-toi', ndU.tuan_toi || '', 'Kế hoạch tuần tới', 3, khoaU) +
@@ -1263,6 +1263,65 @@
     Object.keys(D.so.hoanCanh).forEach(function (m) { if ((D.so.hoanCanh[m].dien_chinh_sach || []).length) cs++; });
     return 'Lớp ' + D.lop + ' có ' + hs.length + ' học sinh (' + nu + ' nữ' + (dt ? ', ' + dt + ' dân tộc thiểu số' : '') + (hn ? ', ' + hn + ' khuyết tật học hòa nhập' : '') + ')' +
       (cs ? '; ' + cs + ' em thuộc diện chính sách' : '') + (D.so.hoTro.length ? '; ' + D.so.hoTro.length + ' em trong danh sách cần hỗ trợ' : '') + '.';
+  }
+
+  // ── ✨ ĐIỀN MẪU (3/10/2026, thầy Chung: "bấm nút, nội dung tự điền sẵn cho các thầy cô chỉ sửa";
+  //    "không API, tự App mình sinh ra"). Kho câu + luật ở js/scn-mau.js; ở đây gom SỐ LIỆU THẬT
+  //    của lớp làm ngữ cảnh, rồi chỉ điền vào ô còn TRỐNG — chữ thầy cô đã gõ không bao giờ bị đè.
+  function nutMau(loai, khoa) {
+    return khoa || !window.SCN_MAU ? '' : '<button class="scn-nut phu nho scn-nut-mau" data-act="mau" data-mau="' + loai + '" title="Máy soạn sẵn từ số liệu của lớp và chủ điểm tháng — chỉ điền ô còn trống, thầy cô sửa lại rồi bấm Lưu">✨ Điền mẫu</button>';
+  }
+  function soLieuKhoang(tu, den) {
+    var S = D.so, cc = tongHopChuyenCan(S.vang, tu, den);
+    var buoi = S.ddl.filter(function (d) { return d.ngay >= tu && d.ngay <= den; }).length;
+    var td = S.theoDoi.filter(function (x) { return x.ngay >= tu && x.ngay <= den; });
+    function emLoai(l) { var o = {}; td.forEach(function (x) { if (x.loai === l && x.hoc_sinh_ma) o[x.hoc_sinh_ma] = 1; }); return Object.keys(o).map(tenHS); }
+    return { vang: cc.lop, buoi: buoi, tiLe: tiLeChuyenCan(cc.lop.tong, D.hs.length, buoi),
+      khen: td.filter(function (x) { return x.loai === 'khen'; }).length, nhac: td.filter(function (x) { return x.loai === 'nhac'; }).length,
+      emKhen: emLoai('khen'), emNhac: emLoai('nhac'), emTienBo: emLoai('tien_bo'), emVang: Object.keys(cc.theoHS).map(tenHS) };
+  }
+  function ctxMau(loai) {
+    var hs = D.hs, S = D.so, cs = 0;
+    Object.keys(S.hoanCanh).forEach(function (m) { if ((S.hoanCanh[m].dien_chinh_sach || []).length) cs++; });
+    var dangHT = S.hoTro.filter(function (x) { return x.trang_thai !== 'da_on'; });
+    function tenHT(f) { var o = {}; dangHT.filter(f).forEach(function (x) { o[x.hoc_sinh_ma] = 1; }); return Object.keys(o).map(tenHS).join(', '); }
+    var c = { lop: D.lop, khoi: +D.khoi || 0, nam: D.nam, siSo: hs.length, nu: hs.filter(function (h) { return h.gioi_tinh === 'Nữ'; }).length,
+      hoaNhap: hs.filter(function (h) { return h.khuyet_tat_hoa_nhap; }).length, chinhSach: cs, hoTro: dangHT.length,
+      hoTroTen: tenHT(function (x) { return x.loai !== 'noi_troi'; }), emNoiTroi: tenHT(function (x) { return x.loai === 'noi_troi'; }),
+      luuY: tenHT(function (x) { return x.loai === 'suc_khoe' || x.loai === 'hoan_canh'; }), dacDiem: dacDiemTuSinh() };
+    var hn = homNay();
+    if (loai === 'thang') {
+      var ym = D.thangKH, tu = ym + '-01', den = congNgay(isoCua(new Date(+ym.slice(0, 4), +ym.slice(5, 7), 1)), -1);
+      c.ym = ym; c.cd = chuDiemThang(D.nam, ym); c.tangGiam = tangGiamGoiY(ym);
+      if (tu <= hn) c.soLieu = soLieuKhoang(tu, den < hn ? den : hn);
+    } else if (loai === 'tuan') {
+      var t = D.tuanKH, dau = ngayDauTuan(D.nam, t), cuoi = congNgay(dau, 6);
+      var s1 = tietSHDC(D.nam, t), s2 = tietSHDC(D.nam, t + 1), cd2 = chuDiemThang(D.nam, thangCuaTuan(D.nam, t + 1));
+      c.tuan = t; c.ym = thangCuaTuan(D.nam, t); c.shdc = s1 && s1.ten; c.shdcSau = s2 && s2.ten; c.hdtn = cd2 && c.khoi ? cd2.hdtn[c.khoi] : '';
+      if (dau && dau <= hn) c.soLieu = soLieuKhoang(dau, cuoi < hn ? cuoi : hn);
+    } else if (loai === 'hop' || loai === 'tk') {
+      var ky = loai === 'tk' ? D.kyTK : ((document.getElementById('hop-ky') || {}).value || 'dau_nam');
+      c.kyHop = ky; c.ky = ky;
+      var sl = soLieuKy(ky === 'cuoi_hk1' || ky === 'hk1' ? 'hk1' : 'ca_nam');
+      c.soLieu = { vang: sl.cc.lop, buoi: sl.buoi, tiLe: sl.tl, khen: sl.khen, nhac: sl.nhac, tienBo: sl.tienBo, hoTro: sl.hoTro, daOn: sl.daOn, hop: sl.hop, dg: sl.dg };
+    } else if (loai === 'ht') {
+      c.loaiHT = (document.getElementById('ht-loai') || {}).value || 'khac';
+    }
+    return c;
+  }
+  function dienMau(loai) {
+    if (!window.SCN_MAU) return;
+    var ra = window.SCN_MAU.sinh(loai, ctxMau(loai)), n = 0, coChu = 0;
+    Object.keys(ra).forEach(function (id) {
+      var o = document.getElementById(id);
+      if (!o || o.disabled || !ra[id]) return;
+      if (String(o.value || '').trim()) { coChu++; return; }
+      o.value = ra[id]; n++;
+      o.classList.add('scn-vua-mau');
+    });
+    if (n) D.daCham = true;
+    bao(n ? '✨ Đã điền mẫu ' + n + ' ô' + (coChu ? ' (giữ nguyên ' + coChu + ' ô đã có chữ)' : '') + ' — thầy cô đọc, sửa cho đúng lớp mình rồi bấm Lưu.'
+      : (coChu ? 'Các ô đã có chữ — muốn lấy mẫu ô nào thì xoá trắng ô đó rồi bấm lại.' : 'Không có ô nào để điền.'));
   }
 
   function canCuMac() {
@@ -1843,7 +1902,7 @@
       '<input id="hop-dia-diem" class="scn-o" placeholder="Địa điểm (phòng học lớp…)" value="' + thoat(x.dia_diem || '') + '">' +
       '<label class="scn-nhan ngang">Dự <input type="number" min="0" id="hop-du" class="scn-o so" value="' + thoat(x.so_du != null ? x.so_du : '') + '"></label>' +
       '<label class="scn-nhan ngang">/ <input type="number" min="0" id="hop-tong" class="scn-o so" value="' + thoat(x.tong_so != null ? x.tong_so : D.hs.length) + '"></label></div>' +
-      veDiemDanhPH(muc.co_mat) +
+      veDiemDanhPH(muc.co_mat) + nutMau('hop') +
       (khung ? khung.muc.map(function (m) { return oVan('hop-m-' + m[0], muc[m[0]], m[1], 2); }).join('') : '') +
       oVan('hop-noi-dung', x.noi_dung, khung ? 'Nội dung khác, tóm tắt cuộc họp' : 'Nội dung họp', 3) + oVan('hop-y-kien', x.phan_hoi, 'Ý kiến cha mẹ học sinh (tóm tắt)', 2) + oVan('hop-ket-luan', x.ket_luan, 'Kết luận', 2) +
       '<div class="scn-hang"><button class="scn-nut" data-act="luu-hop"' + (x.id ? ' data-id="' + x.id + '"' : '') + '>Lưu biên bản</button>' + (x.id ? '<button class="scn-nut phu" data-act="huy-sua">Thôi</button>' : '') + '</div></div></details>';
@@ -1921,7 +1980,7 @@
       '<p class="scn-ghi-chu">Loại <b>khó khăn học tập</b> và <b>năng lực nổi trội</b> in vào các bảng "Mặt nổi trội" / "Mặt hạn chế cần giúp đỡ" của sổ và <b>có trong bản gửi tổ trưởng</b> (kèm tên học sinh) — chỉ ghi biểu hiện học tập, không ghi hoàn cảnh gia đình. Loại khác chỉ GVCN và Ban giám hiệu xem.</p>' +
       oVan('ht-bieu-hien', x.bieu_hien, 'Biểu hiện quan sát được (mặt nổi trội / mặt hạn chế cần giúp đỡ)', 2) +
       '<label class="scn-nhan">Môn / kỹ năng cần hỗ trợ<input id="ht-mon" class="scn-o" value="' + thoat(x.mon_ky_nang || '') + '" placeholder="Đọc, viết, tính toán…"></label>' +
-      oVan('ht-bien-phap', x.bien_phap, 'Biện pháp (trong giờ, đôi bạn cùng tiến, phụ đạo buổi 2…)', 2) +
+      oVan('ht-bien-phap', x.bien_phap, 'Biện pháp (trong giờ, đôi bạn cùng tiến, phụ đạo buổi 2…)', 2) + nutMau('ht') +
       '<label class="scn-nhan">Người phối hợp<input id="ht-phoi-hop" class="scn-o" value="' + thoat(x.nguoi_phoi_hop || '') + '" placeholder="Cha mẹ, GV bộ môn, Tổng phụ trách Đội, y tế…"></label>' +
       '<div class="scn-hang"><label class="scn-nhan ngang">Mốc xem lại <input type="date" id="ht-moc-xl" class="scn-o" value="' + thoat(x.moc_xem_lai || '') + '"></label>' + oChon('ht-tt', TT_HT, x.trang_thai || 'dang_theo_doi') + '</div>' +
       oVan('ht-ket-qua', x.ket_qua, 'Kết quả', 2) +
@@ -1993,7 +2052,7 @@
       '<li>Họp cha mẹ học sinh: ' + sl.hop + ' lần</li>' +
       '<li>Đánh giá ' + (sl.dg ? TEN_KY_DG[sl.dg.ky].toLowerCase() + ' (lượt môn): hoàn thành tốt ' + sl.dg.T + ' · hoàn thành ' + sl.dg.H + ' · chưa hoàn thành ' + sl.dg.C : (ky === 'hk1' ? 'cuối học kỳ I' : 'cuối năm') + ': chưa có dữ liệu') + '</li>' +
       '</ul>' + (han ? '<p class="scn-ghi-chu">Mốc: ' + (ky === 'hk1' ? 'sơ kết trước ' : 'tổng kết trước ') + ngayVN(han) + '.</p>' : ''));
-    h += the('Giáo viên chủ nhiệm viết',
+    h += the('Giáo viên chủ nhiệm viết', nutMau('tk', khoa) +
       '<label class="scn-nhan ngang">Ngày lập <input type="date" id="tk-ngay" class="scn-o" value="' + thoat(ngay) + '"' + (khoa ? ' disabled' : '') + '></label>' +
       oVan('tk-lam-duoc', tk.viec_lam_duoc, 'Những việc làm được', 4, khoa) + oVan('tk-ton-tai', tk.ton_tai, 'Tồn tại, hạn chế', 3, khoa) + oVan('tk-de-xuat', tk.de_xuat, 'Đề xuất', 2, khoa) +
       oVan('tk-vo-sach', (tk.them || {}).vo_sach, 'Phong trào "Vở sạch – chữ đẹp" (số em đạt, tỉ lệ, nhận xét)', 2, khoa) +
@@ -3262,6 +3321,7 @@
       'chon-het': function () { D.hs.forEach(function (h) { D.chon[h.ma] = true; }); ve(); },
       'bo-chon': function () { D.chon = {}; ve(); },
       'huy-sua': function () { D.sua = null; ve(); },
+      'mau': function () { dienMau(a('data-mau')); },
       'tu-sinh': function () { var t = document.getElementById('kh-dac-diem'), g = document.getElementById('kh-goi-y'); if (t && g) t.value = t.value ? t.value + '\n' + g.textContent : g.textContent; },
       'them-bcs': function () { var v = document.getElementById('scn-bcs'); if (v) { var d = document.createElement('div'); d.innerHTML = dongBCS({ chuc_vu: '' }, v.children.length + 100); v.appendChild(d.firstChild); } },
       'xoa-bcs': function () { var d = b.closest('.scn-bcs-dong'); if (d) d.parentNode.removeChild(d); },

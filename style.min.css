@@ -3252,3 +3252,28 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .tkb-ks-hang input, .tkb-ks-hang select { padding: 7px 9px; border: 1px solid var(--vien); border-radius: 7px; font: inherit; font-weight: 400; }
 .tkb-ks-trung { color: #b42318; font-size: 13px; min-height: 18px; }
 .tkb-ks-nut { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.dh-nut { font: inherit; font-size: 13.5px; font-weight: 700; padding: 7px 14px; border: 1px solid var(--dam); border-radius: 8px; background: var(--dam); color: #fff; cursor: pointer; }
+.dh-nut:hover { background: #1e4593; }
+.dh-nut:disabled { opacity: .45; cursor: default; }
+.tkb-soat-so { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--thieu); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+.tkb-soat-do { color: var(--thieu) !important; }
+.tkb-soat-vang { color: var(--canh) !important; }
+.tkb-soat-nut { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.tkb-soat-nut small { flex: 1 1 260px; font-size: 12.4px; color: var(--chu-mo); line-height: 1.45; }
+.tkb-soat-loc { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.tkb-soat-muc { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; vertical-align: 1px; }
+.tkb-soat-muc.do { background: var(--thieu-nen); color: var(--thieu); }
+.tkb-soat-muc.vang { background: var(--canh-nen); color: var(--canh); }
+.tkb-soat-muc.nhac { background: var(--o-con); color: var(--chu-mo); }
+.tkb-soat-nhom { background: var(--the); border: 1px solid var(--vien); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+.tkb-soat-nhom h4 { margin: 0 0 6px; font-size: 14px; }
+.tkb-soat-nhom h4 small { color: var(--chu-mo); font-weight: 600; }
+.tkb-soat-nhom ul { list-style: none; margin: 0; padding: 0; }
+.tkb-soat-nhom li { display: flex; gap: 10px; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px dashed var(--ke); font-size: 13.4px; }
+.tkb-soat-nhom li:first-child { border-top: 0; }
+.tkb-soat-nhom li small { color: var(--chu-mo); }
+.tkb-soat-nhom li > span { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.tkb-de-xuat ol { margin: 8px 0 6px; padding-left: 22px; font-size: 13.2px; line-height: 1.55; }
+@media (max-width: 640px) { .tkb-soat-nhom li { flex-direction: column; align-items: flex-start; } }
+.scn-nut-mau { border-style: dashed; }
+.scn-vua-mau { background: #f7f5ff; border-color: #b9aef0 !important; }

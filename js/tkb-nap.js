@@ -385,6 +385,7 @@
       dong('Đối chiếu lưới giáo viên', d.coTrangGV ? (d.lech ? '<b style="color:var(--canh)">' + d.lech + ' tiết lệch</b> — máy lấy theo lưới lớp' : '✅ khớp từng tiết') : 'trang giáo viên không có hoặc chưa điền — bỏ qua (không bắt buộc)') +
       dong('Giáo viên trùng tiết', d.trungGV.length ? '<b style="color:var(--thieu)">' + d.trungGV.length + ' chỗ</b><br><small>' +
         d.trungGV.slice(0, 5).map(thoat).join('<br>') + (d.trungGV.length > 5 ? '<br>…' : '') + '</small>' : '✅ không có') +
+      soatChuongTrinh(d) +
       '</tbody></table></div>' +
       (d.nhac.length ? '<div class="hd-kiem vang">' + d.nhac.map(thoat).join('<br>') + '</div>' : '') +
 
@@ -462,6 +463,16 @@
     veKiemCoSo();
   }
   function dong(a, b) { return '<tr><td style="white-space:nowrap">' + a + '</td><td>' + b + '</td></tr>'; }
+  // Soát chương trình ngay khi đọc tệp (js/tkb-soat.js, 3/10/2026): thiếu tiết, môn dồn một ngày, lỗ tiết.
+  // Trùng tiết đã có dòng riêng ở trên; sau khi ghi, thẻ 🩺 Soát lỗi ở màn TKB có nút tự gỡ.
+  function soatChuongTrinh(d) {
+    if (!window.TKB_SOAT) return '';
+    var kq = window.TKB_SOAT.soat(d.tiet.map(function (x) { return { lop: x.lop, thu: x.thu, buoi: x.buoi, tiet: x.tiet, mon: x.mon, gv_nhan: x.nhan }; }));
+    var vang = kq.loi.filter(function (l) { return l.muc === 'vang'; });
+    return dong('Soát chương trình', vang.length ? '<b style="color:var(--canh)">' + vang.length + ' chỗ nên sửa</b><br><small>' +
+      vang.slice(0, 5).map(function (l) { return thoat(l.tieuDe + ': ' + l.chiTiet); }).join('<br>') + (vang.length > 5 ? '<br>…' : '') +
+      '<br>Ghi xong vào Điều hành › Thời khóa biểu › 🩺 Soát lỗi để xem đủ và tự gỡ trùng.</small>' : '✅ đủ tiết theo chương trình, không dồn ngày, không lỗ tiết');
+  }
 
   // ── Soát phân hiệu trước khi ghi. chan = không cho ghi · nhac = cho ghi, nói rõ hệ quả ──
   // Các bản đã công bố còn có thể có hiệu lực từ ngày moc trở đi: bản đang dùng ngày đó + mọi bản áp dụng sau
