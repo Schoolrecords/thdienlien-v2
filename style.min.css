@@ -3277,3 +3277,14 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 @media (max-width: 640px) { .tkb-soat-nhom li { flex-direction: column; align-items: flex-start; } }
 .scn-nut-mau { border-style: dashed; }
 .scn-vua-mau { background: #f7f5ff; border-color: #b9aef0 !important; }
+.tkb-luoi td.co-o-sua { vertical-align: top; height: auto; padding: 4px; cursor: default; }
+.tkb-o-sua .tkb-khung-sua { margin: 0; padding: 8px 9px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); text-align: left; }
+.tkb-o-sua .tkb-ks-dau b { font-size: 12.5px; }
+.tkb-o-sua .tkb-ks-dau small { display: block; font-size: 11.5px; color: var(--chu-mo); }
+.tkb-o-sua .tkb-ks-hang { flex-direction: column; gap: 6px; margin: 6px 0 4px; }
+.tkb-o-sua .tkb-ks-hang label { flex: 1 1 auto; font-size: 12px; }
+.tkb-o-sua .tkb-ks-hang select, .tkb-o-sua .tkb-ks-hang input { width: 100%; min-width: 0; padding: 6px 7px; font-size: 13px; }
+.tkb-o-sua .tkb-ks-trung { font-size: 12px; min-height: 0; }
+.tkb-o-sua .tkb-ks-nut { gap: 5px; }
+.tkb-o-sua .tkb-ks-nut button { font-size: 12.5px; padding: 5px 9px; }
+.tkb-an { display: none !important; }

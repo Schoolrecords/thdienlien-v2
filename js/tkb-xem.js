@@ -471,7 +471,9 @@
 
   // ── Lưới tuần: hàng = tiết (S1…, C1…), cột = thứ ──
   // o(thu, buoi, tiet) trả { mon, phu, thay } hoặc null
-  function luoiTuan(o, tieuDe, sua) {
+  // khung: HTML khung sửa — vẽ NGAY TRONG Ô đang mở (3/10/2026, thầy Chung: "bấm vào ô sẽ cho lựa chọn,
+  // sửa tại ô luôn… danh sách sổ xuống"), thay cho khung nằm dưới lưới phải cuộn xuống tìm.
+  function luoiTuan(o, tieuDe, sua, khung) {
     var dsThu = thuCo(), mt = soTietBuoi(), hn = thuHomNay();
     var h = '<div class="tkb-cuon"><table class="tkb-luoi"><thead><tr><th class="tkb-o-tiet">Tiết</th>' +
       dsThu.map(function (t) { return '<th class="' + (t === hn ? 'hom-nay' : '') + '">' + TEN_THU[t] + (t === hn ? '<small>hôm nay</small>' : '') + '</th>'; }).join('') +
@@ -485,6 +487,7 @@
             var oKhoa = t + '|' + b + '|' + i, dangMo = sua && S.oSua && S.oSua.thu === t && S.oSua.buoi === b && S.oSua.tiet === i;
             var tdMo = '<td class="' + (t === hn ? 'hom-nay' : '') + (sua ? ' tkb-sua-o' : '') + (dangMo ? ' dang-mo' : '') + '"' +
               (sua ? ' data-o-sua="' + oKhoa + '" title="Bấm để sửa tiết này"' : '') + '>';
+            if (dangMo && khung) return tdMo.replace('dang-mo"', 'dang-mo co-o-sua"') + '<div class="tkb-o-sua">' + khung + '</div></td>';
             if (!v) return tdMo + '<div class="tkb-trong">' + (sua ? '<span class="tkb-them">+</span>' : '') + '</div></td>';
             return tdMo + '<div class="tkb-mon tkb-m-' + nhomMon(v.mon) + (v.trung ? ' trung' : '') + '">' +
               '<b>' + thoat(v.mon) + '</b><i>' + thoat(v.phu || '') + '</i></div></td>';
@@ -552,7 +555,7 @@
         if (!a) return null;
         var g = gvCua[a[0].gv_nhan];
         return { mon: a[0].mon, phu: a[0].gv_nhan || '' , ten: g && g.ho_ten };
-      }, null, S.sua) + (S.sua && S.oSua ? veKhungSua() : '') + thongKeMot(function (x) { return x.lop === S.lop; }, 'gv') + '</div></div>';
+      }, null, S.sua, S.sua && S.oSua ? veKhungSua() : '') + thongKeMot(function (x) { return x.lop === S.lop; }, 'gv') + '</div></div>';
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -589,6 +592,15 @@
   function tietGoc(lop, o) {
     return ((S.goc && S.goc.tiet) || []).filter(function (x) { return x.lop === lop && x.thu === o.thu && x.buoi === o.buoi && x.tiet === o.tiet; })[0] || null;
   }
+  // Môn → { tên gọi GV: số tiết } của một lớp (bản gốc) — để chọn môn là tự gợi đúng người đang dạy môn đó ở lớp
+  function monGVLop(lop) {
+    var r = {};
+    ((S.goc && S.goc.tiet) || []).forEach(function (x) {
+      if (x.lop !== lop || !x.mon || !x.gv_nhan) return;
+      (r[x.mon] = r[x.mon] || {})[x.gv_nhan] = (r[x.mon][x.gv_nhan] || 0) + 1;
+    });
+    return r;
+  }
   // Giáo viên đã dạy lớp KHÁC đúng ô này (cùng phiên bản)
   function trungTiet(nhan, o) {
     if (!nhan) return [];
@@ -600,14 +612,29 @@
     var o = S.oSua, cu = tietGoc(S.lop, o) || {}, dsMon = {};
     S.dl.tiet.forEach(function (x) { if (x.mon) dsMon[x.mon] = 1; });
     var gv = gvGoc(), tr = trungTiet(cu.gv_nhan, o);
+    // Danh sách sổ xuống (3/10/2026): môn của trường · giáo viên chia hai nhóm "đang dạy lớp này" / "giáo viên khác",
+    // người đang bận đúng tiết này ở lớp khác có dấu ⚠ ngay trong danh sách.
+    if (cu.mon) dsMon[cu.mon] = 1;
+    var monLop = monGVLop(S.lop), dayLop = {};
+    Object.keys(monLop).forEach(function (m) { Object.keys(monLop[m]).forEach(function (n) { dayLop[n] = 1; }); });
+    function opGV(g) {
+      var ban = trungTiet(g.nhan, o);
+      return '<option value="' + thoat(g.nhan) + '"' + (g.nhan === cu.gv_nhan ? ' selected' : '') + '>' + thoat(g.ten + (g.ten !== g.nhan ? ' (' + g.nhan + ')' : '')) +
+        (ban.length ? ' — ⚠ đang dạy ' + thoat(ban.join(', ')) : '') + '</option>';
+    }
+    var nhom1 = gv.filter(function (g) { return dayLop[g.nhan]; }), nhom2 = gv.filter(function (g) { return !dayLop[g.nhan]; });
     return '<div class="tkb-khung-sua" id="tkb-khung-sua">' +
       '<div class="tkb-ks-dau"><b>' + TEN_THU[o.thu] + ' · ' + (o.buoi === 'sang' ? 'Sáng' : 'Chiều') + ' · tiết ' + o.tiet + ' — lớp ' + thoat(S.lop) + '</b>' +
       (cu.mon ? '<small>Hiện tại: ' + thoat(cu.mon) + (cu.gv_nhan ? ' · ' + thoat(cu.gv_nhan) : '') + '</small>' : '<small>Ô trống — thêm tiết mới</small>') + '</div>' +
-      '<div class="tkb-ks-hang"><label>Môn <input id="tkb-sua-mon" list="tkb-ds-mon" value="' + thoat(cu.mon || '') + '" placeholder="Tiếng Việt, Toán…"></label>' +
-      '<datalist id="tkb-ds-mon">' + Object.keys(dsMon).sort(function (a, b) { return a.localeCompare(b, 'vi'); }).map(function (m) { return '<option value="' + thoat(m) + '">'; }).join('') + '</datalist>' +
-      '<label>Giáo viên <select id="tkb-sua-gv"><option value="">— Không ghi giáo viên —</option>' + gv.map(function (g) {
-        return '<option value="' + thoat(g.nhan) + '"' + (g.nhan === cu.gv_nhan ? ' selected' : '') + '>' + thoat(g.ten + (g.ten !== g.nhan ? ' (' + g.nhan + ')' : '')) + '</option>';
-      }).join('') + '</select></label></div>' +
+      '<div class="tkb-ks-hang"><label>Môn <select id="tkb-sua-mon"><option value="">— Chọn môn —</option>' +
+        Object.keys(dsMon).sort(function (a, b) { return a.localeCompare(b, 'vi'); }).map(function (m) {
+          return '<option value="' + thoat(m) + '"' + (m === cu.mon ? ' selected' : '') + '>' + thoat(m) + '</option>';
+        }).join('') + '<option value="__khac__">✎ Môn khác (gõ tên)…</option></select>' +
+        '<input id="tkb-sua-mon-khac" class="tkb-an" placeholder="Gõ tên môn"></label>' +
+      '<label>Giáo viên <select id="tkb-sua-gv"><option value="">— Không ghi giáo viên —</option>' +
+        (nhom1.length ? '<optgroup label="Đang dạy lớp ' + thoat(S.lop) + '">' + nhom1.map(opGV).join('') + '</optgroup>' : '') +
+        '<optgroup label="Giáo viên khác">' + nhom2.map(opGV).join('') + '</optgroup>' +
+      '</select></label></div>' +
       '<div id="tkb-sua-trung" class="tkb-ks-trung">' + (tr.length ? '⚠ Giáo viên này đang dạy lớp ' + thoat(tr.join(', ')) + ' cùng tiết.' : '') + '</div>' +
       '<div class="tkb-ks-nut"><button class="dh-nut" id="tkb-sua-luu">Lưu tiết</button>' +
       (cu.mon ? '<button class="dh-nut-nho" id="tkb-sua-xoa">Xoá tiết này</button>' : '') +
@@ -629,6 +656,7 @@
   function luuO() {
     if (S.dangLuu) return;
     var o = S.oSua, mon = String((document.getElementById('tkb-sua-mon') || {}).value || '').trim();
+    if (mon === '__khac__') mon = String((document.getElementById('tkb-sua-mon-khac') || {}).value || '').trim();
     var nhan = (document.getElementById('tkb-sua-gv') || {}).value || '';
     if (!mon) { baoTKB('Chưa ghi tên môn.'); return; }
     var g = gvGoc().filter(function (x) { return x.nhan === nhan; })[0];
@@ -856,7 +884,7 @@
       luoiTuan(function (t, b, i) {
         var a = m[t + '|' + b + '|' + i];
         return a ? { mon: a[0].mon, phu: a.map(function (x) { return x.lop; }).join(' + '), trung: a.length > 1 } : null;
-      }, null, S.sua) + (S.sua && S.oSua ? veKhungSuaGV(g) : '') + thongKeMot(function (x) { return x.gv_nhan === g.gv_nhan; }, 'lop') + '</div></div>';
+      }, null, S.sua, S.sua && S.oSua ? veKhungSuaGV(g) : '') + thongKeMot(function (x) { return x.gv_nhan === g.gv_nhan; }, 'lop') + '</div></div>';
   }
 
   function veToanTruong() {
@@ -991,8 +1019,32 @@
       if (S.sua && S.cheDo === 'lop') { S.goc = null; napGoc().then(ve, function (e) { baoTKB(String(e.message || e)); S.sua = false; ve(); }); }
       ve();
     });
+    // Khung sửa nằm TRONG ô: bấm vào ô chọn/nút của khung thì không mở lại ô (vẽ lại sẽ mất lựa chọn đang làm)
+    Array.prototype.slice.call(EL.querySelectorAll('.tkb-o-sua')).forEach(function (k) {
+      k.addEventListener('click', function (e) { e.stopPropagation(); });
+      k.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { S.oSua = null; S.lopSuaGV = ''; ve(); }
+        else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          var n = document.getElementById('tkb-sua-luu') || document.getElementById('tkb-sgv-luu'); if (n && !n.disabled) n.click();
+        }
+      });
+      var dau = k.querySelector('select, input'); if (dau && dau.focus) try { dau.focus({ preventScroll: true }); } catch (e) { dau.focus(); }
+    });
+    var monSua = document.getElementById('tkb-sua-mon');
+    if (monSua && monSua.tagName === 'SELECT') monSua.addEventListener('change', function () {
+      var khac = document.getElementById('tkb-sua-mon-khac');
+      if (khac) { khac.classList.toggle('tkb-an', monSua.value !== '__khac__'); if (monSua.value === '__khac__') khac.focus(); }
+      // Chọn môn → tự chọn người đang dạy môn đó ở lớp này (nhiều tiết nhất)
+      var ds = monGVLop(S.lop)[monSua.value], gvO = document.getElementById('tkb-sua-gv');
+      if (ds && gvO) {
+        var nhan = Object.keys(ds).sort(function (a, b) { return ds[b] - ds[a]; })[0];
+        if (nhan) { gvO.value = nhan; gvO.dispatchEvent(new Event('change')); }
+      }
+    });
     tat('[data-o-sua]', function (b) {
       var p = b.getAttribute('data-o-sua').split('|');
+      if (S.oSua && S.oSua.thu === +p[0] && S.oSua.buoi === p[1] && S.oSua.tiet === +p[2]) return;
       S.oSua = { thu: +p[0], buoi: p[1], tiet: +p[2] }; S.lopSuaGV = ''; ve();
       var k = document.getElementById('tkb-khung-sua'); if (k && k.scrollIntoView) k.scrollIntoView({ block: 'nearest' });
     });
