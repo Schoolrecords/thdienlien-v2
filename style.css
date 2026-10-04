@@ -3615,6 +3615,45 @@ textarea.ht-o { min-height: 116px; display: block; }
 .tkb-mon.nho i { font-size: 11px; }
 .tkb-mon.trung { outline: 0; }
 .tkb-mon.trung i::after { content: ' (trùng tiết)'; font-weight: 700; color: var(--chu); }
+/* Lưới tuần kiểu cổng công khai (4/10/2026, thầy Chung): kẻ ô đủ, cột Buổi gộp ô ☀/⛅, Tiết số tròn, dải ngăn sáng–chiều */
+#tkb-xem .tkb-luoi { border-collapse: collapse; }
+#tkb-xem .tkb-luoi th, #tkb-xem .tkb-luoi td { border: 1px solid #d5deec; }
+#tkb-xem .tkb-luoi tr > :first-child { border-left: 0; }
+#tkb-xem .tkb-luoi tr > :last-child { border-right: 0; }
+#tkb-xem .tkb-luoi thead th { background: #14306b; color: #fff; font-size: 13.5px; font-weight: 700; padding: 11px 6px;
+  border-color: rgba(255,255,255,.18); border-top: 0; box-shadow: none; }
+#tkb-xem .tkb-luoi thead th.hom-nay { background: #1f4592; color: #fff; box-shadow: none; }
+#tkb-xem .tkb-luoi thead th small { color: #ffd76a; font-size: 10.5px; letter-spacing: .3px; }
+#tkb-xem .tkb-luoi .tkb-o-buoi { width: 84px; }
+#tkb-xem .tkb-luoi .tkb-o-tiet { width: 56px; text-align: center; font: inherit; }
+#tkb-xem .tkb-luoi thead .tkb-o-tiet { background: #14306b; color: #fff; font-weight: 700; font-size: 13.5px; }
+#tkb-xem .tkb-luoi td { padding: 8px 6px; height: 50px; text-align: center; vertical-align: middle; border-bottom: 1px solid #d5deec; }
+#tkb-xem .tkb-luoi tr.het-buoi td { border-bottom: 1px solid #d5deec; }
+#tkb-xem .tkb-luoi td.hom-nay { background: #fffbe9; }
+#tkb-xem .tkb-luoi tbody tr:hover td:not(.tkb-o-tiet):not(.dang-mo) { background: #f4f7fd; }
+#tkb-xem .tkb-luoi .tkb-cot-buoi { font-size: 12.5px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; vertical-align: middle; text-align: center; }
+#tkb-xem .tkb-luoi .tkb-cot-buoi svg { display: block; width: 26px; height: 26px; margin: 0 auto 6px; fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#tkb-xem .tkb-luoi tr.sang .tkb-cot-buoi { background: #fff8e8; color: #9a6206; }
+#tkb-xem .tkb-luoi tr.sang .tkb-cot-buoi svg { color: #e0a21a; }
+#tkb-xem .tkb-luoi tr.chieu .tkb-cot-buoi { background: #edf3fc; color: #22569e; }
+#tkb-xem .tkb-luoi tr.chieu .tkb-cot-buoi svg { color: #3f7fd0; }
+#tkb-xem .tkb-luoi td.tkb-o-tiet span { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: 50%; font-size: 12.5px; font-weight: 700; }
+#tkb-xem .tkb-luoi tr.sang td.tkb-o-tiet { background: #fffdf6; }
+#tkb-xem .tkb-luoi tr.sang td.tkb-o-tiet span { background: #fbeccb; color: #9a6206; }
+#tkb-xem .tkb-luoi tr.chieu td.tkb-o-tiet { background: #f8fbff; }
+#tkb-xem .tkb-luoi tr.chieu td.tkb-o-tiet span { background: #dbe8f9; color: #22569e; }
+#tkb-xem .tkb-luoi tr.tkb-ngan td { height: 8px; padding: 0; background: #fdf0d2; border-left: 0; border-right: 0; }
+#tkb-xem .tkb-luoi .tkb-mon { text-align: center; justify-items: center; }
+#tkb-xem .tkb-luoi .tkb-mon b { color: var(--dam); font-size: 13.5px; font-weight: 700; }
+#tkb-xem .tkb-luoi .tkb-mon i { font-size: 12px; margin-top: 1px; }
+@media (max-width: 640px) {
+  #tkb-xem .tkb-luoi .tkb-o-buoi { width: 58px; }
+  #tkb-xem .tkb-luoi .tkb-o-tiet { width: 42px; }
+  #tkb-xem .tkb-luoi .tkb-cot-buoi { font-size: 10.5px; letter-spacing: .5px; }
+  #tkb-xem .tkb-luoi .tkb-cot-buoi svg { width: 20px; height: 20px; }
+}
 .tkb-trong { min-height: 0; height: 18px; border: 0; }
 
 /* Lưới phân hiệu */

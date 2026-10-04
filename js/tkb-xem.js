@@ -473,15 +473,23 @@
   // o(thu, buoi, tiet) trả { mon, phu, thay } hoặc null
   // khung: HTML khung sửa — vẽ NGAY TRONG Ô đang mở (3/10/2026, thầy Chung: "bấm vào ô sẽ cho lựa chọn,
   // sửa tại ô luôn… danh sách sổ xuống"), thay cho khung nằm dưới lưới phải cuộn xuống tìm.
+  // Kiểu lưới theo cổng công khai (thầy Chung 4/10/2026): cột Buổi gộp ô ☀/⛅, Tiết số tròn, dải ngăn sáng–chiều
+  var ICON_BUOI = {
+    sang: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+    chieu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 19h9a3.6 3.6 0 0 0 .4-7.2 5 5 0 0 0-9.6 1.2A3 3 0 0 0 7.5 19z"/><path d="M15.5 3.2v1.6M20.6 5.4l-1.1 1.1M22 10.3h-1.6M10.4 5.4l1.1 1.1"/></svg>'
+  };
   function luoiTuan(o, tieuDe, sua, khung) {
     var dsThu = thuCo(), mt = soTietBuoi(), hn = thuHomNay();
-    var h = '<div class="tkb-cuon"><table class="tkb-luoi"><thead><tr><th class="tkb-o-tiet">Tiết</th>' +
+    var cacBuoi = dsBuoi().filter(function (b) { return mt[b] > 0; });
+    var h = '<div class="tkb-cuon"><table class="tkb-luoi"><thead><tr><th class="tkb-o-buoi">Buổi</th><th class="tkb-o-tiet">Tiết</th>' +
       dsThu.map(function (t) { return '<th class="' + (t === hn ? 'hom-nay' : '') + '">' + TEN_THU[t] + (t === hn ? '<small>hôm nay</small>' : '') + '</th>'; }).join('') +
       '</tr></thead><tbody>';
-    dsBuoi().forEach(function (b) {
+    cacBuoi.forEach(function (b, bi) {
+      if (bi) h += '<tr class="tkb-ngan" aria-hidden="true"><td colspan="' + (dsThu.length + 2) + '"></td></tr>';
       for (var i = 1; i <= mt[b]; i++) {
-        h += '<tr class="' + (b === 'chieu' ? 'chieu' : '') + (i === mt[b] ? ' het-buoi' : '') + '">' +
-          '<td class="tkb-o-tiet">' + (b === 'sang' ? 'S' : 'C') + i + '</td>' +
+        h += '<tr class="' + (b === 'chieu' ? 'chieu' : 'sang') + (i === mt[b] ? ' het-buoi' : '') + '">' +
+          (i === 1 ? '<th scope="rowgroup" rowspan="' + mt[b] + '" class="tkb-cot-buoi">' + ICON_BUOI[b] + '<span>' + (b === 'sang' ? 'Sáng' : 'Chiều') + '</span></th>' : '') +
+          '<td class="tkb-o-tiet"><span title="' + (b === 'sang' ? 'Sáng' : 'Chiều') + ' – tiết ' + i + '">' + i + '</span></td>' +
           dsThu.map(function (t) {
             var v = o(t, b, i);
             var oKhoa = t + '|' + b + '|' + i, dangMo = sua && S.oSua && S.oSua.thu === t && S.oSua.buoi === b && S.oSua.tiet === i;
@@ -1271,6 +1279,8 @@
       'table{border-collapse:collapse;width:100%}th,td{border:1px solid #555;padding:2px 3px;text-align:center;vertical-align:middle}' +
       'th{background:#e8edf5}tr.chieu td{background:#fbf6e6}.tkb-mon b{display:block;font-size:' + (cs ? '9' : '11') + 'px}' +
       '.tkb-mon i{font-style:normal;font-size:' + (cs ? '8' : '10') + 'px;color:#333}.tkb-trong{height:14px}small{font-weight:normal}' +
+      '.tkb-cot-buoi{font-size:10px;text-transform:uppercase}.tkb-cot-buoi svg{display:block;width:14px;height:14px;margin:0 auto 2px;fill:none;stroke:#000;stroke-width:1.7}' +
+      '.tkb-ngan td{height:3px;padding:0;background:#ccc}' +
       '</style></head><body><h1>THỜI KHÓA BIỂU</h1><div class="phu">' + thoat(tieuDe) + ' · ' +
       thoat(EL.querySelector('.tkb-meta') ? EL.querySelector('.tkb-meta').textContent : '') + '</div>' +
       (tom && !cs ? tom.outerHTML : '') + bang.outerHTML + '</body></html>');
