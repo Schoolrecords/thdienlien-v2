@@ -4909,39 +4909,15 @@ body.ck-mo > footer { display: none !important; }
 .sdb-chon label { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--chu-mo); font-size: 13px; }
 .sdb-chon select.dh-o-nhap { margin-top: 0; }
 .sdb-tuan-chu { font-weight: 800; color: var(--dam); padding: 0 4px; }
-.sdb-ngay { background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc); padding: 10px 12px; margin: 10px 0; }
-.sdb-ngay-dau { color: var(--dam); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.sdb-trong { font-size: 12.8px; color: var(--chu-nhat); }
-.sdb-bang-cuon { overflow-x: auto; }
-.sdb-bang { width: 100%; border-collapse: collapse; font-size: 13.4px; }
-.sdb-bang { table-layout: fixed; }                 /* cột thẳng hàng giữa các ngày */
-.sdb-bang th:nth-child(1) { width: 52px; } .sdb-bang th:nth-child(2) { width: 140px; } .sdb-bang th:nth-child(4) { width: 210px; }
-.sdb-bang th { text-align: left; font-size: 11.6px; text-transform: uppercase; letter-spacing: .4px; color: var(--chu-nhat); padding: 5px 6px; border-bottom: 1px solid var(--vien); }
-.sdb-bang td { padding: 7px 6px; border-bottom: 1px solid var(--ke); vertical-align: top; }
-.sdb-bang tr.chua td { background: #fcfcfd; }
-.sdb-hang-buoi td { background: var(--o-con); font-size: 12.4px; color: var(--chu-mo); font-weight: 700; }
-.sdb-cot-tiet { font-weight: 800; color: var(--dam); white-space: nowrap; width: 40px; }
-.sdb-cot-mon { white-space: nowrap; }
-.sdb-cot-ky { font-size: 12.6px; min-width: 120px; }
-.sdb-cot-ky small { display: block; color: var(--chu-nhat); }
 .sdb-chot { margin-top: 18px; }
 .sdb-tuan-ds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 @media (max-width: 640px) {
   .sdb-nut-luu { width: 100%; min-width: 0; }
-  .sdb-bang thead { display: none; }
-  .sdb-bang, .sdb-bang tbody, .sdb-bang tr { display: block; width: 100%; }
-  .sdb-bang tr { border-bottom: 1px solid var(--ke); padding: 6px 0; }
-  .sdb-bang td { display: inline-block; border: 0; padding: 2px 4px; }
-  .sdb-bang td.sdb-cot-ky, .sdb-bang td[colspan] { display: block; padding-left: 48px; }
-  .sdb-bang tr.sdb-hang-buoi td { display: block; padding: 6px; }
-  .sdb-bang tr:not(.sdb-hang-buoi) td:nth-child(3) { display: block; padding-left: 48px; }
   .sdb-lop-dau h2 { font-size: 19px; }
 }
 /* Ghi ngay trên sổ tuần (5/10/2026 — thầy Chung: "không thấy giáo viên ghi vào đâu") */
 .sdb-huong-dan { font-size: 13.2px; color: var(--chu); background: var(--vang-nen); border: 1px solid #f1e2b5; border-radius: 11px; padding: 9px 13px; margin: 4px 0 10px; line-height: 1.6; }
 .sdb-huong-dan a { color: var(--chinh); font-weight: 700; }
-.sdb-bang th.sdb-cot-tt { width: 86px; }
-.sdb-cot-tt { text-align: right; white-space: nowrap; }
 .sdb-nut-ghi { font: inherit; font-size: 12.8px; font-weight: 800; cursor: pointer; min-height: 34px; padding: 4px 12px; border-radius: 9px; border: 0; background: var(--dam); color: #fff; }
 .sdb-nut-ghi.sua { background: #fff; color: var(--chinh); border: 1px solid var(--vien); font-weight: 700; }
 .sdb-dong-sua td { background: var(--o-con); padding: 10px 12px 14px; }
@@ -4949,7 +4925,34 @@ body.ck-mo > footer { display: none !important; }
 .sdb-o-dong-nut { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .sdb-o-dong-nut .sdb-nut-luu { min-width: 0; width: auto; }
 @media (max-width: 640px) {
-  .sdb-bang td.sdb-cot-tt { display: block; text-align: left; padding-left: 48px; }
-  .sdb-bang tr.sdb-dong-sua td { display: block; padding-left: 10px; }
 }
-@media print { .sdb-cot-tt, .sdb-dong-sua, .sdb-huong-dan { display: none !important; } }
+
+/* Sổ tuần kiểu LỊCH BÁO GIẢNG (5/10/2026, thầy Chung) — MỘT bảng cả tuần, gộp ô Thứ/Buổi/HS vắng; tên bài kế hoạch in mờ */
+.sdb-tuan-so { font-size: 15px; font-weight: 800; color: var(--dam); letter-spacing: .5px; margin: 2px 0 2px; }
+.sdb-bang-cuon { overflow-x: auto; background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc); }
+.sdb-lbg { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 13.2px; table-layout: fixed; }
+.sdb-lbg th { font-size: 11.4px; text-transform: uppercase; letter-spacing: .3px; color: var(--chu-nhat); padding: 8px 6px; border-bottom: 1px solid var(--vien); text-align: left; background: var(--o-con); }
+.sdb-lbg th:nth-child(1) { width: 66px; } .sdb-lbg th:nth-child(2) { width: 92px; } .sdb-lbg th:nth-child(3) { width: 108px; }
+.sdb-lbg th:nth-child(4) { width: 42px; } .sdb-lbg th:nth-child(5) { width: 104px; } .sdb-lbg th:nth-child(6) { width: 62px; }
+.sdb-lbg th:nth-child(8) { width: 150px; } .sdb-lbg th.sdb-c-tt { width: 78px; }
+.sdb-lbg td { padding: 6px; border-bottom: 1px solid var(--ke); border-left: 1px solid var(--ke); vertical-align: top; line-height: 1.4; }
+.sdb-lbg tr.sdb-ngay-moi td { border-top: 2px solid var(--vien-dam); }
+.sdb-lbg tr.sdb-buoi-moi td { border-top: 1px solid var(--vien); }
+.sdb-c-ngay { text-align: center; color: var(--dam); background: var(--o-con); vertical-align: middle !important; }
+.sdb-c-buoi { text-align: center; font-weight: 700; color: var(--chu-mo); vertical-align: middle !important; }
+.sdb-c-vang { font-size: 12.4px; color: var(--chu-mo); vertical-align: middle !important; }
+.sdb-vang-ten { font-size: 11.6px; line-height: 1.35; margin-top: 2px; }
+.sdb-c-tiet, .sdb-c-ppct { text-align: center; }
+.sdb-c-tiet { font-weight: 800; color: var(--dam); }
+.sdb-c-ky { font-size: 12.6px; }
+.sdb-c-ky small { display: block; color: var(--chu-nhat); }
+.sdb-c-tt { text-align: right; white-space: nowrap; }
+.sdb-kh { color: var(--chu-nhat); font-style: italic; }
+.sdb-lbg tr.tre td.sdb-c-bai { box-shadow: inset 3px 0 0 var(--thieu); }
+.sdb-chua-ky { color: var(--thieu); font-weight: 700; font-size: 12px; }
+.sdb-khoa { font-size: 12px; margin-top: 2px; }
+.sdb-nut-xn { display: block; margin: 6px auto 0; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; border: 0; border-radius: 8px;
+  padding: 6px 8px; min-height: 34px; background: var(--ok); color: #fff; white-space: normal; line-height: 1.25; }
+.sdb-kh-nhan { font-size: 12.4px; color: var(--ok); margin-top: 4px; }
+.sdb-kh-nhan .chip-loc { white-space: normal; text-align: left; }
+@media print { .sdb-c-tt, .sdb-dong-sua, .sdb-huong-dan, .sdb-nut-xn { display: none !important; } }
