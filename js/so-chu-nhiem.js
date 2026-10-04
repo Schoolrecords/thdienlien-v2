@@ -1650,7 +1650,8 @@
     return '<div class="scn-form scn-co-ban"><p class="scn-nhan"><b>Thông tin cơ bản</b></p>' + oCoBan('cb-', hs) +
       '<div class="scn-hang"><button class="scn-nut" data-act="luu-cb" data-ma="' + thoat(hs.ma) + '">Lưu thông tin cơ bản</button>' +
       oChon('cb-tt', [['chuyen_di', 'Chuyển đi'], ['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']], 'chuyen_di') +
-      '<button class="scn-nut phu" data-act="doi-tt" data-ma="' + thoat(hs.ma) + '">Đánh dấu rời lớp</button></div>' +
+      '<button class="scn-nut phu" data-act="doi-tt" data-ma="' + thoat(hs.ma) + '">Đánh dấu rời lớp</button>' +
+      '<button class="scn-nut phu scn-nut-xoa" data-act="xoa-hs" data-ma="' + thoat(hs.ma) + '">🗑 Xoá khỏi danh sách</button></div>' +
       (/^TAM-/.test(hs.ma) ? '<p class="scn-ghi-chu">Em đang mang mã tạm ' + thoat(hs.ma) + '.</p>' : '') + '</div>';
   }
   function veHSRoi(suaHS) {
@@ -1658,7 +1659,8 @@
     if (!ds.length) return '';
     return the('Học sinh đã rời lớp (' + ds.length + ')', '<ul class="scn-ds">' + ds.map(function (x) {
       return '<li><b>' + thoat(x.ho_ten) + '</b> · ' + thoat(TEN_ROI[x.trang_thai] || x.trang_thai) +
-        (suaHS ? ' <button class="scn-nut phu nho" data-act="hoc-lai" data-ma="' + thoat(x.ma) + '">Học lại lớp này</button>' : '') + '</li>';
+        (suaHS ? ' <button class="scn-nut phu nho" data-act="hoc-lai" data-ma="' + thoat(x.ma) + '">Học lại lớp này</button>' +
+          ' <button class="scn-nut phu nho scn-nut-xoa" data-act="xoa-hs" data-ma="' + thoat(x.ma) + '">🗑 Xoá</button>' : '') + '</li>';
     }).join('') + '</ul>');
   }
   // Bảng nhập cả lớp — đúng các cột trang "Thông tin về học sinh" + các diện đếm ở trang "Thông tin cơ bản về lớp".
@@ -3386,6 +3388,7 @@
       'luu-cb': function () { luuCoBan(a('data-ma'), b); },
       'doi-tt': function () { doiTrangThaiHS(a('data-ma'), giaTri('cb-tt') || 'chuyen_di', b); },
       'hoc-lai': function () { doiTrangThaiHS(a('data-ma'), 'dang_hoc', b); },
+      'xoa-hs': function () { xoaHS(a('data-ma'), b); },
       'dd-thang': function () {
         if (!window.BIEU_MAU || !D.lop || !D.so) return;
         window.BIEU_MAU.diemDanhLop({ lop: D.lop, nam: D.nam, ym: a('data-ym'), hs: D.hs, vang: D.so.vang, ddl: D.so.ddl,
@@ -3544,7 +3547,7 @@
       (dong.length > soDong ? ' ' + (dong.length - soDong) + ' dòng thừa (nhiều hơn số học sinh còn lại) đã bỏ qua.' : ''));
   });
   // Gọi hàm sql/75; thiếu hàm thì nói rõ tệp cần chạy
-  function goiHam(ten, tham, nut, xong) {
+  function goiHam(ten, tham, nut, xong, tep) {
     if (nut) nut.disabled = true;
     may().rpc(ten, tham).then(function (r) {
       if (r.error) throw r.error;
@@ -3553,7 +3556,7 @@
       var m = loiChu(e);
       if (nut) nut.disabled = false;
       bao('Chưa lưu được: ' + (/Could not find the function|does not exist|schema cache/i.test(m)
-        ? 'cơ sở dữ liệu của trường chưa chạy sql/75-scn-sua-hoc-sinh.sql — nhờ người phụ trách hệ thống chạy.' : m));
+        ? 'cơ sở dữ liệu của trường chưa chạy sql/' + (tep || '75-scn-sua-hoc-sinh.sql') + ' — nhờ người phụ trách hệ thống chạy.' : m));
     });
   }
   function napLaiLop() { D.dangNap = true; ve(); napLop().then(function () { ve(); }); }
@@ -3596,6 +3599,34 @@
         napLaiLop();
       });
     });
+  }
+  // 4/10/2026 thầy Chung: "GVCN có thể xóa danh sách học sinh (HS ghi sai hoặc đã chuyển đi)" — sql/78.
+  // Máy chủ tự chọn: mã tạm TAM-… không còn năm nào khác → xoá hẳn; có mã CSDL ngành → chỉ gỡ khỏi lớp năm này
+  // (hồ sơ, căn cước giữ, BGH nạp lại là về). Lý do bắt buộc, ghi vào nhật ký cùng bản chụp dòng cũ.
+  function xoaHS(ma, nut) {
+    var roi = ((D.so && D.so.hsRoi) || []).filter(function (x) { return x.ma === ma; })[0];
+    var ten = roi ? roi.ho_ten : tenHS(ma), tam = /^TAM-/.test(ma || '');
+    var moTa = 'Dùng khi em bị ghi sai, ghi trùng hoặc nhầm lớp. ' +
+      (tam ? 'Em đang mang mã tạm nên sẽ bị xoá hẳn cùng mọi ghi chép của em trong sổ.'
+           : 'Em có mã trên CSDL ngành nên chỉ được gỡ khỏi danh sách lớp ' + D.lop + ' năm học ' + D.nam + '; hồ sơ của em vẫn giữ, Ban giám hiệu nạp lại được.') +
+      (roi ? '' : ' Nếu em chuyển trường thật, nên bấm "Đánh dấu rời lớp" để sổ còn ghi tăng giảm sĩ số.');
+    if (!window.hopNhap) return;
+    window.hopNhap({ tieuDe: 'Xoá ' + ten + ' khỏi danh sách lớp ' + D.lop, bieuTuong: '🗑', moTa: moTa, nhan: 'Lý do xoá',
+      kieu: 'chu', goiY: 'VD: ghi trùng, nhầm lớp, đã chuyển trường…', batBuoc: true, toiDa: 200, nutLuu: 'Xoá khỏi danh sách', nguyHiem: true })
+      .then(function (lyDo) {
+        if (lyDo == null) return;
+        if (!may()) {
+          return xemThu(function () {
+            D.hs = D.hs.filter(function (h) { return h.ma !== ma; });
+            if (D.so) D.so.hsRoi = (D.so.hsRoi || []).filter(function (h) { return h.ma !== ma; });
+            D.hsMo = '';
+          });
+        }
+        goiHam('scn_xoa_hoc_sinh', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_ly_do: lyDo }, nut, function (kieu) {
+          bao(kieu === 'xoa_han' ? 'Đã xoá ' + ten + ' khỏi danh sách lớp.' : 'Đã gỡ ' + ten + ' khỏi danh sách lớp ' + D.lop + ' (hồ sơ của em vẫn giữ).');
+          D.hsMo = ''; napLaiLop();
+        }, '78-scn-xoa-hoc-sinh.sql');
+      });
   }
   function luuHoanCanh(ma, nut) {
     var cs = Array.prototype.slice.call(EL.querySelectorAll('[data-cs]')).filter(function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-cs'); });

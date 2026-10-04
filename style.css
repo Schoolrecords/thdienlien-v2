@@ -3670,6 +3670,8 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 .scn-nut { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 14px; min-height: 40px; border: 1px solid var(--chu); border-radius: 6px; background: var(--chu); color: #fff; cursor: pointer; white-space: nowrap; }
 .scn-nut.phu { background: #fff; color: var(--chu); border-color: var(--scn-ke); }
 .scn-nut.nho { font-size: 13px; padding: 5px 10px; min-height: 34px; font-weight: 600; }
+.scn-nut.phu.scn-nut-xoa { color: #b3372a; border-color: #e8c4bf; }
+.scn-nut.phu.scn-nut-xoa:not(:disabled):hover { background: #fdf3f2; }
 .scn-nut:disabled { opacity: .55; cursor: default; }
 .scn-nut:not(:disabled):hover { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18); }
 .scn-x { font: inherit; font-size: 16px; line-height: 1; width: 32px; height: 32px; border: 1px solid var(--scn-ke); border-radius: 6px; background: #fff; color: var(--chu-mo); cursor: pointer; flex: 0 0 auto; }
