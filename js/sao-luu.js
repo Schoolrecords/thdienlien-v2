@@ -40,6 +40,8 @@
     'day_thay', 'ho_so_truoc_2026',
     // Cổng công khai TT 09/2024 (sql/80, 4/10/2026) — bản công bố phải lưu 05 năm (Điều 15)
     'cong_khai',
+    // Khách kiểm tra có hạn (sql/82, 4/10/2026)
+    'khach_kiem_tra',
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
     'tkb_giao_vien', 'tkb_phien_ban', 'tkb_ten_goi', 'tkb_tiet'

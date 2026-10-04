@@ -96,6 +96,17 @@
     });
   }
 
+  // Tài khoản KHÁCH KIỂM TRA (sql/82): luôn 'khoa' — nếu còn hạn thì mở màn chỉ xem minh
+  // chứng (js/khach-kiem-tra.js), trang app VẪN khoá. Trường chưa chạy 82 / không phải khách
+  // / hết hạn → hộp chờ duyệt / bị khoá như cũ.
+  function choDuyetHoacKhach(email, laKhoa) {
+    if (!window.KHACH_XEM || !may) { veCongChoDuyet(email, laKhoa); return; }
+    Promise.resolve(may.rpc('khach_toi')).then(function (r) {
+      if (r && !r.error && r.data) { dangXemCong = true; window.KHACH_XEM.mo(may, r.data, dangXuat); }
+      else veCongChoDuyet(email, laKhoa);
+    }, function () { veCongChoDuyet(email, laKhoa); });
+  }
+
   function veCongChoDuyet(email, laKhoa) {
     var h = hopCong(); if (!h) return;
     h.innerHTML = dauCong() +
@@ -500,7 +511,7 @@
       // Coi như chờ duyệt và cho đăng xuất — KHÔNG mở khóa trang.
       if (vaoNhanh === uid && (!r.data || r.data.trang_thai !== 'hoat_dong')) { vaoNhanh = ''; xoaVaTaiLai(); return; }
       if (!r.data) {
-        veCongChoDuyet(phien.user.email || '', false);
+        choDuyetHoacKhach(phien.user.email || '', false);
         return;
       }
       if (r.data.trang_thai === 'hoat_dong' && window.KHO_MAY) window.KHO_MAY.ghi(uid + '|vao|nd', r.data);
@@ -543,7 +554,7 @@
         window.veQuanTri && window.veQuanTri();
       } else {
         // cho_duyet hoặc khoa → giữ nguyên cổng, KHÔNG mở khóa trang
-        veCongChoDuyet(r.data.email, r.data.trang_thai === 'khoa');
+        choDuyetHoacKhach(r.data.email, r.data.trang_thai === 'khoa');
       }
     }, function (e) {
       // Đứt mạng giữa chừng thì lời hứa bị TỪ CHỐI chứ không trả về {error} —
