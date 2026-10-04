@@ -122,14 +122,21 @@
   // hình nổi VML (cách Word tự lưu ảnh "Behind text" ra HTML) — thẻ <img> thường
   // thì Word xếp vào dòng chữ, không làm nền được. Tệp phải tải bằng taiVeMHT để
   // ảnh nằm TRONG tệp (Word không đọc ảnh data: trong HTML).
+  // `than` là chuỗi → một phần ruột lề NĐ 30. Là MẢNG [{ than, le, css }] → mỗi phần
+  // một section riêng (sổ đầu bài 5/10/2026: trang Căn cứ lề NĐ 30, trang sổ tuần lề hẹp
+  // để vừa MỘT trang A4). `le` theo thứ tự CSS: trên phải dưới trái; `css` thêm vào <style>.
   function khungWordBiaAnh(tieuDeTab, bia, than, tenAnh) {
+    var phan = Array.isArray(than) ? than : [{ than: than }];
+    var css = '', ruot = '';
+    phan.forEach(function (p, i) {
+      var ten = 'WordSection' + (i + 2);
+      css += '@page ' + ten + '{size:21cm 29.7cm;margin:' + (p.le || '2cm 1.5cm 2cm 3cm') + '}div.' + ten + '{page:' + ten + '}' + (p.css || '');
+      ruot += '<span style="font-size:13pt">' + NGAT_SECTION + '</span><div class="' + ten + '">' + p.than + '</div>';
+    });
     return dauTep(tieuDeTab,
-      '@page WordSection1{size:21cm 29.7cm;margin:1cm 1cm 0.5cm 1cm}div.WordSection1{page:WordSection1}' +
-      '@page WordSection2{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}div.WordSection2{page:WordSection2}' +
+      '@page WordSection1{size:21cm 29.7cm;margin:1cm 1cm 0.5cm 1cm}div.WordSection1{page:WordSection1}' + css +
       'table.so-bang th,table.so-bang td{padding:2pt 4pt;line-height:1.2}', true) +
-      '<body><div class="WordSection1">' + nenTrang(tenAnh) + bia + '</div>' +
-      '<span style="font-size:13pt">' + NGAT_SECTION + '</span>' +
-      '<div class="WordSection2">' + than + '</div></body></html>';
+      '<body><div class="WordSection1">' + nenTrang(tenAnh) + bia + '</div>' + ruot + '</body></html>';
   }
   function nenTrang(tenAnh) {
     return '<!--[if gte vml 1]><v:shapetype id="_x0000_t75" coordsize="21600,21600" o:spt="75" o:preferrelative="t"' +

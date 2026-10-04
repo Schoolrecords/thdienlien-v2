@@ -13,7 +13,7 @@
 //                                 ghi sổ của cả trường hôm nay.
 //   Lớp học › Sổ đầu bài          sổ một TUẦN của một lớp như trang sổ giấy: tiết ·
 //                                 môn · tên bài · người ký · học sinh vắng (đọc từ
-//                                 điểm danh, không ghi lại) · chốt tuần · ký tháng · in.
+//                                 điểm danh, không ghi lại) · chốt tuần · ký tháng · tải Word.
 //
 // KHÔNG phát sinh nguồn thứ hai: khung tiết = tkb_tiet (qua TKB_XEM) + day_thay;
 // học sinh vắng = diem_danh_lop + hs_vang. Bảng riêng chỉ giữ tên bài, ghi chú, chữ ký.
@@ -752,7 +752,7 @@
     var chotT = chotPhu(congNgay(L.tuan, 2), 'tuan');
     var tom = '<div class="sdb-tong">Đã ký <b>' + d.da + '/' + d.phai + '</b> tiết trong tuần' +
       (d.thieu.length ? ' · <span class="sdb-do">quá hạn chưa ghi ' + d.thieu.length + ' tiết: ' + thoat(d.thieu.slice(0, 8).join(', ')) + (d.thieu.length > 8 ? '…' : '') + '</span>' : '') +
-      ' <button type="button" class="dh-nut-nho sdb-in" data-sdbl="in">🖨 In tuần</button></div>';
+      ' <button type="button" class="dh-nut-nho sdb-in" data-sdbl="in" title="Tải tệp Word sổ tuần này — một trang A4 dọc">📄 Tải Sổ đầu bài</button></div>';
     L.keHoach = ganKeHoach(L.lop, L.ngay, (window.SDB_KHDH || {})[khoiCua(L.lop)]);
     var tuanSo = soTuan(L.tuan);
     tom = '<div class="sdb-tuan-so">' + (tuanSo ? 'TUẦN ' + tuanSo : 'Ngoài tuần học') + '</div>' + tom;
@@ -1032,27 +1032,192 @@
     });
   }
 
-  // In một tuần — cửa sổ in riêng, A4 dọc, giống trang sổ giấy
-  function inTuan() {
-    var ten = (window.CAU_HINH && (window.CAU_HINH.TEN_TRUONG || window.CAU_HINH.tenTruong)) || '';
-    L.keHoach = ganKeHoach(L.lop, L.ngay, (window.SDB_KHDH || {})[khoiCua(L.lop)]);
-    var bang = veBangTuan(true), tuanSo = soTuan(L.tuan);
-    var c = chotPhu(congNgay(L.tuan, 2), 'tuan'), ky = chotPhu(congNgay(L.tuan, 2), 'thang');
-    var w = window.open('', '_blank');
-    if (!w) { bao('Trình duyệt chặn cửa sổ in — cho phép cửa sổ bật lên rồi bấm lại.'); return; }
-    w.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Sổ ghi đầu bài lớp ' + thoat(L.lop) + '</title><style>' +
-      'body{font:12px "Times New Roman",serif;margin:10mm;color:#000}.sdb-c-ngay,.sdb-c-buoi,.sdb-c-tiet,.sdb-c-ppct{text-align:center}.sdb-vang-ten{font-size:10.5px}h1{font-size:17px;text-align:center;margin:0 0 2px}' +
-      '.p{text-align:center;margin:0 0 10px}table{border-collapse:collapse;width:100%;margin:4px 0 10px}td,th{border:1px solid #000;padding:3px 5px;vertical-align:top}' +
-      'th{background:#eee}.sdb-ngay-moi td{border-top:2px solid #000}.tkb-chip{font-size:10px;border:1px solid #888;border-radius:6px;padding:0 4px}' +
-      '.sdb-c-tt,.sdb-dong-sua{display:none}small{display:block;color:#333}.sdb-ghi-chu{font-style:italic}.sdb-do{color:#b00}.ky{display:flex;justify-content:space-around;margin-top:18px;text-align:center}' +
-      '@page{size:A4 portrait;margin:12mm}</style></head><body>' +
-      '<div class="p">' + thoat(ten) + '</div><h1>SỔ GHI ĐẦU BÀI — LỚP ' + thoat(L.lop) + '</h1>' +
-      '<div class="p">Năm học ' + thoat(namHoc()) + (tuanSo ? ' · TUẦN ' + tuanSo : '') + ' (' + ngayVN(L.tuan) + ' – ' + ngayVN(congNgay(L.tuan, 5)) + ')</div>' + bang +
-      '<div class="ky"><div>GVCN chốt tuần<br>' + (c ? thoat(c.nguoi_ten || '') + '<br><small>(xác nhận điện tử ' + gioPhut(c.luc) + ' ' + ngayVN(ngayCuaTs(c.luc)) + ')</small>' : '<br><br>') + '</div>' +
-      '<div>Ban giám hiệu ký duyệt<br>' + (ky ? thoat(ky.nguoi_ten || '') + '<br><small>(xác nhận điện tử ' + gioPhut(ky.luc) + ' ' + ngayVN(ngayCuaTs(ky.luc)) + ')</small>' : '<br><br>') + '</div></div>' +
-      '</body></html>');
-    w.document.close();
-    setTimeout(function () { try { w.focus(); w.print(); } catch (e) { /* bỏ qua */ } }, 400);
+  // ── TẢI SỔ ĐẦU BÀI (Word) — 5/10/2026, thầy Chung: "thay nút In tuần bằng Tải Sổ đầu bài, file Word chuẩn
+  // 1 trang A4 dọc" + "trang bìa thật đẹp, màu khác Sổ chủ nhiệm nhưng cấu tạo tương tự, có trang Căn cứ và
+  // Hướng dẫn sử dụng". Tệp gồm 3 section (WORD_TIEN_ICH.khungWordBiaAnh, gói MHTML kèm ảnh):
+  //   1. Bìa in màu: img/bia-so-dau-bai.jpg — CÙNG khuôn ảnh bìa sổ chủ nhiệm (trống đồng, khung thông tin),
+  //      đổi sang tông đồng/vàng, chữ "SỔ GHI ĐẦU BÀI – TIỂU HỌC" in sẵn trên ảnh → vị trí chữ dùng lại số đo
+  //      của bìa sổ chủ nhiệm (so-chu-nhiem.js, đo bằng Word COM 29/9/2026).
+  //   2. Căn cứ + Hướng dẫn sử dụng — lề NĐ 30.
+  //   3. Sổ tuần — MỘT trang: lề trên/dưới 1,5 · trái 2 · phải 1,5 cm, bảng cố định 17,5 cm, cỡ chữ tự hạ
+  //      (11 → 7,5pt) theo chiều cao ước tính của bảng (caoBang — số dòng × số dòng chữ mỗi ô). Tiết chưa ký để TRỐNG — tên bài kế hoạch chỉ là gợi ý
+  //      trên màn hình, không phải chữ ký.
+  var ANH_BIA = 'bia-so-dau-bai.jpg', ANH_BIA_WEB = 'img/bia-so-dau-bai.jpg', ANH_BIA_B64 = null;
+  // Bề rộng cột (cm, tổng 17,5): tên bài Bút Xanh dài trung vị 47 ký tự, 10% từ 79 trở lên → dành cột Tên bài rộng nhất.
+  var COT_WORD = [['Thứ, ngày', 1.1], ['Buổi', 1.0], ['HS vắng', 1.8], ['Tiết', 0.65], ['Môn', 1.75], ['Tiết PPCT', 0.9], ['Tên bài · ghi chú', 6.9], ['Giáo viên ký', 3.4]];
+  // Ước chiều cao phần thân bảng (cm) ở cỡ chữ co: mỗi dòng cao bằng ô nhiều dòng nhất. Đo bằng Word COM 5/10/2026:
+  // tên bài ~0,43em mỗi ký tự; họ tên, tên môn (nhiều chữ hoa, dấu) ~0,5em — ước hẹp hơn thì "Nguyễn Thị Hoàn Mỹ"
+  // rớt dòng ở MỌI tiết, bảng cao vọt từ 18,5 lên 27 cm.
+  function caoBang(dong, co) {
+    var soKt = function (i) { return Math.max(4, (COT_WORD[i][1] - 0.22) / (co * 0.0353 * (i === 6 ? 0.43 : 0.5))); };
+    return dong.reduce(function (s, x) {
+      var n = Math.max(1, Math.ceil(x[0] / soKt(4)), Math.ceil(x[1] / soKt(6)), Math.ceil(x[2] / soKt(7)));
+      return s + n * co * 1.15 * 0.0353 + 0.09;
+    }, 0);
+  }
+
+  function biaWord(lop, gvcn) {
+    var W = window.WORD_TIEN_ICH, ch = W.chan, MAU = '#4A2306';
+    var dongCo = function (t, cao, kieu) {
+      return '<p style="margin:0;line-height:' + cao + 'pt;mso-line-height-rule:exactly;color:' + MAU + ';' + (kieu || '') + '">' + t + '</p>';
+    };
+    var trongCo = function (cao) { return '<p style="margin:0;line-height:' + cao + 'pt;mso-line-height-rule:exactly;font-size:6pt">&nbsp;</p>'; };
+    var oBia = function (t) { return dongCo('<b>' + t + '</b>', 37, 'margin-left:51pt;font-size:18pt;white-space:nowrap'); };
+    var truong = W.cauHinh('TEN_TRUONG'), chuQuan = W.cauHinh('DON_VI_CHU_QUAN') || W.cauHinh('CHU_QUAN_THUONG');
+    return trongCo(21) +
+      dongCo('<b>' + ch(String(chuQuan).toUpperCase()) + '</b>', 27, 'text-align:center;font-size:17pt') +
+      dongCo('<b>' + ch(String(truong).toUpperCase()) + '</b>', 27.2, 'text-align:center;font-size:18.5pt') +
+      trongCo(468) +
+      oBia('Giáo viên chủ nhiệm : ' + (gvcn ? ch(gvcn) : '…………………………………')) +
+      oBia('Lớp : ' + ch(lop)) +
+      oBia(ch(truong)) +
+      oBia(ch(W.cauHinh('DIA_CHI_TRUONG') || '') || '&nbsp;') +
+      trongCo(27) +
+      dongCo('<b>NĂM HỌC: ' + ch(namHoc()) + '</b>', 30, 'text-align:center;font-size:16.5pt');
+  }
+
+  // Trang 2 — chỉ ghi điều đã kiểm chứng trong văn bản (bộ nhớ so-dau-bai-quyet-dinh) và cách app đang chạy.
+  function canCuWord() {
+    var W = window.WORD_TIEN_ICH;
+    var muc = function (t) { return '<p style="margin:10pt 0 4pt;font-size:13pt"><b>' + t + '</b></p>'; };
+    var y = function (t) { return '<p style="margin:0 0 4pt;text-align:justify;text-indent:1cm;font-size:13pt;line-height:1.3">' + t + '</p>'; };
+    return '<p style="margin:0;text-align:center;font-size:12pt">' + W.chan(W.cauHinh('TEN_TRUONG').toUpperCase()) + '</p>' +
+      '<p style="margin:8pt 0 6pt;text-align:center;font-size:15pt"><b>CĂN CỨ VÀ HƯỚNG DẪN SỬ DỤNG<br>SỔ GHI ĐẦU BÀI ĐIỆN TỬ</b></p>' +
+      muc('I. CĂN CỨ') +
+      y('1. Thông tư số 15/2026/TT-BGDĐT ban hành Điều lệ trường tiểu học: điểm e khoản 1 Điều 21 quy định <i>sổ ghi đầu bài</i> là hồ sơ quản lý hoạt động giáo dục của nhà trường; khoản 4 Điều 21 quy định hồ sơ điện tử có giá trị pháp lý như hồ sơ giấy, nhà trường đã dùng hồ sơ điện tử thì không bắt buộc lập hồ sơ giấy.') +
+      y('2. Kế hoạch giáo dục của nhà trường, kế hoạch dạy học các môn học và thời khóa biểu năm học ' + W.chan(namHoc()) + '.') +
+      y('3. Sổ không dùng để xếp loại hay chấm điểm tiết dạy; chỉ ghi nhận bài đã dạy, người dạy và học sinh vắng.') +
+      muc('II. HƯỚNG DẪN SỬ DỤNG') +
+      y('<b>1. Ghi sổ.</b> Giáo viên ghi trên điện thoại tại <b>Điều hành › Ghi đầu bài</b>, hoặc trên máy tính tại <b>Lớp học › Sổ đầu bài</b>. Các tiết trong ngày lấy sẵn từ thời khóa biểu (kể cả tiết dạy thay). Tên bài và tiết theo phân phối chương trình (PPCT) điền sẵn theo kế hoạch dạy học; dạy đúng kế hoạch thì bấm <b>Xác nhận</b> một lần cho cả buổi, dạy khác thì sửa tên bài của tiết đó.') +
+      y('<b>2. Thời hạn.</b> Ghi trong buổi dạy. Quá buổi vẫn ghi được, sổ đánh dấu <i>(ghi bù)</i>.') +
+      y('<b>3. Tiết không dạy.</b> Đánh dấu "Tiết này không dạy" và chọn lý do; các tiết sau của môn đó tự lùi một bài theo kế hoạch.') +
+      y('<b>4. Học sinh vắng.</b> Lấy từ điểm danh của lớp, không ghi lại. Ghi dạng số vắng/sĩ số; (P) vắng có phép, (K) vắng không phép.') +
+      y('<b>5. Chốt và ký duyệt.</b> Giáo viên chủ nhiệm <b>chốt tuần</b> từ thứ Sáu; tuần đã chốt thì giáo viên không sửa được. Ban giám hiệu <b>ký duyệt tháng</b> trong tuần cuối của tháng. Các xác nhận này ghi trên hệ thống kèm thời gian.') +
+      y('<b>6. Tải sổ.</b> Nút <b>Tải Sổ đầu bài</b> ở Lớp học › Sổ đầu bài tải tệp Word gồm trang bìa, trang này và sổ của tuần đang xem (một trang A4 dọc) để lưu hồ sơ hoặc in khi cần.');
+  }
+
+  function tuanWord(lop, tuan, dsNgay, dsChot, tuanSo, coEp) {
+    var W = window.WORD_TIEN_ICH, ch = W.chan;
+    var chotCua = function (ngay, loai) { return (dsChot || []).filter(function (c) { return c.loai === loai && ngay >= c.tu_ngay && ngay <= c.den_ngay; })[0] || null; };
+    // Giãn dòng ĐẶT CỨNG theo pt (exactly): để % thì Word lấy giãn 1,5 của body, mỗi dòng cao gấp đôi chữ.
+    var O = 'font-size:@COpt;margin:0;mso-para-margin:0;padding:1pt 3pt;line-height:@LHpt;mso-line-height-rule:exactly;vertical-align:middle';
+    var td = function (noi, i, them) { return '<td' + (them || '') + ' style="width:' + COT_WORD[i][1] + 'cm;' + O + '">' + noi + '</td>'; };
+    var vangChu = function (d, b) {
+      var ss = d.siSo[b], vg = d.vang[b] || [];
+      if (!ss && !vg.length) return '';
+      return (ss ? ss.so_vang + '/' + ss.si_so : String(vg.length)) +
+        (vg.length ? '<br><span style="font-size:@NHOpt">' + vg.map(function (h) { return ch(h.ten) + (h.phep === 'co_phep' ? ' (P)' : h.phep === 'khong_phep' ? ' (K)' : ''); }).join(', ') + '</span>' : '');
+    };
+    var tb = '', soDong = 0, phai = 0, da = 0, dong = [];
+    dsNgay.forEach(function (d) {
+      var ds = dongCuaNgay(d);
+      if (thuCuaNgay(d.ngay) === 7 && !ds.length) return;
+      var oNgay = '<b>' + TEN_THU[thuCuaNgay(d.ngay)].replace('Thứ ', '') + '</b><br>' + ngayNgan(d.ngay);
+      if (!ds.length || (d.nghi && !Object.keys(d.ghi).length)) {
+        soDong++; dong.push([0, 30, 0]);
+        tb += '<tr class="ngay-moi">' + td(oNgay, 0, ' class="giua"') + '<td colspan="7" class="nghieng" style="' + O + '">' +
+          (d.nghi ? 'Nghỉ: ' + ch(d.nghi.ten || '') : 'Không có tiết theo thời khóa biểu') + '</td></tr>';
+        return;
+      }
+      var buoi = ['sang', 'chieu'].map(function (b) { return { b: b, ds: ds.filter(function (x) { return x.t.buoi === b; }) }; })
+        .filter(function (x) { return x.ds.length; });
+      buoi.forEach(function (g, gi) {
+        g.ds.forEach(function (x, i) {
+          var r = x.r, t = x.t;
+          soDong++;
+          if (!t.tuQuan && !d.nghi) { phai++; if (r) da++; }
+          var ten = r ? (r.tinh_trang === 'khong_day' ? '<i>Không dạy' + (r.ghi_chu ? ' — ' + ch(r.ghi_chu) : '') + '</i>'
+            : ch(r.ten_bai) + (r.ghi_chu ? ' <i style="font-size:@NHOpt">(' + ch(r.ghi_chu) + ')</i>' : '')) : (t.tuQuan ? '<i>Lớp tự quản</i>' : '');
+          var ky = r ? ch(r.gv_ten || r.gv_email || '') + (r.ghi_bu ? ' <i style="font-size:@NHOpt">(ghi bù)</i>' : '') + (r.day_thay ? ' <i style="font-size:@NHOpt">(dạy thay)</i>' : '') : '';
+          var html = '<tr' + (gi === 0 && i === 0 ? ' class="ngay-moi"' : '') + '>';
+          if (gi === 0 && i === 0) html += td(oNgay, 0, ' class="giua" rowspan="' + ds.length + '"');
+          if (i === 0) html += td(g.b === 'sang' ? 'Sáng' : 'Chiều', 1, ' class="giua" rowspan="' + g.ds.length + '"') +
+            td(vangChu(d, g.b), 2, ' rowspan="' + g.ds.length + '"');
+          html += td(String(t.tiet), 3, ' class="giua"') + td(ch(t.mon), 4) +
+            td(r && r.tiet_ppct ? String(r.tiet_ppct) : '', 5, ' class="giua"') + td(ten, 6) + td(ky, 7);
+          tb += html + '</tr>';
+          dong.push([String(t.mon || '').length, r ? String(r.ten_bai || '').length + (r.ghi_chu ? String(r.ghi_chu).length + 3 : 0) + (r.tinh_trang === 'khong_day' ? 12 : 0) : 0,
+            r ? String(r.gv_ten || r.gv_email || '').length + (r.ghi_bu ? 10 : 0) + (r.day_thay ? 12 : 0) : 0]);
+        });
+      });
+    });
+    // Cỡ chữ lớn nhất để thân bảng vừa ~20 cm (trang 26,7 cm trừ đầu trang, hàng tiêu đề, dòng tổng, chỗ ký)
+    var co = coEp || [11, 10.5, 10, 9.5, 9, 8.5, 8, 7.5].filter(function (c) { return caoBang(dong, c) <= 21; })[0] || 7.5;
+    var css = 'table.sdb tr.ngay-moi td{border-top:1.5pt solid #000}';
+    var giua = congNgay(tuan, 2), c = chotCua(giua, 'tuan'), ky = chotCua(giua, 'thang');
+    var dau = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
+      '<td style="border:none;padding:0;width:42%;text-align:center;vertical-align:top;font-size:11pt">' +
+      ch(W.cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br><b>' + ch(W.cauHinh('TEN_TRUONG').toUpperCase()) + '</b></td>' +
+      '<td style="border:none;padding:0;width:58%;text-align:center;vertical-align:top">' +
+      '<b style="font-size:15pt">SỔ GHI ĐẦU BÀI</b><br><span style="font-size:12pt"><b>Lớp ' + ch(lop) + '</b> · Năm học ' + ch(namHoc()) + '</span><br>' +
+      '<span style="font-size:11.5pt">' + (tuanSo ? '<b>TUẦN ' + tuanSo + '</b>: ' : '') + 'từ ' + ngayVN(tuan) + ' đến ' + ngayVN(congNgay(tuan, 5)) + '</span></td></tr></table>';
+    // KHÔNG đặt margin cho bảng: Word đổ margin-top của bảng thành "cách trên" của MỌI đoạn trong ô (đo 5/10/2026: 6pt mỗi dòng).
+    var bang = '<p style="margin:0;font-size:4pt;line-height:4pt;mso-line-height-rule:exactly">&nbsp;</p><table class="sdb co-dinh" style="width:17.5cm"><colgroup>' +
+      COT_WORD.map(function (k) { return '<col style="width:' + k[1] + 'cm">'; }).join('') + '</colgroup><thead><tr>' +
+      COT_WORD.map(function (k) { return '<th style="width:' + k[1] + 'cm;' + O.replace('@CO', '@TH') + '">' + k[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + tb + '</tbody></table>';
+    var tong = '<p class="nghieng" style="margin:3pt 0 0;font-size:10pt">Đã ký ' + da + '/' + phai + ' tiết trong tuần. HS vắng: số vắng/sĩ số; (P) có phép, (K) không phép.</p>';
+    var oKy = function (tieuDe, x) {
+      return '<td style="border:none;width:50%;text-align:center;vertical-align:top;font-size:12pt"><b>' + tieuDe + '</b><br>' +
+        (x ? '<span class="nghieng" style="font-size:10pt">(Đã xác nhận điện tử lúc ' + gioPhut(x.luc) + ' ' + ngayVN(ngayCuaTs(x.luc)) + ')</span>' +
+          (x.nhan_xet ? '<br><span style="font-size:10pt">Nhận xét: ' + ch(x.nhan_xet) + '</span>' : '') + '<br><b>' + ch(x.nguoi_ten || x.nguoi_email || '') + '</b>'
+          : '<span class="nghieng" style="font-size:10pt">(Ký, ghi rõ họ tên)</span><div style="height:36pt"></div>') + '</td>';
+    };
+    var cuoi = '<p style="margin:0;font-size:6pt;line-height:6pt;mso-line-height-rule:exactly">&nbsp;</p><table style="border:none;width:100%"><tr>' + oKy('GIÁO VIÊN CHỦ NHIỆM', c) + oKy('BAN GIÁM HIỆU KÝ DUYỆT', ky) + '</tr></table>';
+    var than = (dau + bang + tong + cuoi).replace(/@COpt/g, co + 'pt').replace(/@THpt/g, (co - 0.5) + 'pt').replace(/@NHOpt/g, Math.max(7, co - 1.5) + 'pt')
+      .replace(/@LHpt/g, (Math.round(co * 11.5) / 10) + 'pt');
+    return { than: than, css: css, soDong: soDong, co: co, uoc: caoBang(dong, co) };
+  }
+
+  function htmlSoWord(lop, tuan, dsNgay, dsChot, tuanSo, gvcn, coEp) {   // coEp: ép cỡ chữ — chỉ bài đo dùng
+    var tw = tuanWord(lop, tuan, dsNgay, dsChot, tuanSo, coEp);
+    var html = window.WORD_TIEN_ICH.khungWordBiaAnh('Sổ ghi đầu bài lớp ' + lop, biaWord(lop, gvcn), [
+      { than: canCuWord() },
+      { than: tw.than, le: '1.5cm 1.5cm 1.5cm 2cm', css: tw.css }
+    ], ANH_BIA);
+    return { html: html, soDong: tw.soDong, co: tw.co, uoc: tw.uoc };
+  }
+
+  function docAnhBia() {
+    if (ANH_BIA_B64) return Promise.resolve(ANH_BIA_B64);
+    if (!window.fetch || !window.FileReader) return Promise.reject(new Error('trình duyệt không đọc được ảnh'));
+    return fetch(ANH_BIA_WEB).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then(function (b) {
+        return new Promise(function (xong, hong) {
+          var fr = new FileReader();
+          fr.onload = function () { ANH_BIA_B64 = String(fr.result).split(',')[1] || ''; xong(ANH_BIA_B64); };
+          fr.onerror = function () { hong(fr.error); };
+          fr.readAsDataURL(b);
+        });
+      });
+  }
+  // Tên GVCN in bìa: phân công chủ nhiệm (tài khoản đã đăng nhập) → GVCN dự kiến ở lop_hoc (sql/70). Lỗi thì để chấm.
+  function docGvcn(lop) {
+    if (!may()) return Promise.resolve(MAU_TOI);
+    return Promise.all([
+      may().from('phan_cong_day').select('lop, nguoi_dung:nguoi_dung_id(ho_ten)').eq('nam_hoc', namHoc()).eq('la_chu_nhiem', true).eq('lop', lop).limit(1),
+      may().from('lop_hoc').select('lop, gvcn_ten').eq('nam_hoc', namHoc()).eq('lop', lop).limit(1)
+    ]).then(function (r) {
+      var p = (r[0] && !r[0].error && r[0].data || [])[0], l = (r[1] && !r[1].error && r[1].data || [])[0];
+      return (p && p.nguoi_dung && p.nguoi_dung.ho_ten) || (l && l.gvcn_ten) || '';
+    }, function () { return ''; });
+  }
+  function taiTuan() {
+    var W = window.WORD_TIEN_ICH;
+    if (!W || !W.khungWordBiaAnh) { bao('Chưa nạp xong bộ xuất Word — tải lại trang (F5) rồi bấm lại.'); return; }
+    if (!L.ngay.length || L.dangTai) { if (!L.ngay.length) bao('Sổ tuần chưa tải xong.'); return; }
+    var lop = L.lop, tuan = L.tuan, ngay = L.ngay, chotDs = L.chot, tuanSo = soTuan(tuan);
+    var tenTep = 'So-dau-bai_Lop-' + String(lop).replace(/[^\w-]/g, '') + '_' + (tuanSo ? 'Tuan-' + pad(tuanSo) : tuan) + '.doc';
+    L.dangTai = true;
+    docGvcn(lop).then(function (gvcn) {
+      var html = htmlSoWord(lop, tuan, ngay, chotDs, tuanSo, gvcn).html;
+      return docAnhBia().then(function (b64) {
+        W.taiVeMHT(html, tenTep, [{ ten: ANH_BIA, loai: 'image/jpeg', b64: b64 }]);
+        bao('Đã tải ' + tenTep + ' — bìa, căn cứ và sổ tuần (một trang A4 dọc).');
+      }, function () {
+        W.taiVe(html, tenTep);   // mất mạng đọc ảnh: vẫn cho tải, bìa không có nền màu
+        bao('Đã tải ' + tenTep + '. Chưa tải được ảnh nền bìa — bìa không có màu.');
+      });
+    }).catch(function (e) { bao(chuLoi(e)); }).then(function () { L.dangTai = false; });
   }
 
   function batSuKienLop(el) {
@@ -1067,7 +1232,7 @@
       } else if (v === 'chot') chot('tuan', L.tuan, congNgay(L.tuan, 6));
       else if (v === 'kyThang') chot('thang', a.getAttribute('data-tu'), a.getAttribute('data-den'));
       else if (v === 'goChot') goChot(a.getAttribute('data-id'));
-      else if (v === 'in') inTuan();
+      else if (v === 'in') taiTuan();
       else if (v === 'ghi') moGhiDong(a.getAttribute('data-ngay'), a.getAttribute('data-k'));
       else if (v === 'huyDong') { L.mo = null; veLop(); }
       else if (v === 'luuDong') luuDong();
@@ -1132,6 +1297,6 @@
   window.SO_DAU_BAI = {
     veDieuHanh: veDieuHanh, moLop: moLop,
     // cho bài thử
-    _khungNgay: khungNgay, _tiepTheo: tiepTheo, _goiYTu: goiYTu, _thuHai: thuHai, _soTuan: soTuan, _ganKeHoach: ganKeHoach, _maMon: maMon
+    _khungNgay: khungNgay, _tiepTheo: tiepTheo, _goiYTu: goiYTu, _thuHai: thuHai, _soTuan: soTuan, _ganKeHoach: ganKeHoach, _maMon: maMon, _htmlSoWord: htmlSoWord
   };
 })();
