@@ -117,7 +117,9 @@
     bao_cao: [
       { kieu: 'nhom', nhan: 'Báo cáo thường niên (Điều 14 khoản 1 điểm b · Phụ lục I)', mo: 'Mỗi dòng một bản PDF (đã ký, đóng dấu). Báo cáo năm trước của các trường tiền thân cũng đưa vào đây để lưu trữ đủ 05 năm.' },
       { k: 'ban', kieu: 'bang', cot: [{ k: 'nam', nhan: 'Năm' }, { k: 'ten', nhan: 'Tên', rong: 1 }, { k: 'don_vi', nhan: 'Đơn vị (trường tiền thân)' },
-        { k: 'ghi_chu', nhan: 'Ghi chú (ngày công bố…)' }, { k: 'link', nhan: 'Link tệp PDF', rong: 1 }] }
+        { k: 'ghi_chu', nhan: 'Ghi chú (ngày công bố…)' }, { k: 'link', nhan: 'Link tệp PDF', rong: 1 }] },
+      { kieu: 'nhom', nhan: 'Mục VII của báo cáo thường niên', mo: 'Nút "📄 Báo cáo thường niên (Word)" ở đầu thẻ dựng bản Word 7 mục từ các mục công khai; ô dưới là phần VII do nhà trường viết.' },
+      { k: 'nhiem_vu_khac', nhan: 'Kết quả thực hiện các nhiệm vụ trọng tâm khác', kieu: 'area' }
     ]
   };
 
@@ -176,7 +178,8 @@
       '<div class="ckq-nut-dau"><label>Năm học <select id="ckq-nam">' + namChon.map(function (n) {
         return '<option' + (n === NAM ? ' selected' : '') + '>' + t(n) + '</option>';
       }).join('') + '</select></label>' +
-      '<button class="nut-phu" id="ckq-xem-truoc">👁 Xem trước cả cổng</button></div></div>' +
+      '<button class="nut-phu" id="ckq-xem-truoc">👁 Xem trước cả cổng</button>' +
+      '<button class="nut-phu" id="ckq-bctn" title="Phụ lục I Thông tư 09/2024 — dựng từ các mục công khai của năm học đang chọn, đối sánh năm trước">📄 Báo cáo thường niên (Word)</button></div></div>' +
       (soCB ? '' : '<div class="ckq-goi-y">Cổng chỉ thay cho hộp đăng nhập ở trang chủ khi nhà trường đã <b>công bố ít nhất một mục</b>. ' +
         'Trước đó thầy cô cứ soạn và xem trước thoải mái — người ngoài chưa thấy gì.</div>') +
       '<div class="ckq-ds">' + window.CONG_KHAI.MUC.map(function (m) {
@@ -187,6 +190,7 @@
 
     document.getElementById('ckq-nam').addEventListener('change', function () { NAM = this.value; MUC_CHON = ''; ve(HOP); });
     document.getElementById('ckq-xem-truoc').addEventListener('click', xemTruoc);
+    document.getElementById('ckq-bctn').addEventListener('click', function () { xuatBCTN(this); });
     Array.prototype.slice.call(HOP.querySelectorAll('[data-ckq-soan]')).forEach(function (b) {
       b.addEventListener('click', function () { MUC_CHON = b.getAttribute('data-ckq-soan'); veDanhSach(); });
     });
@@ -242,6 +246,9 @@
       ' <small>' + t(m.dieu) + '</small></h3><div>' +
       (nh ? 'Đang sửa <b>bản nháp</b>' : cb ? 'Đang sửa từ <b>bản đã công bố</b> — lưu sẽ tạo bản nháp cập nhật' : 'Mục mới') + '</div></div>' +
       (coTuDong ? '<button type="button" class="nut-phu ckq-tu-dong" id="ckq-tu-dong">⚡ Điền số liệu tự động từ hệ thống</button>' : '') +
+      (ma === 'ket_qua' ? ' <label class="nut-phu ckq-tu-dong ckq-nut-tep" title="Chọn một hoặc nhiều tệp kết quả cuối năm (TT 27) kết xuất từ CSDL ngành — kể cả của trường tiền thân. Chỉ ĐẾM trên máy, không lưu tên học sinh.">' +
+        '📥 Đếm từ tệp Excel CSDL ngành<input type="file" id="ckq-tep-tt27" accept=".xls,.xlsx" multiple hidden></label>' +
+        '<div id="ckq-tt27"></div>' : '') +
       '<div class="ckq-luoi">' + khuon.map(function (f) {
         if (f.kieu === 'nhom') return '<div class="ckq-nhom"><b>' + t(f.nhan) + '</b>' + (f.mo ? '<small>' + t(f.mo) + '</small>' : '') + '</div>';
         if (f.kieu === 'bang') return '<div class="ckq-o ckq-o-rong">' + (f.nhan ? '<label>' + t(f.nhan) + '</label>' : '') + bangHTML(f, layGT(nd, f.k), f.cot) + '</div>';
@@ -285,6 +292,8 @@
       });
     });
     if (coTuDong) document.getElementById('ckq-tu-dong').addEventListener('click', function () { tuDong(ma, this); });
+    var tepTT27 = document.getElementById('ckq-tep-tt27');
+    if (tepTT27) tepTT27.addEventListener('change', function () { demTT27(Array.prototype.slice.call(this.files || [])); this.value = ''; });
     document.getElementById('ckq-luu').addEventListener('click', function () { luu(ma).then(function (ok) { if (ok) ve(HOP); }); });
     document.getElementById('ckq-xem').addEventListener('click', function () { xemTruoc(ma); });
     document.getElementById('ckq-cong-bo').addEventListener('click', function () { congBo(ma); });
@@ -436,6 +445,70 @@
       });
       window.xemCongKhai(ds);
     }, baoLoi);
+  }
+
+  // ══════════ ĐẾM KẾT QUẢ TT27 TỪ EXCEL (js/cong-khai-tt27.js) ══════════
+  function demTT27(tep) {
+    var vung = document.getElementById('ckq-tt27');
+    if (!vung || !tep.length || !window.CK_TT27) return;
+    vung.innerHTML = '<div class="ckq-goi-y">Đang đọc ' + tep.length + ' tệp…</div>';
+    Promise.all(tep.map(function (f) { return window.CK_TT27.docTep(f).catch(function (e) { return [{ ten: f.name, khoi: {}, ma: [], so_dong: 0, canh_bao: ['Không đọc được: ' + ((e && e.message) || e)] }]; }); }))
+      .then(function (ds) {
+        var g = window.CK_TT27.gop([].concat.apply([], ds));
+        var khoi = Object.keys(g.khoi).sort();
+        if (!khoi.length) {
+          vung.innerHTML = '<div class="ckq-goi-y">Không đếm được học sinh nào. ' + t(g.canh_bao.join(' · ')) + '</div>';
+          return;
+        }
+        var cot = [['so_lop', 'Lớp'], ['hoc_sinh', 'HS']].concat(g.co_gioi ? [['nu', 'Nữ']] : [])
+          .concat(g.co_xl ? [['htxs', 'HTXS'], ['htt', 'HTT'], ['ht', 'HT'], ['cht', 'CHT']] : [])
+          .concat(g.co_len ? [['len_lop', 'Lên lớp'], ['khong_len_lop', 'Không LL']] : [])
+          .concat(g.co_htct ? [['hoan_thanh_cth', 'HTCT tiểu học']] : []);
+        vung.innerHTML = '<div class="ckq-tt27"><b>Đếm được ' + g.so_dong + ' học sinh từ ' + tep.length + ' tệp</b> — đối chiếu với tổng hợp của trường trước khi điền:' +
+          '<div class="ckq-bang-cuon"><table class="ckq-bang"><thead><tr><th>Khối</th>' + cot.map(function (c2) { return '<th>' + c2[1] + '</th>'; }).join('') +
+          '</tr></thead><tbody>' + khoi.map(function (k) {
+            return '<tr><td>Khối ' + k + '</td>' + cot.map(function (c2) { return '<td>' + g.khoi[k][c2[0]] + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table></div>' +
+          (g.canh_bao.length ? '<div class="ckq-luu-y">⚠️ ' + t(g.canh_bao.join(' · ')) + '</div>' : '') +
+          '<button type="button" class="nut-chinh" id="ckq-tt27-dien">✔ Điền vào bảng theo khối</button> ' +
+          '<button type="button" class="nut-phu" id="ckq-tt27-bo">Bỏ</button></div>';
+        document.getElementById('ckq-tt27-bo').onclick = function () { vung.innerHTML = ''; };
+        document.getElementById('ckq-tt27-dien').onclick = function () {
+          var nd = docForm('ket_qua');
+          var cu = nd.khoi || [];
+          nd.khoi = khoi.map(function (k) {
+            var a = g.khoi[k], r = cu.filter(function (x) { return String(x.khoi) === String(k); })[0] || {};
+            r.khoi = +k; r.so_lop = a.so_lop; r.hoc_sinh = a.hoc_sinh;
+            if (g.co_gioi) r.nu = a.nu;
+            if (g.co_xl) { r.htxs = a.htxs; r.htt = a.htt; r.ht = a.ht; r.cht = a.cht; }
+            if (g.co_len && +k < 5) { r.len_lop = a.len_lop; r.khong_len_lop = a.khong_len_lop; }
+            return r;
+          }).concat(cu.filter(function (x) { return khoi.indexOf(String(x.khoi)) < 0; }));
+          if (g.khoi[5]) { nd.tong_lop5 = g.khoi[5].hoc_sinh; if (g.co_htct) nd.hoan_thanh_cth = g.khoi[5].hoan_thanh_cth; }
+          veSoan('ket_qua', nd);
+          bao('📥 Đã điền số đếm từ ' + tep.length + ' tệp Excel (' + g.so_dong + ' học sinh). Kiểm tra cột "2 buổi", DTTS, KT rồi bấm Lưu nháp.');
+        };
+      });
+  }
+
+  // ══════════ BÁO CÁO THƯỜNG NIÊN (js/cong-khai-bctn.js) ══════════
+  // Năm học đang chọn: bản CÔNG BỐ, mục nào chưa công bố thì lấy NHÁP (BGH thường xuất báo
+  // cáo để rà trước rồi mới công bố). Năm trước liền kề: chỉ bản công bố.
+  function xuatBCTN(nut) {
+    if (!window.xuatBaoCaoThuongNien) { baoLoi('Chưa tải được phần xuất báo cáo — tải lại trang.'); return; }
+    var cu = nut.textContent; nut.disabled = true; nut.textContent = 'Đang dựng báo cáo…';
+    may().from('cong_khai').select('nam_hoc,muc,noi_dung,trang_thai').in('nam_hoc', [NAM, namTruoc(NAM)]).in('trang_thai', ['nhap', 'cong_bo'])
+      .then(function (r) {
+        nut.disabled = false; nut.textContent = cu;
+        if (r.error) { baoLoi(r.error); return; }
+        var nam = {}, truoc = {};
+        (r.data || []).forEach(function (x) {
+          if (x.nam_hoc === NAM) { if (x.trang_thai === 'cong_bo' || !nam[x.muc]) nam[x.muc] = x.noi_dung; }
+          else if (x.trang_thai === 'cong_bo') truoc[x.muc] = x.noi_dung;
+        });
+        if (!Object.keys(nam).length) { baoLoi('Năm học ' + NAM + ' chưa soạn mục công khai nào — chưa có gì để dựng báo cáo.'); return; }
+        window.xuatBaoCaoThuongNien(NAM, nam, truoc);
+      }, function (e) { nut.disabled = false; nut.textContent = cu; baoLoi(e); });
   }
 
   // ══════════ ĐIỀN SỐ LIỆU TỰ ĐỘNG ══════════

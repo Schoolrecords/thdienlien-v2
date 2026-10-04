@@ -4690,6 +4690,9 @@ body.ck-mo > footer { display: none !important; }
 .ckq-bang-nut { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .ckq-chon-hs { font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--vien-dam); max-width: 100%; }
 .ckq-luu-y { color: var(--chu-mo); font-size: 12.5px; }
+.ckq-nut-tep { display: inline-flex; align-items: center; cursor: pointer; }
+.ckq-tt27 { margin: 4px 0 12px; padding: 12px 14px; border: 1px solid #cfe3d6; background: #f3faf6; border-radius: 12px; font-size: 14px; display: grid; gap: 8px; justify-items: start; }
+.ckq-tt27 .ckq-bang-cuon { width: 100%; }
 .ckq-chk { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--chu); cursor: pointer; }
 .ckq-chk input { width: 18px; height: 18px; }
 .ckq-chan { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ke);
