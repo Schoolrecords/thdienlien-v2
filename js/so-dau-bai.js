@@ -448,14 +448,16 @@
   }
 
   // dieu-hanh.js gọi khi mở thẻ "Ghi đầu bài"
+  function ganGhiChuNhanh() {
+    if (document.getElementById('sdb-ghi-chu-nhanh')) return;
+    var dl = document.createElement('datalist'); dl.id = 'sdb-ghi-chu-nhanh';
+    dl.innerHTML = GHI_CHU_NHANH.map(function (g) { return '<option value="' + thoat(g) + '">'; }).join('');
+    document.body.appendChild(dl);
+  }
   function veDieuHanh(el) {
     if (!el) return;
     EL_V = el;
-    if (!document.getElementById('sdb-ghi-chu-nhanh')) {
-      var dl = document.createElement('datalist'); dl.id = 'sdb-ghi-chu-nhanh';
-      dl.innerHTML = GHI_CHU_NHANH.map(function (g) { return '<option value="' + thoat(g) + '">'; }).join('');
-      document.body.appendChild(dl);
-    }
+    ganGhiChuNhanh();
     batSuKienToi(el);
     var k = V.ngay + '|' + toiEmail();
     if (V.khoa !== k && !V.dangNap) napToi();
@@ -466,7 +468,7 @@
   // B. LỚP HỌC › SỔ ĐẦU BÀI (sổ tuần của một lớp)
   // ══════════════════════════════════════════════════════════════
   var L = { khoiTao: false, dangNap: false, loi: '', dsLop: [], lopCN: [], lop: '', lopMuon: '', tuan: thuHai(homNayISO()),
-    ngay: [], chot: [], khoa: '', dangLuu: false };
+    ngay: [], chot: [], khoa: '', dangLuu: false, mo: null, nhap: {} };
   var EL_L = null;
 
   function napDsLop() {
@@ -582,7 +584,9 @@
       '<button type="button" class="dh-nut-nho" data-sdbl="toi" aria-label="Tuần sau"' + (L.tuan >= thuHai(homNayISO()) ? ' disabled' : '') + '>›</button>' +
       (L.tuan !== thuHai(homNayISO()) ? '<button type="button" class="dh-nut-nho" data-sdbl="nay">Tuần này</button>' : '') +
       '</div></div></div>';
-    if (!may()) dau += '<div class="hd-kiem vang">🧪 <b>Xem thử</b> — thời khóa biểu và tên người là dữ liệu mẫu. Ghi thử ở Điều hành › Ghi đầu bài rồi quay lại đây xem.</div>';
+    if (!may()) dau += '<div class="hd-kiem vang">🧪 <b>Xem thử</b> — thời khóa biểu và tên người là dữ liệu mẫu; ghi thử chỉ giữ trong trang.</div>';
+    dau += '<div class="sdb-huong-dan">✍ <b>Cách ghi:</b> bấm <b>✍ Ghi</b> ở cuối dòng tiết mình dạy, gõ tên bài rồi <b>Lưu</b> — tên người ký và giờ ký app tự ghi. ' +
+      'Trên điện thoại ghi nhanh cả buổi ở <a href="#" data-sdbl="dieuHanh">Điều hành › 📖 Ghi đầu bài</a>.</div>';
     if (!L.khoiTao || (L.dangNap && !L.ngay.length)) { el.innerHTML = dau + '<div class="the-thong-bao">Đang tải sổ…</div></div>'; return; }
     if (!L.dsLop.length) {
       el.innerHTML = dau + '<div class="the-thong-bao">Thầy/cô chưa chủ nhiệm hay dạy lớp nào trong thời khóa biểu năm học ' + thoat(namHoc()) + ', nên chưa có sổ để xem.</div></div>';
@@ -621,12 +625,13 @@
       var nhom = ds.filter(function (x) { return x.t.buoi === b; });
       if (!nhom.length) return;
       var ss = d.siSo[b], vg = d.vang[b] || [];
-      html += '<tr class="sdb-hang-buoi"><td colspan="4">' + TEN_BUOI[b] +
+      html += '<tr class="sdb-hang-buoi"><td colspan="5">' + TEN_BUOI[b] +
         (ss || vg.length ? ' · vắng ' + (ss ? ss.so_vang + '/' + ss.si_so : vg.length) +
           (vg.length ? ': ' + vg.map(function (h) { return thoat(h.ten) + (h.phep === 'co_phep' ? ' (P)' : h.phep === 'khong_phep' ? ' (K)' : ''); }).join(', ') : '')
           : ' · chưa điểm danh') + '</td></tr>';
       nhom.forEach(function (x) {
         var r = x.r, t = x.t, o;
+        var mo = L.mo && L.mo.ngay === d.ngay && L.mo.k === x.k;
         if (r) {
           o = '<td>' + (r.tinh_trang === 'khong_day' ? '<i>Không dạy</i>' + (r.ghi_chu ? ' — ' + thoat(r.ghi_chu) : '') :
             thoat(r.ten_bai) + (r.ghi_chu ? '<div class="sdb-ghi-chu">' + thoat(r.ghi_chu) + '</div>' : '')) + '</td>' +
@@ -635,14 +640,101 @@
           o = '<td colspan="2" class="sdb-mo">Lớp tự quản (dạy thay)</td>';
         } else {
           var tre = !d.nghi && (d.ngay < homNayISO() || (d.ngay === homNayISO() && quaHan(d.ngay, t.buoi)));
-          o = '<td colspan="2" class="' + (tre ? 'sdb-do' : 'sdb-mo') + '">' + (tre ? 'Chưa ghi' : 'Chưa tới hạn') +
+          // 5/10/2026 thầy Chung: "Chưa tới hạn" khó hiểu → nói đúng trạng thái
+          var chu = tre ? 'Chưa ghi' : d.ngay > homNayISO() ? 'Chưa tới ngày' : 'Chưa ghi · hạn ' + HET_BUOI[t.buoi];
+          o = '<td colspan="2" class="' + (tre ? 'sdb-do' : 'sdb-mo') + '">' + chu +
             (t.gvNhan ? ' · ' + thoat(t.gvNhan) : '') + (t.thay ? ' (dạy thay)' : '') + '</td>';
         }
-        html += '<tr' + (r ? '' : ' class="chua"') + '><td class="sdb-cot-tiet">' + kiHieu(t.buoi, t.tiet) + '</td><td class="sdb-cot-mon">' + thoat(t.mon) + '</td>' + o + '</tr>';
+        var q = quyenGhiDong(d, t, r);
+        var nut = q && !mo ? '<button type="button" class="sdb-nut-ghi' + (r ? ' sua' : '') + '" data-sdbl="ghi" data-ngay="' + d.ngay + '" data-k="' + thoat(x.k) + '">' +
+          (r ? 'Sửa' : '✍ Ghi') + '</button>' : '';
+        html += '<tr' + (r ? '' : ' class="chua"') + '><td class="sdb-cot-tiet">' + kiHieu(t.buoi, t.tiet) + '</td><td class="sdb-cot-mon">' + thoat(t.mon) + '</td>' + o +
+          '<td class="sdb-cot-tt">' + nut + '</td></tr>';
+        if (mo) html += '<tr class="sdb-dong-sua"><td colspan="5">' + veOGhiDong(d, t, r) + '</td></tr>';
       });
     });
-    return '<div class="sdb-ngay">' + dau + '<div class="sdb-bang-cuon"><table class="sdb-bang"><thead><tr><th>Tiết</th><th>Môn</th><th>Tên bài · ghi chú</th><th>Giáo viên ký</th></tr></thead><tbody>' +
+    return '<div class="sdb-ngay">' + dau + '<div class="sdb-bang-cuon"><table class="sdb-bang"><thead><tr><th>Tiết</th><th>Môn</th><th>Tên bài · ghi chú</th><th>Giáo viên ký</th><th class="sdb-cot-tt"></th></tr></thead><tbody>' +
       html + '</tbody></table></div></div>';
+  }
+
+  // Ai được ghi / sửa MỘT dòng ngay trên sổ tuần (5/10/2026 — thầy Chung: "không thấy giáo viên ghi vào đâu").
+  // Ghi: người dạy tiết đó (TKB/dạy thay), GVCN lớp (ghi hộ — người ký là GVCN), BGH. Sửa: người đã ký, BGH.
+  // Không ghi trước ngày; tuần đã chốt thì chỉ BGH. Hàng rào thật vẫn là RLS sql/83.
+  function quyenGhiDong(d, t, r) {
+    if (d.ngay > homNayISO() || t.tuQuan) return false;
+    if (chotPhu(d.ngay) && !laQT()) return false;
+    if (!may()) return true;
+    if (r) return laQT() || String(r.gv_email || '').toLowerCase() === toiEmail();
+    return laQT() || laCN() || (!!toiEmail() && t.gvEmail === toiEmail());
+  }
+  function veOGhiDong(d, t, r) {
+    var n = L.nhap;
+    // Gợi ý: bài ghi gần nhất của cùng môn trong tuần đang xem (trước tiết này)
+    var truoc = [];
+    L.ngay.forEach(function (dd) {
+      Object.keys(dd.ghi).forEach(function (k) {
+        var g = dd.ghi[k];
+        if (g.ten_bai && chuanMon(g.mon) === chuanMon(t.mon) && (dd.ngay < d.ngay || (dd.ngay === d.ngay && (g.buoi < t.buoi || (g.buoi === t.buoi && g.tiet < t.tiet)))))
+          truoc.push({ s: dd.ngay + g.buoi + pad(g.tiet), ten: g.ten_bai });
+      });
+    });
+    truoc.sort(function (a, b) { return a.s < b.s ? 1 : -1; });
+    var tiep = truoc.length ? tiepTheo(truoc[0].ten) : '';
+    var chip = !n.khongDay && tiep && tiep !== n.ten ? '<div class="sdb-goi-y"><button type="button" class="chip-loc" data-sdbl="dien" data-v="' + thoat(tiep) + '">↻ ' + thoat(tiep) + '</button></div>' : '';
+    var ghiHo = !r && may() && t.gvEmail && t.gvEmail !== toiEmail();
+    return '<div class="sdb-o-dong">' +
+      (n.khongDay
+        ? '<select class="dh-o-nhap" data-sdbl-o="ghiChu">' + LY_DO_KHONG_DAY.map(function (l) { return '<option' + (n.ghiChu === l ? ' selected' : '') + '>' + thoat(l) + '</option>'; }).join('') + '</select>'
+        : '<input class="dh-o-nhap sdb-o-bai" data-sdbl-o="ten" value="' + thoat(n.ten) + '" maxlength="300" placeholder="Tên bài dạy (VD: Bài 5. Phép cộng – tiết 1)" enterkeyhint="done">' + chip +
+          '<input class="dh-o-nhap sdb-o-chu" data-sdbl-o="ghiChu" value="' + thoat(n.ghiChu) + '" maxlength="500" placeholder="Ghi chú (không bắt buộc)" list="sdb-ghi-chu-nhanh">') +
+      '<label class="sdb-khong-day"><input type="checkbox" data-sdbl-o="khongDay"' + (n.khongDay ? ' checked' : '') + '> Tiết này không dạy</label>' +
+      (ghiHo ? '<div class="sdb-mo">Thầy/cô ghi hộ tiết của ' + thoat(t.gvNhan || 'giáo viên khác') + ' — sổ ghi tên người bấm là người ký.</div>' : '') +
+      '<div class="sdb-o-dong-nut"><button type="button" class="sdb-nut-luu" data-sdbl="luuDong"' + (L.dangLuu ? ' disabled' : '') + '>' + (L.dangLuu ? 'Đang lưu…' : '✓ Lưu tiết ' + kiHieu(t.buoi, t.tiet)) + '</button>' +
+      '<button type="button" class="dh-nut-nho" data-sdbl="huyDong">Huỷ</button></div></div>';
+  }
+  function moGhiDong(ngay, k) {
+    var d = L.ngay.filter(function (x) { return x.ngay === ngay; })[0];
+    if (!d) return;
+    var r = d.ghi[k];
+    L.mo = { ngay: ngay, k: k };
+    L.nhap = r ? { ten: r.ten_bai || '', ghiChu: r.ghi_chu || '', khongDay: r.tinh_trang === 'khong_day' } : { ten: '', ghiChu: '', khongDay: false };
+    veLop();
+    var o = EL_L && EL_L.querySelector('[data-sdbl-o="ten"]');
+    if (o) { try { o.focus(); } catch (e) { /* bỏ qua */ } }
+  }
+  function luuDong() {
+    if (!L.mo || L.dangLuu) return;
+    var d = L.ngay.filter(function (x) { return x.ngay === L.mo.ngay; })[0];
+    if (!d) return;
+    var k = L.mo.k, r = d.ghi[k];
+    var t = d.khung.filter(function (x) { return khoa(x.buoi, x.tiet, x.lop) === k; })[0] ||
+      (r ? { lop: r.lop, buoi: r.buoi, tiet: r.tiet, mon: r.mon, thay: r.day_thay } : null);
+    if (!t) return;
+    var n = L.nhap, ten = String(n.ten || '').trim(), ghi = String(n.ghiChu || '').trim();
+    if (n.khongDay && !ghi) ghi = LY_DO_KHONG_DAY[0];
+    if (!n.khongDay && !ten) { bao('Chưa điền tên bài.'); return; }
+    var row = { nam_hoc: namHoc(), ngay: d.ngay, buoi: t.buoi, tiet: t.tiet, lop: t.lop, mon: t.mon,
+      tinh_trang: n.khongDay ? 'khong_day' : 'da_day', ten_bai: n.khongDay ? null : ten, ghi_chu: ghi || null, day_thay: !!t.thay };
+    if (!may()) {
+      var bayGio = new Date().toISOString();
+      if (r) Object.assign(r, row, { sua_luc: bayGio });
+      else {
+        r = Object.assign({ id: MAU.id++, gv_ten: MAU_TOI, gv_email: '', ghi_luc: bayGio, sua_luc: bayGio, ghi_bu: quaHan(d.ngay, t.buoi), sua_sau_han: false }, row);
+        MAU.ghi.push(r); d.ghi[k] = r;
+      }
+      L.mo = null; bao('Đã lưu (xem thử — không gửi đi đâu).'); veLop(); return;
+    }
+    L.dangLuu = true; veLop();
+    var viec = r
+      ? may().from('sdb_tiet').update({ mon: row.mon, tinh_trang: row.tinh_trang, ten_bai: row.ten_bai, ghi_chu: row.ghi_chu, day_thay: row.day_thay }).eq('id', r.id).select()
+      : may().from('sdb_tiet').insert(row).select();
+    viec.then(function (kq) {
+      if (kq.error) { bao(chuLoi(kq.error)); return; }
+      var x = (kq.data || [])[0];
+      if (!x) { bao('Máy chủ không nhận — thầy/cô không có quyền sửa dòng này.'); return; }
+      d.ghi[k] = x; L.mo = null; V.khoa = '';   // màn Ghi đầu bài ở Điều hành đọc lại lần tới
+      bao('Đã lưu tiết ' + kiHieu(t.buoi, t.tiet) + ' vào sổ đầu bài.');
+    }, function (e) { bao(chuLoi(e)); }).then(function () { L.dangLuu = false; veLop(); });
   }
 
   function veChotTuan(c, d) {
@@ -736,7 +828,7 @@
       'body{font:12.5px "Times New Roman",serif;margin:14mm;color:#000}h1{font-size:17px;text-align:center;margin:0 0 2px}' +
       '.p{text-align:center;margin:0 0 10px}table{border-collapse:collapse;width:100%;margin:4px 0 10px}td,th{border:1px solid #000;padding:3px 5px;vertical-align:top}' +
       'th{background:#eee}.sdb-ngay-dau{font-weight:700;margin-top:8px}.sdb-hang-buoi td{background:#f4f4f4;font-style:italic}.tkb-chip{font-size:10px;border:1px solid #888;border-radius:6px;padding:0 4px}' +
-      'small{display:block;color:#333}.sdb-ghi-chu{font-style:italic}.sdb-do{color:#b00}.ky{display:flex;justify-content:space-around;margin-top:18px;text-align:center}' +
+      '.sdb-cot-tt,.sdb-dong-sua{display:none}small{display:block;color:#333}.sdb-ghi-chu{font-style:italic}.sdb-do{color:#b00}.ky{display:flex;justify-content:space-around;margin-top:18px;text-align:center}' +
       '@page{size:A4 portrait;margin:12mm}</style></head><body>' +
       '<div class="p">' + thoat(ten) + '</div><h1>SỔ GHI ĐẦU BÀI — LỚP ' + thoat(L.lop) + '</h1>' +
       '<div class="p">Năm học ' + thoat(namHoc()) + ' · Tuần ' + ngayVN(L.tuan) + ' – ' + ngayVN(congNgay(L.tuan, 5)) + '</div>' + bang +
@@ -755,15 +847,30 @@
       if (v === 'lui' || v === 'toi' || v === 'nay') {
         var moi = v === 'nay' ? thuHai(homNayISO()) : congNgay(L.tuan, v === 'lui' ? -7 : 7);
         if (moi > thuHai(homNayISO())) return;
-        L.tuan = moi; L.ngay = []; napTuan(); veLop();
+        L.tuan = moi; L.ngay = []; L.mo = null; napTuan(); veLop();
       } else if (v === 'chot') chot('tuan', L.tuan, congNgay(L.tuan, 6));
       else if (v === 'kyThang') chot('thang', a.getAttribute('data-tu'), a.getAttribute('data-den'));
       else if (v === 'goChot') goChot(a.getAttribute('data-id'));
       else if (v === 'in') inTuan();
+      else if (v === 'ghi') moGhiDong(a.getAttribute('data-ngay'), a.getAttribute('data-k'));
+      else if (v === 'huyDong') { L.mo = null; veLop(); }
+      else if (v === 'luuDong') luuDong();
+      else if (v === 'dien') { L.nhap.ten = a.getAttribute('data-v') || ''; veLop(); }
+      else if (v === 'dieuHanh') { e.preventDefault(); if (window.DH && window.DH.moTab) window.DH.moTab('sodaubai'); }
+    });
+    el.addEventListener('input', function (e) {
+      var o = e.target, f = o.getAttribute && o.getAttribute('data-sdbl-o');
+      if (!f) return;
+      if (f === 'khongDay') { L.nhap.khongDay = o.checked; L.nhap.ghiChu = o.checked ? LY_DO_KHONG_DAY[0] : ''; veLop(); }
+      else L.nhap[f] = o.value;
+    });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.getAttribute && e.target.getAttribute('data-sdbl-o') === 'ten') { e.preventDefault(); luuDong(); }
     });
     el.addEventListener('change', function (e) {
       var o = e.target;
-      if (o.getAttribute && o.getAttribute('data-sdbl') === 'lop') { L.lop = o.value; L.ngay = []; napTuan(); veLop(); }
+      if (o.getAttribute && o.getAttribute('data-sdbl') === 'lop') { L.lop = o.value; L.ngay = []; L.mo = null; napTuan(); veLop(); }
+      else if (o.tagName === 'SELECT' && o.getAttribute('data-sdbl-o') === 'ghiChu') L.nhap.ghiChu = o.value;
     });
   }
 
@@ -797,6 +904,7 @@
     var mh = document.getElementById('mh-sodaubai'), vung = document.getElementById('vung-sodaubai');
     if (mh && vung) {
       EL_L = vung;
+      ganGhiChuNhanh();
       batSuKienLop(vung);
       if (window.MutationObserver) new MutationObserver(khiHienLop).observe(mh, { attributes: true, attributeFilter: ['class'] });
       khiHienLop();

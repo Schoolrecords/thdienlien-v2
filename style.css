@@ -4937,3 +4937,19 @@ body.ck-mo > footer { display: none !important; }
   .sdb-bang tr:not(.sdb-hang-buoi) td:nth-child(3) { display: block; padding-left: 48px; }
   .sdb-lop-dau h2 { font-size: 19px; }
 }
+/* Ghi ngay trên sổ tuần (5/10/2026 — thầy Chung: "không thấy giáo viên ghi vào đâu") */
+.sdb-huong-dan { font-size: 13.2px; color: var(--chu); background: var(--vang-nen); border: 1px solid #f1e2b5; border-radius: 11px; padding: 9px 13px; margin: 4px 0 10px; line-height: 1.6; }
+.sdb-huong-dan a { color: var(--chinh); font-weight: 700; }
+.sdb-bang th.sdb-cot-tt { width: 86px; }
+.sdb-cot-tt { text-align: right; white-space: nowrap; }
+.sdb-nut-ghi { font: inherit; font-size: 12.8px; font-weight: 800; cursor: pointer; min-height: 34px; padding: 4px 12px; border-radius: 9px; border: 0; background: var(--dam); color: #fff; }
+.sdb-nut-ghi.sua { background: #fff; color: var(--chinh); border: 1px solid var(--vien); font-weight: 700; }
+.sdb-dong-sua td { background: var(--o-con); padding: 10px 12px 14px; }
+.sdb-o-dong { max-width: 720px; }
+.sdb-o-dong-nut { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sdb-o-dong-nut .sdb-nut-luu { min-width: 0; width: auto; }
+@media (max-width: 640px) {
+  .sdb-bang td.sdb-cot-tt { display: block; text-align: left; padding-left: 48px; }
+  .sdb-bang tr.sdb-dong-sua td { display: block; padding-left: 10px; }
+}
+@media print { .sdb-cot-tt, .sdb-dong-sua, .sdb-huong-dan { display: none !important; } }
