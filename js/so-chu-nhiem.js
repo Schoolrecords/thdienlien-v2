@@ -3431,7 +3431,14 @@
       return r;
     }).catch(function (e) {
       var m = loiChu(e);
-      bao('Chưa lưu được: ' + (/row-level security|violates|permission/i.test(m)
+      // Chỉ lỗi QUYỀN (RLS) mới quy cho phân công chủ nhiệm. "violates … constraint" là dữ liệu chưa hợp lệ —
+      // trước 4/10/2026 gộp chung nên lỗi NULL ở bảng nhập cả lớp hiện thành "chưa nhận là GVCN", đoán sai hướng.
+      if (!/row-level security|permission denied/i.test(m) && /violates/i.test(m)) {
+        bao('Chưa lưu được: dữ liệu chưa hợp lệ — ' + m + '. Chụp thông báo này gửi Ban giám hiệu.');
+        if (nut) nut.disabled = false;
+        return null;
+      }
+      bao('Chưa lưu được: ' + (/row-level security|permission denied/i.test(m)
         ? (khoaDen() ? 'sổ đã khoá đến hết ngày ' + ngayVN(khoaDen()) + ' — mục có ngày từ đó trở về trước không sửa được; báo Ban giám hiệu nếu cần mở khoá.'
           : 'máy chủ chưa nhận thầy cô là GVCN lớp ' + D.lop + ' năm ' + D.nam + ' — báo Ban giám hiệu kiểm tra phân công chủ nhiệm (Quản trị › Phân công).')
         : thieuBang(m) ? 'cơ sở dữ liệu chưa chạy sql/69.' : m));
@@ -3492,7 +3499,14 @@
           if (k[2] === 'c' || k[2] === 'v') { moi[k[0]] = v(k[0]); if (!giong(moi[k[0]], c[k[0]])) doi = true; }
           // Ô tích: không đụng thì giữ nguyên giá trị cũ (kể cả null = "chưa ghi") — để BHYT/SGK
           // chưa ai ghi không bị biến thành "không có" chỉ vì dòng có thay đổi ở ô khác
-          else if (k[2] === 't') { var t = !!v(k[0]); if (t !== !!c[k[0]]) { moi[k[0]] = t; doi = true; } }
+          // ⚠️ Dòng nào cũng phải MANG ĐỦ cột tích (4/10/2026, cô Hương Trầm 2A QC1): upsert nhiều dòng,
+          // supabase-js lấy HỢP các cột rồi điền NULL cho dòng thiếu → can_quan_tam (not null) báo lỗi,
+          // còn co_bhyt/du_sgk của em khác trong cùng lượt bị xoá trắng. Không đổi thì gửi lại giá trị cũ.
+          else if (k[2] === 't') {
+            var t = !!v(k[0]);
+            if (t !== !!c[k[0]]) { moi[k[0]] = t; doi = true; }
+            else moi[k[0]] = k[0] === 'can_quan_tam' ? !!c[k[0]] : (c[k[0]] == null ? null : c[k[0]]);
+          }
         });
       });
       if (doi) ds.push(Object.assign({ nam_hoc: D.nam, hoc_sinh_ma: ma, lop: D.lop }, moi));
