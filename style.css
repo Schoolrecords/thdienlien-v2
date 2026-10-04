@@ -4421,7 +4421,8 @@ body.ck-mo > footer { display: none !important; }
 .ck-chon-nam button.chon { background: #fff; color: var(--dam); font-weight: 700; }
 .ck-nut-vang { display: inline-flex; align-items: center; gap: 8px; background: var(--vang); color: #2a1d00; font-weight: 700; font-size: 14px; border-radius: 11px; padding: 9px 16px; }
 .ck-nut-vang svg { width: 16px; height: 16px; }
-.ck-so-lieu { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 30px; }
+/* auto-fit: trường chưa khai đủ 5 ô (vd chưa có bằng CQG) thì các ô vẫn giãn đều, không chừa lỗ */
+.ck-so-lieu { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 30px; max-width: 1180px; }
 .ck-o { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; padding: 14px 16px; }
 .ck-so { font-size: 28px; font-weight: 800; line-height: 1.1; }
 .ck-nhan-so { color: #b9c8e8; font-size: 13px; margin-top: 4px; }
@@ -4537,7 +4538,6 @@ body.ck-mo > footer { display: none !important; }
   .ck-bo-cuc { grid-template-columns: minmax(0, 1fr); }
   .ck-muc-luc { display: none; }
   .ck-lanh-dao { grid-template-columns: repeat(2, 1fr); }
-  .ck-so-lieu { grid-template-columns: repeat(3, 1fr); }
   .ck-menu { display: none; }
 }
 @media (max-width: 640px) {
