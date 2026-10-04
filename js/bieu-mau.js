@@ -372,23 +372,99 @@
     return kemCSS(w.khungWord('Danh mục hồ sơ', than, true),
       'table.bm-nho th{font-size:11pt;padding:3pt 4pt}table.bm-nho td{font-size:11.5pt;padding:3pt 5pt}');
   }
+  // ── Mẫu BAN HÀNH (Phụ lục V NĐ 30/2020) — thầy Chung 4/10/2026, sổ dự án 120. Cần cột ho_so.thoi_han (sql/79).
+  //    Hồ sơ còn hiệu lực CÓ thời hạn bảo quản = Danh mục nhà trường (đề mục = hộp, số La Mã). Hồ sơ KHÔNG ghi thời hạn
+  //    (hồ sơ Đảng, Đoàn — tổ chức đó tự quản lý) in thành phần riêng, không tính vào số hồ sơ ban hành.
+  var LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+  var CHU_SO = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+  function soChu(n) {
+    if (n < 10) return CHU_SO[n];
+    var ch = Math.floor(n / 10) % 10, dv = n % 10, tr = Math.floor(n / 100);
+    var ra = (tr ? CHU_SO[tr] + ' trăm ' + (ch === 0 && dv ? 'linh ' : '') : '') +
+      (ch === 1 ? 'mười' : ch ? CHU_SO[ch] + ' mươi' : '') +
+      (dv ? ' ' + (dv === 5 && ch ? 'lăm' : dv === 1 && ch > 1 ? 'mốt' : dv === 4 && ch > 1 ? 'tư' : CHU_SO[dv]) : '');
+    return ra.replace(/\s+/g, ' ').trim();
+  }
+  function coThoiHan() { return (window.HO_SO || []).some(function (h) { return !!banGhi(h).thoi_han; }); }
+  function htmlDanhMucBH(gt) {
+    var w = W(), c = w.chan;
+    var HOP = window.HOP || {}, HS = window.HO_SO || [];
+    var thuTuHop = [];
+    (window.BO_PHAN || []).forEach(function (bp) { bp.hop.forEach(function (m) { if (thuTuHop.indexOf(m) < 0) thuTuHop.push(m); }); });
+    var hieuLuc = HS.filter(function (h) { return h.tt !== 'da_dong'; });
+    var trongDM = hieuLuc.filter(function (h) { return !!banGhi(h).thoi_han; });
+    var ngoaiDM = hieuLuc.filter(function (h) { return !banGhi(h).thoi_han; });
+    var cot = [['TT', 1.0], ['Số, ký hiệu hồ sơ', 2.3], ['Tên đề mục và tiêu đề hồ sơ', 0]];
+    if (gt.tc) cot.push(['Tiêu chí TT57', 1.8]);
+    cot.push(['Thời hạn bảo quản', 3.6], ['Đơn vị/người lập hồ sơ', 3.2]);
+    if (gt.cc) cot.push(['Ghi chú (căn cứ)', 5.2]);
+    if (gt.tt) cot.push(['Trạng thái', 2.0]);
+    if (gt.link) cot.push(['Thư mục Drive', 3.8]);
+    var tong = 26.2, khac = 0;
+    cot.forEach(function (x) { khac += x[1]; });
+    cot[2][1] = Math.max(6, tong - khac);
+    var nCot = cot.length;
+    var dau = '<tr>' + cot.map(function (x) { return '<th style="width:' + x[1].toFixed(2) + 'cm">' + x[0] + '</th>'; }).join('') + '</tr>';
+    var stt = 0, so = 0, vv = 0, dong = '';
+    thuTuHop.forEach(function (maHop) {
+      var ds = trongDM.filter(function (h) { return h.hop === maHop; });
+      if (!ds.length) return;
+      so++;
+      dong += '<tr><td class="giua" style="font-weight:bold">' + (LA_MA[so - 1] || so) + '</td><td colspan="' + (nCot - 1) + '" style="font-weight:bold">' +
+        c(String((HOP[maHop] || {}).ten || maHop).toUpperCase()) + ' <i style="font-weight:normal;font-size:11pt">(hộp ' + c(maHop) + ' · ' + ds.length + ' hồ sơ)</i></td></tr>';
+      ds.forEach(function (h) {
+        var g = banGhi(h), link = /^https?:\/\//i.test(h.link || '') ? h.link : '';
+        if (/^Vĩnh viễn/i.test(g.thoi_han || '')) vv++;
+        dong += '<tr><td class="giua">' + (++stt) + '</td><td class="giua">' + c(h.ma) + '</td><td>' + c(h.ten) + '</td>' +
+          (gt.tc ? '<td class="giua">' + c((h.tc || []).join(', ')) + '</td>' : '') +
+          '<td>' + c(g.thoi_han || '') + '</td><td>' + c(g.don_vi_lap || h.phuTrach || (HOP[h.hop] || {}).phuTrach || '') + '</td>' +
+          (gt.cc ? '<td style="font-size:10.5pt">' + c(g.can_cu || '') + '</td>' : '') +
+          (gt.tt ? '<td class="giua">' + c(TEN_TT[h.tt] || h.tt || '') + '</td>' : '') +
+          (gt.link ? '<td class="duongdan">' + (link ? '<a href="' + c(link) + '">' + c(link) + '</a>' : '') + '</td>' : '') + '</tr>';
+      });
+    });
+    if (!stt) dong = '<tr><td colspan="' + nCot + '" class="giua nghieng">Chưa có hồ sơ nào ghi thời hạn bảo quản — dùng mẫu "Quản lý".</td></tr>';
+    var phanRieng = ngoaiDM.length && gt.dang
+      ? '<p style="margin:16pt 0 6pt"><b>Phần riêng — Hồ sơ của tổ chức Đảng, Đoàn quản lý trên hệ thống</b> <i>(không thuộc Danh mục hồ sơ nhà trường; tổ chức đó tự quản lý, phân quyền riêng)</i></p>' +
+        '<table class="co-dinh bm-nho"><thead><tr><th style="width:1.2cm">TT</th><th style="width:2.6cm">Mã</th><th style="width:15cm">Tên hồ sơ</th><th style="width:7.4cm">Hộp</th></tr></thead><tbody>' +
+        ngoaiDM.slice().sort(function (a, b) { return thuTuHop.indexOf(a.hop) - thuTuHop.indexOf(b.hop) || (a.ma < b.ma ? -1 : 1); }).map(function (h, i) {
+          return '<tr><td class="giua">' + (i + 1) + '</td><td class="giua">' + c(h.ma) + '</td><td>' + c(h.ten) + '</td><td>' + c(h.hop + '. ' + ((HOP[h.hop] || {}).ten || '')) + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      : '';
+    var tenTruong = String((window.CAU_HINH || {}).TEN_TRUONG || '');
+    var chu = soChu(stt); chu = chu.charAt(0).toUpperCase() + chu.slice(1);
+    var than = w.theThuc() +
+      '<p class="giua" style="margin:18pt 0 0"><b style="font-size:14pt">DANH MỤC HỒ SƠ CỦA ' + c(tenTruong.toUpperCase()) + '<br>NĂM HỌC ' + c(namHoc()) + '</b></p>' +
+      '<p class="giua nghieng" style="margin:4pt 0 10pt">(Ban hành kèm theo Quyết định số &nbsp;&nbsp;&nbsp;&nbsp;/QĐ-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ngày &nbsp;&nbsp;&nbsp; tháng &nbsp;&nbsp;&nbsp; năm ' +
+        c(String(namHoc()).slice(0, 4)) + ' của Hiệu trưởng ' + c(tenTruong) + ')</p>' +
+      '<table class="co-dinh bm-nho"><thead>' + dau + '</thead><tbody>' + dong + '</tbody></table>' +
+      '<p style="margin:6pt 0 0;font-size:11pt"><i>Thời hạn bảo quản theo Phụ lục Thông tư số 08/2025/TT-BGDĐT ("STT" là số thứ tự trong Phụ lục; "vận dụng" là nhóm gần nhất khi Thông tư không nêu đích danh) ' +
+        'và bảng thời hạn bảo quản tài liệu phổ biến. Hồ sơ ghi "nếu có" chỉ lập khi phát sinh.</i></p>' +
+      '<p style="margin:8pt 0 0">Bản Danh mục hồ sơ này có <b>' + stt + '</b> (' + c(chu) + ') hồ sơ, bao gồm: <b>' + vv + '</b> hồ sơ bảo quản vĩnh viễn; <b>' + (stt - vv) + '</b> hồ sơ bảo quản có thời hạn.</p>' +
+      phanRieng + w.khoiKy(null);
+    return kemCSS(w.khungWord('Danh mục hồ sơ', than, true),
+      'table.bm-nho th{font-size:11pt;padding:3pt 4pt}table.bm-nho td{font-size:11.5pt;padding:3pt 5pt}');
+  }
   function tuyDanhMuc() {
     var bp = (window.BO_PHAN || []).map(function (b) { return [String(b.soTT), b.soTT + '. ' + b.ten]; });
     return {
       tieuDe: 'Danh mục Hồ sơ · Năm học ' + namHoc(),
       dung: function (gt) {
         if (!(window.HO_SO || []).length) throw new Error('chưa nạp được danh mục hồ sơ của trường.');
-        return htmlDanhMuc(gt);
+        return gt.mau === 'bh' && gt.loc !== 'chua' && !gt.bp ? htmlDanhMucBH(gt) : htmlDanhMuc(gt);
       },
       tenTep: function (gt) {
         return (gt.loc === 'chua' ? 'ho-so-chua-hoan-thien-' : 'danh-muc-ho-so-') + (gt.bp ? 'bo-phan-' + gt.bp + '-' : '') + namHoc() + '.doc';
       },
       tuyChon: [
+        { ma: 'mau', nhan: 'Mẫu', loai: 'chon', ds: [['bh', 'Ban hành (NĐ 30, thời hạn bảo quản)'], ['ql', 'Quản lý (tiêu chí, người phụ trách)']], mac: coThoiHan() ? 'bh' : 'ql' },
         { ma: 'bp', nhan: 'Phạm vi', loai: 'chon', ds: [['', 'Toàn trường']].concat(bp), mac: '' },
         { ma: 'loc', nhan: 'Hồ sơ', loai: 'chon', ds: [['', 'Tất cả'], ['chua', 'Chỉ hồ sơ chưa hoàn thiện']], mac: '' },
         { ma: 'cc', nhan: 'Cột Áp dụng · Căn cứ', mac: true },
         { ma: 'tt', nhan: 'Cột Trạng thái', mac: false },
-        { ma: 'link', nhan: 'Cột thư mục Drive', mac: false }
+        { ma: 'link', nhan: 'Cột thư mục Drive', mac: false },
+        { ma: 'tc', nhan: 'Cột tiêu chí TT57 (mẫu ban hành)', mac: false },
+        { ma: 'dang', nhan: 'Kèm hồ sơ Đảng, Đoàn (mẫu ban hành)', mac: true }
       ]
     };
   }
