@@ -604,7 +604,27 @@
 
   // ══════════ SỰ KIỆN ══════════
   var daGanCuon = false;
+  // Điện thoại: bảng nhiều cột chuyển thành THẺ DỌC (thầy Chung 5/10/2026 — cột bị ép hẹp, chữ
+  // xuống dòng từng từ). Gắn nhãn cột vào từng ô; CSS @media ≤640px dựng thẻ. TKB giữ lưới, kéo ngang.
+  function ganNhanBang(el) {
+    Array.prototype.slice.call(el.querySelectorAll('.ck-cuon table:not(.ck-tkb)')).forEach(function (bang) {
+      var dau = Array.prototype.slice.call(bang.querySelectorAll('thead tr:last-child th')).map(function (th) {
+        return String(th.textContent || '').replace(/\s+/g, ' ').trim();
+      });
+      if (!dau.length) return;
+      bang.classList.add('ck-bang-the');
+      if (bang.parentNode && bang.parentNode.classList) bang.parentNode.classList.add('ck-cuon-the');
+      Array.prototype.slice.call(bang.querySelectorAll('tbody tr')).forEach(function (tr) {
+        var j = 0;
+        Array.prototype.slice.call(tr.children).forEach(function (o) {
+          o.setAttribute('data-nhan', dau[j] || '');
+          j += +(o.getAttribute('colspan') || 1);
+        });
+      });
+    });
+  }
   function ganSuKien(el) {
+    ganNhanBang(el);
     Array.prototype.slice.call(el.querySelectorAll('[data-ck="dang-nhap"]')).forEach(function (b) {
       b.addEventListener('click', function (e) {
         e.preventDefault();

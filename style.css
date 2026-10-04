@@ -4462,10 +4462,10 @@ body.ck-mo > footer { display: none !important; }
 .ck-hero h1 { font-size: 34px; line-height: 1.2; margin: 14px 0 8px; font-weight: 800; max-width: 760px; color: #fff; }
 .ck-dan { color: #d4def3; max-width: 720px; font-size: 15.5px; }
 .ck-hero-hang { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 22px; }
-.ck-chon-nam { display: inline-flex; flex-wrap: wrap; gap: 4px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; padding: 4px; }
-.ck-chon-nam button { font: inherit; font-size: 15px; font-weight: 600; color: #d4def3; background: none; border: 0; border-radius: 10px; padding: 9px 18px; cursor: pointer; letter-spacing: .2px; }
-.ck-chon-nam button:hover { color: #fff; background: rgba(255,255,255,.08); }
-.ck-chon-nam button.chon { background: rgba(255,255,255,.16); color: #fff; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.32); }
+.ck-chon-nam { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; background: none; border: 0; padding: 0; }
+.ck-chon-nam button { font: inherit; font-size: 15px; font-weight: 600; color: #b9c8e8; background: none; border: 0; padding: 0; cursor: pointer; letter-spacing: .2px; }
+.ck-chon-nam button:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.ck-chon-nam button.chon { font-size: 24px; font-weight: 800; color: #fff; cursor: default; text-decoration: none; letter-spacing: 0; }
 .ck-nut-vang { display: inline-flex; align-items: center; gap: 8px; background: var(--vang); color: #2a1d00; font-weight: 700; font-size: 14px; border-radius: 11px; padding: 9px 16px; }
 .ck-nut-vang svg { width: 16px; height: 16px; }
 /* auto-fit: trường chưa khai đủ 5 ô (vd chưa có bằng CQG) thì các ô vẫn giãn đều, không chừa lỗ */
@@ -4682,6 +4682,31 @@ body.ck-mo > footer { display: none !important; }
   .ck-cq { display: none; }
   .ck-hero .ck-khung { padding: 30px 16px 28px; }
   .ck-hero h1 { font-size: 25px; }
+  .ck-chon-nam button.chon { font-size: 21px; }
+  .ck-van-ban li { flex-wrap: wrap; row-gap: 2px; }
+  .ck-van-ban li .ck-xem { flex-basis: 100%; padding-left: 46px; font-size: 12.5px; }
+  .ck-the .ck-tt { border-radius: 8px; line-height: 1.35; }
+  .ck-nhan { font-size: 11px; letter-spacing: .6px; }
+  .ck-ten { font-size: 14px; }
+  .ck-ten small { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ck-dau .ck-khung > .ck-ten { min-width: 0; flex: 1; }
+  /* Bảng nhiều cột → thẻ dọc (5/10/2026) */
+  .ck-trang .ck-cuon.ck-cuon-the { overflow: visible; border: 0; border-radius: 0; background: none; }
+  .ck-trang .ck-cuon table.ck-bang-the, .ck-trang table.ck-bang-the tbody, .ck-trang table.ck-bang-the tr,
+  .ck-trang table.ck-bang-the td { display: block; width: 100%; min-width: 0; }
+  .ck-trang table.ck-bang-the { table-layout: auto; }
+  .ck-trang table.ck-bang-the thead { display: none; }
+  .ck-trang table.ck-bang-the tr { border: 1px solid #c9d5e8; border-radius: 10px; margin: 0 0 10px; background: #fff; overflow: hidden; }
+  .ck-trang .ck-cuon table.ck-bang-the td { border: 0; border-bottom: 1px solid #edf1f8; text-align: left; white-space: normal;
+    padding: 8px 12px; height: auto; background: none; font-size: 14px; }
+  .ck-trang .ck-cuon table.ck-bang-the td:last-child { border-bottom: 0; }
+  .ck-trang .ck-cuon table.ck-bang-the td:first-child { background: #f1f5fc; color: var(--dam); font-weight: 700; }
+  .ck-trang table.ck-bang-the td::before { content: attr(data-nhan); display: block; font-size: 11px; font-weight: 700; color: var(--chu-mo);
+    text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
+  .ck-trang table.ck-bang-the td[data-nhan=""]::before { display: none; }
+  .ck-trang table.ck-bang-the td:empty { display: none; }
+  .ck-hop .ck-cuon.ck-cuon-the { padding: 10px 8px 0; }
+  .ck-hop table.kx-bang.ck-bang-the, .ck-hop table.dm-bang.ck-bang-the { min-width: 0; table-layout: auto; }
   .ck-so-lieu { grid-template-columns: repeat(2, 1fr); }
   .ck-so { font-size: 23px; }
   .ck-luoi-muc { grid-template-columns: 1fr 1fr; gap: 10px; }
