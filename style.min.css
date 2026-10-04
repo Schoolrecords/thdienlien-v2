@@ -3321,6 +3321,12 @@ body.ck-mo > footer { display: none !important; }
 .ck-menu { margin-left: auto; display: flex; gap: 2px; }
 .ck-menu a { color: var(--chu); font-size: 14.5px; padding: 8px 13px; border-radius: 9px; font-weight: 600; }
 .ck-menu a:hover { background: var(--o-con); color: var(--chinh); }
+.ck-nut-cbgv { margin-left: 12px; display: inline-flex; align-items: center; gap: 7px; background: var(--dam); color: #fff; border: 0; border-radius: 999px;
+  padding: 9px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 8px rgba(20,48,107,.18); }
+.ck-nut-cbgv:hover { background: #1f4592; }
+.ck-nut-cbgv:disabled { opacity: .75; cursor: default; }
+.ck-nut-cbgv svg { width: 16px; height: 16px; }
+.ck-nut-cbgv .ck-ngan { display: none; }
 .ck-hero { position: relative; color: #fff; overflow: hidden; background: var(--dam); }
 .ck-hero .ck-anh { position: absolute; inset: 0; background-position: center 40%; background-size: cover; opacity: .28; }
 .ck-hero .ck-phu { position: absolute; inset: 0;
@@ -3527,6 +3533,9 @@ body.ck-mo > footer { display: none !important; }
   .ck-muc-luc { display: none; }
   .ck-lanh-dao { grid-template-columns: repeat(2, 1fr); }
   .ck-menu { display: none; }
+  .ck-nut-cbgv { margin-left: auto; padding: 8px 13px; font-size: 13.5px; }
+  .ck-nut-cbgv .ck-dai { display: none; }
+  .ck-nut-cbgv .ck-ngan { display: inline; }
 }
 @media (max-width: 640px) {
   .ck-khung { padding: 0 16px; }

@@ -136,8 +136,8 @@
     var nam = dsNam();
     var bcMoi = baoCaoMoiNhat();
 
-    var nutPhai = CHE_DO === 'ngoai'
-      ? '<button class="ck-nut-dn" type="button" data-ck="dang-nhap" title="Cán bộ, giáo viên, nhân viên đăng nhập bằng Gmail">' + svg('khoa') + 'Đăng nhập CBGV</button>'
+    // Khách: nút đăng nhập nằm ở thanh đầu (ck-nut-cbgv) — dải trên không lặp lại
+    var nutPhai = CHE_DO === 'ngoai' ? ''
       : '<button class="ck-nut-dn" type="button" data-ck="dong">↩ ' + (CHE_DO === 'thu' ? 'Đóng xem trước' : 'Về hệ thống') + '</button>';
 
     el.innerHTML =
@@ -153,6 +153,9 @@
         '<nav class="ck-menu"><a href="#ck-dau-trang">Giới thiệu</a><a href="#ck-muc-luc">Công khai</a>' +
         (THEM.tkb ? '<a href="#ck-tkb">Thời khóa biểu</a>' : '') +
         '<a href="#ck-bao_cao">Báo cáo thường niên</a><a href="#ck-lien-he">Liên hệ</a></nav>' +
+        // Lối vào RÕ cho CBGV (thầy Chung 4/10/2026: "lẽ ra cần có đường vào") — luôn hiện, kể cả điện thoại
+        (CHE_DO === 'ngoai' ? '<button class="ck-nut-cbgv" type="button" data-ck="dang-nhap" title="Cán bộ, giáo viên, nhân viên nhà trường đăng nhập bằng Gmail">' +
+          svg('khoa') + '<span class="ck-dai">Cán bộ, giáo viên đăng nhập</span><span class="ck-ngan">Đăng nhập</span></button>' : '') +
       '</div></header>' +
       '<section class="ck-hero" id="ck-dau-trang"><div class="ck-anh" data-anh="' + t(anh) + '"></div><div class="ck-phu"></div><div class="ck-khung">' +
         '<span class="ck-nhan">Công khai theo Thông tư 09/2024/TT-BGDĐT</span>' +
@@ -593,7 +596,9 @@
       (tt.nguoi_phu_trach ? '<p class="ck-cach">Người phụ trách công tác công khai: <b>' + t(tt.nguoi_phu_trach) + '</b></p>' : '') + '</div>' +
       '<div><h4>Căn cứ công khai</h4><p>Thông tư 09/2024/TT-BGDĐT ngày 03/6/2024 của Bộ trưởng Bộ Giáo dục và Đào tạo quy định về công khai trong hoạt động của các cơ sở giáo dục thuộc hệ thống giáo dục quốc dân.</p></div>' +
       '<div><h4>Dành cho cán bộ, giáo viên</h4><p>Hồ sơ, điều hành, lớp học và các dữ liệu nội bộ chỉ xem được sau khi đăng nhập.</p>' +
-      (CHE_DO === 'ngoai' ? '<p class="ck-cach"><a href="#" data-ck="dang-nhap">Đăng nhập bằng Gmail ›</a></p>' : '') + '</div>' +
+      (CHE_DO === 'ngoai' ? '<p class="ck-cach"><a href="#" data-ck="dang-nhap">Đăng nhập bằng Gmail ›</a></p>' +
+        '<p class="ck-cach">Lần đầu đăng nhập: chọn đúng Gmail đã gửi nhà trường — hệ thống tự nhận và mở đúng quyền. ' +
+        'Gmail chưa có trong danh sách thì chờ Ban giám hiệu duyệt.</p>' : '') + '</div>' +
       '</div><div class="ck-day">© ' + new Date().getFullYear() + ' ' + t(ten) + ' · Hệ thống Quản trị số Trường học</div></footer>';
   }
 
