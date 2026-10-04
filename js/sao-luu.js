@@ -38,6 +38,8 @@
     // 16 bảng BỊ SÓT đến 1/10/2026 (rà toàn app): bản sao lưu không có sổ chủ nhiệm,
     // TKB, dạy thay. Từ nay quet-app.js mục 15 chặn nếu sql/ có bảng mà đây không có.
     'day_thay', 'ho_so_truoc_2026',
+    // Cổng công khai TT 09/2024 (sql/80, 4/10/2026) — bản công bố phải lưu 05 năm (Điều 15)
+    'cong_khai',
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
     'tkb_giao_vien', 'tkb_phien_ban', 'tkb_ten_goi', 'tkb_tiet'

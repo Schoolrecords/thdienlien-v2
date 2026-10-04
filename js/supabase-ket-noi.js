@@ -32,7 +32,14 @@
     '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
     '</svg>';
 
-  function hopCong() { return document.getElementById('cong-hop'); }
+  function hopCong() {
+    // Cổng công khai (js/cong-khai.js) đang che màn → gỡ trước khi vẽ hộp đăng nhập
+    // nào. Riêng lúc người đã đăng nhập tự mở xem cổng (CHE_DO 'xem'/'thu') thì cổng
+    // không đi qua đây, nên gỡ ở đây không làm mất cổng của họ.
+    if (window.CONG_KHAI && window.CONG_KHAI.dangMo() && !dangXemCong) window.CONG_KHAI.dong();
+    return document.getElementById('cong-hop');
+  }
+  var dangXemCong = false;
 
   function dauCong() {
     var C = window.CAU_HINH || {};
@@ -69,6 +76,7 @@
 
   // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
   function moKhoa() {
+    if (window.CONG_KHAI && !dangXemCong) window.CONG_KHAI.dong();
     document.body.classList.remove('dang-khoa');
     var cong = document.getElementById('cong-vao');
     if (cong) cong.classList.add('an');
@@ -132,6 +140,21 @@
   //
   // Nghĩa là màn "chờ duyệt" ở trên KHÔNG còn lối rẽ nào nữa — ai thấy nó thì
   // đúng là chưa được cấp quyền, và câu chữ ở đó phải tự nó đủ chỉ đường.
+
+  // ══════════ CỔNG CÔNG KHAI TT 09/2024 (sổ dự án 121) ══════════
+  // Người CHƯA đăng nhập: trường đã công bố nội dung công khai (sql/80) thì hiện cổng
+  // công khai, nút "Đăng nhập CBGV" trên cổng gọi dangNhap(). Chưa có bảng hoặc chưa
+  // công bố mục nào → hộp đăng nhập như cũ. Trang VẪN khoá (body.dang-khoa) suốt lúc
+  // cổng hiện: cổng chỉ đọc bảng cong_khai, không mở dữ liệu nào của app.
+  var luotCong = 0;
+  function moCongNgoai() {
+    if (!window.CONG_KHAI || !may) { veCongDangNhap(); return; }
+    var luot = ++luotCong;
+    window.CONG_KHAI.thu(may, dangNhap).then(function (co) {
+      if (luot !== luotCong || window.NGUOI_DUNG) return;   // phiên đã tới trong lúc chờ
+      if (!co) veCongDangNhap();
+    });
+  }
 
   function veCongDangTai(chu) {
     var h = hopCong(); if (!h) return;
@@ -269,6 +292,7 @@
       '<div class="email">' + thoat(nd.email) + '</div>' +
       '<span class="the-vai-tro">' + (TEN_VAI_TRO[nd.vai_tro] || '') + '</span></div>' +
       (laQT ? '<button class="muc-menu" id="muc-quan-tri">⚙️ Quản trị hệ thống</button>' : '') +
+      '<button class="muc-menu" id="muc-cong-khai" hidden>🏛 Cổng công khai</button>' +
       // 30/9/2026: cài app lên màn hình chính (js/cai-app.js tự ẩn khi đã mở từ màn hình chính)
       '<button class="muc-menu" id="muc-cai-app" hidden>📲 Cài app lên điện thoại</button>' +
       '<a class="muc-menu" href="huong-dan.html" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng</a>' +
@@ -286,10 +310,29 @@
       window.chuyenManHinh('quantri');
     });
     document.getElementById('muc-dang-xuat').addEventListener('click', dangXuat);
+    var nutCK = document.getElementById('muc-cong-khai');
+    if (nutCK && window.CONG_KHAI && may) {
+      // Chỉ hiện khi bảng cong_khai có thật (trường đã chạy sql/80)
+      may.from('cong_khai').select('id', { count: 'exact', head: true }).then(function (r) {
+        if (r && !r.error) nutCK.hidden = false;
+      });
+      nutCK.addEventListener('click', function () {
+        hop.classList.remove('hien');
+        window.xemCongKhai();
+      });
+    }
     if (window.CAI_APP) window.CAI_APP.ganMenu(document.getElementById('muc-cai-app'));
     // Thẻ "Quản trị hệ thống" ở trang chủ: chỉ BGH/quản trị (js/app.js, mục 100)
     if (window.apQuyenGiaoDien) window.apQuyenGiaoDien();
   }
+
+  // Người đã đăng nhập xem cổng công khai (banNhap: BGH xem trước bản nháp —
+  // js/cong-khai-soan.js truyền vào). Nút "Về hệ thống" trên cổng gỡ cổng ra.
+  window.xemCongKhai = function (banNhap) {
+    if (!window.CONG_KHAI || !may) return;
+    dangXemCong = true;
+    window.CONG_KHAI.xem(may, function () { dangXemCong = false; window.scrollTo(0, 0); }, banNhap);
+  };
 
   function dangNhap() {
     // 🔴 PHẢI GIỮ LẠI ?truong=<mã> khi Google trả về.
@@ -399,10 +442,11 @@
       if (vaoNhanh) { vaoNhanh = ''; xoaVaTaiLai(); return; }
       // Hết phiên (đăng xuất ở thẻ khác, vé hết hạn) → không ai đứng tên máy này
       if (window.KHO_MAY) window.KHO_MAY.xoaHet();
-      veCongDangNhap();
+      moCongNgoai();
       return;
     }
     if (idPhienDaXuLy === phien.user.id) return; // tránh xử lý lặp khi đổi tab
+    luotCong++;   // cổng công khai đang tải dở (nếu có) thì thôi, không dựng nữa
     // Đã vào nhanh bằng tài khoản A mà phiên thật là tài khoản B → làm lại từ đầu
     if (vaoNhanh && vaoNhanh !== phien.user.id) { vaoNhanh = ''; xoaVaTaiLai(); return; }
     idPhienDaXuLy = phien.user.id;

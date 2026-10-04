@@ -586,6 +586,8 @@
   window.CSVC = {
     ve: ve, nap: nap, noiSuKien: noiSuKien,
     daTai: function () { return DA_NAP; },
-    tomTat: tomTat
+    tomTat: tomTat,
+    // Danh mục hạng mục (mã → tên) — cổng công khai đọc để đặt tên dòng (cong-khai-soan.js)
+    nhom: NHOM
   };
 })();

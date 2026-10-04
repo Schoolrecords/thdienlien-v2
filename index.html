@@ -85,7 +85,7 @@
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
   <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093005">
-  <link rel="stylesheet" href="style.min.css?v=039226e0e2">
+  <link rel="stylesheet" href="style.min.css?v=d3d0ef3291">
 </head>
 <body class="dang-khoa">
 
@@ -530,7 +530,7 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=8d10e6261d"></script>
+<script src="js/goi.min.js?v=617d8916b4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
@@ -552,6 +552,9 @@
 <!-- Kho trên máy (IndexedDB) cho Sổ chủ nhiệm hiện ngay bản đã lưu. TRƯỚC
      supabase-ket-noi.js: đăng xuất / đổi tài khoản phải xoá được kho. -->
 <script src="js/kho-may.js?v=2026093005"></script>
+<!-- Cổng công khai TT 09/2024 (sổ dự án 121, sql/80): mặt ngoài cho người chưa đăng nhập.
+     TRƯỚC supabase-ket-noi.js — tệp đó gọi window.CONG_KHAI khi chưa có phiên. -->
+<script src="js/cong-khai.js?v=2026093005"></script>
 <script src="js/supabase-ket-noi.js?v=2026093005"></script>
 <!-- Hộp thoại dùng chung (window.hopNhap / window.hopHoi) — nạp trước các
      module dùng nó. Chỉ khai báo hàm, không đụng DOM lúc nạp. -->
@@ -564,6 +567,8 @@
      điều kiện nạp như sao-luu.js: cần quan-tri.js cho window.qtTabPhu và
      hop-thoai.js cho window.hopHoi. -->
 <script src="js/phan-cong.js?v=2026093005"></script>
+<!-- Thẻ 🏛 Công khai trong Quản trị: soạn · xem trước · công bố (cần quan-tri.js, hop-thoai.js, cong-khai.js) -->
+<script src="js/cong-khai-soan.js?v=2026093005"></script>
 <script src="js/app.js?v=2026093005"></script>
 <script src="js/hoso-sua.js?v=2026093005"></script>
 <script src="js/xuat-word.js?v=2026093005"></script>
