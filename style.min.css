@@ -3756,3 +3756,78 @@ body.ck-mo > footer { display: none !important; }
   .ckq-dong { flex-wrap: wrap; padding: 12px; }
   .ckq-dong .nut-chinh { width: 100%; }
 }
+.sdb-dau { margin-bottom: 10px; }
+.sdb-ngay-chon { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sdb-ngay-chon label { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--dam); }
+.sdb-ngay-chon .dh-o-nhap { width: auto; margin-top: 0; }
+.sdb-ngay-chon .dh-nut-nho[disabled] { opacity: .4; cursor: default; }
+.sdb-chu-dau { font-size: 12.8px; color: var(--chu-mo); line-height: 1.6; margin: 8px 0 4px; }
+.sdb-buoi { background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc); padding: 12px; margin: 12px 0; }
+.sdb-buoi-dau { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; color: var(--dam); }
+.sdb-tiet { border-top: 1px solid var(--ke); padding: 12px 0 10px; }
+.sdb-tiet.da { opacity: .96; }
+.sdb-tiet-dau { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14.5px; }
+.sdb-ki { display: inline-grid; place-items: center; min-width: 34px; height: 26px; border-radius: 8px; background: var(--dam); color: #fff; font-weight: 800; font-size: 12.5px; }
+.sdb-tiet.da .sdb-ki { background: var(--ok); }
+.sdb-tiet.tre:not(.da) .sdb-ki { background: var(--canh); }
+.sdb-o-bai { font-size: 16px; min-height: 46px; }
+.sdb-o-chu { font-size: 15px; }
+.sdb-goi-y { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px; }
+.sdb-goi-y .chip-loc { white-space: nowrap; max-width: 78vw; overflow: hidden; text-overflow: ellipsis; }
+.sdb-khong-day { display: inline-flex; align-items: center; gap: 7px; font-size: 13.2px; color: var(--chu-mo); margin-top: 8px; min-height: 32px; }
+.sdb-khong-day input { width: 18px; height: 18px; }
+.sdb-bai { font-size: 15px; font-weight: 700; color: var(--chu); margin-top: 6px; line-height: 1.45; }
+.sdb-ghi-chu { font-size: 12.8px; color: var(--chu-mo); font-style: italic; margin-top: 2px; }
+.sdb-ky { font-size: 12.4px; color: var(--chu-nhat); margin-top: 4px; }
+.sdb-sua { font: inherit; font-size: 12.4px; font-weight: 700; color: var(--chinh); background: none; border: 0; cursor: pointer; padding: 4px 6px; }
+.sdb-vang { font-size: 12.4px; color: var(--chu-mo); margin-top: 6px; }
+.sdb-vang.mo { color: var(--chu-nhat); }
+.sdb-nut-luu {
+  font: inherit; font-size: 15px; font-weight: 800; min-width: 280px; padding: 0 22px; min-height: 48px; margin-top: 10px; cursor: pointer;
+  border: 0; border-radius: 12px; background: var(--dam); color: #fff;
+}
+.sdb-nut-luu[disabled] { opacity: .55; cursor: default; }
+.sdb-tong { font-size: 13.4px; color: var(--chu); margin: 6px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sdb-do { color: var(--thieu); font-weight: 700; }
+.sdb-mo { color: var(--chu-nhat); }
+.sdb-luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+.sdb-o-lop { font: inherit; cursor: pointer; border: 1px solid var(--vien); border-radius: 10px; background: #fff; padding: 7px 4px; text-align: center; }
+.sdb-o-lop b { display: block; font-size: 14px; color: var(--dam); }
+.sdb-o-lop span { font-size: 12px; color: var(--chu-mo); }
+.sdb-o-lop.xanh { background: var(--ok-nen); border-color: #bfe6cf; }
+.sdb-o-lop.do { background: var(--thieu-nen); border-color: #f2cccc; }
+.sdb-trang { padding-bottom: 30px; }
+.sdb-lop-dau { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 6px 0 8px; }
+.sdb-lop-dau h2 { margin: 0; color: var(--dam); font-size: 22px; }
+.sdb-chon { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sdb-chon label { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--chu-mo); font-size: 13px; }
+.sdb-chon select.dh-o-nhap { margin-top: 0; }
+.sdb-tuan-chu { font-weight: 800; color: var(--dam); padding: 0 4px; }
+.sdb-ngay { background: var(--the); border: 1px solid var(--vien); border-radius: var(--bo-goc); padding: 10px 12px; margin: 10px 0; }
+.sdb-ngay-dau { color: var(--dam); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sdb-trong { font-size: 12.8px; color: var(--chu-nhat); }
+.sdb-bang-cuon { overflow-x: auto; }
+.sdb-bang { width: 100%; border-collapse: collapse; font-size: 13.4px; }
+.sdb-bang { table-layout: fixed; }
+.sdb-bang th:nth-child(1) { width: 52px; } .sdb-bang th:nth-child(2) { width: 140px; } .sdb-bang th:nth-child(4) { width: 210px; }
+.sdb-bang th { text-align: left; font-size: 11.6px; text-transform: uppercase; letter-spacing: .4px; color: var(--chu-nhat); padding: 5px 6px; border-bottom: 1px solid var(--vien); }
+.sdb-bang td { padding: 7px 6px; border-bottom: 1px solid var(--ke); vertical-align: top; }
+.sdb-bang tr.chua td { background: #fcfcfd; }
+.sdb-hang-buoi td { background: var(--o-con); font-size: 12.4px; color: var(--chu-mo); font-weight: 700; }
+.sdb-cot-tiet { font-weight: 800; color: var(--dam); white-space: nowrap; width: 40px; }
+.sdb-cot-mon { white-space: nowrap; }
+.sdb-cot-ky { font-size: 12.6px; min-width: 120px; }
+.sdb-cot-ky small { display: block; color: var(--chu-nhat); }
+.sdb-chot { margin-top: 18px; }
+.sdb-tuan-ds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .sdb-nut-luu { width: 100%; min-width: 0; }
+  .sdb-bang thead { display: none; }
+  .sdb-bang, .sdb-bang tbody, .sdb-bang tr { display: block; width: 100%; }
+  .sdb-bang tr { border-bottom: 1px solid var(--ke); padding: 6px 0; }
+  .sdb-bang td { display: inline-block; border: 0; padding: 2px 4px; }
+  .sdb-bang td.sdb-cot-ky, .sdb-bang td[colspan] { display: block; padding-left: 48px; }
+  .sdb-bang tr.sdb-hang-buoi td { display: block; padding: 6px; }
+  .sdb-bang tr:not(.sdb-hang-buoi) td:nth-child(3) { display: block; padding-left: 48px; }
+  .sdb-lop-dau h2 { font-size: 19px; }
+}

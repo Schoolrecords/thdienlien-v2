@@ -85,7 +85,7 @@
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
   <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093005">
-  <link rel="stylesheet" href="style.min.css?v=d1b1c237b3">
+  <link rel="stylesheet" href="style.min.css?v=4088c95a09">
 </head>
 <body class="dang-khoa">
 
@@ -465,6 +465,11 @@
     <div id="vung-sochunhiem"></div>
   </section>
 
+  <!-- ═══ SỔ GHI ĐẦU BÀI (js/so-dau-bai.js, sql/83) — sổ tuần của một lớp; giáo viên ghi ở Điều hành › Ghi đầu bài ═══ -->
+  <section class="man-hinh" id="mh-sodaubai">
+    <div class="lh-trang" id="vung-sodaubai"></div>
+  </section>
+
   <!-- ═══ QUẢN TRỊ HỆ THỐNG ═══ -->
   <section class="man-hinh" id="mh-quantri">
     <div class="dau-muc">
@@ -530,7 +535,7 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=c4644a3911"></script>
+<script src="js/goi.min.js?v=f270b1abf1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
@@ -608,6 +613,8 @@
      dùng window.WORD_TIEN_ICH (xuat-word.js nạp phía trên). -->
 <script src="js/scn-mau.js?v=2026093005"></script>
 <script src="js/so-chu-nhiem.js?v=2026093005"></script>
+<!-- Sổ ghi đầu bài (5/10/2026, sql/83): dùng TKB_XEM (tkb-xem.js nạp phía dưới) LÚC CHẠY, không lúc nạp. -->
+<script src="js/so-dau-bai.js?v=2026093005"></script>
 <!-- Nạp dữ liệu từ Excel CSDL ngành. Sau quan-tri.js (nơi tạo window.qtTabPhu). -->
 <!-- Bộ đóng gói .xlsx + ba tệp mẫu nhập dữ liệu (CBGV · Học sinh · Chia lớp
      tuyển sinh) cho nút "Tải mẫu Excel" ở thẻ Nạp dữ liệu. Nạp TRƯỚC nap-du-lieu.js. -->

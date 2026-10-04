@@ -4,7 +4,8 @@
 // Mã màn VẪN là `hocsinh` (#mh-hocsinh, #hocsinh trên địa chỉ) để không gãy
 // liên kết cũ — chỉ chữ hiển thị đổi thành "Lớp học".
 //
-// Ba thẻ con: Tổng quan (mặc định) · Sổ chủ nhiệm · Sổ đầu bài (sắp có).
+// Các thẻ con: Tổng quan (mặc định) · Sổ chủ nhiệm · Kiểm tra sổ · Sổ đầu bài (5/10/2026, js/so-dau-bai.js —
+// chỉ hiện khi trường đã chạy sql/83, window.SDB_BAT).
 // Thầy Hiệu phó chốt 28/9/2026: mở trang là thấy TỔNG THỂ trên một màn — dải số
 // liệu + bảng lớp, mỗi dòng có sẵn lối vào Sổ chủ nhiệm / Sổ đầu bài; bảng tổng
 // hợp điểm trường × khối thu gọn ở dưới. Thẻ Sổ chủ nhiệm là màn #mh-sochunhiem (so-chu-nhiem.js) — màn đó
@@ -281,13 +282,16 @@
   // được giao. GV bộ môn, nhân viên chỉ thấy Tổng quan. so-chu-nhiem.js biết vai sớm
   // hơn (đọc ngay khi mở sổ) thì báo qua window.SCN_QUYEN.
   var CAC_THE = [['tong-quan', 'Tổng quan'], ['sochunhiem', 'Sổ chủ nhiệm'], ['kiemtra', 'Kiểm tra sổ'], ['sodaubai', 'Sổ đầu bài']];
-  var TEN_THE = { sochunhiem: 'Sổ chủ nhiệm', kiemtra: 'Kiểm tra sổ' };
+  var TEN_THE = { sochunhiem: 'Sổ chủ nhiệm', kiemtra: 'Kiểm tra sổ', sodaubai: 'Sổ đầu bài' };
+  function coSdb() { return !!(window.SDB_BAT && window.SDB_BAT()); }
   function quyenSo() {
     var vt = (window.NGUOI_DUNG || {}).vai_tro || '', q = window.SCN_QUYEN || {};
     var bgh = XEM_THU || vt === 'admin' || vt === 'ban_giam_hieu';
     return { so: bgh || LOP_TOI.length > 0 || !!q.gvcn, kiemTra: bgh || TO_TOI.length > 0 || !!q.toKT };
   }
   window.LOP_HOC_QUYEN = quyenSo;
+  // so-dau-bai.js gọi sau khi dò ra trường đã bật Sổ đầu bài — vẽ lại để hiện thẻ và lối vào từng lớp
+  window.LOP_HOC_VE_LAI = function () { ve(); };
   // Đường dẫn vị trí trên màn sổ / màn kiểm tra: màn đó tự có tiêu đề và thẻ con
   // riêng, nên KHÔNG vẽ lại tiêu đề "Lớp học" + hàng thẻ (hai tầng thẻ chồng nhau
   // chiếm nửa màn điện thoại). Về trang Lớp học bằng chữ "Lớp học" ở đây.
@@ -296,18 +300,14 @@
       '<a href="#hocsinh" data-lh-the="tong-quan">Lớp học</a><span>/</span><b>' + (TEN_THE[ma] || 'Sổ chủ nhiệm') + '</b></nav>';
   };
   window.LOP_HOC_THE = function (maDangChon, phai) {
-    if (maDangChon === 'sochunhiem' || maDangChon === 'kiemtra') return '<div class="lh-dau">' + window.LOP_HOC_VET(maDangChon) + '</div>';
+    if (maDangChon === 'sochunhiem' || maDangChon === 'kiemtra' || maDangChon === 'sodaubai') return '<div class="lh-dau">' + window.LOP_HOC_VET(maDangChon) + '</div>';
     var q = quyenSo();
     return '<div class="lh-dau">' +
       '<nav class="lh-vet" aria-label="Vị trí"><a href="#" data-lh-ve="home">Trang chủ</a><span>/</span><b>Lớp học</b></nav>' +
       '<div class="lh-dau-hang"><h2>Lớp học</h2>' + (phai ? '<div class="lh-dau-phai">' + phai + '</div>' : '') + '</div>' +
       '<div class="lh-the" role="tablist">' + CAC_THE.filter(function (t) {
-        return t[0] === 'sochunhiem' ? q.so : t[0] === 'kiemtra' ? q.kiemTra : true;
+        return t[0] === 'sochunhiem' ? q.so : t[0] === 'kiemtra' ? q.kiemTra : t[0] === 'sodaubai' ? coSdb() : true;
       }).map(function (t) {
-        if (t[0] === 'sodaubai') {
-          return '<button type="button" class="lh-the-mo" data-lh-the="sodaubai" aria-disabled="true" title="Chức năng đang xây dựng">' +
-            t[1] + ' <small>sắp có</small></button>';
-        }
         return '<button type="button" role="tab" data-lh-the="' + t[0] + '"' +
           (t[0] === maDangChon ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + t[1] + '</button>';
       }).join('') + '</div></div>';
@@ -315,7 +315,7 @@
 
   function moThe(ma) {
     if (ma === 'sodaubai') {
-      if (window.notify) window.notify('Sổ đầu bài điện tử đang được xây dựng — chưa dùng được.');
+      if (window.SO_DAU_BAI) window.SO_DAU_BAI.moLop();
       return;
     }
     if (ma === 'sochunhiem') {
@@ -363,7 +363,13 @@
     var chiKiemTra = !XEM_THU && laToKiemTra(lop) && LOP_TOI.indexOf(lop) < 0 && !/^(admin|ban_giam_hieu)$/.test((window.NGUOI_DUNG || {}).vai_tro || '');
     return '<button type="button" class="lh-lien" data-lh-scn="' + thoat(lop) + '"' + (chiKiemTra ? ' title="Mở màn kiểm tra sổ (bản đã lọc) của lớp thuộc tổ"' : '') + '>Sổ chủ nhiệm</button>';
   }
-  var O_SDB = '<span class="lh-sap-co" title="Chức năng đang xây dựng">Sổ đầu bài <small>sắp có</small></span>';
+  // Lối vào Sổ đầu bài của từng lớp: BGH/Quản trị mọi lớp, GVCN lớp mình (GV bộ môn vào bằng thẻ Sổ đầu bài)
+  function oSdb(lop) {
+    if (!coSdb()) return '';
+    var vt = (window.NGUOI_DUNG || {}).vai_tro || '';
+    if (!(XEM_THU || vt === 'admin' || vt === 'ban_giam_hieu' || LOP_TOI.indexOf(lop) >= 0)) return '';
+    return '<button type="button" class="lh-lien" data-lh-sdb="' + thoat(lop) + '">Sổ đầu bài</button>';
+  }
 
   // Bắt bấm trên CẢ trang (hàng thẻ còn nằm ở màn sổ chủ nhiệm)
   document.addEventListener('click', function (e) {
@@ -377,6 +383,8 @@
     if (!mh || !mh.contains(t)) return;
     a = t.closest('[data-lh-scn]');
     if (a) { e.preventDefault(); moSo(a.getAttribute('data-lh-scn')); return; }
+    a = t.closest('[data-lh-sdb]');
+    if (a) { e.preventDefault(); if (window.SO_DAU_BAI) window.SO_DAU_BAI.moLop(a.getAttribute('data-lh-sdb')); return; }
     a = t.closest('[data-lh-sap]');
     if (a) {
       var c = a.getAttribute('data-lh-sap');
@@ -598,7 +606,7 @@
           '<td class="so c-ss">' + x.siSo + '<span class="lh-dv"> HS</span></td>' +
           '<td class="so c-nn"><span class="lh-dv">Nam </span>' + x.nam + ' / <span class="lh-dv">Nữ </span>' + x.nu + '</td>' +
           '<td class="so c-hn">' + (x.hn ? '<span class="lh-dv">Hoà nhập </span>' + x.hn : '<span class="lh-nhat">0</span>') + '</td>' +
-          '<td class="tt c-tt">' + oSo(x.lop) + oDuyet(x.lop) + O_SDB + '</td></tr>';
+          '<td class="tt c-tt">' + oSo(x.lop) + oDuyet(x.lop) + oSdb(x.lop) + '</td></tr>';
     }
   }
 

@@ -44,6 +44,8 @@
     'khach_kiem_tra',
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
+    // Sổ ghi đầu bài (sql/83, 5/10/2026) — hồ sơ bắt buộc TT15 Đ.21.1.e, lưu hết khóa học
+    'sdb_chot', 'sdb_lich_su', 'sdb_tiet',
     'tkb_giao_vien', 'tkb_phien_ban', 'tkb_ten_goi', 'tkb_tiet'
   ];
 

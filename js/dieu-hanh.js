@@ -2392,6 +2392,9 @@
       // 29/9/2026 thầy Chung: báo nghỉ – bố trí dạy thay là việc HẰNG NGÀY của Ban giám hiệu / phụ trách
       // phân hiệu → thẻ riêng trong nhóm HÔM NAY (trước nằm sâu ở Thời khóa biểu › Dạy thay). js/day-thay.js vẽ.
       { ma: 'daythay', ten: 'Báo nghỉ – Dạy thay', bi: '👨‍🏫', ngan: 'Dạy thay' },
+      // 5/10/2026 thầy Chung: Sổ ghi đầu bài (TT15 Đ.21.1.e) — giáo viên ghi trên điện thoại mỗi buổi.
+      // js/so-dau-bai.js vẽ; chỉ hiện khi trường đã chạy sql/83 (window.SDB_BAT).
+      { ma: 'sodaubai', ten: 'Ghi đầu bài', bi: '📖', ngan: 'Đầu bài' },
       { ma: 'baoviec', ten: 'Báo việc', bi: '⚡', ngan: 'Báo việc' } ] },
     { nhom: 'NHÂN SỰ', muc: [
       { ma: 'baocao', ten: 'Điểm danh & Chấm công', bi: '🧑‍🏫', ngan: 'Chấm công' } ] },
@@ -2417,11 +2420,15 @@
   ];
   // Bốn mục của thanh tab điện thoại — đúng bản thiết kế màn 3b
   // 29/9/2026: 'daythay' thay chỗ 'baocao' (Chấm công là màn XEM, còn trong hàng chip) — thầy Chung
-  var TAB_MOBILE = ['tongquan', 'daythay', 'dexuat', 'baoviec'];
+  // 5/10/2026: thêm 'sodaubai' (giáo viên ghi đầu bài mỗi buổi) — thanh đáy thành 5 ô khi trường đã bật sổ
+  var TAB_MOBILE_GOC = ['tongquan', 'sodaubai', 'daythay', 'dexuat', 'baoviec'];
+  var TAB_MOBILE = TAB_MOBILE_GOC;
 
+  function coSdb() { return !!(window.SDB_BAT && window.SDB_BAT() && window.SO_DAU_BAI); }
   function moiMuc() {
-    var ds = [];
-    DS_NHOM.forEach(function (n) { n.muc.forEach(function (m) { ds.push(m); }); });
+    var ds = [], sdb = coSdb();
+    DS_NHOM.forEach(function (n) { n.muc.forEach(function (m) { if (m.ma !== 'sodaubai' || sdb) ds.push(m); }); });
+    TAB_MOBILE = TAB_MOBILE_GOC.filter(function (ma) { return ma !== 'sodaubai' || sdb; });
     return ds;
   }
   function tenMan(ma) {
@@ -2456,6 +2463,7 @@
     var vung = $('#vung-dieuhanh');
     if (!vung) return;
     if (MAN_CU[TAB]) TAB = MAN_CU[TAB];
+    if (TAB === 'sodaubai' && !coSdb()) TAB = 'tongquan';   // trường chưa bật sổ (chưa chạy sql/83)
 
     var bang;
     if (THAT) {
@@ -2574,6 +2582,7 @@
       // Thẻ Báo nghỉ – Dạy thay (29/9/2026): js/day-thay.js tự nạp + vẽ vào chỗ trống này (cuối veDieuHanh)
       TAB === 'bieumau' ? '<div id="dh-bieu-mau"><div class="the-thong-bao">Đang tải…</div></div>' :
       TAB === 'daythay' ? '<div id="dh-day-thay"><div class="the-thong-bao">Đang tải…</div></div>' :
+      TAB === 'sodaubai' ? '<div id="dh-so-dau-bai"><div class="the-thong-bao">Đang tải…</div></div>' :
       TAB === 'dugio' ? (window.veDuGioKT ? window.veDuGioKT() : '') :
       // Màn TKB tự nạp dữ liệu (bất đồng bộ) nên ở đây chỉ dựng chỗ trống;
       // TKB_XEM.ve() điền vào ngay sau khi gắn HTML (cuối veDieuHanh).
@@ -2586,7 +2595,7 @@
       veTongQuan();
 
     // ── Thanh tab dưới (điện thoại) ──
-    var tabM = '<div class="dh-tabm">' + TAB_MOBILE.map(function (ma) {
+    var tabM = '<div class="dh-tabm" style="grid-template-columns:repeat(' + TAB_MOBILE.length + ',1fr)">' + TAB_MOBILE.map(function (ma) {
       var m = moiMuc().filter(function (x) { return x.ma === ma; })[0] || { ten: ma, bi: '•' };
       var d = demCho(ma);
       return '<button class="' + (TAB === ma ? 'on' : '') + '" onclick="DH.tab(\'' + ma + '\')">' +
@@ -2602,6 +2611,7 @@
       veNhatKyKhoi() + tabM + '</div></div>';
     if (TAB === 'tkb' && window.TKB_XEM) window.TKB_XEM.ve(document.getElementById('tkb-xem'));
     if (TAB === 'daythay' && window.DAY_THAY) window.DAY_THAY.ve(document.getElementById('dh-day-thay'));
+    if (TAB === 'sodaubai' && window.SO_DAU_BAI) window.SO_DAU_BAI.veDieuHanh(document.getElementById('dh-so-dau-bai'));
     if (TAB === 'bieumau' && window.BIEU_MAU) window.BIEU_MAU.ve(document.getElementById('dh-bieu-mau'));
     // Khung "Việc cần xử lý" đầu Tổng quan (js/viec-nhanh.js — BGH / phụ trách điểm trường)
     if (TAB === 'tongquan' && window.VIEC_NHANH) window.VIEC_NHANH.veKhung(document.getElementById('dh-viec-can-lam'));
@@ -2912,6 +2922,8 @@
       window.DH.tab(ma);
     },
     locCS: function (ma) { LOC_CS = ma; veDieuHanh(); },
+    // so-dau-bai.js gọi sau khi dò ra trường đã bật sổ (thêm thẻ vào hàng tab)
+    ve: function () { veDieuHanh(); },
 
     // ── Công tắc Sáng/Chiều (bản thiết kế v3) ──
     // Đổi buổi là đổi CẢ dữ liệu xem lẫn buổi sẽ báo cáo — người phụ trách
