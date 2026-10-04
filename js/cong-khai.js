@@ -99,6 +99,8 @@
   var NAM = '';          // năm học đang chọn
   var CHE_DO = 'ngoai';  // 'ngoai' (chưa đăng nhập) | 'xem' (đã đăng nhập xem cổng) | 'thu' (xem trước nháp)
   var NUT_DANG_NHAP = null, NUT_DONG = null, TIEU_DE_CU = null;
+  // Tra cứu thêm (sql/81): THEM.tkb / THEM.dm — null = trường chưa bật hoặc chưa chạy 81
+  var MAY = null, THEM = { tkb: null, dm: null, xong: false }, TKB_CHON = { diem: '', lop: '' };
 
   function dsNam() {
     var m = {};
@@ -149,6 +151,7 @@
         '<img src="' + t(logo) + '" alt="" onerror="this.onerror=null;this.src=\'img/he-thong.svg\'">' +
         '<div class="ck-ten">' + t(ten) + (c.SLOGAN ? '<small>' + t(c.SLOGAN) + '</small>' : '') + '</div>' +
         '<nav class="ck-menu"><a href="#ck-dau-trang">Giới thiệu</a><a href="#ck-muc-luc">Công khai</a>' +
+        (THEM.tkb ? '<a href="#ck-tkb">Thời khóa biểu</a>' : '') +
         '<a href="#ck-bao_cao">Báo cáo thường niên</a><a href="#ck-lien-he">Liên hệ</a></nav>' +
       '</div></header>' +
       '<section class="ck-hero" id="ck-dau-trang"><div class="ck-anh" data-anh="' + t(anh) + '"></div><div class="ck-phu"></div><div class="ck-khung">' +
@@ -170,8 +173,10 @@
         '<div class="ck-luoi-muc">' + MUC.map(veThe).join('') + '</div>' +
         '<div class="ck-bo-cuc"><aside class="ck-muc-luc"><div class="ck-tieu">Mục lục</div>' +
           MUC.map(function (m) { return '<a href="#ck-' + m.ma + '"><span>' + m.so + '</span>' + t(m.ten) + '</a>'; }).join('') +
+          (THEM.tkb ? '<a href="#ck-tkb"><span>+</span>Thời khóa biểu</a>' : '') +
+          (THEM.dm ? '<a href="#ck-danh-muc"><span>+</span>Danh mục hồ sơ</a>' : '') +
           '<div class="ck-ghi">Nội dung được công bố trước ngày 30/6 hằng năm và cập nhật chậm nhất 10 ngày làm việc khi có thay đổi (Điều 15).</div>' +
-        '</aside><div class="ck-cac-muc">' + MUC.map(veMuc).join('') + '</div></div>' +
+        '</aside><div class="ck-cac-muc">' + MUC.map(veMuc).join('') + veTkb() + veDanhMuc() + '</div></div>' +
       '</div></main>' +
       veChan(tt, ten);
 
@@ -457,6 +462,87 @@
     }
   };
 
+  // ══════════ TRA CỨU THÊM: THỜI KHÓA BIỂU · DANH MỤC HỒ SƠ (sql/81) ══════════
+  var THU = { 2: 'Thứ Hai', 3: 'Thứ Ba', 4: 'Thứ Tư', 5: 'Thứ Năm', 6: 'Thứ Sáu', 7: 'Thứ Bảy', 8: 'Chủ nhật' };
+  function veTkb() {
+    var d = THEM.tkb;
+    if (!d || !d.lop || !d.lop.length) return '';
+    var diem = [];
+    d.lop.forEach(function (l) { var k = l.diem || 'Toàn trường'; if (diem.indexOf(k) < 0) diem.push(k); });
+    if (diem.indexOf(TKB_CHON.diem) < 0) TKB_CHON.diem = diem[0];
+    var dsLop = d.lop.filter(function (l) { return (l.diem || 'Toàn trường') === TKB_CHON.diem; });
+    var lop = dsLop.filter(function (l) { return l.lop === TKB_CHON.lop; })[0] || dsLop[0];
+    TKB_CHON.lop = lop.lop;
+    // lưới: hàng = (buổi, tiết), cột = thứ
+    // Cột: đủ Thứ Hai–Thứ Sáu, thêm Thứ Bảy/Chủ nhật nếu CÓ lớp nào của trường học hôm đó
+    var thu = [2, 3, 4, 5, 6], hang = {};
+    d.lop.forEach(function (l) { (l.tiet || []).forEach(function (x) { if (thu.indexOf(x[0]) < 0) thu.push(x[0]); }); });
+    (lop.tiet || []).forEach(function (x) { hang[x[1] + '|' + x[2]] = 1; });
+    thu.sort(function (a, b) { return a - b; });
+    var dsHang = Object.keys(hang).sort(function (a, b) {
+      var A = a.split('|'), B = b.split('|');
+      return (A[0] === B[0] ? 0 : A[0] === 'sang' ? -1 : 1) || (+A[1] - +B[1]);
+    });
+    function o(th, h) {
+      var p = h.split('|');
+      var x = (lop.tiet || []).filter(function (y) { return y[0] === th && y[1] === p[0] && String(y[2]) === p[1]; })[0];
+      return x ? '<b>' + t(x[3]) + '</b>' + (x[4] ? '<small>' + t(x[4]) + '</small>' : '') : '';
+    }
+    var buoiTruoc = '';
+    return '<section class="ck-muc" id="ck-tkb"><div class="ck-muc-dau"><div><div class="ck-so-la-ma">Tra cứu</div>' +
+      '<h2>Thời khóa biểu từng lớp</h2><div class="ck-can-cu">Năm học ' + t(String(d.nam_hoc || '').replace('-', '–')) +
+      (d.hoc_ky ? ' · học kỳ ' + t(d.hoc_ky) : '') + '</div></div>' +
+      (d.ap_dung_tu ? '<div class="ck-ngay">Áp dụng từ <b>' + ngay(d.ap_dung_tu) + '</b></div>' : '') + '</div>' +
+      (diem.length > 1 ? '<div class="ck-chip-hang">' + diem.map(function (k) {
+        return '<button type="button" class="ck-chip' + (k === TKB_CHON.diem ? ' chon' : '') + '" data-tkb-diem="' + t(k) + '">' + t(k) + '</button>';
+      }).join('') + '</div>' : '') +
+      '<div class="ck-chip-hang ck-chip-lop">' + dsLop.map(function (l) {
+        return '<button type="button" class="ck-chip' + (l.lop === lop.lop ? ' chon' : '') + '" data-tkb-lop="' + t(l.lop) + '">' + t(l.lop) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="ck-cuon"><table class="ck-tkb"><thead><tr><th>Lớp ' + t(lop.lop) + '</th>' +
+      thu.map(function (th) { return '<th>' + (THU[th] || th) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      dsHang.map(function (h) {
+        var p = h.split('|');
+        var vach = p[0] !== buoiTruoc && buoiTruoc ? ' class="ck-tkb-chieu"' : '';
+        buoiTruoc = p[0];
+        return '<tr' + vach + '><td>' + (p[0] === 'sang' ? 'Sáng' : 'Chiều') + ' · tiết ' + p[1] + '</td>' +
+          thu.map(function (th) { return '<td>' + o(th, h) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<p class="ck-ghi-chu">Thời khóa biểu có thể thay đổi theo kế hoạch của nhà trường; bản trên trang này là bản đang áp dụng.</p></section>';
+  }
+  function veDanhMuc() {
+    var ds = THEM.dm;
+    if (!ds || !ds.length) return '';
+    var hop = [], theoHop = {};
+    ds.forEach(function (h) { if (!theoHop[h.hop]) { theoHop[h.hop] = []; hop.push(h); } theoHop[h.hop].push(h); });
+    return '<section class="ck-muc" id="ck-danh-muc"><div class="ck-muc-dau"><div><div class="ck-so-la-ma">Tra cứu</div>' +
+      '<h2>Danh mục hồ sơ nhà trường</h2><div class="ck-can-cu">Theo mẫu Danh mục hồ sơ (Phụ lục V Nghị định 30/2020/NĐ-CP) · ' +
+      so(ds.length) + ' hồ sơ</div></div></div>' +
+      hop.map(function (g, i) {
+        var dsh = theoHop[g.hop];
+        return '<details class="ck-hop"' + (i === 0 ? ' open' : '') + '><summary><b>' + t(g.ten_hop || g.hop) + '</b><span>' + so(dsh.length) + ' hồ sơ</span></summary>' +
+          '<div class="ck-cuon"><table><thead><tr><th>Số, ký hiệu</th><th class="ck-trai">Tên hồ sơ</th><th class="ck-trai">Thời hạn bảo quản</th><th class="ck-trai">Đơn vị/người lập</th></tr></thead><tbody>' +
+          dsh.map(function (h) {
+            return '<tr><td>' + t(h.ma) + '</td><td class="ck-trai">' + t(h.ten) + '</td><td class="ck-trai">' + t(h.thoi_han) + '</td><td class="ck-trai">' + t(h.don_vi_lap || '') + '</td></tr>';
+          }).join('') + '</tbody></table></div></details>';
+      }).join('') + '</section>';
+  }
+  // Gọi hai hàm sql/81 một lần mỗi lần mở cổng; xong thì vẽ lại. Lỗi (trường chưa chạy 81) → bỏ qua.
+  function taiThem() {
+    if (!MAY || THEM.xong) return;
+    THEM.xong = true;
+    Promise.all([
+      Promise.resolve(MAY.rpc('cong_khai_tkb')).catch(function () { return null; }),
+      Promise.resolve(MAY.rpc('cong_khai_danh_muc')).catch(function () { return null; })
+    ]).then(function (kq) {
+      THEM.tkb = kq[0] && !kq[0].error ? kq[0].data : null;
+      THEM.dm = kq[1] && !kq[1].error ? kq[1].data : null;
+      if ((THEM.tkb || THEM.dm) && document.body.classList.contains('ck-mo')) {
+        var y = window.pageYOffset; veTrang(); window.scrollTo(0, y);
+      }
+    });
+  }
+
   // Báo cáo thường niên: gộp MỌI năm học đã công bố (lưu trữ 05 năm — Điều 15 khoản 2)
   function tatCaBaoCao() {
     var ds = [];
@@ -504,6 +590,13 @@
     Array.prototype.slice.call(el.querySelectorAll('[data-ck="dong"]')).forEach(function (b) {
       b.addEventListener('click', function () { var f = NUT_DONG; window.CONG_KHAI.dong(); if (f) f(); });
     });
+    Array.prototype.slice.call(el.querySelectorAll('[data-tkb-diem],[data-tkb-lop]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.hasAttribute('data-tkb-diem')) { TKB_CHON.diem = b.getAttribute('data-tkb-diem'); TKB_CHON.lop = ''; }
+        else TKB_CHON.lop = b.getAttribute('data-tkb-lop');
+        var y = window.pageYOffset; veTrang(); window.scrollTo(0, y);
+      });
+    });
     Array.prototype.slice.call(el.querySelectorAll('[data-nam]')).forEach(function (b) {
       b.addEventListener('click', function () { NAM = b.getAttribute('data-nam'); veTrang(); });
     });
@@ -540,8 +633,10 @@
     var nam = dsNam();
     if (nam.indexOf(NAM) < 0) NAM = nam[0] || (window.CAU_HINH && window.CAU_HINH.NAM_HOC) || '';
     document.body.classList.add('ck-mo');
+    THEM.xong = false;
     veTrang();
     window.scrollTo(0, 0);
+    taiThem();
     // Tiêu đề thẻ trình duyệt — giữ lại tiêu đề cũ để trả về khi đóng cổng
     if (TIEU_DE_CU == null) TIEU_DE_CU = document.title;
     document.title = 'Công khai — ' + ((C().TEN_TRUONG) || 'Quản trị số');
@@ -557,6 +652,7 @@
       // ?dangnhap=1 — lối tắt cho thầy cô lưu vào dấu trang: vào thẳng hộp đăng nhập
       if (/[?&]dangnhap=1\b/.test(location.search)) return Promise.resolve(false);
       NUT_DANG_NHAP = dangNhap;
+      MAY = may;
       return Promise.resolve(may.from('cong_khai').select(COT).eq('trang_thai', 'cong_bo'))
         .then(function (r) {
           // Bảng chưa có (trường chưa chạy sql/80) hay lỗi gì khác → giữ cổng đăng nhập cũ
@@ -568,6 +664,7 @@
     // Người đã đăng nhập xem cổng (menu tài khoản) hoặc BGH xem trước nháp
     xem: function (may, dongLai, banNhap) {
       NUT_DONG = dongLai || null;
+      MAY = may;
       if (banNhap) { mo(banNhap, 'thu'); return Promise.resolve(true); }
       return Promise.resolve(may.from('cong_khai').select(COT).eq('trang_thai', 'cong_bo')).then(function (r) {
         mo((r && r.data) || [], 'xem');

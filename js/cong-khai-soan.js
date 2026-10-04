@@ -52,7 +52,10 @@
       { kieu: 'nhom', nhan: 'Văn bản tổ chức bộ máy, quy chế (Điều 4 khoản 7, 8)' },
       { k: 'van_ban', kieu: 'vb', goiYVb: ['Quyết định thành lập, sáp nhập trường', 'Quyết định bổ nhiệm Hiệu trưởng, Phó Hiệu trưởng',
         'Quy chế tổ chức và hoạt động; sơ đồ tổ chức bộ máy', 'Quy chế thực hiện dân chủ ở cơ sở', 'Quy chế chi tiêu nội bộ', 'Chiến lược phát triển nhà trường'] },
-      { k: 'nguoi_phu_trach', nhan: 'Người phụ trách công tác công khai (in ở chân trang)', goiY: 'Hiệu trưởng …' }
+      { k: 'nguoi_phu_trach', nhan: 'Người phụ trách công tác công khai (in ở chân trang)', goiY: 'Hiệu trưởng …' },
+      { kieu: 'nhom', nhan: 'Cho người ngoài tra cứu thêm (BGH chốt 04/10/2026)', mo: 'Có hiệu lực sau khi CÔNG BỐ mục I. Chỉ đưa ra những cột được phép (sql/81): TKB — lớp, tiết, môn, tên giáo viên; danh mục — số, tên, thời hạn, đơn vị lập (không trạng thái, không link).' },
+      { k: 'hien_tkb', nhan: 'Hiện thời khóa biểu từng lớp (bản đã công bố, đang áp dụng)', kieu: 'chk' },
+      { k: 'hien_danh_muc', nhan: 'Hiện danh mục hồ sơ nhà trường (mẫu ban hành NĐ 30)', kieu: 'chk' }
     ],
     tai_chinh: [
       { k: 'cho', nhan: 'Đang chờ (để TRỐNG khi đã công bố đủ)', goiY: 'Chờ quyết toán năm 2026 · hạn 30/6/2027' },
@@ -193,6 +196,7 @@
   // ══════════ BIỂU MẪU SOẠN ══════════
   function oNhap(f, gt) {
     var v = gt == null ? '' : gt;
+    if (f.kieu === 'chk') return '<label class="ckq-chk"><input type="checkbox" data-k="' + f.k + '"' + (v === true || v === 'true' ? ' checked' : '') + '> ' + t(f.nhan) + '</label>';
     if (f.kieu === 'area') return '<textarea data-k="' + f.k + '" rows="3" placeholder="' + t(f.goiY || '') + '">' + t(v) + '</textarea>';
     return '<input data-k="' + f.k + '" ' + (f.kieu === 'so' ? 'type="number" step="any" inputmode="decimal"' : 'type="text"') +
       ' value="' + t(v) + '" placeholder="' + t(f.goiY || '') + '">';
@@ -244,6 +248,7 @@
         if (f.kieu === 'vb') return '<div class="ckq-o ckq-o-rong">' + bangHTML(f, layGT(nd, f.k), VB_COT) +
           '<small class="ckq-luu-y">Dán link <b>TỆP PDF</b> đã đặt chia sẻ "Bất kỳ ai có đường liên kết — Người xem". ' +
           '<b>Không</b> dán link thư mục hồ sơ (ô sẽ tô đỏ): thư mục hồ sơ là dữ liệu nội bộ.</small></div>';
+        if (f.kieu === 'chk') return '<div class="ckq-o ckq-o-rong">' + oNhap(f, layGT(nd, f.k)) + '</div>';
         return '<div class="ckq-o' + (f.kieu === 'area' ? ' ckq-o-rong' : '') + '"><label>' + t(f.nhan) + '</label>' + oNhap(f, layGT(nd, f.k)) + '</div>';
       }).join('') + '</div>' +
       '<div class="ckq-chan"><button type="button" class="nut-chinh" id="ckq-luu">💾 Lưu nháp</button>' +
@@ -310,6 +315,7 @@
     var form = document.getElementById('ckq-form');
     var nd = {};
     Array.prototype.slice.call(form.querySelectorAll('[data-k]')).forEach(function (i) {
+      if (i.type === 'checkbox') { if (i.checked) datGT(nd, i.getAttribute('data-k'), true); return; }
       var v = String(i.value || '').trim();
       if (v === '') return;
       datGT(nd, i.getAttribute('data-k'), i.type === 'number' ? Number(v) : v);

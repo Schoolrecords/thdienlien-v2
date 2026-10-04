@@ -3436,6 +3436,25 @@ body.ck-mo > footer { display: none !important; }
 .ck-moc b { color: var(--dam); }
 .ck-moc p { font-size: 14px; color: var(--chu-mo); }
 .ck-ghi-chu { font-size: 12.5px; color: var(--chu-mo); margin-top: 10px; }
+.ck-chip-hang { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.ck-chip { font: inherit; font-size: 13.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--vien); background: #fff; color: var(--chu); }
+.ck-chip:hover { border-color: #b8c9e8; }
+.ck-chip.chon { background: var(--dam); border-color: var(--dam); color: #fff; }
+.ck-chip-lop .ck-chip { min-width: 52px; }
+.ck-cuon table.ck-tkb td, .ck-cuon table.ck-tkb th { text-align: center; white-space: normal; min-width: 110px; vertical-align: top; }
+.ck-cuon table.ck-tkb td:first-child, .ck-cuon table.ck-tkb th:first-child { text-align: left; min-width: 110px; color: var(--chu-mo); font-size: 13px; white-space: nowrap; }
+.ck-tkb td b { display: block; color: var(--dam); font-weight: 700; }
+.ck-tkb td small { display: block; color: var(--chu-mo); font-size: 12px; }
+.ck-tkb tr.ck-tkb-chieu td { border-top: 2px solid var(--vien); }
+.ck-hop { border: 1px solid var(--ke); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+.ck-hop summary { cursor: pointer; padding: 11px 14px; display: flex; justify-content: space-between; gap: 10px; background: var(--o-con); list-style: none; }
+.ck-hop summary::-webkit-details-marker { display: none; }
+.ck-hop summary b { color: var(--dam); }
+.ck-hop summary b::before { content: "▸ "; color: var(--chu-nhat); }
+.ck-hop[open] summary b::before { content: "▾ "; }
+.ck-hop summary span { color: var(--chu-mo); font-size: 13px; white-space: nowrap; }
+.ck-hop .ck-cuon { border: 0; border-radius: 0; }
 .ck-luu-tru { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .ck-luu-tru a, .ck-luu-mo { border: 1px solid var(--ke); border-radius: 12px; padding: 12px; text-align: center; color: var(--chu); font-size: 14px; }
 .ck-luu-tru a b, .ck-luu-mo b { display: block; color: var(--dam); font-size: 16px; }
@@ -3577,6 +3596,8 @@ body.ck-mo > footer { display: none !important; }
 .ckq-bang-nut { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .ckq-chon-hs { font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--vien-dam); max-width: 100%; }
 .ckq-luu-y { color: var(--chu-mo); font-size: 12.5px; }
+.ckq-chk { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--chu); cursor: pointer; }
+.ckq-chk input { width: 18px; height: 18px; }
 .ckq-chan { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ke);
   position: sticky; bottom: 0; background: #fff; padding-bottom: 6px; }
 .ckq-cong-bo { background: #1f8a5b !important; border-color: #1f8a5b !important; }
