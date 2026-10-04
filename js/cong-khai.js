@@ -163,7 +163,7 @@
         '<p class="ck-dan">Minh bạch điều kiện bảo đảm chất lượng, kế hoạch và kết quả giáo dục, thu chi tài chính — để cha mẹ học sinh, người học và xã hội cùng biết, cùng giám sát.</p>' +
         '<div class="ck-hero-hang">' +
           (nam.length ? '<div class="ck-chon-nam" role="tablist" aria-label="Chọn năm học">' + nam.map(function (n) {
-            return '<button type="button" data-nam="' + t(n) + '" class="' + (n === NAM ? 'chon' : '') + '">' + t(n.replace('-', '–')) + '</button>';
+            return '<button type="button" data-nam="' + t(n) + '" class="' + (n === NAM ? 'chon' : '') + '">Năm học ' + t(n.replace('-', ' – ')) + '</button>';
           }).join('') + '</div>' : '') +
           (bcMoi && link(bcMoi.link) ? '<a class="ck-nut-vang" href="' + t(link(bcMoi.link)) + '" target="_blank" rel="noopener">' + svg('tai') +
             t(bcMoi.ten || ('Báo cáo thường niên ' + (bcMoi.nam || ''))) + ' (PDF)</a>' : '') +

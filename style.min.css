@@ -3338,9 +3338,10 @@ body.ck-mo > footer { display: none !important; }
 .ck-hero h1 { font-size: 34px; line-height: 1.2; margin: 14px 0 8px; font-weight: 800; max-width: 760px; color: #fff; }
 .ck-dan { color: #d4def3; max-width: 720px; font-size: 15.5px; }
 .ck-hero-hang { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 22px; }
-.ck-chon-nam { display: inline-flex; flex-wrap: wrap; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); border-radius: 12px; padding: 3px; }
-.ck-chon-nam button { font: inherit; font-size: 13.5px; color: #d4def3; background: none; border: 0; border-radius: 9px; padding: 6px 12px; cursor: pointer; }
-.ck-chon-nam button.chon { background: #fff; color: var(--dam); font-weight: 700; }
+.ck-chon-nam { display: inline-flex; flex-wrap: wrap; gap: 4px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; padding: 4px; }
+.ck-chon-nam button { font: inherit; font-size: 15px; font-weight: 600; color: #d4def3; background: none; border: 0; border-radius: 10px; padding: 9px 18px; cursor: pointer; letter-spacing: .2px; }
+.ck-chon-nam button:hover { color: #fff; background: rgba(255,255,255,.08); }
+.ck-chon-nam button.chon { background: rgba(255,255,255,.16); color: #fff; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.32); }
 .ck-nut-vang { display: inline-flex; align-items: center; gap: 8px; background: var(--vang); color: #2a1d00; font-weight: 700; font-size: 14px; border-radius: 11px; padding: 9px 16px; }
 .ck-nut-vang svg { width: 16px; height: 16px; }
 .ck-so-lieu { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 30px; max-width: 1180px; }
@@ -3354,16 +3355,17 @@ body.ck-mo > footer { display: none !important; }
 .ck-dau-muc h2 { font-size: 22px; color: var(--dam); font-weight: 800; line-height: 1.25; }
 .ck-phu-de { color: var(--chu-mo); font-size: 14px; }
 .ck-luoi-muc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 38px; }
-.ck-the { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--vien); border-radius: 16px; padding: 16px 16px 14px;
-  color: var(--chu); transition: .15s; min-height: 156px; }
-.ck-the:hover { border-color: #b8c9e8; box-shadow: 0 10px 26px rgba(20,48,107,.09); transform: translateY(-2px); }
+.ck-the { display: flex; flex-direction: column; background: #fff; border: 1px solid #d6e0ef; border-radius: 16px; padding: 18px 18px 16px;
+  color: var(--chu); transition: .15s; min-height: 178px;
+  box-shadow: 0 1px 2px rgba(20,48,107,.06), 0 6px 18px rgba(20,48,107,.08); }
+.ck-the:hover { border-color: #aebfdf; box-shadow: 0 2px 4px rgba(20,48,107,.08), 0 14px 32px rgba(20,48,107,.14); transform: translateY(-3px); }
 .ck-the-dau { display: flex; align-items: center; justify-content: space-between; }
-.ck-bi { width: 38px; height: 38px; border-radius: 11px; background: var(--o-con); display: grid; place-items: center; color: var(--chinh); }
-.ck-bi svg { width: 20px; height: 20px; }
-.ck-dieu { font-size: 12px; color: var(--chu-nhat); font-weight: 700; letter-spacing: .4px; }
-.ck-the h3 { font-size: 15.5px; margin: 12px 0 4px; line-height: 1.3; color: var(--dam); }
-.ck-mo { font-size: 13px; color: var(--chu-mo); flex: 1; }
-.ck-tt { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 9px; margin-top: 10px; align-self: flex-start; }
+.ck-bi { width: 44px; height: 44px; border-radius: 12px; background: #eaf0fa; display: grid; place-items: center; color: var(--chinh); }
+.ck-bi svg { width: 22px; height: 22px; }
+.ck-dieu { font-size: 13px; color: var(--chu-nhat); font-weight: 700; letter-spacing: .4px; }
+.ck-the h3 { font-size: 18px; margin: 14px 0 5px; line-height: 1.3; color: var(--dam); }
+.ck-mo { font-size: 14.5px; color: var(--chu-mo); flex: 1; line-height: 1.5; }
+.ck-tt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 400; border-radius: 999px; padding: 3px 11px; margin-top: 12px; align-self: flex-start; }
 .ck-tt::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
 .ck-tt-tot { color: var(--ck-tot); background: var(--ck-tot-nen); }
 .ck-tt-cho { color: var(--ck-cho); background: var(--ck-cho-nen); }
@@ -3499,7 +3501,15 @@ body.ck-mo > footer { display: none !important; }
   .ck-cuon table.ck-tkb thead th { background: #fff; color: #000; border-color: #999; }
   .ck-cuon table.ck-tkb th, .ck-cuon table.ck-tkb td { border-color: #999; }
 }
-.ck-hop { border: 1px solid var(--ke); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+.ck-hop { border: 1px solid #b0bfd8; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.ck-hop[open] summary { border-bottom: 1px solid #b0bfd8; }
+.ck-hop .ck-cuon table.kx-bang th, .ck-hop .ck-cuon table.kx-bang td,
+.ck-hop .ck-cuon table.dm-bang th, .ck-hop .ck-cuon table.dm-bang td { border: 1px solid #b9c7dd; }
+.ck-hop .ck-cuon table tr > :first-child { border-left: 0; }
+.ck-hop .ck-cuon table tr > :last-child { border-right: 0; }
+.ck-hop .ck-cuon table thead th { border-top: 0; background: #eef3fb; color: var(--dam); }
+.ck-hop .ck-cuon table tbody tr:last-child td { border-bottom: 0; }
+.ck-hop .ck-cuon table tbody tr:nth-child(even) td { background: #fafcff; }
 .ck-hop summary { cursor: pointer; padding: 11px 14px; display: flex; justify-content: space-between; gap: 10px; background: var(--o-con); list-style: none; }
 .ck-hop summary::-webkit-details-marker { display: none; }
 .ck-hop summary b { color: var(--dam); }
@@ -3547,10 +3557,10 @@ body.ck-mo > footer { display: none !important; }
   .ck-luoi-muc { grid-template-columns: 1fr 1fr; gap: 10px; }
   .ck-the { min-height: 0; padding: 12px; }
   .ck-the .ck-mo { display: none; }
-  .ck-the h3 { font-size: 14px; margin: 8px 0 0; flex: 1; }
+  .ck-the h3 { font-size: 15.5px; margin: 8px 0 0; flex: 1; }
   .ck-bi { width: 32px; height: 32px; }
   .ck-dieu { font-size: 11px; }
-  .ck-tt { font-size: 11px; padding: 2px 7px; margin-top: 8px; }
+  .ck-tt { font-size: 11.5px; padding: 2px 8px; margin-top: 8px; }
   .ck-muc { padding: 18px 16px; border-radius: 14px; }
   .ck-muc-dau { flex-direction: column; }
   .ck-ngay { text-align: left; }
