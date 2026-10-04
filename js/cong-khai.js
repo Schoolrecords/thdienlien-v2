@@ -140,6 +140,8 @@
 
     el.innerHTML =
       (CHE_DO === 'thu' ? '<div class="ck-dai-thu">XEM TRƯỚC — gồm cả bản NHÁP chưa công bố. Người ngoài chỉ thấy các mục đã công bố.</div>' : '') +
+      (CHE_DO === 'xem' && !BAN.length ? '<div class="ck-dai-thu">Nhà trường CHƯA công bố mục nào — người ngoài vẫn thấy hộp đăng nhập. ' +
+        'Ban giám hiệu soạn và công bố ở Quản trị › 🏛 Công khai; mục đầu tiên công bố xong thì cổng này thay cho hộp đăng nhập.</div>' : '') +
       '<div class="ck-thanh"><div class="ck-khung">' +
         '<div><span class="ck-cq">' + t(coQuan) + (coQuan ? ' · ' : '') + '</span><b>Cổng công khai thông tin</b></div>' + nutPhai +
       '</div></div>' +

@@ -283,6 +283,8 @@
     }
     var laQT = (nd.vai_tro === 'admin' || nd.vai_tro === 'ban_giam_hieu');
     khu.innerHTML =
+      '<button class="nut-cong-khai" id="nut-cong-khai" type="button" hidden title="Cổng công khai — xem đúng như người ngoài nhìn thấy (Thông tư 09/2024)">' +
+      '🏛<span> Cổng công khai</span></button>' +
       '<button class="chip-nguoi" id="chip-nguoi">' +
       (nd.anh_dai_dien ? '<img src="' + thoat(nd.anh_dai_dien) + '" alt="" referrerpolicy="no-referrer">' : '<span class="anh-chu">👤</span>') +
       '<span class="chip-chu"><b>' + thoat(nd.ho_ten) + '</b>' +
@@ -314,8 +316,15 @@
     if (nutCK && window.CONG_KHAI && may) {
       // Chỉ hiện khi bảng cong_khai có thật (trường đã chạy sql/80)
       may.from('cong_khai').select('id', { count: 'exact', head: true }).then(function (r) {
-        if (r && !r.error) nutCK.hidden = false;
+        if (!r || r.error) return;
+        nutCK.hidden = false;
+        // Nút tròn 🏛 cạnh ảnh đại diện (thầy Chung 4/10/2026: "tại sao phải vào Quản trị
+        // mới xem được công khai?"). KHÔNG đặt trên thanh menu: màn 1920px chỉ còn ~66px
+        // trống, nút có chữ (~120px) làm menu tràn và nút cuối bị khuất (đã đo trên QC1).
+        var tron = document.getElementById('nut-cong-khai');
+        if (tron) tron.hidden = false;
       });
+      document.getElementById('nut-cong-khai').addEventListener('click', function () { window.xemCongKhai(); });
       nutCK.addEventListener('click', function () {
         hop.classList.remove('hien');
         window.xemCongKhai();

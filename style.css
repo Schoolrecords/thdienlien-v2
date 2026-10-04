@@ -4388,7 +4388,7 @@ body.ck-mo > footer { display: none !important; }
   font-size: 15.5px; line-height: 1.6; color: var(--chu);
 }
 .ck-trang a { text-decoration: none; }
-.ck-khung { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+.ck-khung { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
 .ck-dai-thu { background: #fff3cd; color: #7a5a00; font-size: 13px; text-align: center; padding: 6px 12px; border-bottom: 1px solid #f1e2b5; }
 .ck-thanh { background: #0d2350; color: #c9d6f0; font-size: 12.5px; letter-spacing: .3px; }
 .ck-thanh .ck-khung { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; }
@@ -4570,7 +4570,46 @@ body.ck-mo > footer { display: none !important; }
 }
 
 /* ═══ Thẻ Quản trị "🏛 Công khai" — soạn, xem trước, công bố (js/cong-khai-soan.js) ═══ */
+/* Nút tròn 🏛 cạnh ảnh đại diện — mở cổng công khai (supabase-ket-noi.js) */
+.nut-cong-khai {
+  flex: 0 0 auto; width: 40px; height: 40px; margin-right: 8px; border-radius: 50%; cursor: pointer;
+  display: inline-grid; place-items: center; font-size: 18px; line-height: 1; color: #fff;
+  background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.55);
+}
+.nut-cong-khai[hidden] { display: none; }
+.nut-cong-khai:hover { background: rgba(255,255,255,.18); }
+.nut-cong-khai span { display: none; }
+@media (max-width: 999px) {
+  .khu-dieu-huong .nut-cong-khai { display: flex; width: 100%; height: auto; border-radius: 999px; justify-content: center;
+    gap: 4px; padding: 8px 10px; margin: 0 0 8px; font-size: 14px; font-weight: 700; }
+  .khu-dieu-huong .nut-cong-khai[hidden] { display: none; }
+  .khu-dieu-huong .nut-cong-khai span { display: inline; }
+}
 .ckq-khu { margin-top: 16px; }
+/* Màn soạn Công khai TRẢI RỘNG (thầy Chung 4/10/2026: "giao diện hơi hẹp, cần làm rộng để dễ
+   quan sát") — cùng cách và cùng mốc với .dh-rong của Điều hành: nới hai bên bằng margin âm,
+   KHÔNG dùng transform (giết position:sticky của thanh nút cuối biểu mẫu). */
+@media (min-width: 1400px) {
+  .ckq-khu {
+    width: min(100vw - 48px, 1720px);
+    margin-left: calc((100% - min(100vw - 48px, 1720px)) / 2);
+  }
+}
+/* Danh sách 8 mục: lưới thẻ trên màn rộng — đỡ phải cuộn mới thấy biểu mẫu */
+@media (min-width: 1100px) {
+  .ckq-ds { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .ckq-dong { border-right: 1px solid var(--ke); }
+  .ckq-dong:nth-child(2n) { border-right: 0; }
+  .ckq-dong:nth-last-child(-n+2) { border-bottom: 0; }
+}
+@media (min-width: 1600px) {
+  .ckq-ds { grid-template-columns: repeat(4, 1fr); }
+  .ckq-dong { flex-wrap: wrap; align-items: flex-start; border-bottom: 0; }
+  .ckq-dong:nth-child(2n) { border-right: 1px solid var(--ke); }
+  .ckq-dong:nth-child(4n) { border-right: 0; }
+  .ckq-dong:nth-child(-n+4) { border-bottom: 1px solid var(--ke); }
+  .ckq-dong .nut-chinh { margin-left: 48px; }
+}
 .ckq-khu .nut-phu { font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--vien-dam);
   background: #fff; color: var(--chu); cursor: pointer; }
 .ckq-khu .nut-phu:hover { border-color: var(--chinh); color: var(--chinh); }
