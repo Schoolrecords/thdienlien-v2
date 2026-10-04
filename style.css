@@ -4542,6 +4542,16 @@ body.ck-mo > footer { display: none !important; }
 .ck-hop[open] summary b::before { content: "▾ "; }
 .ck-hop summary span { color: var(--chu-mo); font-size: 13px; white-space: nowrap; }
 .ck-hop .ck-cuon { border: 0; border-radius: 0; }
+/* Cột thẳng hàng giữa các hộp (danh mục hồ sơ · màn khách) */
+.ck-hop table.kx-bang, .ck-hop table.dm-bang { table-layout: fixed; }
+.ck-hop table.kx-bang th:nth-child(1), .ck-hop table.dm-bang th:nth-child(1) { width: 120px; }
+.ck-hop table.kx-bang th:nth-child(3) { width: 120px; }
+.ck-hop table.kx-bang th:nth-child(4) { width: 140px; }
+.ck-hop table.kx-bang th:nth-child(5) { width: 70px; }
+.ck-hop table.dm-bang th:nth-child(3) { width: 170px; }
+.ck-hop table.dm-bang th:nth-child(4) { width: 220px; }
+.ck-hop table.kx-bang td, .ck-hop table.dm-bang td { white-space: normal; }
+@media (max-width: 640px) { .ck-hop table.kx-bang, .ck-hop table.dm-bang { table-layout: auto; min-width: 560px; } }
 .ck-luu-tru { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .ck-luu-tru a, .ck-luu-mo { border: 1px solid var(--ke); border-radius: 12px; padding: 12px; text-align: center; color: var(--chu); font-size: 14px; }
 .ck-luu-tru a b, .ck-luu-mo b { display: block; color: var(--dam); font-size: 16px; }

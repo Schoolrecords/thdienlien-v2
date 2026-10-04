@@ -521,7 +521,7 @@
       hop.map(function (g, i) {
         var dsh = theoHop[g.hop];
         return '<details class="ck-hop"' + (i === 0 ? ' open' : '') + '><summary><b>' + t(g.ten_hop || g.hop) + '</b><span>' + so(dsh.length) + ' hồ sơ</span></summary>' +
-          '<div class="ck-cuon"><table><thead><tr><th>Số, ký hiệu</th><th class="ck-trai">Tên hồ sơ</th><th class="ck-trai">Thời hạn bảo quản</th><th class="ck-trai">Đơn vị/người lập</th></tr></thead><tbody>' +
+          '<div class="ck-cuon"><table class="dm-bang"><thead><tr><th>Số, ký hiệu</th><th class="ck-trai">Tên hồ sơ</th><th class="ck-trai">Thời hạn bảo quản</th><th class="ck-trai">Đơn vị/người lập</th></tr></thead><tbody>' +
           dsh.map(function (h) {
             return '<tr><td>' + t(h.ma) + '</td><td class="ck-trai">' + t(h.ten) + '</td><td class="ck-trai">' + t(h.thoi_han) + '</td><td class="ck-trai">' + t(h.don_vi_lap || '') + '</td></tr>';
           }).join('') + '</tbody></table></div></details>';

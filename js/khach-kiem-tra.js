@@ -6,7 +6,7 @@
 //   2. window.KHACH_XEM.mo(may, info, dangXuat): màn CHỈ XEM danh mục minh chứng cho khách
 //      còn hạn — supabase-ket-noi.js gọi khi tài khoản đăng nhập bị 'khoa' mà khach_toi() có.
 // Khách KHÔNG vào được app (tài khoản luôn 'khoa', sql/82) — màn này đọc qua khach_ho_so().
-// Quyền mở TỆP trên Drive: Apps Script KhachKiemTra.gs (thêm/gỡ người xem theo danh sách).
+// Quyền mở TỆP trên Drive: Apps Script CongKhaiDrive.gs › dongBoKhach (thêm/gỡ người xem theo danh sách).
 // ============================================================
 (function () {
   'use strict';
@@ -51,7 +51,7 @@
       '<div class="ckq-dau"><div><h3>🧾 Tài khoản khách kiểm tra</h3>' +
       '<p>Cho đoàn kiểm tra, đoàn đánh giá ngoài <b>xem danh mục minh chứng</b> trong thời gian làm việc (tối đa 60 ngày mỗi lần cấp). ' +
       'Khách đăng nhập bằng Gmail của họ tại địa chỉ trường, <b>chỉ thấy</b> danh sách hồ sơ minh chứng và đường dẫn; không vào được Điều hành, Lớp học, danh sách cán bộ, học sinh. ' +
-      'Hết hạn hoặc thu hồi là mất quyền ngay. Quyền mở tệp trên Drive do Apps Script <b>KhachKiemTra.gs</b> thêm/gỡ theo danh sách này.</p></div></div>' +
+      'Hết hạn hoặc thu hồi là mất quyền ngay. Quyền mở tệp trên Drive do Apps Script <b>CongKhaiDrive.gs</b> (hàm dongBoKhach) thêm/gỡ theo danh sách này.</p></div></div>' +
       '<div class="ckq-soan"><div class="ckq-soan-dau"><h3>Cấp tài khoản khách</h3></div><div class="ckq-luoi">' +
       '<div class="ckq-o"><label>Gmail của khách</label><input id="kk-email" type="email" placeholder="Gmail của thành viên đoàn"></div>' +
       '<div class="ckq-o"><label>Họ và tên</label><input id="kk-ten" type="text"></div>' +
@@ -139,7 +139,7 @@
       '</select><input id="kx-q" type="search" placeholder="Tìm theo mã hoặc tên hồ sơ…" value="' + t(LOC.q) + '"></div>' +
       (nhom.length ? nhom.map(function (g) {
         return '<details class="ck-hop" open><summary><b>' + t(g.ten_hop || g.hop) + '</b><span>' + theo[g.hop].length + ' hồ sơ</span></summary>' +
-          '<div class="ck-cuon"><table><thead><tr><th>Mã</th><th class="ck-trai">Tên hồ sơ</th><th class="ck-trai">Tiêu chí</th><th class="ck-trai">Tình trạng</th><th></th></tr></thead><tbody>' +
+          '<div class="ck-cuon"><table class="kx-bang"><thead><tr><th>Mã</th><th class="ck-trai">Tên hồ sơ</th><th class="ck-trai">Tiêu chí</th><th class="ck-trai">Tình trạng</th><th></th></tr></thead><tbody>' +
           theo[g.hop].map(function (h) {
             var u = link(h.link);
             return '<tr><td>' + t(h.ma) + '</td><td class="ck-trai">' + t(h.ten) + '</td><td class="ck-trai">' + t((h.tieu_chi || []).join(', ')) + '</td>' +
