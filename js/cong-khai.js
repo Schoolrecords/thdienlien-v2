@@ -488,7 +488,31 @@
       var x = (lop.tiet || []).filter(function (y) { return y[0] === th && y[1] === p[0] && String(y[2]) === p[1]; })[0];
       return x ? '<b>' + t(x[3]) + '</b>' + (x[4] ? '<small>' + t(x[4]) + '</small>' : '') : '';
     }
-    var buoiTruoc = '';
+    // Nhóm hàng theo buổi: cột "Buổi" gộp ô (☀ Sáng / ⛅ Chiều), dải ngăn giữa hai buổi
+    var nhom = [];
+    dsHang.forEach(function (h) {
+      var b = h.split('|')[0];
+      if (!nhom.length || nhom[nhom.length - 1].b !== b) nhom.push({ b: b, hang: [] });
+      nhom[nhom.length - 1].hang.push(h);
+    });
+    var homNay = new Date().getDay() + 1;   // getDay: 1 = Thứ Hai → mã thứ 2
+    function lopNgay(th) { return th === homNay ? ' class="ck-hom-nay"' : ''; }
+    var ICON = {
+      sang: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+      chieu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 19h9a3.6 3.6 0 0 0 .4-7.2 5 5 0 0 0-9.6 1.2A3 3 0 0 0 7.5 19z"/><path d="M15.5 3.2v1.6M20.6 5.4l-1.1 1.1M22 10.3h-1.6M10.4 5.4l1.1 1.1"/></svg>'
+    };
+    var soCot = thu.length + 2;
+    var than = nhom.map(function (g, gi) {
+      var ten = g.b === 'sang' ? 'Sáng' : 'Chiều';
+      return (gi ? '<tr class="ck-tkb-ngan" aria-hidden="true"><td colspan="' + soCot + '"></td></tr>' : '') +
+        g.hang.map(function (h, i) {
+          return '<tr class="ck-tkb-' + g.b + '">' +
+            (i ? '' : '<th scope="rowgroup" rowspan="' + g.hang.length + '" class="ck-tkb-buoi">' + ICON[g.b === 'sang' ? 'sang' : 'chieu'] +
+              '<span>' + ten + '</span></th>') +
+            '<td class="ck-tkb-tiet"><span title="' + ten + ' – tiết ' + t(h.split('|')[1]) + '">' + t(h.split('|')[1]) + '</span></td>' +
+            thu.map(function (th) { return '<td' + lopNgay(th) + '>' + o(th, h) + '</td>'; }).join('') + '</tr>';
+        }).join('');
+    }).join('');
     return '<section class="ck-muc" id="ck-tkb"><div class="ck-muc-dau"><div><div class="ck-so-la-ma">Tra cứu</div>' +
       '<h2>Thời khóa biểu từng lớp</h2><div class="ck-can-cu">Năm học ' + t(String(d.nam_hoc || '').replace('-', '–')) +
       (d.hoc_ky ? ' · học kỳ ' + t(d.hoc_ky) : '') + '</div></div>' +
@@ -499,15 +523,12 @@
       '<div class="ck-chip-hang ck-chip-lop">' + dsLop.map(function (l) {
         return '<button type="button" class="ck-chip' + (l.lop === lop.lop ? ' chon' : '') + '" data-tkb-lop="' + t(l.lop) + '">' + t(l.lop) + '</button>';
       }).join('') + '</div>' +
-      '<div class="ck-cuon"><table class="ck-tkb"><thead><tr><th>Lớp ' + t(lop.lop) + '</th>' +
-      thu.map(function (th) { return '<th>' + (THU[th] || th) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      dsHang.map(function (h) {
-        var p = h.split('|');
-        var vach = p[0] !== buoiTruoc && buoiTruoc ? ' class="ck-tkb-chieu"' : '';
-        buoiTruoc = p[0];
-        return '<tr' + vach + '><td>' + (p[0] === 'sang' ? 'Sáng' : 'Chiều') + ' · tiết ' + p[1] + '</td>' +
-          thu.map(function (th) { return '<td>' + o(th, h) + '</td>'; }).join('') + '</tr>';
-      }).join('') + '</tbody></table></div>' +
+      '<div class="ck-tkb-ten">Thời khóa biểu lớp <b>' + t(lop.lop) + '</b>' +
+      (diem.length > 1 ? ' · ' + t(TKB_CHON.diem) : '') + '</div>' +
+      '<div class="ck-cuon ck-cuon-tkb"><table class="ck-tkb"><caption class="ck-an">Thời khóa biểu lớp ' + t(lop.lop) + '</caption>' +
+      '<thead><tr><th scope="col">Buổi</th><th scope="col">Tiết</th>' +
+      thu.map(function (th) { return '<th scope="col"' + lopNgay(th) + '>' + (THU[th] || th) + (th === homNay ? '<small>Hôm nay</small>' : '') + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + than + '</tbody></table></div>' +
       '<p class="ck-ghi-chu">Thời khóa biểu có thể thay đổi theo kế hoạch của nhà trường; bản trên trang này là bản đang áp dụng.</p></section>';
   }
   function veDanhMuc() {
