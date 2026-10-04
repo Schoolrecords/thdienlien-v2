@@ -99,6 +99,7 @@
   var NAM = '';          // năm học đang chọn
   var CHE_DO = 'ngoai';  // 'ngoai' (chưa đăng nhập) | 'xem' (đã đăng nhập xem cổng) | 'thu' (xem trước nháp)
   var NUT_DANG_NHAP = null, NUT_DONG = null, TIEU_DE_CU = null;
+  var NUT_DANG_XUAT = null, EMAIL_CHO = '';   // chế độ 'cho': đăng nhập Gmail chưa có trong danh sách
   // Tra cứu thêm (sql/81): THEM.tkb / THEM.dm — null = trường chưa bật hoặc chưa chạy 81
   var MAY = null, THEM = { tkb: null, dm: null, xong: false }, TKB_CHON = { diem: '', lop: '' };
 
@@ -138,10 +139,15 @@
 
     // Khách: nút đăng nhập nằm ở thanh đầu (ck-nut-cbgv) — dải trên không lặp lại
     var nutPhai = CHE_DO === 'ngoai' ? ''
+      : CHE_DO === 'cho' ? '<button class="ck-nut-dn" type="button" data-ck="dang-xuat">Đăng xuất</button>'
       : '<button class="ck-nut-dn" type="button" data-ck="dong">↩ ' + (CHE_DO === 'thu' ? 'Đóng xem trước' : 'Về hệ thống') + '</button>';
 
     el.innerHTML =
       (CHE_DO === 'thu' ? '<div class="ck-dai-thu">XEM TRƯỚC — gồm cả bản NHÁP chưa công bố. Người ngoài chỉ thấy các mục đã công bố.</div>' : '') +
+      (CHE_DO === 'cho' ? '<div class="ck-dai-cho"><div class="ck-khung">' + svg('khoa') + '<div>Gmail <b>' + t(EMAIL_CHO) +
+        '</b> chưa có trong danh sách cán bộ, giáo viên của trường — anh/chị đang xem <b>phần công khai</b>. ' +
+        'Nếu là cán bộ, giáo viên mới, hãy báo Ban giám hiệu duyệt; hoặc ' +
+        '<a href="#" data-ck="dang-xuat">đăng xuất</a> rồi đăng nhập đúng Gmail đã gửi nhà trường.</div></div></div>' : '') +
       (CHE_DO === 'xem' && !BAN.length ? '<div class="ck-dai-thu">Nhà trường CHƯA công bố mục nào — người ngoài vẫn thấy hộp đăng nhập. ' +
         'Ban giám hiệu soạn và công bố ở Quản trị › 🏛 Công khai; mục đầu tiên công bố xong thì cổng này thay cho hộp đăng nhập.</div>' : '') +
       '<div class="ck-thanh"><div class="ck-khung">' +
@@ -633,6 +639,13 @@
         if (NUT_DANG_NHAP) NUT_DANG_NHAP();
       });
     });
+    Array.prototype.slice.call(el.querySelectorAll('[data-ck="dang-xuat"]')).forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.preventDefault();
+        var f = NUT_DANG_XUAT; window.CONG_KHAI.dong();
+        if (f) f(); else location.reload();
+      });
+    });
     Array.prototype.slice.call(el.querySelectorAll('[data-ck="dong"]')).forEach(function (b) {
       b.addEventListener('click', function () { var f = NUT_DONG; window.CONG_KHAI.dong(); if (f) f(); });
     });
@@ -689,6 +702,7 @@
   }
 
   window.CONG_KHAI = {
+    cheDo: function () { return document.body.classList.contains('ck-mo') ? CHE_DO : ''; },
     MUC: MUC,
     COT: COT,
     hanNam: hanNam,
@@ -704,6 +718,21 @@
           // Bảng chưa có (trường chưa chạy sql/80) hay lỗi gì khác → giữ cổng đăng nhập cũ
           if (!r || r.error || !r.data || !r.data.length) return false;
           mo(r.data, 'ngoai');
+          return true;
+        }, function () { return false; });
+    },
+    // Đăng nhập bằng Gmail KHÔNG có trong danh sách CBGV (tài khoản 'cho_duyet') — thầy Chung
+    // 5/10/2026: người ngoài lỡ bấm "Cán bộ, giáo viên đăng nhập" thì coi như KHÁCH: đưa về cổng,
+    // báo một dòng, có nút Đăng xuất. Quyền không đổi: RLS vẫn chỉ cho đọc bản công bố.
+    choDuyet: function (may, email, dangXuat) {
+      if (!may) return Promise.resolve(false);
+      NUT_DANG_XUAT = dangXuat || null;
+      EMAIL_CHO = email || '';
+      MAY = may;
+      return Promise.resolve(may.from('cong_khai').select(COT).eq('trang_thai', 'cong_bo'))
+        .then(function (r) {
+          if (!r || r.error || !r.data || !r.data.length) return false;
+          mo(r.data, 'cho');
           return true;
         }, function () { return false; });
     },

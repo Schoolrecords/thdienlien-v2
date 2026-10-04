@@ -3343,6 +3343,10 @@ body.ck-mo > footer { display: none !important; }
 }
 .ck-trang a { text-decoration: none; }
 .ck-khung { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+.ck-dai-cho { background: #eef4ff; color: #1c3a72; font-size: 13.5px; border-bottom: 1px solid #c9d8f3; }
+.ck-dai-cho .ck-khung { display: flex; gap: 10px; align-items: flex-start; padding-top: 10px; padding-bottom: 10px; }
+.ck-dai-cho svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; }
+.ck-dai-cho a { color: var(--chinh); text-decoration: underline; }
 .ck-dai-thu { background: #fff3cd; color: #7a5a00; font-size: 13px; text-align: center; padding: 6px 12px; border-bottom: 1px solid #f1e2b5; }
 .ck-thanh { background: #0d2350; color: #c9d6f0; font-size: 12.5px; letter-spacing: .3px; }
 .ck-thanh .ck-khung { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; }

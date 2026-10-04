@@ -76,7 +76,9 @@
 
   // Trang chỉ mở khi tài khoản ĐÃ đăng nhập VÀ đang hoạt động
   function moKhoa() {
-    if (window.CONG_KHAI && !dangXemCong) window.CONG_KHAI.dong();
+    // Cổng chế độ 'cho' (Gmail chờ duyệt xem như khách) mà nay đã được duyệt → đóng cổng, vào hệ thống
+    var laCho = window.CONG_KHAI && window.CONG_KHAI.cheDo && window.CONG_KHAI.cheDo() === 'cho';
+    if (window.CONG_KHAI && (!dangXemCong || laCho)) { window.CONG_KHAI.dong(); if (laCho) dangXemCong = false; }
     document.body.classList.remove('dang-khoa');
     var cong = document.getElementById('cong-vao');
     if (cong) cong.classList.add('an');
@@ -100,11 +102,22 @@
   // chứng (js/khach-kiem-tra.js), trang app VẪN khoá. Trường chưa chạy 82 / không phải khách
   // / hết hạn → hộp chờ duyệt / bị khoá như cũ.
   function choDuyetHoacKhach(email, laKhoa) {
-    if (!window.KHACH_XEM || !may) { veCongChoDuyet(email, laKhoa); return; }
+    if (!window.KHACH_XEM || !may) { choHoacCong(email, laKhoa); return; }
     Promise.resolve(may.rpc('khach_toi')).then(function (r) {
       if (r && !r.error && r.data) { dangXemCong = true; window.KHACH_XEM.mo(may, r.data, dangXuat); }
-      else veCongChoDuyet(email, laKhoa);
-    }, function () { veCongChoDuyet(email, laKhoa); });
+      else choHoacCong(email, laKhoa);
+    }, function () { choHoacCong(email, laKhoa); });
+  }
+
+  // Gmail chưa có trong danh sách CBGV (chờ duyệt) → coi như KHÁCH: đưa về cổng công khai kèm
+  // một dòng báo + nút Đăng xuất (thầy Chung 5/10/2026). Trường chưa công bố mục nào, hoặc tài
+  // khoản bị khoá → giữ màn báo cũ. Không đổi quyền: RLS vẫn chỉ cho đọc bản công bố.
+  function choHoacCong(email, laKhoa) {
+    if (laKhoa || !window.CONG_KHAI || !window.CONG_KHAI.choDuyet || !may) { veCongChoDuyet(email, laKhoa); return; }
+    dangXemCong = true;
+    window.CONG_KHAI.choDuyet(may, email, dangXuat).then(function (co) {
+      if (!co) { dangXemCong = false; veCongChoDuyet(email, laKhoa); }
+    }, function () { dangXemCong = false; veCongChoDuyet(email, laKhoa); });
   }
 
   function veCongChoDuyet(email, laKhoa) {
