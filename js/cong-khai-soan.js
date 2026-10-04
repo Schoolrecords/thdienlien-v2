@@ -441,6 +441,12 @@
       SO_LIEU[NAM] = r.data; return r.data;
     });
   }
+  // Bằng công nhận CQG chỉ tính khi đã khai số quyết định hoặc ngày ký — bảng cnqg_bang
+  // dựng sẵn một dòng MẪU (Mức 1, trống QĐ) cho trường điền; đọc dòng đó là ghi sai mức.
+  function bangCQG(sl) {
+    var q = sl && sl.chuan_qg;
+    return q && q.muc_do && (q.so_quyet_dinh || q.ngay_ky) ? q : null;
+  }
   function tong(ds, k) { return (ds || []).reduce(function (a, d) { return a + (Number(d[k]) || 0); }, 0); }
   function trong(v) { return v == null || v === '' || (Array.isArray(v) && !v.length); }
 
@@ -488,7 +494,7 @@
       if (hs) nd.tom_tat.hoc_sinh = hs;
       var cb = demCBGV();
       if (cb.tong) nd.tom_tat.cbgv = cb.tong;
-      if (sl.chuan_qg && sl.chuan_qg.muc_do && trong(nd.tom_tat.chuan_qg)) nd.tom_tat.chuan_qg = 'Mức ' + sl.chuan_qg.muc_do;
+      if (bangCQG(sl) && trong(nd.tom_tat.chuan_qg)) nd.tom_tat.chuan_qg = 'Mức ' + bangCQG(sl).muc_do;
       nd.tom_tat.chot = homNay();
       if (trong(nd.lanh_dao)) {
         var ld = (window.DS_TAI_KHOAN || []).filter(function (u) { return /hiệu trưởng/i.test(u.chuc_vu || ''); })
@@ -496,7 +502,8 @@
           .map(function (u) { return { chuc_vu: u.chuc_vu, ho_ten: u.ho_ten, email: u.email || '', dien_thoai: u.so_dien_thoai || u.sdt || '' }; });
         if (ld.length) nd.lanh_dao = ld;
       }
-      return 'Số lớp, học sinh theo danh sách lớp năm ' + NAM + '; CBGV theo danh sách tài khoản (' + cb.tong + ' người).';
+      return 'Số lớp, học sinh theo danh sách lớp năm ' + NAM + '; CBGV theo danh sách tài khoản (' + cb.tong + ' người).' +
+        (bangCQG(sl) ? '' : ' Ô chuẩn quốc gia: chưa khai bằng công nhận (số QĐ) trong hệ thống — thầy cô ghi tay, ví dụ "Mức 2 (bảo lưu)".');
     },
     doi_ngu: function (nd) {
       var c = demCBGV();
@@ -535,8 +542,8 @@
       return 'Chưa có số liệu Kiểm kê CSVC năm ' + NAM + ' — nhập tay hoặc kiểm kê ở mục Đảm bảo chất lượng.';
     },
     kiem_dinh: function (nd, sl) {
-      var q = sl.chuan_qg;
-      if (!q || !q.muc_do) return 'Chưa có thông tin bằng công nhận chuẩn quốc gia trong hệ thống.';
+      var q = bangCQG(sl);
+      if (!q) return 'Chưa khai bằng công nhận chuẩn quốc gia (số QĐ, ngày ký) trong hệ thống — nhập tay các mốc.';
       nd.moc = nd.moc || [];
       var tieuDe = 'Công nhận đạt chuẩn quốc gia Mức độ ' + q.muc_do;
       if (!nd.moc.some(function (x) { return x.tieu_de === tieuDe; })) {
