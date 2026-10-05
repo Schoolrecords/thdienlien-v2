@@ -203,7 +203,7 @@
     });
     return ra;
   }
-  // Danh sách chọn tên bài (6/10/2026, thầy Chung): các tiết của 5 BÀI quanh bài đang xét (2 bài trước, bài này,
+  // Danh sách chọn tên bài (5/10/2026, thầy Chung): các tiết của 5 BÀI quanh bài đang xét (2 bài trước, bài này,
   // 2 bài sau) trong kế hoạch dạy học của môn — chọn trong danh sách hoặc vẫn tự gõ. Mốc: tiết PPCT đã ghi → tên
   // bài trùng → bài kế hoạch của ô → bài đầu tiên của tuần học chứa ngày.
   function tenBaiGoc(ten) { return String(ten || '').replace(/\s*\(\s*tiết\s*\d+\s*\)\s*$/i, '').trim(); }
@@ -1196,7 +1196,7 @@
     var dau = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
       '<td style="border:none;padding:0;width:42%;text-align:center;vertical-align:top;font-size:11pt">' +
       ch(W.cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br><b>' + ch(W.cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
-      // Nét kẻ dưới tên trường (NĐ 30: 1/3–1/2 dòng chữ; thầy Chung 6/10/2026) — cỡ 8pt cho đỡ ăn chiều cao trang sổ tuần
+      // Nét kẻ dưới tên trường (NĐ 30: 1/3–1/2 dòng chữ; thầy Chung 5/10/2026) — cỡ 8pt cho đỡ ăn chiều cao trang sổ tuần
       W.gach(Math.max(2.2, Math.min(4, W.cauHinh('TEN_TRUONG').length * 0.24 * 0.4)), 8) + '</td>' +
       '<td style="border:none;padding:0;width:58%;text-align:center;vertical-align:top">' +
       '<b style="font-size:15pt">SỔ GHI ĐẦU BÀI</b><br><span style="font-size:12pt"><b>Lớp ' + ch(lop) + '</b> · Năm học ' + ch(namHoc()) + '</span><br>' +

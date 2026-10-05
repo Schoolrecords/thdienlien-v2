@@ -1444,7 +1444,7 @@ td.tdst { white-space: nowrap; text-align: right; }
   --canh: #8f5d14; --canh-nen: #fdf3e0;   /* #a86a08 chỉ đạt 4,03:1 — nay 5,1:1 */
   --thieu: #9b2c3a; --thieu-nen: #fdecee;
   --vang-nen: #fdf6e6;
-  --cam-nut: #e0710f; --cam-nut-dam: #c4600b;   /* nút Lưu / Ghi của sổ đầu bài (6/10/2026: navy nặng nề → cam) */
+  --cam-nut: #e0710f; --cam-nut-dam: #c4600b;   /* nút Lưu / Ghi của sổ đầu bài (5/10/2026: navy nặng nề → cam) */
   --navy-fill: linear-gradient(135deg, #0e2454, #14306b 60%, #22488c);
 }
 
@@ -4878,9 +4878,11 @@ body.ck-mo > footer { display: none !important; }
 .sdb-tiet.tre:not(.da) .sdb-ki { background: var(--canh); }
 .sdb-o-bai { font-size: 16px; min-height: 46px; }          /* 16px: iPhone không tự phóng to khi chạm ô */
 .sdb-o-chu { font-size: 15px; }
-/* Sổ chủ nhiệm › Học sinh: nút Xoá cuối mỗi dòng (6/10/2026) */
+/* Sổ chủ nhiệm › Học sinh: nút Xoá cuối mỗi dòng (5/10/2026) */
 .scn-bang .scn-c-xoa { width: 1%; white-space: nowrap; text-align: right; }
-/* Chọn tên bài trong kế hoạch dạy học (6/10/2026) — select dài, không tràn trên điện thoại */
+.scn-nut.phu.scn-nut-sua { color: var(--chinh); }
+.scn-nut.phu.scn-nut-sua.on { background: var(--o-con); }
+/* Chọn tên bài trong kế hoạch dạy học (5/10/2026) — select dài, không tràn trên điện thoại */
 select.dh-o-nhap.sdb-chon-bai { display: block; width: 100%; max-width: 100%; margin-top: 6px; font-size: 15px; min-height: 44px; color: var(--chu); background: #fffaf3; border-color: #f3d3ae; text-overflow: ellipsis; }
 .sdb-goi-y { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px; }
 .sdb-goi-y .chip-loc { white-space: nowrap; max-width: 78vw; overflow: hidden; text-overflow: ellipsis; }
