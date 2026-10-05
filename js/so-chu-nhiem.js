@@ -1389,7 +1389,12 @@
     if (suaHS && D.hsThem) h += veFormThemHS();
     if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.') + veHSRoi(suaHS);
     if (D.hsLuoi && ghi && !nhayCam) return h + veLuoiHS() + veHSRoi(suaHS);
-    h += '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>TT</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới</th><th>Ghi chú</th></tr></thead><tbody>' +
+    // 6/10/2026 thầy Chung: "chưa thấy chức năng xoá học sinh" — nút Xoá trước chỉ nằm trong khung mở ra khi bấm tên em;
+    // nay có ngay cuối mỗi dòng (vẫn hỏi lý do, vẫn qua scn_xoa_hoc_sinh — sql/78).
+    var soCot = suaHS ? 6 : 5;
+    if (suaHS) h += '<p class="scn-ghi-chu">Bấm <b>tên em</b> để sửa thông tin hoặc đánh dấu rời lớp (chuyển đi, thôi học). Em ghi sai, ghi trùng, nhầm lớp: bấm <b>🗑 Xoá</b> cuối dòng.</p>';
+    h += '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>TT</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới</th><th>Ghi chú</th>' +
+      (suaHS ? '<th class="scn-c-xoa"></th>' : '') + '</tr></thead><tbody>' +
       D.hs.map(function (hs, i) {
         var c = S.hoanCanh[hs.ma] || {}, chip = [];
         if (hs.khuyet_tat_hoa_nhap) chip.push('hòa nhập');
@@ -1399,8 +1404,9 @@
         if (S.hoTro.some(function (x) { return x.hoc_sinh_ma === hs.ma && x.trang_thai === 'dang_theo_doi'; })) chip.push('đang hỗ trợ');
         var mo = D.hsMo === hs.ma;
         return '<tr class="' + (mo ? 'mo' : '') + '"><td>' + (i + 1) + '</td><td><button class="scn-lien" data-hs="' + thoat(hs.ma) + '">' + thoat(hs.ho_ten) + '</button></td>' +
-          '<td>' + ngayVN(hs.ngay_sinh) + '</td><td>' + thoat(hs.gioi_tinh || '') + '</td><td>' + chip.map(function (x) { return '<span class="scn-chip">' + thoat(x) + '</span>'; }).join(' ') + '</td></tr>' +
-          (mo ? '<tr class="scn-mo-rong"><td colspan="5">' + (suaHS ? veFormCoBan(hs) : '') + (nhayCam ? rong('Không đủ quyền xem hồ sơ hoàn cảnh (dữ liệu nhạy cảm — chỉ GVCN và Ban giám hiệu).') : veLichSuHS(hs.ma) + veFormHoanCanh(hs, c, ghi)) + '</td></tr>' : '');
+          '<td>' + ngayVN(hs.ngay_sinh) + '</td><td>' + thoat(hs.gioi_tinh || '') + '</td><td>' + chip.map(function (x) { return '<span class="scn-chip">' + thoat(x) + '</span>'; }).join(' ') + '</td>' +
+          (suaHS ? '<td class="scn-c-xoa"><button class="scn-nut phu nho scn-nut-xoa" data-act="xoa-hs" data-ma="' + thoat(hs.ma) + '" title="Xoá ' + thoat(hs.ho_ten) + ' khỏi danh sách lớp">🗑 Xoá</button></td>' : '') + '</tr>' +
+          (mo ? '<tr class="scn-mo-rong"><td colspan="' + soCot + '">' + (suaHS ? veFormCoBan(hs) : '') + (nhayCam ? rong('Không đủ quyền xem hồ sơ hoàn cảnh (dữ liệu nhạy cảm — chỉ GVCN và Ban giám hiệu).') : veLichSuHS(hs.ma) + veFormHoanCanh(hs, c, ghi)) + '</td></tr>' : '');
       }).join('') + '</tbody></table></div>';
     h += veHSRoi(suaHS);
     h += '<p class="scn-ghi-chu">Hồ sơ hoàn cảnh là dữ liệu cá nhân nhạy cảm (Luật Bảo vệ dữ liệu cá nhân 2025): chỉ GVCN lớp và Ban giám hiệu xem; không chia sẻ lên nhóm Zalo. Số định danh cá nhân không hiển thị ở đây.</p>';

@@ -3773,6 +3773,7 @@ body.ck-mo > footer { display: none !important; }
 .sdb-tiet.tre:not(.da) .sdb-ki { background: var(--canh); }
 .sdb-o-bai { font-size: 16px; min-height: 46px; }
 .sdb-o-chu { font-size: 15px; }
+.scn-bang .scn-c-xoa { width: 1%; white-space: nowrap; text-align: right; }
 select.dh-o-nhap.sdb-chon-bai { display: block; width: 100%; max-width: 100%; margin-top: 6px; font-size: 15px; min-height: 44px; color: var(--chu); background: #fffaf3; border-color: #f3d3ae; text-overflow: ellipsis; }
 .sdb-goi-y { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px; }
 .sdb-goi-y .chip-loc { white-space: nowrap; max-width: 78vw; overflow: hidden; text-overflow: ellipsis; }
