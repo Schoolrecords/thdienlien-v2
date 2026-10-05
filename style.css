@@ -1444,6 +1444,7 @@ td.tdst { white-space: nowrap; text-align: right; }
   --canh: #8f5d14; --canh-nen: #fdf3e0;   /* #a86a08 chỉ đạt 4,03:1 — nay 5,1:1 */
   --thieu: #9b2c3a; --thieu-nen: #fdecee;
   --vang-nen: #fdf6e6;
+  --cam-nut: #e0710f; --cam-nut-dam: #c4600b;   /* nút Lưu / Ghi của sổ đầu bài (6/10/2026: navy nặng nề → cam) */
   --navy-fill: linear-gradient(135deg, #0e2454, #14306b 60%, #22488c);
 }
 
@@ -4877,6 +4878,8 @@ body.ck-mo > footer { display: none !important; }
 .sdb-tiet.tre:not(.da) .sdb-ki { background: var(--canh); }
 .sdb-o-bai { font-size: 16px; min-height: 46px; }          /* 16px: iPhone không tự phóng to khi chạm ô */
 .sdb-o-chu { font-size: 15px; }
+/* Chọn tên bài trong kế hoạch dạy học (6/10/2026) — select dài, không tràn trên điện thoại */
+select.dh-o-nhap.sdb-chon-bai { display: block; width: 100%; max-width: 100%; margin-top: 6px; font-size: 15px; min-height: 44px; color: var(--chu); background: #fffaf3; border-color: #f3d3ae; text-overflow: ellipsis; }
 .sdb-goi-y { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 2px; }
 .sdb-goi-y .chip-loc { white-space: nowrap; max-width: 78vw; overflow: hidden; text-overflow: ellipsis; }
 .sdb-khong-day { display: inline-flex; align-items: center; gap: 7px; font-size: 13.2px; color: var(--chu-mo); margin-top: 8px; min-height: 32px; }
@@ -4889,8 +4892,9 @@ body.ck-mo > footer { display: none !important; }
 .sdb-vang.mo { color: var(--chu-nhat); }
 .sdb-nut-luu {
   font: inherit; font-size: 15px; font-weight: 800; min-width: 280px; padding: 0 22px; min-height: 48px; margin-top: 10px; cursor: pointer;
-  border: 0; border-radius: 12px; background: var(--dam); color: #fff;
+  border: 0; border-radius: 12px; background: var(--cam-nut); color: #fff;
 }
+.sdb-nut-luu:hover:not([disabled]) { background: var(--cam-nut-dam); }
 .sdb-nut-luu[disabled] { opacity: .55; cursor: default; }
 .sdb-tong { font-size: 13.4px; color: var(--chu); margin: 6px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sdb-do { color: var(--thieu); font-weight: 700; }
@@ -4918,7 +4922,8 @@ body.ck-mo > footer { display: none !important; }
 /* Ghi ngay trên sổ tuần (5/10/2026 — thầy Chung: "không thấy giáo viên ghi vào đâu") */
 .sdb-huong-dan { font-size: 13.2px; color: var(--chu); background: var(--vang-nen); border: 1px solid #f1e2b5; border-radius: 11px; padding: 9px 13px; margin: 4px 0 10px; line-height: 1.6; }
 .sdb-huong-dan a { color: var(--chinh); font-weight: 700; }
-.sdb-nut-ghi { font: inherit; font-size: 12.8px; font-weight: 800; cursor: pointer; min-height: 34px; padding: 4px 12px; border-radius: 9px; border: 0; background: var(--dam); color: #fff; }
+.sdb-nut-ghi { font: inherit; font-size: 12.8px; font-weight: 800; cursor: pointer; min-height: 34px; padding: 4px 12px; border-radius: 9px; border: 0; background: var(--cam-nut); color: #fff; }
+.sdb-nut-ghi:not(.sua):hover { background: var(--cam-nut-dam); }
 .sdb-nut-ghi.sua { background: #fff; color: var(--chinh); border: 1px solid var(--vien); font-weight: 700; }
 .sdb-dong-sua td { background: var(--o-con); padding: 10px 12px 14px; }
 .sdb-o-dong { max-width: 720px; }

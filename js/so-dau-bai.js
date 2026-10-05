@@ -203,6 +203,39 @@
     });
     return ra;
   }
+  // Danh sách chọn tên bài (6/10/2026, thầy Chung): các tiết của 5 BÀI quanh bài đang xét (2 bài trước, bài này,
+  // 2 bài sau) trong kế hoạch dạy học của môn — chọn trong danh sách hoặc vẫn tự gõ. Mốc: tiết PPCT đã ghi → tên
+  // bài trùng → bài kế hoạch của ô → bài đầu tiên của tuần học chứa ngày.
+  function tenBaiGoc(ten) { return String(ten || '').replace(/\s*\(\s*tiết\s*\d+\s*\)\s*$/i, '').trim(); }
+  function dsKhMon(lop, mon) { var kh = (window.SDB_KHDH || {})[khoiCua(lop)]; return (kh && kh[maMon(mon)]) || []; }
+  function baiQuanh(lop, mon, ngay, ppct, ten) {
+    var ds = dsKhMon(lop, mon), i = -1, j;
+    if (!ds.length) return [];
+    ten = String(ten || '').trim();
+    for (j = 0; i < 0 && ppct && j < ds.length; j++) if (+ds[j][0] === +ppct) i = j;
+    for (j = 0; i < 0 && ten && j < ds.length; j++) if (ds[j][2] === ten) i = j;
+    var n = soTuan(ngay);
+    for (j = 0; i < 0 && n && j < ds.length; j++) if (ds[j][1] >= n) i = j;
+    if (i < 0) i = ds.length - 1;
+    var thuTu = {}, so = 0;
+    ds.forEach(function (x) { var b = tenBaiGoc(x[2]); if (!(b in thuTu)) thuTu[b] = so++; });
+    var giua = thuTu[tenBaiGoc(ds[i][2])];
+    return ds.filter(function (x) { return Math.abs(thuTu[tenBaiGoc(x[2])] - giua) <= 2; });
+  }
+  // <select> chọn bài; thuocTinh = 'data-sdbl-o="chonBai"' hoặc 'data-sdb-o="chonBai" data-k="…"'
+  function oChonBai(thuocTinh, lop, mon, ngay, kh, r, ten) {
+    var ds = baiQuanh(lop, mon, ngay, (r && r.tiet_ppct) || (kh && kh.ppct), ten || (kh && kh.ten));
+    if (!ds.length) return '';
+    var dangChon = String(ten || '').trim(), coChon = false;
+    var op = ds.map(function (x) {
+      var chon = !coChon && x[2] === dangChon;
+      if (chon) coChon = true;
+      return '<option value="' + thoat(x[2]) + '"' + (chon ? ' selected' : '') + '>Tiết ' + x[0] + ' · ' + thoat(x[2]) +
+        (kh && +kh.ppct === +x[0] ? ' — theo kế hoạch' : '') + '</option>';
+    }).join('');
+    return '<select class="dh-o-nhap sdb-chon-bai" ' + thuocTinh + ' title="Chọn bài trong kế hoạch dạy học của môn (5 bài quanh bài này) — hoặc tự gõ ở ô dưới">' +
+      '<option value=""' + (coChon ? '' : ' selected') + '>📘 Chọn bài trong kế hoạch dạy học…</option>' + op + '</select>';
+  }
 
   // Cấu hình dùng chung: giờ hết buổi — hạn "ghi trong buổi" (sql/83; mặc định 11:30 / 17:30),
   // mốc tuần 1 (sdb_tuan_1) và ngày nghỉ cả năm học (để bỏ tuần nghỉ Tết khi đếm tuần)
@@ -240,7 +273,14 @@
     return 'Không lưu được: ' + m;
   }
   // Tiết PPCT lưu kèm: chỉ khi tên bài đúng như kế hoạch (dạy khác kế hoạch thì không gán số tiết)
-  function ppctCua(kh, n, ten) { return kh && !n.khongDay && String(ten || '').trim() === kh.ten ? kh.ppct : null; }
+  // Tiết PPCT ghi kèm: bài kế hoạch của ô, hoặc bài chọn từ danh sách (tên trùng đúng một tiết kế hoạch của môn)
+  function ppctCua(kh, n, ten, lop, mon, ngay) {
+    ten = String(ten || '').trim();
+    if (n.khongDay || !ten) return null;
+    if (kh && ten === kh.ten) return kh.ppct;
+    var x = lop ? baiQuanh(lop, mon, ngay, null, ten).filter(function (y) { return y[2] === ten; })[0] : null;
+    return x ? x[0] : null;
+  }
   // Ghi vào sdb_tiet. Trường chưa chạy sql/84 (chưa có cột tiet_ppct) → ghi lại không có cột đó.
   function boPpct(rows) { return rows.map(function (x) { var y = Object.assign({}, x); delete y.tiet_ppct; return y; }); }
   function thieuCotPpct(kq) { return kq && kq.error && /tiet_ppct/.test(String(kq.error.message || '')); }
@@ -473,7 +513,8 @@
       (n.khongDay
         ? '<select class="dh-o-nhap" data-sdb-o="ghiChu" data-k="' + thoat(k) + '">' +
           LY_DO_KHONG_DAY.map(function (l) { return '<option' + (n.ghiChu === l ? ' selected' : '') + '>' + thoat(l) + '</option>'; }).join('') + '</select>'
-        : '<input class="dh-o-nhap sdb-o-bai" data-sdb-o="ten" data-k="' + thoat(k) + '" value="' + thoat(n.ten) + '" maxlength="300" ' +
+        : oChonBai('data-sdb-o="chonBai" data-k="' + thoat(k) + '"', t.lop, t.mon, V.ngay, kh, r, n.ten) +
+          '<input class="dh-o-nhap sdb-o-bai" data-sdb-o="ten" data-k="' + thoat(k) + '" value="' + thoat(n.ten) + '" maxlength="300" ' +
           'placeholder="' + thoat(gy.length ? 'Lần trước: ' + gy[0] : 'Tên bài dạy (VD: Bài 5. Phép cộng – tiết 1)') + '" enterkeyhint="done">') +
       (kh && !n.khongDay ? '<div class="sdb-kh-nhan">' + (theoKH ? '📘 Theo kế hoạch · tiết PPCT ' + kh.ppct
         : '<button type="button" class="chip-loc" data-sdb="dien" data-k="' + thoat(k) + '" data-v="' + thoat(kh.ten) + '">📘 Kế hoạch: ' + thoat(kh.ten) + '</button>') + '</div>' : '') +
@@ -521,7 +562,7 @@
       // Mọi dòng cùng MỘT bộ cột (bài học sổ dự án 124: upsert nhiều dòng thiếu cột → NULL)
       var row = { nam_hoc: namHoc(), ngay: V.ngay, buoi: t.buoi, tiet: t.tiet, lop: t.lop, mon: t.mon,
         tinh_trang: n.khongDay ? 'khong_day' : 'da_day', ten_bai: n.khongDay ? null : ten, ghi_chu: ghi || null, day_thay: !!t.thay,
-        tiet_ppct: ppctCua(V.keHoach[k], n, ten) };
+        tiet_ppct: ppctCua(V.keHoach[k], n, ten, t.lop, t.mon, V.ngay) };
       if (cu) sua.push({ id: cu.id, k: k, row: row }); else them.push({ k: k, row: row });
     });
     if (!them.length && !sua.length) { bao('Chưa có tiết nào điền tên bài.'); return; }
@@ -582,7 +623,7 @@
     });
     el.addEventListener('input', function (e) {
       var o = e.target, f = o.getAttribute && o.getAttribute('data-sdb-o');
-      if (!f) return;
+      if (!f || f === 'chonBai') return;
       var k = o.getAttribute('data-k');
       V.nhap[k] = V.nhap[k] || { ten: '', ghiChu: '', khongDay: false };
       if (f === 'khongDay') { V.nhap[k].khongDay = o.checked; V.nhap[k].ghiChu = o.checked ? LY_DO_KHONG_DAY[0] : ''; veToi(); }
@@ -593,6 +634,12 @@
       if (o.getAttribute && o.getAttribute('data-sdb') === 'ngay' && o.value) {
         var moi = o.value > homNayISO() ? homNayISO() : o.value;
         V.ngay = moi; V.nhap = {}; V.sua = {}; V.khung = []; napToi(); veToi();
+      } else if (o.getAttribute && o.getAttribute('data-sdb-o') === 'chonBai') {
+        var kc = o.getAttribute('data-k');
+        if (!o.value) return;
+        V.nhap[kc] = V.nhap[kc] || { ten: '', ghiChu: '', khongDay: false };
+        V.nhap[kc].ten = o.value;
+        veToi();
       } else if (o.getAttribute && o.getAttribute('data-sdb-o') === 'ghiChu' && o.tagName === 'SELECT') {
         var k = o.getAttribute('data-k'); V.nhap[k] = V.nhap[k] || { ten: '', khongDay: true }; V.nhap[k].ghiChu = o.value;
       }
@@ -869,7 +916,8 @@
     return '<div class="sdb-o-dong">' +
       (n.khongDay
         ? '<select class="dh-o-nhap" data-sdbl-o="ghiChu">' + LY_DO_KHONG_DAY.map(function (l) { return '<option' + (n.ghiChu === l ? ' selected' : '') + '>' + thoat(l) + '</option>'; }).join('') + '</select>'
-        : '<input class="dh-o-nhap sdb-o-bai" data-sdbl-o="ten" value="' + thoat(n.ten) + '" maxlength="300" placeholder="Tên bài dạy (VD: Bài 5. Phép cộng – tiết 1)" enterkeyhint="done">' + chip +
+        : oChonBai('data-sdbl-o="chonBai"', t.lop, t.mon, d.ngay, (L.keHoach || {})[d.ngay + '|' + khoa(t.buoi, t.tiet, t.lop)], r, n.ten) +
+          '<input class="dh-o-nhap sdb-o-bai" data-sdbl-o="ten" value="' + thoat(n.ten) + '" maxlength="300" placeholder="Tên bài dạy (VD: Bài 5. Phép cộng – tiết 1) — hoặc chọn ở danh sách trên" enterkeyhint="done">' + chip +
           '<input class="dh-o-nhap sdb-o-chu" data-sdbl-o="ghiChu" value="' + thoat(n.ghiChu) + '" maxlength="500" placeholder="Ghi chú (không bắt buộc)" list="sdb-ghi-chu-nhanh">') +
       '<label class="sdb-khong-day"><input type="checkbox" data-sdbl-o="khongDay"' + (n.khongDay ? ' checked' : '') + '> Tiết này không dạy</label>' +
       (ghiHo ? '<div class="sdb-mo">Thầy/cô ghi hộ tiết của ' + thoat(t.gvNhan || 'giáo viên khác') + ' — sổ ghi tên người bấm là người ký.</div>' : '') +
@@ -900,7 +948,7 @@
     if (!n.khongDay && !ten) { bao('Chưa điền tên bài.'); return; }
     var row = { nam_hoc: namHoc(), ngay: d.ngay, buoi: t.buoi, tiet: t.tiet, lop: t.lop, mon: t.mon,
       tinh_trang: n.khongDay ? 'khong_day' : 'da_day', ten_bai: n.khongDay ? null : ten, ghi_chu: ghi || null, day_thay: !!t.thay,
-      tiet_ppct: ppctCua((L.keHoach || {})[d.ngay + '|' + k], n, ten) };
+      tiet_ppct: ppctCua((L.keHoach || {})[d.ngay + '|' + k], n, ten, t.lop, t.mon, d.ngay) };
     if (!may()) {
       var bayGio = new Date().toISOString();
       if (r) Object.assign(r, row, { sua_luc: bayGio });
@@ -1147,7 +1195,9 @@
     var giua = congNgay(tuan, 2), c = chotCua(giua, 'tuan'), ky = chotCua(giua, 'thang');
     var dau = '<table style="border:none;width:100%;border-collapse:collapse"><tr>' +
       '<td style="border:none;padding:0;width:42%;text-align:center;vertical-align:top;font-size:11pt">' +
-      ch(W.cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br><b>' + ch(W.cauHinh('TEN_TRUONG').toUpperCase()) + '</b></td>' +
+      ch(W.cauHinh('DON_VI_CHU_QUAN').toUpperCase()) + '<br><b>' + ch(W.cauHinh('TEN_TRUONG').toUpperCase()) + '</b>' +
+      // Nét kẻ dưới tên trường (NĐ 30: 1/3–1/2 dòng chữ; thầy Chung 6/10/2026) — cỡ 8pt cho đỡ ăn chiều cao trang sổ tuần
+      W.gach(Math.max(2.2, Math.min(4, W.cauHinh('TEN_TRUONG').length * 0.24 * 0.4)), 8) + '</td>' +
       '<td style="border:none;padding:0;width:58%;text-align:center;vertical-align:top">' +
       '<b style="font-size:15pt">SỔ GHI ĐẦU BÀI</b><br><span style="font-size:12pt"><b>Lớp ' + ch(lop) + '</b> · Năm học ' + ch(namHoc()) + '</span><br>' +
       '<span style="font-size:11.5pt">' + (tuanSo ? '<b>TUẦN ' + tuanSo + '</b>: ' : '') + 'từ ' + ngayVN(tuan) + ' đến ' + ngayVN(congNgay(tuan, 5)) + '</span></td></tr></table>';
@@ -1242,7 +1292,7 @@
     });
     el.addEventListener('input', function (e) {
       var o = e.target, f = o.getAttribute && o.getAttribute('data-sdbl-o');
-      if (!f) return;
+      if (!f || f === 'chonBai') return;
       if (f === 'khongDay') { L.nhap.khongDay = o.checked; L.nhap.ghiChu = o.checked ? LY_DO_KHONG_DAY[0] : ''; veLop(); }
       else L.nhap[f] = o.value;
     });
@@ -1253,6 +1303,7 @@
       var o = e.target;
       if (o.getAttribute && o.getAttribute('data-sdbl') === 'lop') { L.lop = o.value; L.ngay = []; L.mo = null; napTuan(); veLop(); }
       else if (o.tagName === 'SELECT' && o.getAttribute('data-sdbl-o') === 'ghiChu') L.nhap.ghiChu = o.value;
+      else if (o.getAttribute && o.getAttribute('data-sdbl-o') === 'chonBai' && o.value) { L.nhap.ten = o.value; veLop(); }
     });
   }
 
