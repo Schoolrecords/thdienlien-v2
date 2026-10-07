@@ -4116,6 +4116,33 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .scn-nhac-dd.xong { color: var(--chu-mo); }
 .scn-nhac-ct { margin-top: 4px; font-size: 13px; }
 .scn-nhac-ct summary { cursor: pointer; color: var(--vang-sam); font-weight: 700; }
+/* Điểm danh 1 chạm cho GVCN trên trang chủ (js/so-chu-nhiem.js theDDNhanh, 7/10/2026 — thầy Chung duyệt ảnh mô phỏng) */
+.ddn { margin: 0 0 10px; padding: 14px; border: 1px solid var(--vien); border-left: 3px solid #15803d; border-radius: 14px; background: var(--the, #fff);
+  color: var(--chu); font-size: 14px; line-height: 1.45; }
+.ddn-tieu b { display: block; font-size: 15px; }
+.ddn-tieu span { display: block; font-size: 13px; color: var(--chu-mo); margin-top: 2px; }
+.ddn-hang { display: flex; gap: 10px; margin-top: 12px; }
+.ddn-hang button { font: inherit; min-height: 52px; border-radius: 12px; cursor: pointer; padding: 10px 8px; }
+.ddn-du { flex: 1.4; border: 0; background: #15803d; color: #fff; font-size: 18px; font-weight: 700; }
+.ddn-vang { flex: 1; border: 1.5px solid #f2c48d; background: #fff; color: #b45309; font-size: 15px; font-weight: 600; }
+.ddn-luu { flex: 1.6; border: 0; background: #1a4b9c; color: #fff; font-size: 16px; font-weight: 700; }
+.ddn-huy { flex: .6; border: 1px solid var(--vien); background: #fff; color: var(--chu); font-size: 14px; font-weight: 600; }
+.ddn-hang button:disabled { opacity: .55; cursor: default; }
+.ddn-ghi { margin: 8px 0 0; font-size: 12.5px; color: var(--chu-mo); }
+.ddn-ten { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ddn-ten button { font: inherit; font-size: 13.5px; min-height: 38px; padding: 6px 12px; border-radius: 19px; cursor: pointer;
+  border: 1px solid #c5d7f6; background: #f6f9ff; color: var(--chu); }
+.ddn-ten button.on { background: #fff4e5; border-color: #f59e0b; color: #92400e; font-weight: 700; }
+.ddn-xong { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 12px;
+  border: 1px solid #a6e3bd; border-radius: 12px; background: #ecfdf3; }
+.ddn-xong b { display: block; color: #15803d; font-size: 15px; }
+.ddn-xong span { font-size: 13px; color: var(--chu-mo); }
+.ddn-hoan-tac { font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 8px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap;
+  border: 1px solid #c5d7f6; background: #e8f0fe; color: #1a4b9c; }
+.ddn-hoan-tac .ddn-dem { font-size: inherit; color: inherit; }
+.scn-nhac.gon { padding: 8px 12px; font-size: 13px; }
+.scn-nhac.gon .scn-nhac-nut { width: auto; }
+@media print { .ddn { display: none; } }
 /* Điểm danh trên điện thoại: nút Lưu dính đáy màn, khỏi cuộn hết danh sách 35 em */
 .scn-dd-luu { position: sticky; bottom: 0; z-index: 2; background: var(--the, #fff); padding: 8px 0; margin-top: 0; box-shadow: 0 -6px 12px -8px rgba(0,0,0,.25); }
 .scn-dd-luu .scn-nut { width: 100%; min-height: 44px; font-size: 15px; }
