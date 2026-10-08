@@ -5176,3 +5176,11 @@ html.bn-khoa-cuon, html.bn-khoa-cuon body { overflow: hidden; }
   .scn-ds-kt td[data-nhan]::before { content: attr(data-nhan) ' '; color: #5b6475; }
   .scn-ds-kt tr.scn-mo-rong td { display: block; }
 }
+/* Khung sửa một em nằm trong bảng rộng: trên điện thoại giữ vừa bề ngang màn hình, không trôi theo cuộn ngang (8/10/2026) */
+@media (max-width: 640px) {
+  .scn-mo-rong > td { padding: 6px 4px !important; }
+  .scn-mo-rong > td > * { position: sticky; left: 4px; max-width: calc(100vw - 40px); box-sizing: border-box; }
+  .scn-mo-rong .scn-form .scn-hang { flex-wrap: wrap; }
+  .scn-mo-rong .scn-form .scn-nhan.ngang { flex: 1 1 100%; }
+  .scn-mo-rong .scn-form .scn-o { min-width: 0; max-width: 100%; }
+}
