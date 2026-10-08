@@ -810,9 +810,21 @@
         ['sang', 'chieu'].forEach(function (b) {
           var x = kq.buoi[b]; if (!x) return;
           var p = x.pa[x.i];
-          h += '<div class="bn-buoi"><div class="bn-buoi-dau"><b>' + (b === 'sang' ? '☀️ Buổi sáng' : '🌤️ Buổi chiều') + '</b>' +
-            (x.pa.length > 1 ? '<button type="button" class="dh-nut-nho" data-bn-pa="' + b + '">↻ Cách xếp khác (' + (x.i + 1) + '/' + x.pa.length + ')</button>' : '') + '</div>' +
-            (p ? '<div class="bn-pa-ten">' + thoat(p.tieuDe) + ' · ' + (p.lyDo || []).map(function (l) { return thoat(l.t); }).join(' · ') + '</div>' : '');
+          // 8/10/2026 (thầy Chung: "không có phương án dạy thay khác?") — các phương án hiện thành THẺ để chọn,
+          // không giấu sau nút "↻"; ghi rõ người dạy thay của từng phương án.
+          var coTay = x.can.some(function (t) { return Object.prototype.hasOwnProperty.call(BN.chon, [t.buoi, t.tiet, t.lop].join('|')); });
+          h += '<div class="bn-buoi"><div class="bn-buoi-dau"><b>' + (b === 'sang' ? '☀️ Buổi sáng' : '🌤️ Buổi chiều') + '</b><small>' + x.can.length + ' tiết cần người</small></div>';
+          if (x.pa.length > 1) {
+            h += '<div class="bn-nhan-nho" style="margin-top:2px">Chọn cách xếp (' + x.pa.length + ' phương án):</div><div class="bn-pa-chon">' + x.pa.map(function (pp, i) {
+              var ten = [], da = {};
+              pp.gan.forEach(function (g) { if (g.gv && !da[g.gv.nhan]) { da[g.gv.nhan] = 1; ten.push(g.gv.ten); } });
+              return '<button type="button" class="bn-pa-the' + (i === x.i && !coTay ? ' on' : '') + '" data-bn-pa="' + b + '" data-i="' + i + '">' +
+                '<b>' + (i === x.i && !coTay ? '✓ ' : '') + thoat(pp.tieuDe) + '</b><span>' + ten.map(thoat).join(', ') + '</span>' +
+                '<small>' + (pp.lyDo || []).map(function (l) { return thoat(l.t); }).join(' · ') + '</small></button>';
+            }).join('') + '</div>';
+          } else if (p) h += '<div class="bn-pa-ten">Chỉ có 1 cách xếp hợp lệ · ' + (p.lyDo || []).map(function (l) { return thoat(l.t); }).join(' · ') + '</div>';
+          if (coTay) h += '<div class="bn-nhan-nho">✏️ Đã đổi tay một số tiết.</div>';
+          h += '<div class="bn-nhan-nho">👉 Chạm vào từng tiết để chọn người khác.</div>';
           kq.gan.filter(function (g) { return g.tiet.buoi === b; }).forEach(function (g) {
             var t = g.tiet;
             h += '<button type="button" class="bn-tiet' + (BN.moTiet === g.k ? ' mo' : '') + (g.gv ? '' : ' trong') + '" data-bn-tiet="' + thoat(g.k) + '">' +
@@ -840,7 +852,8 @@
         }).join('') + '</div>';
         chan = x4.daGui
           ? '<div class="hd-kiem xanh" style="margin:0 0 8px">📤 Đã gửi — người dạy thay bấm “Đã nhận” trên app là thầy cô thấy.</div><button type="button" class="nut-chinh bn-ghi" data-bn="dong">Xong</button>'
-          : '<button type="button" class="nut-chinh bn-ghi" data-bn="zalo">📤 Gửi Zalo cho người dạy thay</button><button type="button" class="dh-nut-nho bn-phu" data-bn="dong">Để sau</button>';
+          : '<button type="button" class="nut-chinh bn-ghi" data-bn="zalo">📤 Gửi Zalo cho người dạy thay</button>' +
+            '<div class="bn-phu-hang"><button type="button" class="dh-nut-nho" data-bn="doi-sau">✏️ Đổi người dạy thay</button><button type="button" class="dh-nut-nho" data-bn="dong">Để sau</button></div>';
       } else chan = '<button type="button" class="nut-chinh bn-ghi" data-bn="dong">Xong</button>';
     }
     h += '</div>' + (chan ? '<div class="bn-chan">' + chan + '</div>' : '') + '</div>';
@@ -885,11 +898,13 @@
       bnSangBuoc3(tu, den && den > tu ? den : '', bu); return;
     }
     if (b.hasAttribute('data-bn-pa')) { var bb = b.getAttribute('data-bn-pa'), kq = BN.kq, n = kq && kq.buoi[bb] ? kq.buoi[bb].pa.length : 1;
-      BN.pa[bb] = ((BN.pa[bb] || 0) + 1) % n;
+      BN.pa[bb] = b.hasAttribute('data-i') ? +b.getAttribute('data-i') : ((BN.pa[bb] || 0) + 1) % n;
       Object.keys(BN.chon).forEach(function (k) { if (k.indexOf(bb + '|') === 0) delete BN.chon[k]; });
       BN.moTiet = ''; bnVe(); return; }
     if (b.hasAttribute('data-bn-tiet')) { var k = b.getAttribute('data-bn-tiet'); BN.moTiet = BN.moTiet === k ? '' : k; bnVe(); return; }
     if (b.hasAttribute('data-bn-gv')) { BN.chon[BN.moTiet] = b.getAttribute('data-bn-gv'); BN.moTiet = ''; bnVe(); return; }
+    // Sau khi ghi muốn đổi người: mở thẻ Dạy thay của ngày đó (mỗi tiết có nút Đổi)
+    if (a === 'doi-sau') { var ng = BN.tu; BN.dong(); if (window.DAY_THAY) window.DAY_THAY.moKhung('bo-tri', ng); return; }
     if (a === 'ghi') { bnGhi(true); return; }
     if (a === 'chi-nghi') { bnGhi(false); return; }
     if (a === 'zalo') {
