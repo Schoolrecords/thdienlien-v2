@@ -660,7 +660,9 @@
     BN.lyDo = (o.v && o.v.ly_do) || 'Nghỉ ốm'; BN.tim = ''; BN.khac = false; BN.loi = ''; BN.dangGhi = false; BN.xong = null;
     BN.tu = o.v ? (o.ngay || o.v.ngay) : ''; BN.den = o.v ? (o.v.den_ngay || '') : ''; BN.buoi = o.v ? o.v.buoi : 'ca_ngay';
     BN.chon = {}; BN.pa = {}; BN.moTiet = '';
-    BN.cs = D.cs !== null && D.cs !== undefined ? D.cs : ((phanHieuCuaToi()[0] || {}).ma || '');
+    // Phạm vi: phân hiệu đang xem ở thẻ Dạy thay; chưa mở thẻ đó (mở từ Việc cần xử lý) → tính sau khi nạp co_so
+    // (thử trên trang thật 8/10/2026: trước mặc định Toàn trường, PHT phải tìm trong 94 người)
+    BN.cs = D.cs !== null && D.cs !== undefined && D.coSo.length ? D.cs : undefined;
     BN.hn = homNayISO();
     if (!BN.el) {
       BN.el = document.createElement('div'); BN.el.className = 'bn-man'; BN.el.id = 'bn-man';
@@ -686,6 +688,10 @@
     docNgay(ngay).then(function (kq) {
       if (BN.ctxNgay !== ngay) return;
       BN.ctx = kq; BN.dangTai = false;
+      if (BN.cs === undefined) {
+        var e = toiEmail(), cua = kq.coSo.filter(function (c) { return !!e && String(c.phu_trach_email || '').toLowerCase() === e; });
+        BN.cs = cua.length ? cua[0].ma : '';
+      }
       if (!D.coSo.length && kq.coSo.length) D.coSo = kq.coSo;
       bnVe();
     }).catch(function (e) { if (BN.ctxNgay === ngay) { BN.dangTai = false; BN.loi = loiDoc(e); bnVe(); } });
@@ -725,8 +731,11 @@
     var vg = vang.filter(function (x) { return khoaNguoi(x) === khoaNguoi(v); })[0] || v;
     var bc = boiCanhCua(BN.tu, ctx, vang);
     kq.bc = bc; kq.v = vg; kq.vang = vang;
-    kq.ds = L().tietCanThay(bc, vg).filter(function (x) { return !x.daPhan && duocBoTri(x.coSo); });
-    kq.daCo = L().tietCanThay(bc, vg).filter(function (x) { return x.daPhan; });
+    // Chỉ tiết của phân hiệu đang chọn — GV dạy 2 phân hiệu: PHT mỗi nơi bố trí phần của mình (thử 8/10/2026)
+    var tatCa = L().tietCanThay(bc, vg), trongCS = function (x) { return !BN.cs || x.coSo === BN.cs; };
+    kq.ds = tatCa.filter(function (x) { return !x.daPhan && duocBoTri(x.coSo) && trongCS(x); });
+    kq.daCo = tatCa.filter(function (x) { return x.daPhan && trongCS(x); });
+    kq.ngoai = tatCa.filter(function (x) { return !trongCS(x); }).length;
     ['sang', 'chieu'].forEach(function (b) {
       var can = kq.ds.filter(function (x) { return x.buoi === b; });
       if (!can.length) return;
@@ -819,6 +828,7 @@
         chan = '<button type="button" class="nut-chinh bn-ghi" data-bn="ghi"' + (BN.dangGhi ? ' disabled' : '') + '>' +
           (BN.dangGhi ? 'Đang ghi…' : '✓ ' + (BN.v ? 'Bố trí ' : 'Ghi nghỉ & bố trí ') + kq.gan.length + ' tiết') + '</button>' + nutGhiNghi;
       }
+      if (kq.ngoai) h += '<div class="bn-nhan-nho">+ ' + kq.ngoai + ' tiết ở phân hiệu khác — PHT phân hiệu đó bố trí (hoặc chọn "Toàn trường" ở bước 1).</div>';
       if (BN.den && BN.den > BN.tu) h += '<div class="bn-nhan-nho">Nghỉ đến ' + ngayVN(BN.den) + '. Các ngày sau: thẻ <b>Báo nghỉ – Dạy thay</b> › chọn ngày › <b>⚡ Bố trí nhanh</b> (khung Việc cần xử lý sẽ nhắc).</div>';
     } else if (BN.buoc === 4) {
       var x4 = BN.xong;
