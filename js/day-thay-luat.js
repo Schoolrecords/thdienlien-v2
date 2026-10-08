@@ -114,16 +114,32 @@
     });
   }
 
+  // Người dạy thay của dòng day_thay d có đang vắng buổi đó không
+  function nguoiThayVang(bc, d) {
+    if (!d || (!d.gv_thay_email && !d.gv_thay_nhan)) return false;
+    var g = bc.dsGV.filter(function (y) { return laNguoi(y, d.gv_thay_email, d.gv_thay_nhan); })[0];
+    return !!g && gvDangVang(bc, g, d.buoi);
+  }
+
   // ── Các tiết cần người thay của MỘT dòng sổ vắng ──
+  //   · tiết của chính người vắng theo TKB (daPhan = dòng day_thay đã có, thayVang = người thay ấy cũng vắng)
+  //   · tiết người vắng ĐANG DẠY THAY cho người khác (thayHo = dòng day_thay đó) — rà 8/10/2026: trước đây
+  //     A được phân thay 2B rồi chính A xin nghỉ thì tiết 2B vẫn ghi tên A, không ai biết lớp bỏ trống.
   function tietCanThay(bc, v) {
     var ds = gvCuaVang(bc, v), nhan = {};
     ds.forEach(function (g) { nhan[g.nhan] = 1; });
-    return bc.lichNgay.filter(function (x) { return nhan[x.gv_nhan] && vangBuoi(v, x.buoi); })
-      .sort(function (a, b) { return (a.buoi === b.buoi ? 0 : a.buoi === 'sang' ? -1 : 1) || a.tiet - b.tiet || String(a.lop).localeCompare(b.lop); })
+    var ra = bc.lichNgay.filter(function (x) { return nhan[x.gv_nhan] && vangBuoi(v, x.buoi); })
       .map(function (x) {
         var da = bc.dayThay.filter(function (d) { return d.buoi === x.buoi && +d.tiet === +x.tiet && d.lop === x.lop; })[0] || null;
-        return { lop: x.lop, buoi: x.buoi, tiet: +x.tiet, mon: x.mon, gvNhan: x.gv_nhan, daPhan: da, coSo: bc.lopCoSo[x.lop] || '' };
+        return { lop: x.lop, buoi: x.buoi, tiet: +x.tiet, mon: x.mon, gvNhan: x.gv_nhan, daPhan: da, coSo: bc.lopCoSo[x.lop] || '',
+          thayVang: !!da && nguoiThayVang(bc, da) };
       });
+    bc.dayThay.forEach(function (d) {
+      if (!vangBuoi(v, d.buoi) || !ds.some(function (g) { return laNguoi(g, d.gv_thay_email, d.gv_thay_nhan); })) return;
+      ra.push({ lop: d.lop, buoi: d.buoi, tiet: +d.tiet, mon: d.mon || '', gvNhan: d.gv_vang_nhan || '', daPhan: null,
+        coSo: d.co_so_ma || bc.lopCoSo[d.lop] || '', thayHo: d });
+    });
+    return ra.sort(function (a, b) { return (a.buoi === b.buoi ? 0 : a.buoi === 'sang' ? -1 : 1) || a.tiet - b.tiet || String(a.lop).localeCompare(b.lop); });
   }
 
   // ── Ứng viên cho một tiết. boQua = [id day_thay đang sửa] ──
@@ -281,7 +297,8 @@
   }
 
   var API = { GIOI_HAN_BUOI: GIOI_HAN_BUOI, TEN_NHOM: TEN_NHOM, thuCuaNgay: thuCuaNgay, boiCanh: boiCanh, gvCuaVang: gvCuaVang,
-    tietCanThay: tietCanThay, ungVien: ungVien, phuongAn: phuongAn, xungDot: xungDot, vanBanZalo: vanBanZalo };
+    tietCanThay: tietCanThay, ungVien: ungVien, phuongAn: phuongAn, xungDot: xungDot, vanBanZalo: vanBanZalo,
+    khongDau: khongDau, vangBuoi: vangBuoi, nguoiThayVang: nguoiThayVang };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   if (goc) goc.DAY_THAY_LUAT = API;
 })(typeof window !== 'undefined' ? window : null);

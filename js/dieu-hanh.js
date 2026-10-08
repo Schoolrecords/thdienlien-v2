@@ -1979,24 +1979,32 @@
 
     var form = '';
     if (DX_LOAI) {
+      // 8/10/2026 (thầy Chung: "ít chạm nhất"): ngày/buổi là NÚT CHẠM — Hôm nay · Ngày mai · Ngày khác;
+      // Cả ngày · Sáng · Chiều. Ô ngày thật chỉ hiện khi chọn "Ngày khác". Lý do được bỏ trống.
+      var mai = ngayISOCach(1), nay = ngayISOCach(0);
+      var nutChon = function (nhom, giaTri, chu, on) {
+        return '<button type="button" class="dh-dx-chon' + (on ? ' on' : '') + '" data-dx-' + nhom + '="' + giaTri + '" onclick="DH.dxChon(this)">' + chu + '</button>';
+      };
       var oNgay = laNghi
-        ? '<div class="dh-chon-hang" style="margin:8px 0">' +
-          '<label style="font-size:13px">Từ ngày <input class="dh-o-nhap" type="date" id="dh-dx-tu" style="width:auto;margin-top:0" value="' + ngayISOCach(1) + '"></label>' +
-          '<label style="font-size:13px">đến <input class="dh-o-nhap" type="date" id="dh-dx-den" style="width:auto;margin-top:0"></label>' +
-          '<select class="dh-o-nhap" id="dh-dx-buoi" style="width:auto;margin-top:0">' +
-          '<option value="ca_ngay">Cả ngày</option><option value="sang">Buổi sáng</option><option value="chieu">Buổi chiều</option></select>' +
-          '</div>' +
-          '<div class="dh-ghi-chu-nho" style="margin-top:0">Nghỉ MỘT ngày thì bỏ trống ô "đến". Quy định đã chốt: báo trước ít nhất 1 buổi — ' +
-          'chọn từ hôm nay trở về trước vẫn gửi được nhưng đơn mang dấu ⚠ báo muộn.</div>'
+        ? '<div class="dh-dx-nhom"><span>Ngày nghỉ</span>' + nutChon('ngay', nay, 'Hôm nay', false) + nutChon('ngay', mai, 'Ngày mai', true) +
+          nutChon('ngay', 'khac', 'Ngày khác…', false) + '</div>' +
+          '<div class="dh-chon-hang dh-dx-khac" style="margin:4px 0 8px;display:none">' +
+          '<label style="font-size:13px">Từ ngày <input class="dh-o-nhap" type="date" id="dh-dx-tu" style="width:auto;margin-top:0" value="' + mai + '"></label>' +
+          '<label style="font-size:13px">đến <input class="dh-o-nhap" type="date" id="dh-dx-den" style="width:auto;margin-top:0"></label></div>' +
+          '<div class="dh-dx-nhom"><span>Buổi</span>' + nutChon('buoi', 'ca_ngay', 'Cả ngày', true) + nutChon('buoi', 'sang', 'Sáng', false) + nutChon('buoi', 'chieu', 'Chiều', false) + '</div>' +
+          '<input type="hidden" id="dh-dx-buoi" value="ca_ngay">' +
+          '<div class="dh-ghi-chu-nho" style="margin-top:2px">Báo trước ít nhất 1 buổi — nghỉ hôm nay vẫn gửi được nhưng đơn mang dấu ⚠ báo muộn; ốm đột xuất thì gọi điện cho PHT.</div>'
         : '';
+      // Đã biết phân hiệu của người gửi thì không hỏi lại
       var oCS = DL.coSo.length > 1
-        ? '<select class="dh-o-nhap" id="dh-dx-coso" style="margin-top:8px">' + DL.coSo.map(function (c) {
+        ? (csToi && coSoCuaToi() ? '<input type="hidden" id="dh-dx-coso" value="' + thoat(csToi) + '">'
+          : '<select class="dh-o-nhap" id="dh-dx-coso" style="margin-top:8px">' + DL.coSo.map(function (c) {
             return '<option value="' + thoat(c.ma) + '"' + (c.ma === csToi ? ' selected' : '') + '>' + thoat(c.ten) + '</option>';
-          }).join('') + '</select>'
+          }).join('') + '</select>')
         : '';
       form = oNgay + oCS +
         '<textarea class="dh-o-nhap" id="dh-dx-noidung" rows="2" placeholder="' +
-        (laNghi ? 'Lý do (ngắn gọn)…' : 'Nội dung đề xuất (ngắn gọn)…') + '"></textarea>' +
+        (laNghi ? 'Lý do (không bắt buộc)…' : 'Nội dung đề xuất (ngắn gọn)…') + '"></textarea>' +
         '<button class="dh-nut-gui" onclick="DH.dxGui()">GỬI ĐỀ XUẤT</button>';
     }
 
@@ -3402,18 +3410,29 @@
 
     // ── Đề xuất ──
     dxLoai: function (ma) { DX_LOAI = DX_LOAI === ma ? null : ma; veGiu(); },
+    // Nút chạm Ngày nghỉ / Buổi của đơn nghỉ — đổi tại chỗ, không vẽ lại (giữ chữ lý do đang gõ)
+    dxChon: function (b) {
+      var nhom = b.hasAttribute('data-dx-ngay') ? 'ngay' : 'buoi', gt = b.getAttribute('data-dx-' + nhom);
+      Array.prototype.slice.call(b.parentNode.querySelectorAll('.dh-dx-chon')).forEach(function (x) { x.classList.toggle('on', x === b); });
+      if (nhom === 'buoi') { var o = $('#dh-dx-buoi'); if (o) o.value = gt; return; }
+      var khac = $('.dh-dx-khac'), tu = $('#dh-dx-tu'), den = $('#dh-dx-den');
+      if (khac) khac.style.display = gt === 'khac' ? '' : 'none';
+      if (gt !== 'khac') { if (tu) tu.value = gt; if (den) den.value = ''; }
+      else if (tu && tu.focus) tu.focus();
+    },
     // Nút "Xin nghỉ" ở hàng Việc hằng ngày (js/viec-nhanh.js): mở thẳng form đơn nghỉ phép, không bật/tắt
     moXinNghi: function () {
       window.DH.moTab('dexuat');
       DX_LOAI = 'nghi_phep'; veGiu();
-      var o = document.getElementById('dh-dx-tu');
+      var o = document.querySelector('.dh-dx-nhom');
       if (o && o.scrollIntoView) o.scrollIntoView({ block: 'center' });
     },
     dxGui: function () {
       if (!DX_LOAI) { window.notify('Chọn loại đề xuất trước.'); return; }
       var laNghi = LOAI_DX_NGHI.indexOf(DX_LOAI) >= 0;
       var noiDung = (($('#dh-dx-noidung') || {}).value || '').trim();
-      if (!noiDung) { window.notify(laNghi ? 'Ghi lý do ngắn gọn trước khi gửi.' : 'Ghi nội dung đề xuất trước khi gửi.'); return; }
+      if (!noiDung && laNghi) noiDung = tenLoaiDX(DX_LOAI);   // đơn nghỉ: lý do không bắt buộc (8/10/2026)
+      if (!noiDung) { window.notify('Ghi nội dung đề xuất trước khi gửi.'); return; }
       var tu = laNghi ? (($('#dh-dx-tu') || {}).value || '') : null;
       var den = laNghi ? (($('#dh-dx-den') || {}).value || '') : null;
       var buoi = laNghi ? ((($('#dh-dx-buoi') || {}).value) || 'ca_ngay') : 'ca_ngay';

@@ -82,7 +82,7 @@
         var don = r[2].filter(function (d) { return trongPham(d.co_so_ma); }), donKhac = r[2].length - don.length;
         var tenPham = cs.length ? cs.map(function (m) { return CS.tenCS[m] || m; }).join(', ') : 'toàn trường';
         var h = '<section class="vcl"><div class="vcl-dau"><b>Việc cần xử lý</b><small>' + thoat(tenPham) + '</small>' +
-          '<button type="button" class="dh-nut-nho" data-vcl="bao-nghi">🙋 Báo nghỉ thay giáo viên</button></div>' +
+          '<button type="button" class="nut-chinh" data-vcl="bao-nghi">🙋 Báo nghỉ &amp; bố trí</button></div>' +
           dongDayThay('Hôm nay', hn, r[0]) + dongDayThay('Ngày mai', mai, r[1]);
         if (don.length) {
           h += '<div id="vcl-don" class="vcl-nhom">📝 <b>' + don.length + ' đơn xin nghỉ chờ duyệt</b></div>' + don.map(function (d) {
@@ -124,7 +124,7 @@
       if (!ok) return;
       var xong = function () {
         KHUNG.khoa = ''; KHUNG.html = '';
-        bao(dongY ? '✅ Đã duyệt — bấm "Bố trí ngay" để chọn người dạy thay.' : 'Đã ghi: không duyệt.');
+        if (!dongY) bao('Đã ghi: không duyệt.');
         veKhung();
       };
       if (!may()) { xong(); return; }
@@ -132,6 +132,8 @@
       may().rpc('duyet_de_xuat', { p_id: id, p_dong_y: dongY, p_ghi_chu: null }).then(function (r) {
         if (r.error) { nut.disabled = false; bao('Không duyệt được: ' + r.error.message); return; }
         xong();
+        // 8/10/2026: duyệt xong mở luôn khung chọn người dạy thay (bớt bước tìm thẻ, bấm Phương án)
+        if (dongY && window.DAY_THAY && window.DAY_THAY.boTriDon) window.DAY_THAY.boTriDon(id);
       });
     });
   }

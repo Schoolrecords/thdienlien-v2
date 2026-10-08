@@ -513,8 +513,9 @@
     var coThay = ds.filter(coNguoi);
     var nguoi = {}, nghi = {};
     coThay.forEach(function (d) {
-      var k = tenThay(d);
-      var x = nguoi[k] = nguoi[k] || { ten: k, sang: 0, chieu: 0, lop: {}, nhan: 0 };
+      // Gộp theo Gmail (rà 8/10/2026): một người hai tên gọi ở hai phân hiệu không bị tách làm hai dòng ký nhận
+      var k = String(d.gv_thay_email || '').toLowerCase() || 'n:' + tenThay(d);
+      var x = nguoi[k] = nguoi[k] || { ten: tenThay(d), sang: 0, chieu: 0, lop: {}, nhan: 0 };
       x[d.buoi === 'sang' ? 'sang' : 'chieu']++; x.lop[d.lop] = 1; if (d.trang_thai === 'da_nhan') x.nhan++;
     });
     ds.forEach(function (d) {
