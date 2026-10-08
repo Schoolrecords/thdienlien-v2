@@ -262,13 +262,13 @@
     return '<section class="dt-the dt-form-bao"><header><div><b>🙋 Báo nghỉ thay giáo viên</b><small>ghi thẳng sổ vắng — bảng công và dạy thay cập nhật ngay</small></div>' +
       '<button class="dh-nut-nho" id="dt-dong-bao">Đóng</button></header>' +
       '<div class="dt-form-luoi">' +
-      '<label>Giáo viên<select id="dt-bao-nguoi" class="tkb-chon"><option value="">— chọn —</option>' + ds.map(function (c, i) {
+      '<label class="dt-o-rong"><span>Giáo viên</span><select id="dt-bao-nguoi" class="tkb-chon"><option value="">— chọn —</option>' + ds.map(function (c, i) {
         return '<option value="' + i + '">' + thoat(c.ho_ten) + (c.chuc_vu ? ' · ' + thoat(c.chuc_vu) : '') + (!D.cs && c.co_so_ma ? ' · ' + thoat(tenCoSo(c.co_so_ma)) : '') + '</option>';
       }).join('') + '</select></label>' +
-      '<label>Từ ngày<input type="date" id="dt-bao-tu" class="tkb-chon" value="' + D.ngay + '"></label>' +
-      '<label>Đến ngày <small>(nếu nghỉ nhiều ngày)</small><input type="date" id="dt-bao-den" class="tkb-chon"></label>' +
-      '<label>Buổi<select id="dt-bao-buoi" class="tkb-chon"><option value="ca_ngay">Cả ngày</option><option value="sang">Buổi sáng</option><option value="chieu">Buổi chiều</option></select></label>' +
-      '<label>Lý do<select id="dt-bao-ly" class="tkb-chon">' + LY_DO_VANG.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></label>' +
+      '<label><span>Từ ngày</span><input type="date" id="dt-bao-tu" class="tkb-chon" value="' + D.ngay + '"></label>' +
+      '<label><span>Đến ngày <small>(nếu nghỉ nhiều ngày)</small></span><input type="date" id="dt-bao-den" class="tkb-chon"></label>' +
+      '<label><span>Buổi</span><select id="dt-bao-buoi" class="tkb-chon"><option value="ca_ngay">Cả ngày</option><option value="sang">Buổi sáng</option><option value="chieu">Buổi chiều</option></select></label>' +
+      '<label><span>Lý do</span><select id="dt-bao-ly" class="tkb-chon">' + LY_DO_VANG.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></label>' +
       '</div><div class="dt-form-nut"><button class="nut-chinh" id="dt-ghi-bao">Ghi báo nghỉ</button></div></section>';
   }
 

@@ -159,13 +159,20 @@
 
   function tenO(sel) {
     var t = '';
-    if (sel.labels && sel.labels.length) t = sel.labels[0].textContent;
+    // Ô <select> nằm TRONG <label> thì textContent của nhãn gồm cả chữ mọi <option>
+    // (thầy Chung 8/10/2026: tiêu đề cửa sổ thành cả danh sách tên) → bỏ ô nhập khỏi bản sao rồi mới lấy chữ
+    if (sel.labels && sel.labels.length) {
+      var nhan = sel.labels[0].cloneNode(true);
+      Array.prototype.slice.call(nhan.querySelectorAll('select, input, textarea, button')).forEach(function (x) { x.remove(); });
+      t = nhan.textContent;
+    }
     if (!t) t = sel.getAttribute('aria-label') || sel.title || '';
     if (!t) {
       var tr = sel.previousElementSibling;
       if (tr && /^(LABEL|SPAN|B|STRONG)$/.test(tr.tagName)) t = tr.textContent;
     }
-    return (t || 'Chọn').replace(/\s+/g, ' ').replace(/[:：]\s*$/, '').trim();
+    t = (t || 'Chọn').replace(/\s+/g, ' ').replace(/[:：]\s*$/, '').trim();
+    return t.length > 60 ? t.slice(0, 57) + '…' : t;
   }
 
   function dungDs() {

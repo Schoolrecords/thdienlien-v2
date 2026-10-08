@@ -3121,6 +3121,16 @@ html.scn-xt-khoa, html.scn-xt-khoa body { overflow: hidden; }
 .dt-form-luoi label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--chu-mo); }
 .dt-form-luoi label small { font-size: 11.5px; }
 .dt-form-luoi .tkb-chon { min-height: 40px; width: 100%; }
+.dt-form-luoi label { min-width: 0; justify-content: flex-end; }
+.dt-form-luoi label > span { line-height: 1.3; }
+.dt-form-luoi input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; height: 40px; background: #fff; }
+.dt-form-luoi input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+@media (max-width: 640px) {
+  .dt-form-luoi { grid-template-columns: 1fr 1fr; }
+  .dt-form-luoi .dt-o-rong { grid-column: 1 / -1; }
+  .dt-form-luoi label small { display: block; font-size: 11px; }
+  .dt-form-nut .nut-chinh { width: 100%; min-height: 46px; }
+}
 .dt-form-nut { margin-top: 10px; display: flex; justify-content: flex-end; }
 .dt-don-cho { border-color: #f1e2b5; background: #fffcf3; }
 .dt-don { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px dashed var(--vien); }
