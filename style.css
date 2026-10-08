@@ -5124,3 +5124,35 @@ html.bn-khoa-cuon, html.bn-khoa-cuon body { overflow: hidden; }
 .scn-hang.scn-tuan-nav > .scn-nut.phu:not(.nho) { flex: 0 0 46px; min-width: 46px; padding: 0; justify-content: center; }
 .scn-hang.scn-tuan-nav > select { flex: 1 1 0; min-width: 0; }
 .scn-hang.scn-tuan-nav > .scn-nut.nho { flex: 0 0 auto; }
+
+/* ══ Sổ chủ nhiệm — dễ dùng hơn (8/10/2026) ══ */
+.scn-dd-gon { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--ok-nen, #e8f6ee); border: 1px solid #b9e2c8; border-radius: 10px; padding: 10px 12px; margin: 6px 0; }
+.scn-dd-gon b { color: var(--ok, #15803d); }
+.scn-dd-gon small { display: block; color: var(--chu-mo); margin-top: 2px; }
+.scn-cb-cc li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 6px 0; border-bottom: 1px dashed var(--vien); }
+.scn-cb-nut { display: flex; gap: 6px; flex-wrap: wrap; }
+.scn-cb-nut a.scn-nut { text-decoration: none; display: inline-flex; align-items: center; }
+.scn-them-ct { margin: 8px 0; border: 1px dashed var(--vien-dam, #b9c4de); border-radius: 10px; padding: 6px 10px; }
+.scn-them-ct > summary { cursor: pointer; font-weight: 600; color: var(--chinh, #2f5fd0); padding: 4px 0; min-height: 32px; }
+.scn-thieu ul { margin: 6px 0 0; }
+.scn-sd-ban { white-space: nowrap; }
+.scn-sd-o { display: inline-block; min-width: 76px; max-width: 110px; min-height: 40px; margin: 2px; padding: 4px 6px; border: 1.5px solid var(--vien-dam, #b9c4de); border-radius: 8px; background: #fff; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--chu); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.scn-sd-o.trong { color: var(--chu-mo); border-style: dashed; font-weight: 400; }
+.scn-sd-o.trung { border-color: #e0a020; background: #fff8e6; }
+.scn-sd-o.chon { border-color: var(--chinh, #2f5fd0); background: #e8f0fe; box-shadow: 0 0 0 3px rgba(47,95,208,.25); }
+.scn-sd-o:disabled { cursor: default; }
+.scn-sd-goi-y { position: sticky; top: 64px; z-index: 3; background: #e8f0fe; border: 1px solid #c5d7f6; border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 14px; }
+.scn-sd-chua button.on { background: var(--chinh, #2f5fd0); color: #fff; }
+.scn-xt-co { display: inline-flex; gap: 4px; }
+.scn-xt-co button { min-width: 40px; min-height: 36px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12); color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+@media (max-width: 640px) {
+  .scn-x { min-width: 40px; min-height: 40px; }
+  .scn-sd-o { min-width: 64px; font-size: 12px; }
+}
+.scn-xt-co button { background: var(--o-con, #f1f4fa); border: 1px solid var(--vien, #d9e1f2); color: var(--chu); }
+.scn-xt-co button:hover { background: var(--ke, #e5eaf3); }
+@media (max-width: 640px) {
+  .scn-xt-dau { flex-wrap: wrap; }
+  .scn-xt-nut { flex-wrap: wrap; flex: 1 1 100%; justify-content: flex-start; }
+  .scn-xt-nut .scn-xt-dong { margin-left: auto; }
+}
