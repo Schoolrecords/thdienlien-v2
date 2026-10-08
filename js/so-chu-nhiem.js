@@ -4098,7 +4098,7 @@
   // (diem_danh_lop + hs_vang, phép mặc định 'chua_ro' — GVCN bổ sung P/K trong sổ), RLS sẵn có của sql/20 + 69.
   // Sau khi ghi có 10 giây "Hoàn tác"; quá 10 giây vẫn sửa trong sổ (thẻ Theo dõi hằng ngày).
   // Chỉ bật cho trường có mã Sở trong danh sách — trường khác giữ nguyên dòng nhắc cũ.
-  var DD_NHANH_MA_SO = ['11819'];
+  var DD_NHANH_MA_SO = ['11819', '12111', '11841', '12108']; // 8/10/2026: thêm Nguyễn Kiệm · Hùng Châu 2 · Vĩnh Thành (đã có scn_*)
   var DD_HOAN_TAC_GIAY = 10;
   var THU_VN = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   var DDN = { hs: {}, mo: '', chon: {}, xong: {}, dem: null, dangGhi: false };
