@@ -3974,3 +3974,30 @@ html.bn-khoa-cuon, html.bn-khoa-cuon body { overflow: hidden; }
   .bn-pa-chon { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
   .bn-pa-the { flex: 0 0 72%; scroll-snap-align: start; }
 }
+.scn-luu-hang { align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.scn-luu-hang .scn-nut { background: var(--chinh, #2f5fd0); color: #fff; border-color: transparent; }
+.scn-luu-hang .scn-nut:not(:disabled):hover { background: var(--dam-2, #24418f); }
+.scn-tu-luu { font-size: 13px; color: var(--chu-mo); }
+.scn-tu-luu.xong { color: var(--ok, #15803d); font-weight: 600; }
+.scn-tu-luu.cho { color: #a15c00; }
+.scn-tu-luu.dang { color: var(--chu-mo); font-style: italic; }
+.scn-tu-luu.loi { color: #b3372a; font-weight: 600; }
+.scn-tuan-nav { align-items: center; gap: 6px; }
+.scn-tuan-nav > .scn-nut.phu:not(.nho) { min-width: 44px; font-size: 20px; padding: 0 10px; line-height: 1; }
+.scn-tuan-nav select { flex: 1 1 150px; min-width: 0; }
+.scn-kh-truoc { background: #fff8e6; border: 1px solid #f1d9a0; border-left: 4px solid #e0a020; border-radius: 10px; padding: 10px 12px; margin: 8px 0 12px; font-size: 14px; }
+.scn-kh-truoc b { display: block; margin-bottom: 4px; color: #7a4b00; }
+@media (max-width: 640px) {
+  .scn-luu-hang { position: sticky; bottom: 64px; z-index: 5; background: var(--the, #fff); padding: 8px 0; border-top: 1px solid var(--vien); }
+  .scn-luu-hang .scn-nut { flex: 0 0 auto; }
+  .scn-tuan-nav .scn-ghi-chu { width: 100%; }
+}
+.scn-dd-luu { flex-wrap: wrap; }
+.scn-dd-dang { width: 100%; font-size: 13px; color: var(--chu-mo); }
+.scn-dd-dang b { color: var(--dam, #16285c); }
+.scn-dd-khac { display: inline-block; background: #fdebd0; color: #9a5b00; font-weight: 700; font-size: 12px; padding: 1px 8px; border-radius: 10px; }
+.scn-xep-do { margin: 6px 0 10px; }
+.scn-hang.scn-tuan-nav { flex-wrap: wrap; }
+.scn-hang.scn-tuan-nav > .scn-nut.phu:not(.nho) { flex: 0 0 46px; min-width: 46px; padding: 0; justify-content: center; }
+.scn-hang.scn-tuan-nav > select { flex: 1 1 0; min-width: 0; }
+.scn-hang.scn-tuan-nav > .scn-nut.nho { flex: 0 0 auto; }
