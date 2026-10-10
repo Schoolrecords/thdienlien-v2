@@ -317,7 +317,8 @@
       window.notify('Chỉ Ban giám hiệu mới xuất được phiếu giao việc.');
       return;
     }
-    var ds = window.HO_SO.filter(function (h) { return h.hop === maHop; });
+    // Phiếu giao việc chỉ gồm hồ sơ đang quản lý — hồ sơ đã đóng không giao cho ai nữa (11/10/2026).
+    var ds = window.HO_SO.filter(function (h) { return h.hop === maHop && h.tt !== 'da_dong'; });
     if (!ds.length) { window.notify('Hộp này chưa có hồ sơ nào để xuất.'); return; }
 
     var dong = ds.map(function (h, i) {

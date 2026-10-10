@@ -516,7 +516,9 @@
       '<div id="kq-kiem-tra"></div>' +
       bp.hop.map(function (maHop, i) {
         var hop = window.HOP[maHop];
-        var ds = window.HO_SO.filter(function (h) { return h.hop === maHop; });
+        // Hồ sơ ĐÃ ĐÓNG không liệt kê trong hộp — thầy Chung 11/10/2026 (bên mầm non): "đã đóng thì đưa vào danh mục làm gì?".
+        // Danh sách đã đóng vẫn in ở Biểu mẫu (bieu-mau.js) và vẫn tìm được ở ô tìm kiếm.
+        var ds = window.HO_SO.filter(function (h) { return h.hop === maHop && h.tt !== 'da_dong'; });
         var mo = hopChon ? (maHop === hopChon) : (i === 0);
         return '<div class="sub' + (mo ? ' open' : '') + '">' +
           '<div class="sub-head" role="button" tabindex="0"' +
