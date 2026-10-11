@@ -70,7 +70,7 @@
       { k: 'van_ban', kieu: 'vb' }
     ],
     doi_ngu: [
-      { kieu: 'nhom', nhan: 'Theo vị trí việc làm và trình độ đào tạo (Điều 8 khoản 1 điểm a)', mo: '"Điền tự động" chỉ đếm được TỔNG SỐ theo chức vụ; cột trình độ nhà trường nhập.' },
+      { kieu: 'nhom', nhan: 'Theo vị trí việc làm và trình độ đào tạo (Điều 8 khoản 1 điểm a)', mo: 'Cột trình độ và ba ô chuẩn nghề nghiệp, bồi dưỡng: bấm "👥 Nhập trình độ, chuẩn nghề nghiệp từng người" ở trên (máy tự đếm), hoặc gõ thẳng số vào đây.' },
       { k: 'bang', kieu: 'bang', cot: [{ k: 'vi_tri', nhan: 'Vị trí việc làm', rong: 1 }, { k: 'tong', nhan: 'Tổng', kieu: 'so' },
         { k: 'thac_si', nhan: 'Thạc sĩ+', kieu: 'so' }, { k: 'dai_hoc', nhan: 'Đại học', kieu: 'so' }, { k: 'cao_dang', nhan: 'Cao đẳng', kieu: 'so' }, { k: 'khac', nhan: 'TC, khác', kieu: 'so' }] },
       { kieu: 'nhom', nhan: 'Tỷ lệ đạt chuẩn, bồi dưỡng (Điều 8 khoản 1 điểm b, c)' },
