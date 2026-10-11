@@ -186,7 +186,7 @@
         return '<div class="ckq-dong' + (m.ma === MUC_CHON ? ' on' : '') + '"><div class="ckq-so">' + m.so + '</div><div class="ckq-ten"><b>' + t(m.ten) +
           '</b><small>' + t(m.dieu) + ' · ' + t(m.mo) + '</small><div>' + trangThaiMuc(m) + '</div></div>' +
           '<button class="nut-chinh" data-ckq-soan="' + m.ma + '">✏️ Soạn</button></div>';
-      }).join('') + '</div><div id="ckq-soan"></div></div>';
+      }).join('') + '</div><div id="ckq-soan"></div><div id="ckq-dnn-vung"></div></div>';
 
     document.getElementById('ckq-nam').addEventListener('change', function () { NAM = this.value; MUC_CHON = ''; ve(HOP); });
     document.getElementById('ckq-xem-truoc').addEventListener('click', xemTruoc);
@@ -246,6 +246,8 @@
       ' <small>' + t(m.dieu) + '</small></h3><div>' +
       (nh ? 'Đang sửa <b>bản nháp</b>' : cb ? 'Đang sửa từ <b>bản đã công bố</b> — lưu sẽ tạo bản nháp cập nhật' : 'Mục mới') + '</div></div>' +
       (coTuDong ? '<button type="button" class="nut-phu ckq-tu-dong" id="ckq-tu-dong">⚡ Điền số liệu tự động từ hệ thống</button>' : '') +
+      // Trình độ · chuẩn NN · bồi dưỡng từng người (js/doi-ngu-nhap.js, sql/85) — bảng mở BÊN DƯỚI biểu mẫu. Mang từ mầm non 11/10/2026.
+      (ma === 'doi_ngu' && window.DOI_NGU ? '<button type="button" class="nut-phu ckq-tu-dong" id="ckq-dnn">👥 Nhập trình độ, chuẩn nghề nghiệp từng người</button>' : '') +
       (ma === 'ket_qua' ? ' <label class="nut-phu ckq-tu-dong ckq-nut-tep" title="Chọn một hoặc nhiều tệp kết quả cuối năm (TT 27) kết xuất từ CSDL ngành — kể cả của trường tiền thân. Chỉ ĐẾM trên máy, không lưu tên học sinh.">' +
         '📥 Đếm từ tệp Excel CSDL ngành<input type="file" id="ckq-tep-tt27" accept=".xls,.xlsx" multiple hidden></label>' +
         '<div id="ckq-tt27"></div>' : '') +
@@ -292,6 +294,21 @@
       });
     });
     if (coTuDong) document.getElementById('ckq-tu-dong').addEventListener('click', function () { tuDong(ma, this); });
+    var vDnn = document.getElementById('ckq-dnn-vung');
+    if (vDnn && ma !== 'doi_ngu') vDnn.innerHTML = '';
+    var nDnn = document.getElementById('ckq-dnn');
+    if (nDnn) nDnn.addEventListener('click', function () {
+      window.DOI_NGU.ve(vDnn, NAM, dsNhanSuDN(), function (kq) {
+        // Lưu xong: điền tổng số + số tổng hợp vào biểu mẫu (CHƯA lưu nháp — BGH xem lại rồi bấm)
+        delete SO_LIEU[NAM];
+        var nd = docForm('doi_ngu');
+        TU_DONG.doi_ngu(nd, {});
+        var canhBao = window.DOI_NGU.dienVao(nd, kq);
+        veSoan('doi_ngu', nd);
+        bao('👥 Đã điền số tổng hợp từ bảng từng người.' + canhBao + ' Kiểm tra rồi bấm <b>💾 Lưu nháp</b> → <b>📢 Công bố</b>.');
+      });
+      vDnn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     var tepTT27 = document.getElementById('ckq-tep-tt27');
     if (tepTT27) tepTT27.addEventListener('change', function () { demTT27(Array.prototype.slice.call(this.files || [])); this.value = ''; });
     document.getElementById('ckq-luu').addEventListener('click', function () { luu(ma).then(function (ok) { if (ok) ve(HOP); }); });
@@ -517,7 +534,12 @@
     if (SO_LIEU[NAM]) return Promise.resolve(SO_LIEU[NAM]);
     return may().rpc('cong_khai_so_lieu', { p_nam: NAM }).then(function (r) {
       if (r.error) throw r.error;
-      SO_LIEU[NAM] = r.data; return r.data;
+      // Số tổng hợp từ bảng từng người — trường chưa chạy sql/85 thì bỏ qua, không báo lỗi.
+      var dem = window.DOI_NGU ? window.DOI_NGU.dem(NAM, dsNhanSuDN()).catch(function () { return null; }) : Promise.resolve(null);
+      return dem.then(function (dn) {
+        var sl = Object.assign({}, r.data, { doi_ngu: dn });
+        SO_LIEU[NAM] = sl; return sl;
+      });
     });
   }
   // Bằng công nhận CQG chỉ tính khi đã khai số quyết định hoặc ngày ký — bảng cnqg_bang
@@ -539,6 +561,8 @@
     }, function (e) { nut.disabled = false; nut.textContent = cu; baoLoi(e); });
   }
 
+  // Danh sách người cho bảng 👥 — CÙNG nguồn với demCBGV (tài khoản, bỏ tài khoản khoá)
+  function dsNhanSuDN() { return (window.DS_TAI_KHOAN || []).filter(function (u) { return u.email && (!u.trang_thai || u.trang_thai !== 'khoa'); }); }
   function demCBGV() {
     var ds = (window.DS_TAI_KHOAN || []).filter(function (u) { return !u.trang_thai || u.trang_thai !== 'khoa'; });
     var nhom = { cbql: 0, gv: 0, tpt: 0, nv: 0 };
@@ -584,7 +608,7 @@
       return 'Số lớp, học sinh theo danh sách lớp năm ' + NAM + '; CBGV theo danh sách tài khoản (' + cb.tong + ' người).' +
         (bangCQG(sl) ? '' : ' Ô chuẩn quốc gia: chưa khai bằng công nhận (số QĐ) trong hệ thống — thầy cô ghi tay, ví dụ "Mức 2 (bảo lưu)".');
     },
-    doi_ngu: function (nd) {
+    doi_ngu: function (nd, sl) {
       var c = demCBGV();
       var mau = [['Cán bộ quản lý', c.cbql], ['Giáo viên', c.gv], ['Tổng phụ trách Đội', c.tpt], ['Nhân viên', c.nv]];
       var cu = nd.bang || [];
@@ -593,6 +617,11 @@
         d.tong = x[1];
         return d;
       }).concat(cu.filter(function (r) { return !mau.some(function (x) { return x[0] === r.vi_tri; }); }));
+      var dn = sl && sl.doi_ngu;
+      if (dn && window.DOI_NGU) {
+        var cb = window.DOI_NGU.dienVao(nd, dn);
+        if (dn.tong - dn.thieu_td || dn.bd_nhap) return 'Tổng số theo danh sách tài khoản; trình độ, chuẩn NN, bồi dưỡng theo bảng 👥 từng người.' + cb + ' Kiểm tra lại.';
+      }
       if (trong(nd.dc_tong) && c.gv) nd.dc_tong = c.gv + c.tpt;
       if (trong(nd.nn_tong) && (c.gv + c.cbql)) nd.nn_tong = c.gv + c.tpt + c.cbql;
       if (trong(nd.bd_tong) && c.tong) nd.bd_tong = c.tong;

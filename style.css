@@ -5184,3 +5184,56 @@ html.bn-khoa-cuon, html.bn-khoa-cuon body { overflow: hidden; }
   .scn-mo-rong .scn-form .scn-nhan.ngang { flex: 1 1 100%; }
   .scn-mo-rong .scn-form .scn-o { min-width: 0; max-width: 100%; }
 }
+
+/* ══ Bảng nhập nhanh trình độ · chuẩn NN · bồi dưỡng từng người (js/doi-ngu-nhap.js), mở dưới mục Đội ngũ
+   ở 🏛 Công khai — mang từ app mầm non 11/10/2026, đổi màu nhấn theo bảng màu tiểu học. ══ */
+.dnn { margin-top: 14px; background: #fff; border: 1px solid var(--vien); border-left: 4px solid var(--chinh); border-radius: var(--bo-goc, 14px);
+  padding: 16px 18px; scroll-margin-top: 90px; }
+.dnn-dau > b { display: block; color: var(--dam); font-size: 16px; }
+.dnn-dau small { display: block; color: var(--chu-mo); font-size: 12.5px; margin-top: 4px; line-height: 1.5; }
+.dnn-cho, .dnn-loi { margin: 0; color: var(--chu-mo); }
+.dnn-loi { color: #b03a2e; }
+.dnn-cong-cu { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 12px 0 10px; font-size: 13px; color: var(--chu-mo); }
+.dnn-cong-cu > span { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.dnn select { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1px solid var(--vien-dam, #b9d3d3); border-radius: 8px; background: #fff; max-width: 100%; }
+.dnn select:focus { outline: 2px solid rgba(42, 92, 184, .25); border-color: var(--chinh); }
+.dnn-dan { background: var(--o-con); border: 1px dashed var(--vien-dam, #b9d3d3); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; }
+.dnn-dan textarea { display: block; width: 100%; box-sizing: border-box; margin: 6px 0 8px; font: 13px/1.4 ui-monospace, Consolas, monospace;
+  padding: 8px; border: 1px solid var(--vien-dam, #b9d3d3); border-radius: 8px; resize: vertical; }
+.dnn-cuon { overflow-x: auto; border: 1px solid var(--ke); border-radius: 10px; max-height: 60vh; overflow-y: auto; }
+.dnn-bang { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.dnn-bang thead th { position: sticky; top: 0; z-index: 1; background: var(--o-con); color: var(--chu-mo); font-size: 12px; font-weight: 700;
+  text-align: left; padding: 7px 8px; white-space: nowrap; }
+.dnn-bang td { padding: 5px 8px; border-top: 1px solid var(--ke); vertical-align: middle; }
+.dnn-nhom th { background: #fff; color: var(--dam); font-size: 12.5px; text-align: left; padding: 9px 8px 5px; border-top: 1px solid var(--vien); }
+.dnn-stt { color: var(--chu-nhat); width: 28px; }
+.dnn-ten b { display: block; font-weight: 700; }
+.dnn-ten small, .dnn-tu { display: block; color: var(--chu-nhat); font-size: 11.5px; }
+.dnn-khong { color: var(--chu-nhat); font-size: 12px; }
+.dnn-bd label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
+.dnn-bd input { width: 18px; height: 18px; accent-color: var(--chinh); }
+tr.dnn-doi td { background: #f3f7ff; }
+tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
+.dnn-tong { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.dnn-tong > div { background: var(--o-con); border-radius: 10px; padding: 8px 12px; }
+.dnn-tong small { display: block; color: var(--chu-mo); font-size: 12px; }
+.dnn-tong b { color: var(--dam); font-size: 18px; }
+.dnn-chan { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.dnn-bao, .dnn-bao-dan { font-size: 13px; color: var(--chu-mo); }
+
+/* Điện thoại: mỗi người thành một thẻ, ô chọn xếp dọc */
+@media (max-width: 640px) {
+  .dnn { padding: 12px; }
+  .dnn-cuon { max-height: none; border: 0; }
+  .dnn-bang thead { display: none; }
+  .dnn-bang, .dnn-bang tbody { display: block; }
+  .dnn-bang tr[data-i] { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 10px 2px; border-top: 1px solid var(--ke); }
+  .dnn-bang tr[data-i] td { border: 0; padding: 0; }
+  .dnn-bang td[data-nhan] { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; }
+  .dnn-bang td[data-nhan]::before { content: attr(data-nhan); color: var(--chu-mo); font-size: 12px; }
+  .dnn-bang .dnn-stt { display: none; }
+  .dnn-bang td[data-nhan] .dnn-tu { grid-column: 2; margin-top: -4px; }
+  .dnn-nhom { display: block; }
+  .dnn-nhom th { display: block; }
+  .dnn select { width: 100%; }
+}
