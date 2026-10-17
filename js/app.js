@@ -290,7 +290,7 @@
       linkCua[h.ma] = link;
       var id = link ? layIdThuMuc(link) : null;
       if (id) quet[h.ma] = id;
-      else if (!link) chuaGan++;
+      else if (!link) { if (h.tt !== 'da_dong') chuaGan++; }   // hồ sơ đã đóng không cần thư mục
       else if (link.indexOf('#') >= 0) troNoiBo++;   // đầu mục trỏ (…/#cbgv)
       else linkNgoai++;                              // Docs/Sheets/tệp đơn… — không quét được
     });
@@ -350,8 +350,8 @@
       var d = demTrangThai(ds);
       toMau(null);
       dong('📂 Theo trạng thái đã lưu: <b>' + d.co + '/' + d.tong + '</b> đã có hồ sơ — icon thư mục xám là hồ sơ chưa có.' + duoiChu +
-        (!window.DA_NOI ? '<br><i>Đang xem dữ liệu mẫu nên không quét Drive thật.</i>'
-          : (!diaChi ? '<br><i>Muốn đếm tệp thật trên Drive: triển khai dịch vụ quét (quan-tri/kiem-tra-tep-drive.gs) rồi lưu URL vào cấu hình <code>link_kiem_tra_drive</code>.</i>' : '')));
+        // Thầy Chung 17/10/2026: bỏ dòng hướng dẫn kỹ thuật (tên tệp .gs, khoá cấu hình) — người dùng không cần thấy.
+        (!window.DA_NOI ? '<br><i>Đang xem dữ liệu mẫu nên không quét Drive thật.</i>' : ''));
       return;
     }
 
