@@ -4605,11 +4605,6 @@ body.ck-mo > footer { display: none !important; }
 .ck-xvb-tt h4 { font-size: 16.5px; font-weight: 800; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .ck-xvb-tt p { font-size: 12.6px; color: #c6d4f0; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ck-xvb-nut { display: flex; align-items: center; gap: 8px; flex: none; }
-.ck-xvb-n {
-  font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; padding: 8px 13px; border-radius: 10px; white-space: nowrap;
-  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .24); transition: background .15s;
-}
-.ck-xvb-n:hover { background: rgba(255, 255, 255, .24); color: #fff; }
 .ck-xvb-than { flex: 1; overflow: auto; background: #e6eaf1; outline: none; }
 .ck-xvb-drive { display: block; width: 100%; height: 100%; border: 0; background: #e6eaf1; }
 .ck-xvb-trang { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 16px 28px; min-height: 100%; }
@@ -4627,7 +4622,6 @@ body.ck-mo > footer { display: none !important; }
   .ck-xvb-dau { padding: 10px 10px 10px 12px; gap: 10px; }
   .ck-xvb-dau .ck-pdf { display: none; }
   .ck-xvb-tt h4 { font-size: 14.5px; }
-  .ck-xvb-phu-n { display: none; }
   .ck-xvb-trang { padding: 10px 6px 18px; gap: 10px; }
 }
 .ck-cuon { overflow-x: auto; border: 1px solid var(--ke); border-radius: 12px; }

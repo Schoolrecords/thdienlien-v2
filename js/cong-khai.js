@@ -627,12 +627,6 @@
     return m ? m[1] : '';
   }
   function laPdf(u) { return /\.pdf(?:$|[?#])/i.test(u) || /\/storage\/v1\/object\/public\//.test(u); }
-  function lienKetTai(u) {
-    var id = idDrive(u);
-    if (id) return 'https://drive.google.com/uc?export=download&id=' + id;
-    if (/\/storage\/v1\/object\/public\//.test(u)) return u + (u.indexOf('?') < 0 ? '?' : '&') + 'download=';
-    return u;
-  }
   function napPdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     return new Promise(function (ok, hong) {
@@ -670,9 +664,8 @@
         '<div class="ck-xvb-dau">' +
           '<span class="ck-pdf">PDF</span>' +
           '<div class="ck-xvb-tt"><h4>' + t(ten) + '</h4><p>' + t([moTa, truong].filter(Boolean).join(' · ')) + '</p></div>' +
+          // Thầy Chung 17/10/2026: bỏ hẳn nút Tải về, Mở thẻ mới — chỉ xem trong khung.
           '<div class="ck-xvb-nut">' +
-            '<a class="ck-xvb-n" href="' + t(lienKetTai(u)) + '" target="_blank" rel="noopener">Tải về</a>' +
-            '<a class="ck-xvb-n ck-xvb-phu-n" href="' + t(u) + '" target="_blank" rel="noopener">Mở thẻ mới</a>' +
             '<button type="button" class="ht-x" data-xvb="dong" aria-label="Đóng">✕</button>' +
           '</div>' +
         '</div>' +
