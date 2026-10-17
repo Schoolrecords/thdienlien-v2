@@ -3492,6 +3492,50 @@ body.ck-mo > footer { display: none !important; }
 .ck-tvb small { color: var(--chu-mo); font-size: 12.5px; }
 .ck-xem { font-size: 13px; font-weight: 700; white-space: nowrap; color: var(--chinh); }
 .ck-mo-nhat { color: var(--chu-nhat); font-weight: 600; }
+.ck-xvb-khoa, .ck-xvb-khoa body { overflow: hidden; }
+.ck-xvb-phu {
+  position: fixed; inset: 0; z-index: 950; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(10, 20, 42, .62); backdrop-filter: blur(3px); animation: htHien .16s ease-out;
+}
+.ck-xvb-phu.dong { animation: htTat .14s ease-in forwards; }
+.ck-xvb {
+  width: 100%; max-width: 1000px; height: calc(100vh - 48px); background: #fff; border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 26px 70px rgba(10, 20, 42, .4); animation: htLen .2s cubic-bezier(.2, .9, .3, 1);
+}
+.ck-xvb-dau {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px 14px 18px; flex: none; color: #fff;
+  background-image: var(--cham-navy), linear-gradient(135deg, var(--dam), var(--dam-2)); background-size: 20px 20px, auto;
+}
+.ck-xvb-dau .ck-pdf { background: rgba(255, 255, 255, .95); border-color: transparent; }
+.ck-xvb-tt { flex: 1; min-width: 0; }
+.ck-xvb-tt h4 { font-size: 16.5px; font-weight: 800; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ck-xvb-tt p { font-size: 12.6px; color: #c6d4f0; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ck-xvb-nut { display: flex; align-items: center; gap: 8px; flex: none; }
+.ck-xvb-n {
+  font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; padding: 8px 13px; border-radius: 10px; white-space: nowrap;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .24); transition: background .15s;
+}
+.ck-xvb-n:hover { background: rgba(255, 255, 255, .24); color: #fff; }
+.ck-xvb-than { flex: 1; overflow: auto; background: #e6eaf1; outline: none; }
+.ck-xvb-drive { display: block; width: 100%; height: 100%; border: 0; background: #e6eaf1; }
+.ck-xvb-trang { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 16px 28px; min-height: 100%; }
+.ck-xvb-giay { position: relative; background: #fff; box-shadow: 0 1px 3px rgba(16, 32, 64, .12), 0 8px 24px rgba(16, 32, 64, .1); line-height: 0; max-width: 100%; }
+.ck-xvb-giay canvas { display: block; height: auto; }
+.ck-xvb-so {
+  position: absolute; right: 10px; bottom: 10px; line-height: 1.4; font-size: 11.5px; font-weight: 700; color: var(--chu-mo);
+  background: rgba(255, 255, 255, .92); border: 1px solid var(--vien); border-radius: 8px; padding: 2px 8px;
+}
+.ck-xvb-cho { margin: auto; padding: 40px 10px; font-size: 14.5px; color: var(--chu-mo); line-height: 1.6; text-align: center; }
+.ck-xvb-chan { flex: none; padding: 8px 18px; font-size: 12.5px; color: var(--chu-mo); border-top: 1px solid var(--ke); background: #fff; }
+@media (max-width: 640px) {
+  .ck-xvb-phu { padding: 0; }
+  .ck-xvb { height: 100%; max-width: none; border-radius: 0; }
+  .ck-xvb-dau { padding: 10px 10px 10px 12px; gap: 10px; }
+  .ck-xvb-dau .ck-pdf { display: none; }
+  .ck-xvb-tt h4 { font-size: 14.5px; }
+  .ck-xvb-phu-n { display: none; }
+  .ck-xvb-trang { padding: 10px 6px 18px; gap: 10px; }
+}
 .ck-cuon { overflow-x: auto; border: 1px solid var(--ke); border-radius: 12px; }
 .ck-cuon table { border-collapse: collapse; width: 100%; font-size: 14px; }
 .ck-cuon th, .ck-cuon td { padding: 9px 12px; border-bottom: 1px solid var(--ke); text-align: right; white-space: nowrap; }

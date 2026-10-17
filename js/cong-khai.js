@@ -273,7 +273,8 @@
       var u = link(v.link);
       return '<li><span class="ck-pdf">PDF</span><span class="ck-tvb"><b>' + t(v.ten) + '</b>' +
         (v.mo_ta ? '<small>' + t(v.mo_ta) + '</small>' : '') + '</span>' +
-        (u ? '<a class="ck-xem" href="' + t(u) + '" target="_blank" rel="noopener">Xem ›</a>' : '<span class="ck-xem ck-mo-nhat">Đang cập nhật</span>') + '</li>';
+        (u ? '<a class="ck-xem" href="' + t(u) + '" target="_blank" rel="noopener" data-ck="xem-vb" data-ten="' + t(v.ten) +
+          '" data-mo-ta="' + t(v.mo_ta || '') + '">Xem ›</a>' : '<span class="ck-xem ck-mo-nhat">Đang cập nhật</span>') + '</li>';
     }).join('') + '</ul>';
   }
 
@@ -608,6 +609,131 @@
       '</div><div class="ck-day">© ' + new Date().getFullYear() + ' ' + t(ten) + ' · Hệ thống Quản trị số Trường học</div></footer>';
   }
 
+  // ══════════ XEM VĂN BẢN NGAY TRONG CỔNG ══════════
+  // Thầy Chung 17/10/2026: bấm "Xem" mà mở trang PDF trần với địa chỉ kỹ thuật
+  // (…supabase.co/storage/…) thì không ra dáng cổng của một nhà trường — thẻ trình
+  // duyệt còn hiện TÊN CŨ ghi trong thông tin ẩn của tệp (QĐ 1137 Vạn Kỷ hiện tên
+  // một trường xã khác vì UBND soạn từ văn bản mẫu). Nay mở khung xem trong cổng:
+  // đầu navy ghi tên văn bản, thân là các trang giấy.
+  //   · Tệp Drive  → khung xem trước của Drive (/preview), chạy cả trên điện thoại.
+  //   · Tệp PDF    → PDF.js (tải chậm từ cdnjs, lần đầu bấm Xem) vẽ từng trang;
+  //                  trình xem PDF dựng sẵn của trình duyệt không chạy trong iframe
+  //                  trên điện thoại Android/iPhone.
+  //   · Thư mục Drive, trang web khác → mở thẻ mới như cũ.
+  var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  var xemVb = null;   // { phu, tieuDeCu, huy }
+  function idDrive(u) {
+    var m = /drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/.exec(u);
+    return m ? m[1] : '';
+  }
+  function laPdf(u) { return /\.pdf(?:$|[?#])/i.test(u) || /\/storage\/v1\/object\/public\//.test(u); }
+  function lienKetTai(u) {
+    var id = idDrive(u);
+    if (id) return 'https://drive.google.com/uc?export=download&id=' + id;
+    if (/\/storage\/v1\/object\/public\//.test(u)) return u + (u.indexOf('?') < 0 ? '?' : '&') + 'download=';
+    return u;
+  }
+  function napPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return new Promise(function (ok, hong) {
+      var s = document.createElement('script');
+      s.src = PDFJS + 'pdf.min.js';
+      s.onload = function () {
+        if (!window.pdfjsLib) return hong(new Error('Không nạp được bộ đọc PDF'));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
+        ok(window.pdfjsLib);
+      };
+      s.onerror = function () { hong(new Error('Không nạp được bộ đọc PDF')); };
+      document.head.appendChild(s);
+    });
+  }
+  function dongXemVb() {
+    if (!xemVb) return;
+    var x = xemVb; xemVb = null;
+    x.huy = true;
+    document.removeEventListener('keydown', phimXemVb);
+    document.documentElement.classList.remove('ck-xvb-khoa');
+    if (x.tieuDeCu != null) document.title = x.tieuDeCu;
+    x.phu.classList.add('dong');
+    setTimeout(function () { if (x.phu.parentNode) x.phu.parentNode.removeChild(x.phu); }, 150);
+    if (x.tro && x.tro.focus) x.tro.focus();
+  }
+  function phimXemVb(e) { if (e.key === 'Escape') dongXemVb(); }
+  function moXemVb(u, ten, moTa, tro) {
+    dongXemVb();
+    var truong = (C().TEN_TRUONG) || '';
+    var id = idDrive(u);
+    var phu = document.createElement('div');
+    phu.className = 'ck-xvb-phu';
+    phu.innerHTML =
+      '<div class="ck-xvb" role="dialog" aria-modal="true" aria-label="' + t(ten) + '">' +
+        '<div class="ck-xvb-dau">' +
+          '<span class="ck-pdf">PDF</span>' +
+          '<div class="ck-xvb-tt"><h4>' + t(ten) + '</h4><p>' + t([moTa, truong].filter(Boolean).join(' · ')) + '</p></div>' +
+          '<div class="ck-xvb-nut">' +
+            '<a class="ck-xvb-n" href="' + t(lienKetTai(u)) + '" target="_blank" rel="noopener">Tải về</a>' +
+            '<a class="ck-xvb-n ck-xvb-phu-n" href="' + t(u) + '" target="_blank" rel="noopener">Mở thẻ mới</a>' +
+            '<button type="button" class="ht-x" data-xvb="dong" aria-label="Đóng">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ck-xvb-than" tabindex="0">' +
+          (id ? '<iframe class="ck-xvb-drive" src="https://drive.google.com/file/d/' + t(id) + '/preview" title="' + t(ten) + '" allow="autoplay"></iframe>'
+              : '<div class="ck-xvb-trang"><p class="ck-xvb-cho">Đang mở văn bản…</p></div>') +
+        '</div>' +
+        (id ? '' : '<div class="ck-xvb-chan"><span data-xvb="so-trang"></span></div>') +
+      '</div>';
+    document.body.appendChild(phu);
+    xemVb = { phu: phu, tieuDeCu: document.title, huy: false, tro: tro };
+    document.title = ten + (truong ? ' — ' + truong : '');
+    document.documentElement.classList.add('ck-xvb-khoa');
+    document.addEventListener('keydown', phimXemVb);
+    phu.addEventListener('click', function (e) {
+      if (e.target === phu || (e.target.closest && e.target.closest('[data-xvb="dong"]'))) dongXemVb();
+    });
+    var nutDong = phu.querySelector('[data-xvb="dong"]');
+    if (nutDong) nutDong.focus();
+    if (!id) vePdf(u, xemVb);
+  }
+  function vePdf(u, phien) {
+    var hop = phien.phu.querySelector('.ck-xvb-trang');
+    var soTrang = phien.phu.querySelector('[data-xvb="so-trang"]');
+    function loi() {
+      if (phien.huy) return;
+      hop.innerHTML = '<p class="ck-xvb-cho">Không hiển thị được văn bản trong khung này. ' +
+        '<a href="' + t(u) + '" target="_blank" rel="noopener">Mở văn bản ở thẻ mới ›</a></p>';
+    }
+    napPdfJs().then(function (lib) { return lib.getDocument({ url: u }).promise; }).then(function (pdf) {
+      if (phien.huy) return;
+      hop.innerHTML = '';
+      soTrang.textContent = pdf.numPages + ' trang';
+      var rong = Math.min(hop.clientWidth || 800, 860);
+      var tl = window.devicePixelRatio || 1;
+      var chuoi = Promise.resolve();
+      for (var i = 1; i <= pdf.numPages; i++) (function (so) {
+        chuoi = chuoi.then(function () {
+          if (phien.huy) return;
+          return pdf.getPage(so).then(function (trang) {
+            var vp0 = trang.getViewport({ scale: 1 });
+            var vp = trang.getViewport({ scale: rong / vp0.width * tl });
+            var giay = document.createElement('div');
+            giay.className = 'ck-xvb-giay';
+            var c = document.createElement('canvas');
+            c.width = vp.width; c.height = vp.height;
+            c.style.width = rong + 'px'; c.style.maxWidth = '100%';
+            c.setAttribute('aria-label', 'Trang ' + so + '/' + pdf.numPages);
+            giay.appendChild(c);
+            var nhan = document.createElement('span');
+            nhan.className = 'ck-xvb-so'; nhan.textContent = so + ' / ' + pdf.numPages;
+            giay.appendChild(nhan);
+            hop.appendChild(giay);
+            return trang.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+          });
+        });
+      })(i);
+      return chuoi;
+    }).catch(loi);
+  }
+
   // ══════════ SỰ KIỆN ══════════
   var daGanCuon = false;
   // Điện thoại: bảng nhiều cột chuyển thành THẺ DỌC (thầy Chung 5/10/2026 — cột bị ép hẹp, chữ
@@ -654,6 +780,16 @@
         if (b.hasAttribute('data-tkb-diem')) { TKB_CHON.diem = b.getAttribute('data-tkb-diem'); TKB_CHON.lop = ''; }
         else TKB_CHON.lop = b.getAttribute('data-tkb-lop');
         var y = window.pageYOffset; veTrang(); window.scrollTo(0, y);
+      });
+    });
+    // Xem văn bản trong khung. Ctrl/⌘/Shift/chuột giữa vẫn mở thẻ mới như mọi liên kết.
+    Array.prototype.slice.call(el.querySelectorAll('[data-ck="xem-vb"]')).forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var u = a.getAttribute('href');
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+        if (!idDrive(u) && !laPdf(u)) return;
+        e.preventDefault();
+        moXemVb(u, a.getAttribute('data-ten') || 'Văn bản', a.getAttribute('data-mo-ta') || '', a);
       });
     });
     Array.prototype.slice.call(el.querySelectorAll('[data-nam]')).forEach(function (b) {
