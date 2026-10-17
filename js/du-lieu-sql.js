@@ -446,7 +446,8 @@
     });
     if (khoi) return 'k' + khoi;
     var chu = boDau((p.chuc_vu || '') + ' ' + (p.to_chuyen_mon || ''));
-    if (ta || /tieng anh|ngoai ngu|anh van/.test(chu)) return 'ta';
+    // "Giáo viên Anh", "GV Anh" (Vạn Kỷ 18/10/2026) cũng là giáo viên Tiếng Anh
+    if (ta || /tieng anh|ngoai ngu|anh van|\b(giao vien|gv)\s*anh\b/.test(chu)) return 'ta';
     if (!coPhanCongCN) {
       var t = boDau(p.to_chuyen_mon || '').match(/^to\s*(chuyen mon\s*)?(khoi\s*)?([1-5])\s*$/);
       if (t) return 'k' + t[3];
@@ -477,6 +478,17 @@
         .then(function (r) { return r || { data: [] }; }, function () { return { data: [] }; });
     } catch (e) { return Promise.resolve({ data: [] }); }
   }
+  // Giáo viên có tiết Tiếng Anh trong TKB đã công bố (18/10/2026, Vạn Kỷ): phiếu trường
+  //  thường chỉ ghi chức vụ "Giáo viên", phan_cong_day lại cần đã đăng nhập → 9 cô dạy
+  //  Tiếng Anh mà nhóm chỉ hiện 1. Tên môn mỗi trường đặt khác ("T.Anh", "Tiếng Anh",
+  //  "NN1") nên lọc theo chữ. RLS chỉ trả tiết của bản công bố — đúng ý.
+  function docTkbTiengAnh(may) {
+    try {
+      var q = may.from('tkb_tiet').select('gv_email,mon').not('gv_email', 'is', null);
+      if (q.or) q = q.or('mon.ilike.*anh*,mon.eq.NN1');
+      return Promise.resolve(q.limit(3000)).then(function (r) { return r || { data: [] }; }, function () { return { data: [] }; });
+    } catch (e) { return Promise.resolve({ data: [] }); }
+  }
   // Khối của một tên lớp: "3A" → 3 · "Lớp 3A" / "DL-3A" → 3. Không ra 1…5 thì 0.
   function khoiCuaLop(lop) {
     var m = String(lop || '').trim().match(/(?:^|[^0-9])([1-5])(?![0-9])/);
@@ -494,7 +506,8 @@
       // Phân công năm nay: lớp chủ nhiệm → khối; môn NN1 → giáo viên Tiếng Anh.
       // Hỏng (chưa có bảng, RLS) thì chia theo tổ / chức vụ — không làm hỏng danh bạ.
       docPhanCong(may, nam),
-      docGvcnDuKien(may, nam)
+      docGvcnDuKien(may, nam),
+      docTkbTiengAnh(may)
     ]).then(function (kq) {
       if (kq[0].error) return; // GV chưa hoạt động thì RLS chặn — bỏ qua im lặng
       var moi = kq[0].data || [];
@@ -538,6 +551,12 @@
         coPhanCongCN = true;
         var x = pc[e] = pc[e] || { khoi: 0, ta: false };
         if (!x.khoi || k < x.khoi) x.khoi = k;
+      });
+      // "TATC" (Tiếng Anh tự chọn, không ghi giáo viên) có gv_email rỗng nên đã bị lọc
+      ((kq[5] && !kq[5].error && kq[5].data) || []).forEach(function (t) {
+        var e = String(t.gv_email || '').trim().toLowerCase();
+        if (!e || !/anh|^nn1$/i.test(boDau(t.mon))) return;
+        (pc[e] = pc[e] || { khoi: 0, ta: false }).ta = true;
       });
 
       var TEN_VAI_TRO = {
