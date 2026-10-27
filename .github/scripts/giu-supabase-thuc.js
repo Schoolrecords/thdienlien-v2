@@ -19,6 +19,13 @@
 //    · "fetch failed" cũ không nói gì. Tên miền <ref>.supabase.co KHÔNG CÒN
 //      (ENOTFOUND) nghĩa là dự án ĐÃ NGỦ — nay nói thẳng ra như vậy.
 //
+// 🔴 BÀI HỌC 27/10/2026 (MN Vân Du 2 NGỦ ~21/10 dù robot chạy đều; đổi theo ở tiểu học 28/10):
+//    robot chỉ gõ `cau_hinh` (anon bị RLS từ chối → 401, Postgres không ghi gì)
+//    và `auth/v1/settings` (không chạm CSDL). Trường vắng người dùng thì Supabase
+//    coi là bỏ không. Lõi tiểu học có sẵn nhịp tim `con_song()` từ sql/01 (ghi
+//    một dòng nhip_tim, cấp cho anon, sql/17 chừa ra) — nay gọi `rpc/con_song`
+//    và CHỈ tính đạt khi 200.
+//
 // Danh sách trường KHÔNG viết trong tệp này: đọc thẳng cau-hinh/ma/*.json,
 // nên cấp mã cho trường mới là robot tự biết. Trường chưa có CSDL riêng (hai ô
 // DIA_CHI / KHOA_CONG_KHAI trống — đang ở chế độ xem thử) thì bỏ qua.
@@ -57,23 +64,25 @@ function docCauHinh() {
     .filter(x => x.d.DIA_CHI && x.d.KHOA_CONG_KHAI);
 }
 
-async function goi(url, khoa) {
+async function goi(d, khoa) {
   const dk = new AbortController();
   const hen = setTimeout(() => dk.abort(), HET_GIO);
   try {
-    const r = await fetch(url, {
-      headers: { apikey: khoa, Authorization: `Bearer ${khoa}` },
+    const r = await fetch(d.url, {
+      method: d.post ? 'POST' : 'GET',
+      headers: { apikey: khoa, Authorization: `Bearer ${khoa}`, 'Content-Type': 'application/json' },
+      body: d.post ? '{}' : undefined,
       signal: dk.signal
     });
     await r.text();
-    // 200 hay 401 đều ĐẠT: yêu cầu đã tới máy chủ của trường; 401 chỉ là RLS.
-    // 5xx (540 = dự án đang dừng) là HỎNG.
-    return { dat: r.status < 500, mo_ta: `HTTP ${r.status}` };
+    // Nhịp tim phải đúng 200 (đã GHI vào CSDL); 401/404 ở đây = trường thiếu hàm con_song().
+    // Cửa Auth: dưới 500 là tới được máy chủ. 5xx (540 = dự án đang dừng) là HỎNG.
+    return { dat: d.can200 ? r.status === 200 : r.status < 500, mo_ta: `${d.ten} HTTP ${r.status}` };
   } catch (e) {
     const ma = e.cause && e.cause.code;
-    if (ma === 'ENOTFOUND') return { dat: false, ngu: true, mo_ta: 'tên miền CSDL không còn — DỰ ÁN ĐÃ NGỦ' };
-    if (e.name === 'AbortError') return { dat: false, mo_ta: `quá ${HET_GIO / 1000} giây không trả lời` };
-    return { dat: false, mo_ta: `không gọi được (${ma || e.message})` };
+    if (ma === 'ENOTFOUND') return { dat: false, ngu: true, mo_ta: `${d.ten}: tên miền CSDL không còn — DỰ ÁN ĐÃ NGỦ` };
+    if (e.name === 'AbortError') return { dat: false, mo_ta: `${d.ten}: quá ${HET_GIO / 1000} giây không trả lời` };
+    return { dat: false, mo_ta: `${d.ten}: không gọi được (${ma || e.message})` };
   } finally {
     clearTimeout(hen);
   }
@@ -83,11 +92,11 @@ async function giuMotTruong(x) {
   const ten = x.d.TEN_TRUONG || x.tep;
   const goc = String(x.d.DIA_CHI).replace(/\/+$/, '');
   const ref = (goc.match(/https:\/\/([a-z0-9]+)\.supabase\.co/) || [])[1] || goc;
-  // Hai cửa khác nhau: PostgREST phải hỏi Postgres (chạm CSDL thật), Auth là
-  // dịch vụ đăng nhập. Chạm cả hai cho chắc được tính là "có hoạt động".
+  // Nhịp tim con_song() GHI một dòng vào Postgres — chắc chắn được tính là "có hoạt
+  // động"; Auth là dịch vụ đăng nhập, chạm thêm cho chắc.
   const duong = [
-    `${goc}/rest/v1/cau_hinh?select=khoa&limit=1`,
-    `${goc}/auth/v1/settings`
+    { ten: 'nhịp tim', url: `${goc}/rest/v1/rpc/con_song`, post: true, can200: true },
+    { ten: 'đăng nhập', url: `${goc}/auth/v1/settings` }
   ];
   let kq;
   for (let lan = 1; lan <= SO_LAN_THU; lan++) {

@@ -73,20 +73,149 @@
     }).join('') + '</select>';
   }
 
+  // ── Đổi Gmail một người ở MỌI chỗ (sql/86-ghep-tai-khoan.sql, 28/10/2026 — bê từ mầm non) ──
+  // Danh sách mời, lớp chủ nhiệm, TKB, dạy thay, sổ chủ nhiệm, hồ sơ phụ trách (cả ô nhiều Gmail cách phẩy)…
+  // cùng đổi trong một giao dịch; tài khoản đã đăng nhập bằng Gmail mới được duyệt theo dòng mời, kèm điểm trường
+  // và lớp chủ nhiệm; thư mục hồ sơ cá nhân xếp lượt cho máy Drive chia sẻ.
+  // Dùng chung: 👥 Tài khoản › Ghép và ✉️ Danh sách mời (thiet-lap.js). Trả Promise<true|false>;
+  // duPhong = true: máy chủ chưa có hàm thì KHÔNG báo, trả 'chua_cai' để Danh sách mời lưu theo lối cũ.
+  // QC1 1/10/2026: đổi Gmail hai cô là một lượt người làm kỹ thuật viết SQL + Apps Script riêng.
+  window.doiGmailNguoi = function (cu, moi, duPhong) {
+    function hong(chu) {
+      return window.hopBao({ tieuDe: 'CHƯA đổi được Gmail', bieuTuong: '⚠️', noiDung: chu + '\n\nChưa có gì bị đổi.' })
+        .then(function () { return false; });
+    }
+    return window.MAY_CHU.rpc('doi_gmail_nguoi', { p_cu: cu, p_moi: moi }).then(function (r) {
+      if (r.error) {
+        var chuaCai = r.error.code === 'PGRST202' || /could not find the function/i.test(r.error.message || '');
+        if (chuaCai && duPhong) return 'chua_cai';
+        return hong(chuaCai
+          ? 'Máy chủ của trường chưa có bản cập nhật "Ghép tài khoản". Nhờ người làm kỹ thuật chạy ' +
+            'sql/86-ghep-tai-khoan.sql cho trường rồi thử lại.'
+          : 'Máy chủ báo: ' + (r.error.message || 'lỗi không rõ.'));
+      }
+      var d = r.data || {};
+      var dong = ['Gmail của ' + (d.ho_ten || 'thầy cô') + ' nay là ' + moi + '.'];
+      if (d.so_dong) dong.push('Đã đổi ' + d.so_dong + ' chỗ còn ghi Gmail cũ (danh sách mời, lớp chủ nhiệm, thời khoá biểu, ' +
+        'dạy thay, sổ chủ nhiệm, hồ sơ phụ trách…).');
+      dong.push(d.da_duyet
+        ? 'Tài khoản đã được duyệt' + (d.lop_chu_nhiem ? ', nhận chủ nhiệm ' + d.lop_chu_nhiem + ' lớp' : '') +
+          ' — thầy cô tải lại trang là vào được.'
+        : 'Thầy cô đăng nhập bằng Gmail mới là vào thẳng, không phải chờ duyệt.');
+      dong.push(d.cho_drive
+        ? 'Thư mục hồ sơ cá nhân: máy Drive mở quyền cho Gmail mới trong khoảng 5 phút — theo dõi ở đầu thẻ 👥 Tài khoản.'
+        : 'Dòng này chưa có link thư mục hồ sơ cá nhân nên không có thư mục nào để chia sẻ.');
+      if (d.tai_khoan_cu_con) dong.push('LƯU Ý: Gmail cũ ' + cu + ' vẫn còn tài khoản đang hoạt động. Nếu không dùng ' +
+        'nữa, chọn 🔴 Khóa ở dòng đó trong 👥 Tài khoản rồi bấm Lưu.');
+      return window.hopBao({ tieuDe: 'Đã đổi Gmail', bieuTuong: '✅', noiDung: dong.join('\n\n') })
+        .then(function () { return true; });
+    }).catch(function (e) { return hong('Không gọi được máy chủ: ' + ((e && e.message) || e)); });
+  };
+
+  // Bỏ dấu, chữ thường, tách từ — để gợi ý "lan nguyen" (tên Google) là "Nguyễn Thị Lan" (danh sách mời).
+  function tachTu(s) {
+    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd')
+      .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  }
+  // Gợi ý chỉ khi CHẮC: ít nhất hai từ khớp và đứng đầu một mình. Không chắc thì để BGH tự chọn.
+  function goiYGhep(tenGoogle, ungVien) {
+    var tu = tachTu(tenGoogle);
+    if (tu.length < 2) return '';
+    var diem = ungVien.map(function (m) {
+      var cua = tachTu(m.ho_ten);
+      return { email: m.email, d: tu.filter(function (t) { return cua.indexOf(t) >= 0; }).length };
+    }).sort(function (a, b) { return b.d - a.d; });
+    if (!diem.length || diem[0].d < 2 || (diem[1] && diem[1].d === diem[0].d)) return '';
+    return diem[0].email;
+  }
+
+  function truocDay(t) {
+    var p = Math.round((Date.now() - new Date(t).getTime()) / 60000);
+    if (p < 1) return 'vừa xong';
+    if (p < 60) return p + ' phút trước';
+    if (p < 48 * 60) return Math.round(p / 60) + ' giờ trước';
+    return Math.round(p / 1440) + ' ngày trước';
+  }
+
+  // Khung trạng thái máy chia sẻ thư mục Drive. Trường chưa chạy SQL (không đọc được bảng) thì im lặng.
+  function veDrive(khung, veLai) {
+    if (!khung) return;
+    Promise.all([
+      window.MAY_CHU.from('hang_doi_drive')
+        .select('id,thu_muc_id,email_moi,ho_ten,trang_thai,ket_qua,tao_luc,xong_luc')
+        .order('id', { ascending: false }).limit(30),
+      window.MAY_CHU.rpc('drive_lan_chay_cuoi')
+    ]).then(function (kq) {
+      if (kq[0].error) return;
+      var chay = kq[1] && !kq[1].error ? kq[1].data : null;
+      var tuan = Date.now() - 7 * 864e5;
+      var ds = (kq[0].data || []).filter(function (v) {
+        return v.ket_qua !== 'Thay bằng lượt mới' &&
+          (v.trang_thai !== 'xong' || new Date(v.xong_luc || v.tao_luc).getTime() > tuan);
+      });
+      var lau = !chay || Date.now() - new Date(chay).getTime() > 30 * 60000;
+      var conCho = ds.some(function (v) { return v.trang_thai !== 'xong'; });
+      if (!ds.length && !chay) return;
+      khung.className = 'tk-drive' + (lau && conCho ? ' canh' : '');
+      khung.innerHTML = '<b>📁 Máy chia sẻ thư mục hồ sơ</b> — ' + (chay
+        ? 'chạy lần cuối ' + truocDay(chay) + (lau ? ' <b class="tk-drive-canh">(lâu rồi không chạy — báo người làm kỹ thuật)</b>' : ' · 5 phút một lượt')
+        : '<b class="tk-drive-canh">chưa chạy lần nào</b> — lượt chờ nằm yên tới khi người làm kỹ thuật cài máy cho trường.') +
+        (ds.length ? '<ul>' + ds.map(function (v) {
+          var tm = 'https://drive.google.com/drive/folders/' + encodeURIComponent(v.thu_muc_id);
+          var dau = v.trang_thai === 'xong' ? '✅' : v.trang_thai === 'loi' ? '⚠️' : '⏳';
+          var chu = v.trang_thai === 'xong' ? 'đã mở quyền ' + truocDay(v.xong_luc || v.tao_luc)
+            : v.trang_thai === 'loi' ? 'chưa mở được quyền' : 'đang chờ mở quyền (xếp ' + truocDay(v.tao_luc) + ')';
+          return '<li>' + dau + ' <b>' + thoat(v.ho_ten || '') + '</b> ' + thoat(v.email_moi) + ' — ' + chu +
+            (v.trang_thai === 'loi'
+              ? ' <a href="' + tm + '" target="_blank" rel="noopener">Mở thư mục</a>' +
+                ' <button class="nut-drive-lai" data-id="' + v.id + '">Thử lại</button>' +
+                '<small>' + thoat(v.ket_qua || '') + ' · Muốn tự làm: mở thư mục › Chia sẻ › dán Gmail › quyền Người chỉnh sửa.</small>'
+              : '') + '</li>';
+        }).join('') + '</ul>' : '');
+      Array.prototype.slice.call(khung.querySelectorAll('.nut-drive-lai')).forEach(function (n) {
+        n.addEventListener('click', function () {
+          n.disabled = true; n.textContent = '…';
+          window.MAY_CHU.rpc('drive_thu_lai', { p_id: Number(n.getAttribute('data-id')) }).then(function (r) {
+            if (r.error) { n.disabled = false; n.textContent = 'Thử lại'; window.hopBao({ tieuDe: 'Không xếp lại được', bieuTuong: '⚠️', noiDung: r.error.message }); return; }
+            veLai();
+          });
+        });
+      });
+    }).catch(function () { /* khung phụ — hỏng mạng thì bảng chính đã báo */ });
+  }
+
   // ── Thẻ Tài khoản ──
   function veTaiKhoan(hop) {
-    window.MAY_CHU.from('nguoi_dung')
-      .select('id,email,ho_ten,chuc_vu,vai_tro,trang_thai,lan_vao_cuoi').order('ho_ten')
-      .then(function (kq) {
+    Promise.all([
+      window.MAY_CHU.from('nguoi_dung')
+        .select('id,email,ho_ten,chuc_vu,vai_tro,trang_thai,lan_vao_cuoi').order('ho_ten'),
+      window.MAY_CHU.from('moi_tai_khoan').select('email,ho_ten,chuc_vu,to_chuyen_mon').order('ho_ten'),
+      // Trường chưa chạy sql/86-ghep-tai-khoan.sql thì không có bảng này — khi ấy không bày nút Ghép.
+      window.MAY_CHU.from('hang_doi_drive').select('id').limit(1)
+    ])
+      .then(function (kqs) {
+        var kq = kqs[0];
         if (kq.error) { hop.innerHTML = '<div class="the-thong-bao">Không đọc được danh sách người dùng.</div>'; return; }
         var ds = kq.data || [];
         var choDuyet = ds.filter(function (u) { return u.trang_thai === 'cho_duyet'; }).length;
+        // Ứng viên ghép: dòng mời mà CHƯA có tài khoản nào đăng nhập bằng đúng Gmail ấy.
+        var daVao = {};
+        ds.forEach(function (u) { if (u.trang_thai !== 'cho_duyet') daVao[String(u.email).toLowerCase()] = 1; });
+        var coGhep = !!(kqs[2] && !kqs[2].error);
+        var ungVien = (coGhep && kqs[1] && !kqs[1].error && kqs[1].data || []).filter(function (m) {
+          return m.email && !daVao[String(m.email).toLowerCase()];
+        });
 
-        hop.innerHTML = '<div class="nhan-nho" style="margin:14px 0 10px">Đã đăng nhập ' + ds.length + ' tài khoản' +
+        hop.innerHTML = '<div id="tk-drive"></div>' +
+          '<div class="nhan-nho" style="margin:14px 0 10px">Đã đăng nhập ' + ds.length + ' tài khoản' +
           // --canh (#8f5d14) đạt 5,1:1 trên nền sáng; #c8901c cũ chỉ 3,3:1 và
           // đã bị bỏ khỏi bảng màu phiên 14-15/8.
           (choDuyet ? ' · <b style="color:var(--canh)">' + choDuyet + ' chờ duyệt</b>' : '') +
-          ' — thầy cô có tên trong danh sách mời thì lần đầu đăng nhập là vào thẳng, không cần duyệt.</div>' +
+          ' — thầy cô có tên trong danh sách mời thì lần đầu đăng nhập là vào thẳng, không cần duyệt.' +
+          (choDuyet && ungVien.length ? ' Tài khoản chờ duyệt mà thật ra là một thầy cô trong danh sách (Gmail trên ' +
+            'phiếu ghi sai, hoặc thầy cô đổi Gmail) thì chọn người ở dòng vàng rồi bấm <b>Ghép</b>: lớp chủ nhiệm, ' +
+            'thời khoá biểu, hồ sơ, thư mục theo về Gmail mới.' : '') +
+          '</div>' +
           '<div class="cuon-ngang"><table class="bang-quan-tri"><thead><tr>' +
           '<th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>' +
           ds.map(function (u) {
@@ -100,8 +229,55 @@
               '<td>' + chonHTML('vai_tro', u.vai_tro, ['admin', 'ban_giam_hieu', 'to_truong', 'giao_vien', 'nhan_vien'], TEN_VAI_TRO) + '</td>' +
               '<td>' + chonHTML('trang_thai', u.trang_thai, ['cho_duyet', 'hoat_dong', 'khoa'], TEN_TRANG_THAI) + '</td>' +
               '<td><button class="nut-luu-nd">Lưu</button>' +
-              (xoaDuoc ? '<button class="nut-xoa-nd">Xóa</button>' : '') + '</td></tr>';
+              (xoaDuoc ? '<button class="nut-xoa-nd">Xóa</button>' : '') + '</td></tr>' +
+              (u.trang_thai === 'cho_duyet' && ungVien.length ? dongGhep(u) : '');
           }).join('') + '</tbody></table></div>';
+
+        function dongGhep(u) {
+          var goiY = goiYGhep(u.ho_ten, ungVien);
+          return '<tr class="dong-ghep" data-email="' + thoat(u.email) + '" data-ten="' + thoat(u.ho_ten) + '"><td colspan="5">' +
+            '<div class="ghep-o">Đây là: <select class="chon-ghep"><option value="">— chọn thầy cô trong danh sách mời —</option>' +
+            ungVien.map(function (m) {
+              return '<option value="' + thoat(m.email) + '"' + (m.email === goiY ? ' selected' : '') + '>' +
+                thoat(m.ho_ten || m.email) + (m.chuc_vu || m.to_chuyen_mon ? ' · ' + thoat(m.chuc_vu || m.to_chuyen_mon) : '') +
+                ' · ' + thoat(m.email) + '</option>';
+            }).join('') + '</select>' +
+            '<button class="nut-ghep">Ghép</button>' +
+            (goiY ? '<span class="goi-y">Gợi ý theo tên Google — xem lại cho chắc trước khi ghép.</span>' : '') +
+            '</div></td></tr>';
+        }
+
+        veDrive(document.getElementById('tk-drive'), function () { veTaiKhoan(hop); });
+
+        Array.prototype.slice.call(hop.querySelectorAll('.nut-ghep')).forEach(function (nut) {
+          nut.addEventListener('click', function () {
+            var dong = nut.closest('tr');
+            var emailND = dong.getAttribute('data-email');
+            var emailDS = dong.querySelector('select.chon-ghep').value;
+            var m = ungVien.filter(function (x) { return x.email === emailDS; })[0];
+            if (!m) {
+              window.hopBao({ tieuDe: 'Chưa chọn người', bieuTuong: '☝️',
+                noiDung: 'Chọn trong danh sách xem tài khoản ' + emailND + ' là thầy cô nào, rồi bấm Ghép.' });
+              return;
+            }
+            window.hopHoi({
+              tieuDe: 'Ghép ' + emailND + ' vào ' + (m.ho_ten || m.email) + '?', nutOK: 'Ghép', nutHuy: 'Huỷ',
+              noiDung: 'Tài khoản Google "' + dong.getAttribute('data-ten') + '" (' + emailND + ') là ' +
+                (m.ho_ten || m.email) + (m.chuc_vu ? ' — ' + m.chuc_vu : '') + '.\n\n' +
+                'Gmail ' + m.email + ' sẽ đổi thành ' + emailND + ' ở mọi chỗ: danh sách mời, lớp chủ nhiệm, ' +
+                'thời khoá biểu, dạy thay, sổ chủ nhiệm, hồ sơ phụ trách. Tài khoản được duyệt ngay với quyền, tổ, ' +
+                'điểm trường của người này; thư mục hồ sơ cá nhân được mở quyền cho Gmail mới sau vài phút.\n\n' +
+                'Chỉ bấm Ghép khi chắc chắn là cùng một người.'
+            }).then(function (dongY) {
+              if (!dongY) return;
+              nut.disabled = true; nut.textContent = '…';
+              window.doiGmailNguoi(m.email, emailND).then(function (xong) {
+                if (xong) { veTaiKhoan(hop); return; }
+                nut.disabled = false; nut.textContent = 'Ghép';
+              });
+            });
+          });
+        });
 
         Array.prototype.slice.call(hop.querySelectorAll('.nut-luu-nd')).forEach(function (nut) {
           nut.addEventListener('click', function () {

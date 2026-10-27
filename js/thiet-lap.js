@@ -232,7 +232,8 @@
       return '<td><input type="text" data-cot="' + cot + '" value="' + thoat(gt || '') +
         '"' + (rong ? ' style="min-width:' + rong + '"' : '') + '></td>';
     }
-    return '<tr data-id="' + id + '">' +
+    // data-email-goc: Gmail lúc vẽ dòng — Lưu thấy ô Gmail khác đi thì đổi qua doi_gmail_nguoi (mọi chỗ), không update trần.
+    return '<tr data-id="' + id + '" data-email-goc="' + thoat((m && m.email) || '') + '">' +
       o('email', m && m.email, '15em') +
       o('ho_ten', m && m.ho_ten, '11em') +
       o('chuc_vu', m && m.chuc_vu, '9em') +
@@ -416,28 +417,42 @@
         }
       }
       luu.disabled = true; luu.textContent = '…';
-      var lenh = id
-        ? may().from('moi_tai_khoan').update(b).eq('id', id).select()
-        : may().from('moi_tai_khoan').upsert([b], { onConflict: 'email' }).select();
-      lenh.then(function (r) {
-        luu.disabled = false;
-        if (r.error) { luu.textContent = 'Lỗi!'; bao('Không lưu được: ' + r.error.message); setTimeout(function () { luu.textContent = 'Lưu'; }, 2500); return; }
-        // RLS chặn ghi → không có error, chỉ data rỗng. Không bắt thì nút hiện
-        // "Đã lưu ✓" trong khi cơ sở dữ liệu không có gì đổi.
-        if (!r.data || !r.data.length) {
-          luu.textContent = 'Lỗi!';
-          bao('Máy chủ nhận lệnh nhưng KHÔNG dòng nào được ghi — tài khoản đang dùng ' +
-            'có thể không đủ quyền sửa danh sách mời. Dòng này CHƯA được lưu.');
-          setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
-          return;
-        }
-        luu.textContent = 'Đã lưu ✓';
-        if (!id && r.data && r.data[0]) tr.setAttribute('data-id', r.data[0].id);
-        setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
-      }).catch(function (e) {
-        luu.disabled = false; luu.textContent = 'Lưu';
-        bao('Không gọi được máy chủ: ' + ((e && e.message) || e) + ' — chưa lưu được gì.');
+      // Đổi Gmail của dòng đã có: sửa trần cột email chỉ đổi MỘT dòng — lớp chủ nhiệm, TKB, dạy thay, sổ chủ
+      // nhiệm, hồ sơ phụ trách vẫn giữ Gmail cũ, thư mục Drive vẫn chia cho Gmail cũ (QC1 1/10/2026 phải viết
+      // SQL + Apps Script riêng). Đi qua doi_gmail_nguoi (quan-tri.js, sql/86) trước, rồi mới lưu các ô còn lại.
+      // Máy chủ chưa có hàm ('chua_cai') thì lưu theo lối cũ.
+      var goc = (tr.getAttribute('data-email-goc') || '').toLowerCase();
+      var doiMail = id && goc && goc !== b.email && window.doiGmailNguoi
+        ? window.doiGmailNguoi(goc, b.email, true) : Promise.resolve(true);
+      doiMail.then(function (duoc) {
+        if (!duoc) { luu.disabled = false; luu.textContent = 'Lưu'; return; }
+        luuDong();
       });
+      function luuDong() {
+        var lenh = id
+          ? may().from('moi_tai_khoan').update(b).eq('id', id).select()
+          : may().from('moi_tai_khoan').upsert([b], { onConflict: 'email' }).select();
+        lenh.then(function (r) {
+          luu.disabled = false;
+          if (r.error) { luu.textContent = 'Lỗi!'; bao('Không lưu được: ' + r.error.message); setTimeout(function () { luu.textContent = 'Lưu'; }, 2500); return; }
+          // RLS chặn ghi → không có error, chỉ data rỗng. Không bắt thì nút hiện
+          // "Đã lưu ✓" trong khi cơ sở dữ liệu không có gì đổi.
+          if (!r.data || !r.data.length) {
+            luu.textContent = 'Lỗi!';
+            bao('Máy chủ nhận lệnh nhưng KHÔNG dòng nào được ghi — tài khoản đang dùng ' +
+              'có thể không đủ quyền sửa danh sách mời. Dòng này CHƯA được lưu.');
+            setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
+            return;
+          }
+          luu.textContent = 'Đã lưu ✓';
+          if (!id && r.data && r.data[0]) tr.setAttribute('data-id', r.data[0].id);
+          tr.setAttribute('data-email-goc', b.email);
+          setTimeout(function () { luu.textContent = 'Lưu'; }, 2500);
+        }).catch(function (e) {
+          luu.disabled = false; luu.textContent = 'Lưu';
+          bao('Không gọi được máy chủ: ' + ((e && e.message) || e) + ' — chưa lưu được gì.');
+        });
+      }
     });
 
     var xoa = tr.querySelector('.tl-xoa-moi');

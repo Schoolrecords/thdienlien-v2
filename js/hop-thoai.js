@@ -9,6 +9,7 @@
 // API (đều trả Promise, KHÔNG chặn luồng như prompt cũ):
 //   window.hopNhap({...}) → Promise<string|null>   null = người dùng huỷ
 //   window.hopHoi({...})  → Promise<boolean>
+//   window.hopBao({...})  → Promise<void>          một nút, thay alert
 //
 // Tuỳ chọn hopNhap:
 //   tieuDe, moTa, bieuTuong, nhan, giaTri, kieu ('vanban'|'chu'|'so'|'ngay'),
@@ -220,5 +221,22 @@
   window.hopHoi = function (a, b) {
     if (typeof a === 'string') return goc(Object.assign({ noiDung: a }, b || {}));
     return goc(a);
+  };
+
+  // ── Hộp BÁO (thay alert) — một nút, trả Promise khi đóng ──
+  // Tuỳ chọn: tieuDe, noiDung, bieuTuong, nutOK. Gọn: hopBao('Đã xoá.')
+  // Cùng bản với mầm non (28/10/2026, ghép tài khoản cần báo nhiều dòng mà alert hiện tên miền).
+  window.hopBao = function (a, b) {
+    var o = typeof a === 'string' ? Object.assign({ noiDung: a }, b || {}) : (a || {});
+    return new Promise(function (traVe) {
+      var k = dungKhung({
+        tieuDe: o.tieuDe || 'Thông báo',
+        bieuTuong: o.bieuTuong || 'ℹ️',
+        nutOK: o.nutOK || 'Đã hiểu'
+      }, 'ht-hoi');
+      k.nutHuy.parentNode.removeChild(k.nutHuy);
+      k.than.appendChild(tao('p', 'ht-loi-nhac', o.noiDung || ''));
+      moKhung(k, k.nutOK, function () { traVe(); }, function () { return true; });
+    });
   };
 })();

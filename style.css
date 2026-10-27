@@ -740,12 +740,29 @@ footer .ten { color: #fff; font-weight: 700; font-size: 14.5px; }
   border: 1px solid var(--vien); border-radius: 8px; background: #fff; max-width: 150px;
 }
 .bang-quan-tri .dong-cho td { background: #fdf7e3; }
+/* Dòng "Ghép" dưới mỗi tài khoản chờ duyệt (sql/86-ghep-tai-khoan.sql, 28/10/2026) */
+.bang-quan-tri .dong-ghep td { background: #fdf7e3; border-top: 0; padding-top: 0; }
+.dong-ghep .ghep-o { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--chu-mo); }
+.bang-quan-tri .dong-ghep select.chon-ghep { max-width: 100%; min-width: 260px; }
+.dong-ghep .goi-y { font-size: 12px; color: var(--ok); }
+/* Trạng thái máy chia sẻ thư mục Drive — đầu thẻ 👥 Tài khoản */
+.tk-drive { margin: 14px 0 4px; padding: 12px 14px; background: var(--the); border: 1px solid var(--vien);
+  border-left: 4px solid var(--chinh); border-radius: 12px; font-size: 13.5px; }
+.tk-drive.canh { border-left-color: var(--canh); }
+.tk-drive-canh { color: var(--canh); }
+.tk-drive ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.tk-drive li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--ke); }
+.tk-drive li small { color: var(--chu-mo); flex-basis: 100%; }
+.tk-drive li a { font-size: 12.5px; }
+.tk-drive .nut-drive-lai { font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--chinh);
+  background: var(--the); border: 1px solid var(--vien-dam); border-radius: 8px; padding: 4px 10px; }
 .bang-quan-tri.nho { min-width: 560px; font-size: 12.5px; }
-.nut-luu-nd {
+.nut-luu-nd, .nut-ghep {
   font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   color: #fff; background: var(--chinh); border: none; border-radius: 8px; padding: 7px 13px;
 }
-.nut-luu-nd:hover { filter: brightness(1.1); }
+.nut-luu-nd:hover, .nut-ghep:hover { filter: brightness(1.1); }
+.nut-ghep:disabled { opacity: .6; cursor: default; }
 /* Nút xóa tài khoản — cố tình để viền rỗng, nhạt hơn nút Lưu để khỏi bấm nhầm */
 .nut-xoa-nd {
   font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-left: 6px;
@@ -1696,7 +1713,7 @@ td.tdst { white-space: nowrap; text-align: right; }
    kỳ tự đánh giá — trước đây chỉ cao ~24px. Mẫu @media (hover:none) này đã có
    sẵn ở khối .rec-tbl .drive, đây là mở rộng cho phần còn lại. */
 @media (hover: none) {
-  .nh-mc, .tag-crit, .chip-loc, .ct-quaylai, .nut-vien, .sub-word, .nut-luu-nd, .nut-xoa-nd {
+  .nh-mc, .tag-crit, .chip-loc, .ct-quaylai, .nut-vien, .sub-word, .nut-luu-nd, .nut-ghep, .nut-xoa-nd {
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .hs-dau button, .sheet-x { width: 44px; height: 44px; }

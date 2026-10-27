@@ -43,6 +43,9 @@
     'nhan_su_danh_gia',   // sql/85 (11/10/2026): trình độ, chuẩn NN, bồi dưỡng từng người — chỉ BGH đọc được
     // Khách kiểm tra có hạn (sql/82, 4/10/2026)
     'khach_kiem_tra',
+    // Ghép tài khoản (sql/86, 28/10/2026): lượt chia sẻ thư mục Drive (BGH đọc được). bi_mat_may KHÔNG có
+    // chính sách đọc nào ⇒ luôn ra rỗng — khoá máy Drive đặt lại bằng quan-tri/sinh-dong-bo-drive-th.py.
+    'hang_doi_drive', 'bi_mat_may',
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
     // Sổ ghi đầu bài (sql/83, 5/10/2026) — hồ sơ bắt buộc TT15 Đ.21.1.e, lưu hết khóa học
