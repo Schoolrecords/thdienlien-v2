@@ -3717,7 +3717,8 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 .scn-x { font: inherit; font-size: 16px; line-height: 1; width: 32px; height: 32px; border: 1px solid var(--scn-ke); border-radius: 6px; background: #fff; color: var(--chu-mo); cursor: pointer; flex: 0 0 auto; }
 .scn-x:hover { color: var(--chu); border-color: var(--scn-ke-dam); }
 
-.scn-tabs { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--scn-ke); margin-bottom: 14px; scrollbar-width: none; }
+/* 27/10/2026: thẻ XUỐNG DÒNG thay vì cuộn ngang — trên điện thoại cuộn ngang giấu 6/9 thẻ (Học sinh … Nộp sổ), thầy cô không biết là có */
+.scn-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--scn-ke); margin-bottom: 14px; }
 .scn-tabs::-webkit-scrollbar { display: none; }
 .scn-tabs button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--chu-mo); cursor: pointer; white-space: nowrap; }
 .scn-tabs button.on { color: var(--chu); border-bottom-color: var(--chu); }
@@ -3807,7 +3808,13 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
   .scn-so b { font-size: 21px; }
   .scn-nk-loai { flex-basis: 64px; }
   .scn-hang > .scn-o { flex: 1 1 140px; }
-  .scn-tabs button { padding: 10px 11px; }
+  .scn-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-bottom: 0; }
+  .scn-tabs button { padding: 8px 4px; white-space: normal; line-height: 1.25; text-align: center; border: 1px solid var(--scn-ke); border-radius: 8px; margin: 0; background: #fff; }
+  .scn-tabs button.on { background: #e8f0fe; border-color: #9db8e8; color: #1a4b9c; }
+  /* bảng học sinh: bỏ cột Giới, hai nút Sửa / Xoá xếp dọc — vừa bề ngang, khỏi vuốt ngang mới thấy nút */
+  .scn-bang .scn-c-gioi { display: none; }
+  .scn-bang td .scn-chip-dt { display: block; margin-top: 3px; }
+  .scn-bang td.scn-c-xoa .scn-nut { display: flex; width: 100%; justify-content: center; margin: 0 0 4px; }
 }
 @media print {
   .scn-tabs, .scn-chon, .scn-nut-xem, .scn-mo-them, .scn-x { display: none !important; }
@@ -4960,6 +4967,7 @@ body.ck-mo > footer { display: none !important; }
 .sdb-o-chu { font-size: 15px; }
 /* Sổ chủ nhiệm › Học sinh: nút Xoá cuối mỗi dòng (5/10/2026) */
 .scn-bang .scn-c-xoa { width: 1%; white-space: nowrap; text-align: right; }
+.scn-bang .scn-chip-dt { display: none; }
 .scn-nut.phu.scn-nut-sua { color: var(--chinh); }
 .scn-nut.phu.scn-nut-sua.on { background: var(--o-con); }
 /* Chọn tên bài trong kế hoạch dạy học (5/10/2026) — select dài, không tràn trên điện thoại */

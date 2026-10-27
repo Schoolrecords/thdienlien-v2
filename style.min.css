@@ -2741,7 +2741,7 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
 .scn-nut:not(:disabled):hover { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18); }
 .scn-x { font: inherit; font-size: 16px; line-height: 1; width: 32px; height: 32px; border: 1px solid var(--scn-ke); border-radius: 6px; background: #fff; color: var(--chu-mo); cursor: pointer; flex: 0 0 auto; }
 .scn-x:hover { color: var(--chu); border-color: var(--scn-ke-dam); }
-.scn-tabs { display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--scn-ke); margin-bottom: 14px; scrollbar-width: none; }
+.scn-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--scn-ke); margin-bottom: 14px; }
 .scn-tabs::-webkit-scrollbar { display: none; }
 .scn-tabs button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--chu-mo); cursor: pointer; white-space: nowrap; }
 .scn-tabs button.on { color: var(--chu); border-bottom-color: var(--chu); }
@@ -2823,7 +2823,12 @@ textarea.scn-o { width: 100%; resize: vertical; line-height: 1.5; }
   .scn-so b { font-size: 21px; }
   .scn-nk-loai { flex-basis: 64px; }
   .scn-hang > .scn-o { flex: 1 1 140px; }
-  .scn-tabs button { padding: 10px 11px; }
+  .scn-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-bottom: 0; }
+  .scn-tabs button { padding: 8px 4px; white-space: normal; line-height: 1.25; text-align: center; border: 1px solid var(--scn-ke); border-radius: 8px; margin: 0; background: #fff; }
+  .scn-tabs button.on { background: #e8f0fe; border-color: #9db8e8; color: #1a4b9c; }
+  .scn-bang .scn-c-gioi { display: none; }
+  .scn-bang td .scn-chip-dt { display: block; margin-top: 3px; }
+  .scn-bang td.scn-c-xoa .scn-nut { display: flex; width: 100%; justify-content: center; margin: 0 0 4px; }
 }
 @media print {
   .scn-tabs, .scn-chon, .scn-nut-xem, .scn-mo-them, .scn-x { display: none !important; }
@@ -3848,6 +3853,7 @@ body.ck-mo > footer { display: none !important; }
 .sdb-o-bai { font-size: 16px; min-height: 46px; }
 .sdb-o-chu { font-size: 15px; }
 .scn-bang .scn-c-xoa { width: 1%; white-space: nowrap; text-align: right; }
+.scn-bang .scn-chip-dt { display: none; }
 .scn-nut.phu.scn-nut-sua { color: var(--chinh); }
 .scn-nut.phu.scn-nut-sua.on { background: var(--o-con); }
 select.dh-o-nhap.sdb-chon-bai { display: block; width: 100%; max-width: 100%; margin-top: 6px; font-size: 15px; min-height: 44px; color: var(--chu); background: #fffaf3; border-color: #f3d3ae; text-overflow: ellipsis; }
