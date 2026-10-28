@@ -1402,9 +1402,13 @@
     }
     return c;
   }
+  // "Kết quả (cuối tháng)" chỉ soạn khi tháng đã gần hết (từ ngày 20) hoặc đã qua. Trước 28/10/2026 bấm Điền mẫu
+  // đầu tháng là điền luôn kết quả bằng số liệu vài ngày — cuối tháng nút nộp thấy ô có chữ nên không soạn lại → nộp thiếu.
+  function nenSoanKetQua(ym) { var hn = homNay(); return !!ym && (ym < hn.slice(0, 7) || (ym === hn.slice(0, 7) && +hn.slice(8, 10) >= 20)); }
   function dienMau(loai) {
     if (!window.SCN_MAU) return;
     var ra = window.SCN_MAU.sinh(loai, ctxMau(loai)), n = 0, coChu = 0;
+    if (loai === 'thang' && !nenSoanKetQua(D.thangKH)) delete ra['kh-ket-qua'];
     Object.keys(ra).forEach(function (id) {
       var o = document.getElementById(id);
       if (!o || o.disabled || !ra[id]) return;
@@ -2541,7 +2545,7 @@
   // "Nộp bản mới". Kỳ cuối HK I / cả năm, hoặc không soạn được (sổ khoá, thiếu số liệu) → nộp như cũ.
   function hoanTatVaNop(ky, nut) {
     var ym = thangCuaKy(ky), kt = ym ? keHoach('thang', ym) : null;
-    if (!ym || !laGVCNLopNay() || !coGhi(ym + '-01') || !window.SCN_MAU || (kt && String(kt.ket_qua || '').trim())) return nopKy(nut);
+    if (!ym || !laGVCNLopNay() || !coGhi(ym + '-01') || !window.SCN_MAU || !nenSoanKetQua(ym) || (kt && String(kt.ket_qua || '').trim())) return nopKy(nut);
     var cuThang = D.thangKH; D.thangKH = ym;
     var ra = window.SCN_MAU.sinh('thang', ctxMau('thang')) || {};
     D.thangKH = cuThang;
@@ -2553,16 +2557,20 @@
     if (!ketQua) return nopKy(nut);   // chưa có buổi điểm danh nào trong tháng — không bịa kết quả
     var dong = { nam_hoc: D.nam, lop: D.lop, cap: 'thang', ky: ym, ngay: ym + '-01', noi_dung: nd, ket_qua: ketQua };
     var thay = function (d) { D.so.keHoach = D.so.keHoach.filter(function (x) { return !(x.cap === 'thang' && x.ky === ym); }).concat([d || dong]); };
-    var ghiThem = 'Ô "Kết quả (cuối tháng)" còn trống — máy đã soạn từ số liệu của lớp và lưu vào sổ (sửa được ở Kế hoạch › Tháng, rồi bấm Nộp bản mới):\n\n' + ketQua;
-    if (!may()) { thay(dong); return nopKy(nut, ghiThem); }
-    ghiMay(may().from('scn_ke_hoach').upsert(dong, { onConflict: 'nam_hoc,lop,cap,ky' }).select().maybeSingle(), nut, function (d) { thay(d); })
-      .then(function (r) { if (nut) nut.disabled = false; if (r) nopKy(nut, ghiThem); });
+    var ghiThem = 'Ô "Kết quả (cuối tháng)" còn trống — bấm Nộp, máy ghi kết quả soạn từ số liệu của lớp vào sổ rồi nộp (sửa lại được ở Kế hoạch › Tháng, rồi bấm Nộp bản mới):\n\n' + ketQua;
+    // Chỉ ghi kết quả vào sổ SAU KHI thầy cô bấm Nộp — bấm Huỷ thì sổ không đổi
+    var ghiTruoc = function () {
+      if (!may()) { thay(dong); return Promise.resolve(true); }
+      return ghiMay(may().from('scn_ke_hoach').upsert(dong, { onConflict: 'nam_hoc,lop,cap,ky' }).select().maybeSingle(), nut, function (d) { thay(d); })
+        .then(function (r) { if (nut) nut.disabled = false; return !!r; });
+    };
+    nopKy(nut, ghiThem, ghiTruoc);
   }
-  function nopKy(nut, ghiThem) {
+  function nopKy(nut, ghiThem, ghiTruoc) {
     var ky = D.kyNop;
     var hoi = (ghiThem ? ghiThem + '\n\n' : '') + 'Nộp sổ lớp ' + D.lop + ' — ' + (TEN_KY_NOP[ky] || ky) + '? Máy chủ chụp lại sổ tại thời điểm này, lọc bỏ dữ liệu nhạy cảm rồi gửi ' + (laKyThang(ky) ? 'tổ chuyên môn' : 'Ban giám hiệu') + '.';
     var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Nộp sổ chủ nhiệm', nutOK: 'Nộp' }) : Promise.resolve(window.confirm(hoi));
-    xn.then(function (ok) {
+    Promise.resolve(xn).then(function (ok) { return ok && ghiTruoc ? ghiTruoc() : ok; }).then(function (ok) {
       if (!ok) return;
       if (!may()) {
         return xemThu(function () {
