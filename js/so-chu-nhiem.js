@@ -476,7 +476,7 @@
   };
   var EL = null;
 
-  function soTrong() { return { lop: null, keHoach: [], hoanCanh: {}, theoDoi: [], lienLac: [], hoTro: [], tongKet: {}, vang: [], ddl: [], kq: [], nlpc: [], th: [], giaoVien: [] }; }
+  function soTrong() { return { lop: null, keHoach: [], hoanCanh: {}, theoDoi: [], lienLac: [], hoTro: [], tongKet: {}, vang: [], ddl: [], kq: [], nlpc: [], th: [], giaoVien: [], dinhDanh: null }; }
 
   // ══════════ ĐỌC MÁY CHỦ ══════════
   // Đọc hết theo trang 1000 dòng. BẮT BUỘC .order('id') — không sắp thì PostgREST
@@ -611,7 +611,14 @@
       nguon('scn', taiHet('scn_tong_ket', '*', N)).then(function (d) { S.tongKet = {}; (d || []).forEach(function (x) { S.tongKet[x.ky] = x; }); }),
       nguon('vang', taiHet('hs_vang', 'id, ngay, buoi, hoc_sinh_ma, phep, ghi_chu, nguoi_ghi_id', N)).then(function (d) { S.vang = d || []; }),
       nguon('vang', taiHet('diem_danh_lop', 'id, ngay, buoi, si_so, so_vang, ghi_luc', N)).then(function (d) { S.ddl = d || []; }),
-      docGiaoVienLop(lop).then(function (d) { S.giaoVien = d; }, function () { S.giaoVien = []; })
+      docGiaoVienLop(lop).then(function (d) { S.giaoVien = d; }, function () { S.giaoVien = []; }),
+      // 28/10/2026 (sql/87): số định danh — bảng chỉ quản trị đọc, GVCN đọc qua hàm. Trường chưa chạy sql/87 → null, ô ẩn.
+      laBGH() || D.lopCuaToi.some(function (l) { return chuanLop(l) === chuanLop(lop); })
+        ? Promise.resolve(may().rpc('scn_dinh_danh_lop', { p_nam: nam, p_lop: lop })).then(function (r) {
+            if (r.error) throw r.error;
+            S.dinhDanh = {}; (r.data || []).forEach(function (x) { S.dinhDanh[x.hoc_sinh_ma] = x.so_dinh_danh; });
+          }).catch(function () { S.dinhDanh = null; })
+        : null
     ]);
     var theoHs = taiHet('hoc_sinh_lop', 'id, hoc_sinh_ma, lop, khoi, trang_thai, hoc_sinh(ma, ho_ten, ngay_sinh, gioi_tinh, dan_toc, khuyet_tat_hoa_nhap)', N)
       .then(function (ds) {
@@ -1480,17 +1487,17 @@
     var suaHS = quyenSuaHS();
     h += '<div class="scn-hang scn-hs-cong-cu">' +
       (ghi && !nhayCam ? '<button class="scn-nut' + (D.hsLuoi ? ' phu' : '') + '" data-act="hs-luoi">' + (D.hsLuoi ? 'Đóng bảng nhập' : '📝 Nhập thông tin cả lớp') + '</button>' : '') +
-      (suaHS ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') +
+      (laBGH() ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') +
       (ghi && !nhayCam ? '<button class="scn-nut phu" data-act="nam-truoc">📥 Lấy từ sổ năm trước</button>' : '') + '</div>';
     if (D.namTruoc && ghi && !nhayCam) h += veNamTruoc();
-    if (suaHS && D.hsThem) h += veFormThemHS();
+    if (laBGH() && D.hsThem) h += veFormThemHS();   // em chuyển đến: BGH (28/10/2026)
     if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.') + veHSRoi(suaHS);
     if (D.hsLuoi && ghi && !nhayCam) return h + veLuoiHS() + veHSRoi(suaHS);
     // 5/10/2026 thầy Chung: "chưa thấy chức năng xoá học sinh" — nút Xoá trước chỉ nằm trong khung mở ra khi bấm tên em;
     // nay có ngay cuối mỗi dòng (vẫn hỏi lý do, vẫn qua scn_xoa_hoc_sinh — sql/78). Cùng ngày thêm nút ✏️ Sửa bên cạnh:
     // mở đúng khung sửa như bấm tên em (data-hs), bấm lần nữa thì đóng.
     var soCot = suaHS ? 6 : 5;
-    if (suaHS) h += '<p class="scn-ghi-chu">Bấm <b>✏️ Sửa</b> (hoặc tên em) để sửa thông tin, hồ sơ hoàn cảnh, đánh dấu rời lớp (chuyển đi, thôi học). Em ghi sai, ghi trùng, nhầm lớp: bấm <b>🗑 Xoá</b>.</p>';
+    if (suaHS) h += '<p class="scn-ghi-chu">Bấm <b>✏️ Sửa</b> (hoặc tên em) để sửa thông tin (cả số định danh), hồ sơ hoàn cảnh, đánh dấu thôi học, bảo lưu. Em ghi sai, ghi trùng, nhầm lớp: bấm <b>🗑 Xoá</b>.</p>';
     h += '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>TT</th><th>Họ và tên</th><th>Ngày sinh</th><th class="scn-c-gioi">Giới</th><th class="scn-c-gioi">Ghi chú</th>' +
       (suaHS ? '<th class="scn-c-xoa"></th>' : '') + '</tr></thead><tbody>' +
       D.hs.map(function (hs, i) {
@@ -1510,7 +1517,7 @@
           (mo ? '<tr class="scn-mo-rong"><td colspan="' + soCot + '">' + (suaHS ? veFormCoBan(hs, !nhayCam && ghi) : '') + (nhayCam ? rong('Không đủ quyền xem hồ sơ hoàn cảnh (dữ liệu nhạy cảm — chỉ GVCN và Ban giám hiệu).') : veLichSuHS(hs.ma) + veFormHoanCanh(hs, c, ghi)) + '</td></tr>' : '');
       }).join('') + '</tbody></table></div>';
     h += veHSRoi(suaHS);
-    h += '<p class="scn-ghi-chu">Hồ sơ hoàn cảnh là dữ liệu cá nhân nhạy cảm (Luật Bảo vệ dữ liệu cá nhân 2025): chỉ GVCN lớp và Ban giám hiệu xem; không chia sẻ lên nhóm Zalo. Số định danh cá nhân không hiển thị ở đây.</p>';
+    h += '<p class="scn-ghi-chu">Hồ sơ hoàn cảnh là dữ liệu cá nhân nhạy cảm (Luật Bảo vệ dữ liệu cá nhân 2025): chỉ GVCN lớp và Ban giám hiệu xem; không chia sẻ lên nhóm Zalo. Số định danh cá nhân chỉ hiện trong khung ✏️ Sửa của từng em, không in vào sổ.</p>';
     return h;
   }
   // 1/10/2026: cả năm của MỘT em trên một chỗ — chuyên cần, nhật ký theo dõi, hỗ trợ, trao đổi với cha mẹ.
@@ -1771,12 +1778,20 @@
       '<p class="scn-ghi-chu">Dùng cho học sinh chuyển đến. Em mới mang <b>mã tạm (TAM-…)</b> cho tới khi có mã trên CSDL ngành — Ban giám hiệu đổi sang mã thật ở màn nạp Học sinh.</p></div>');
   }
   // motNut: bên dưới có form hồ sơ — chỉ một nút "Lưu hồ sơ" ở cuối lưu cả hai phần (rà 8/10/2026: hai nút, lưu nửa này mất chữ nửa kia)
+  // 28/10/2026 thầy Chung: GVCN sửa được mọi thông tin (thêm ô số định danh — sql/87);
+  // chuyển trường (Chuyển đi), chuyển lớp, thêm em chuyển đến là việc của BGH.
   function veFormCoBan(hs, motNut) {
+    var bgh = laBGH(), dd = D.so && D.so.dinhDanh;
+    var lopKhac = bgh ? (D.dsLop || []).filter(function (l) { return chuanLop(l.lop) !== chuanLop(D.lop); }).map(function (l) { return l.lop; }) : [];
     return '<div class="scn-form scn-co-ban"><p class="scn-nhan"><b>Thông tin cơ bản</b></p>' + oCoBan('cb-', hs) +
+      (dd ? '<div class="scn-hang">' + oNgan('cb-dd', dd[hs.ma], 'Số định danh cá nhân (12 số)', '', ' inputmode="numeric" maxlength="15" autocomplete="off"') + '</div>' : '') +
       '<div class="scn-hang">' + (motNut ? '' : '<button class="scn-nut" data-act="luu-cb" data-ma="' + thoat(hs.ma) + '">Lưu thông tin cơ bản</button>') +
-      oChon('cb-tt', [['chuyen_di', 'Chuyển đi'], ['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']], 'chuyen_di') +
+      oChon('cb-tt', (bgh ? [['chuyen_di', 'Chuyển trường']] : []).concat([['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']]), bgh ? 'chuyen_di' : 'thoi_hoc') +
       '<button class="scn-nut phu" data-act="doi-tt" data-ma="' + thoat(hs.ma) + '">Đánh dấu rời lớp</button>' +
       '<button class="scn-nut phu scn-nut-xoa" data-act="xoa-hs" data-ma="' + thoat(hs.ma) + '">🗑 Xoá khỏi danh sách</button></div>' +
+      (lopKhac.length ? '<div class="scn-hang">' + oChon('cb-lop-moi', [['', 'Chọn lớp mới…']].concat(lopKhac), '') +
+        '<button class="scn-nut phu" data-act="chuyen-lop" data-ma="' + thoat(hs.ma) + '">Chuyển lớp</button></div>' : '') +
+      (bgh ? '' : '<p class="scn-ghi-chu">Em chuyển trường, chuyển lớp, em mới chuyển đến: báo Ban giám hiệu.</p>') +
       (/^TAM-/.test(hs.ma) ? '<p class="scn-ghi-chu">Em đang mang mã tạm ' + thoat(hs.ma) + '.</p>' : '') + '</div>';
   }
   function veHSRoi(suaHS) {
@@ -3651,7 +3666,8 @@
       'hs-them-mo': function () { D.hsThem = !D.hsThem; ve(); },
       'luu-luoi': function () { luuLuoi(b); }, 'luu-them': function () { luuCoBan(null, b); },
       'luu-cb': function () { luuMotEm(a('data-ma'), b); },
-      'doi-tt': function () { doiTrangThaiHS(a('data-ma'), giaTri('cb-tt') || 'chuyen_di', b); },
+      'doi-tt': function () { doiTrangThaiHS(a('data-ma'), giaTri('cb-tt') || 'thoi_hoc', b); },
+      'chuyen-lop': function () { chuyenLopHS(a('data-ma'), giaTri('cb-lop-moi'), b); },
       'hoc-lai': function () { doiTrangThaiHS(a('data-ma'), 'dang_hoc', b); },
       'xoa-hs': function () { xoaHS(a('data-ma'), b); },
       'dd-thang': function () {
@@ -3920,7 +3936,7 @@
         }, '78-scn-xoa-hoc-sinh.sql');
       });
   }
-  // Một nút lưu cả khung một em: thông tin cơ bản (nếu đổi) → hồ sơ hoàn cảnh (nếu có form) → nạp lại một lần
+  // Một nút lưu cả khung một em: thông tin cơ bản (nếu đổi) → số định danh (nếu đổi) → hồ sơ hoàn cảnh (nếu có form) → nạp lại một lần
   function luuMotEm(ma, nut) {
     var hs = D.hs.filter(function (x) { return x.ma === ma; })[0], coHC = !!document.getElementById('hc-o-voi');
     if (!document.getElementById('cb-ten')) { if (coHC) luuHoanCanh(ma, nut); return; }
@@ -3929,12 +3945,41 @@
       dan_toc: giaTri('cb-dt') || null, khuyet_tat_hoa_nhap: !!(o && o.checked) };
     if (!tt.ho_ten) { bao('Nhập họ và tên học sinh.'); return; }
     var doiCB = !hs || ['ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc'].some(function (k) { return (hs[k] || null) !== tt[k]; }) || !!hs.khuyet_tat_hoa_nhap !== tt.khuyet_tat_hoa_nhap;
-    if (!doiCB) { if (coHC) luuHoanCanh(ma, nut); else bao('Không có gì thay đổi.'); return; }
-    if (!coHC) { luuCoBan(ma, nut); return; }
-    if (!may()) { Object.assign(hs, tt); D.hs.sort(sapTen); luuHoanCanh(ma, nut); return; }
+    var dd = ddMoi(ma);
+    if (dd === false) return;
+    if (!doiCB && dd === undefined) { if (coHC) luuHoanCanh(ma, nut); else bao('Không có gì thay đổi.'); return; }
+    if (!may()) { Object.assign(hs, tt); D.hs.sort(sapTen); if (coHC) luuHoanCanh(ma, nut); else xemThu(); return; }
+    var buocHC = function () {
+      if (coHC) luuHoanCanh(ma, nut, function () { bao('Đã lưu hồ sơ ' + tt.ho_ten + '.'); napLaiLop(); });
+      else { bao('Đã sửa thông tin ' + tt.ho_ten + '.'); napLaiLop(); }
+    };
+    var buocDD = function () {
+      if (dd === undefined) return buocHC();
+      goiHam('scn_luu_dinh_danh', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_so: dd }, nut, buocHC, '87-scn-gvcn-sua-du-hs.sql');
+    };
+    if (!doiCB) return buocDD();
     goiHam('scn_luu_hoc_sinh', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_ho_ten: tt.ho_ten, p_ngay_sinh: tt.ngay_sinh,
-      p_gioi_tinh: tt.gioi_tinh, p_dan_toc: tt.dan_toc, p_khuyet_tat: tt.khuyet_tat_hoa_nhap }, nut, function () {
-      luuHoanCanh(ma, nut, function () { bao('Đã lưu hồ sơ ' + tt.ho_ten + '.'); napLaiLop(); });
+      p_gioi_tinh: tt.gioi_tinh, p_dan_toc: tt.dan_toc, p_khuyet_tat: tt.khuyet_tat_hoa_nhap }, nut, buocDD);
+  }
+  // Ô số định danh: undefined = không đổi (hoặc trường chưa chạy sql/87) · '' = xoá · false = sai, đã báo
+  function ddMoi(ma) {
+    if (!document.getElementById('cb-dd') || !D.so || !D.so.dinhDanh) return undefined;
+    var so = giaTri('cb-dd').replace(/[\s.\-]/g, '');
+    if (so === (D.so.dinhDanh[ma] || '')) return undefined;
+    if (so && !/^\d{12}$/.test(so)) { bao('Số định danh phải đủ 12 chữ số (đang nhập ' + so.length + ' ký tự).'); return false; }
+    return so;
+  }
+  // 28/10/2026: chuyển lớp cùng năm học — chỉ BGH (sql/87). Hồ sơ hoàn cảnh năm này đi theo em.
+  function chuyenLopHS(ma, lopMoi, nut) {
+    if (!lopMoi) { bao('Chọn lớp mới trước.'); return; }
+    var ten = tenHS(ma), hoi = 'Chuyển ' + ten + ' từ lớp ' + D.lop + ' sang lớp ' + lopMoi + '? Điểm danh, nhật ký đã ghi ở lớp ' + D.lop + ' giữ nguyên ở lớp cũ; hồ sơ hoàn cảnh đi theo em.';
+    var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Chuyển lớp', nutOK: 'Chuyển lớp' }) : Promise.resolve(window.confirm(hoi));
+    xn.then(function (ok) {
+      if (!ok) return;
+      if (!may()) return xemThu(function () { D.hs = D.hs.filter(function (h) { return h.ma !== ma; }); D.hsMo = ''; });
+      goiHam('scn_chuyen_lop', { p_nam: D.nam, p_lop: D.lop, p_ma: ma, p_lop_moi: lopMoi }, nut, function (lop) {
+        bao('Đã chuyển ' + ten + ' sang lớp ' + (lop || lopMoi) + '.'); D.hsMo = ''; napLaiLop();
+      }, '87-scn-gvcn-sua-du-hs.sql');
     });
   }
   function luuHoanCanh(ma, nut, sau) {
