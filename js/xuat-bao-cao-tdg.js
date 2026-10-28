@@ -51,6 +51,11 @@
   /* Ô tiêu đề bảng: nền xám nhạt, chữ đậm, căn giữa — thống nhất cả báo cáo,
      để hội đồng lướt qua là phân biệt được ngay đâu là dòng tiêu đề. */
   const OT = O + 'background:#e8e8e8;font-weight:bold;text-align:center;vertical-align:middle;';
+  /* Ngắt trang: đoạn rỗng 1pt mang page-break-BEFORE, đặt ở ĐẦU trang mới. Word
+     bỏ qua page-break-after trên đoạn văn — bản cũ dùng kiểu đó nên bìa ngoài,
+     bìa trong và mục lục dồn chung một trang (thầy Chung báo 28/10/2026, Minh
+     Châu 2). Cùng cách đã đo bằng Word ở so-chu-nhiem.js (NGAT). */
+  const NGAT = '<p style="margin:0;font-size:1pt;line-height:1pt;page-break-before:always">&nbsp;</p>';
 
   function chan(s) {
     return String(s == null ? '' : s)
@@ -715,7 +720,7 @@
     return h + '</tbody></table>'
       + '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:5pt 0 0">'
       + 'Số trang do nhà trường điền sau khi chốt bản in.</p>'
-      + '<p style="page-break-after:always">&nbsp;</p>';
+      + NGAT;
   }
 
   /* ---------------- Ghép và tải ---------------- */
@@ -783,7 +788,7 @@
       + '<p style="' + TR + 'text-align:center;font-size:11.5pt;font-style:italic;margin:6pt 0 40pt">'
       + 'Lập theo Biểu 1 Phụ lục V Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026<br>'
       + 'của Bộ trưởng Bộ Giáo dục và Đào tạo</p>'
-      + '<p style="page-break-after:always">&nbsp;</p>';
+      + NGAT;
 
     /* Bìa trong — Biểu 1 có riêng một trang này sau bìa ngoài: tên cơ quan quản
        lý và tên trường, rồi tên báo cáo, không có Quốc hiệu. */
@@ -799,7 +804,7 @@
       + chan(d.namHoc) + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-style:italic;margin:60pt 0 0">'
       + chan(CAU_HINH.DIA_DANH || '') + ', năm ' + new Date().getFullYear() + '</p>'
-      + '<p style="page-break-after:always">&nbsp;</p>';
+      + NGAT;
 
     /* Khối chữ ký: chức vụ in hoa đậm — chừa chỗ ký và đóng dấu — họ tên đậm.
        Họ tên lấy ở cauhinh.js để khỏi mỗi tệp ghi một tên khác nhau. */
