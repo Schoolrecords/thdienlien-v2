@@ -1195,9 +1195,16 @@
       if (!coBuoi('sang')) ds.push(['Hôm nay chưa điểm danh <b>buổi sáng</b>.', nut('Điểm danh', 'data-act="mo-the" data-the="theo-doi"')]);
       if (hocChieu && gio >= 13 && !coBuoi('chieu')) ds.push(['Hôm nay chưa điểm danh <b>buổi chiều</b>.', nut('Điểm danh chiều', 'data-act="mo-the" data-the="theo-doi"')]);
     }
-    if (!keHoach('nam', '')) ds.push(['Chưa có <b>kế hoạch chủ nhiệm năm</b>.', nut('Lập kế hoạch năm', 'data-act="mo-kh" data-cap="nam"')]);
-    if (!keHoach('thang', ym)) ds.push(['Chưa có kế hoạch ' + thoat(TEN_THANG(ym).toLowerCase()) + '.', nut('Kế hoạch tháng', 'data-act="mo-kh" data-cap="thang"')]);
-    if (tuan && !tuan.nghi && !keHoach('tuan', 'T' + pad(tuan.tuan))) ds.push(['Chưa ghi kế hoạch, sơ kết <b>tuần ' + tuan.tuan + '</b>.', nut('Kế hoạch tuần', 'data-act="mo-kh" data-cap="tuan"')]);
+    // 28/10/2026 (thầy Chung: "giáo viên ít thao tác nhất"): nút "✨ Soạn …" mở đúng kỳ VÀ điền mẫu luôn
+    // (data-mau) — máy tự lưu sau ~2 giây, thầy cô chỉ đọc lại, sửa. Trước: mở thẻ → chọn kỳ → bấm Điền mẫu.
+    var mau = window.SCN_MAU ? ' data-mau="1"' : '';
+    if (!keHoach('nam', '')) ds.push(['Chưa có <b>kế hoạch chủ nhiệm năm</b>.', nut(mau ? '✨ Soạn kế hoạch năm' : 'Lập kế hoạch năm', 'data-act="mo-kh" data-cap="nam"' + mau)]);
+    if (!keHoach('thang', ym)) ds.push(['Chưa có kế hoạch ' + thoat(TEN_THANG(ym).toLowerCase()) + '.', nut(mau ? '✨ Soạn kế hoạch tháng' : 'Kế hoạch tháng', 'data-act="mo-kh" data-cap="thang" data-thang="' + ym + '"' + mau)]);
+    // Tuần vừa qua chưa sơ kết (hay gặp sáng thứ Hai) — nhắc cả tuần trước, không chỉ tuần này
+    var tTruoc = tuan && !tuan.nghi && tuan.tuan > 1 ? tuanCuaNgay(D.nam, congNgay(tuan.dau, -7)) : null;
+    if (tTruoc && !tTruoc.nghi && tTruoc.tuan === tuan.tuan - 1 && !keHoach('tuan', 'T' + pad(tTruoc.tuan)))
+      ds.push(['Chưa sơ kết <b>tuần ' + tTruoc.tuan + '</b> (tuần vừa qua).', nut(mau ? '✨ Soạn tuần ' + tTruoc.tuan : 'Tuần ' + tTruoc.tuan, 'data-act="mo-kh" data-cap="tuan" data-tuan="' + tTruoc.tuan + '"' + mau)]);
+    if (tuan && !tuan.nghi && !keHoach('tuan', 'T' + pad(tuan.tuan))) ds.push(['Chưa ghi kế hoạch, sơ kết <b>tuần ' + tuan.tuan + '</b>.', nut(mau ? '✨ Soạn tuần ' + tuan.tuan : 'Kế hoạch tuần', 'data-act="mo-kh" data-cap="tuan" data-tuan="' + tuan.tuan + '"' + mau)]);
     if (!((S.lop && S.lop.ban_can_su) || []).length) ds.push(['Chưa ghi ban cán sự lớp.', nut('Ghi ban cán sự', 'data-act="mo-the" data-the="hoc-sinh"')]);
     var thieuSdt = D.hs.filter(function (h) { return !(S.hoanCanh[h.ma] || {}).sdt; }).length;
     if (thieuSdt) ds.push([thieuSdt + ' em chưa có số điện thoại cha mẹ.', nut('Nhập cả lớp', 'data-act="mo-luoi" data-nhom="lien_lac"')]);
@@ -1205,7 +1212,8 @@
     // Từ ngày 25 nhắc nộp tháng này; ngày 1–10 tháng sau nhắc tháng trước nếu còn chưa nộp.
     var kyN = kyCanNop(hnay);
     if (kyN && laGVCNLopNay() && !D.dv.loi && !nopMoiNhat(D.dv.nop).some(function (n) { return chuanLop(n.lop) === chuanLop(D.lop) && n.ky === kyN; }))
-      ds.push(['Chưa <b>nộp sổ ' + thoat(TEN_KY_NOP[kyN].toLowerCase()) + '</b> cho tổ kiểm tra.', nut('Nộp sổ', 'data-act="mo-nop" data-ky="' + kyN + '"')]);
+      // 28/10/2026: nộp NGAY từ đây (máy soạn kết quả tháng nếu còn trống) — trước phải sang thẻ Nộp sổ, chọn kỳ, bấm Nộp
+      ds.push(['Chưa <b>nộp sổ ' + thoat(TEN_KY_NOP[kyN].toLowerCase()) + '</b> cho tổ kiểm tra.', nut('📤 Nộp sổ ' + thoat(TEN_KY_NOP[kyN].toLowerCase()), 'data-act="nop-nhanh" data-ky="' + kyN + '"')]);
     var denHan = S.hoTro.filter(function (x) { return x.trang_thai === 'dang_theo_doi' && x.moc_xem_lai && x.moc_xem_lai <= hnay; });
     if (denHan.length) ds.push([denHan.length + ' em hỗ trợ <b>đến hạn xem lại</b>: ' + denHan.slice(0, 4).map(function (x) { return thoat(tenHS(x.hoc_sinh_ma)); }).join(', ') + (denHan.length > 4 ? '…' : '') + '.', nut('Hỗ trợ HS', 'data-act="mo-the" data-the="ho-tro"')]);
     return ds;
@@ -2376,7 +2384,9 @@
       })() : '') +
       '<div class="scn-hang">' + oChon('dv-ky', KY_NOP, D.kyNop) +
       (xong ? chipTT(moi.trang_thai) : '<button class="scn-nut" data-act="nop-ky">' + nhan + '</button>') +
-      (moi && !xong ? chipTT(moi.trang_thai) : '') + '</div>';
+      (moi && !xong ? chipTT(moi.trang_thai) : '') + '</div>' +
+      (!xong && laGVCNLopNay() && thangCuaKy(D.kyNop) && !String((keHoach('thang', thangCuaKy(D.kyNop)) || {}).ket_qua || '').trim()
+        ? '<p class="scn-ghi-chu">Ô <b>Kết quả (cuối tháng)</b> còn trống — bấm nộp, máy soạn sẵn kết quả từ điểm danh, khen nhắc của lớp và lưu vào sổ (sửa lại được).</p>' : '');
     var dsSap = ds.slice().sort(function (a, b) { return thuTuKy(a.ky) - thuTuKy(b.ky) || b.lan - a.lan; });
     h += dsSap.length ? '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>Kỳ</th><th>Lần</th><th>Nộp lúc</th><th>Trạng thái</th><th>Kiểm tra, nhận xét</th><th>Mã bản</th></tr></thead><tbody>' +
       dsSap.map(function (n) {
@@ -2517,9 +2527,40 @@
   }
 
   // ── Hành động ──
-  function nopKy(nut) {
+  // Tháng (ym "2026-10") của kỳ nộp "thang-10" trong năm học D.nam; kỳ không phải tháng → ''
+  function thangCuaKy(ky) {
+    var m = /^thang-(\d+)$/.exec(String(ky || ''));
+    if (!m) return '';
+    var t = +m[1];
+    return (t >= 9 ? namDau(D.nam) : namDau(D.nam) + 1) + '-' + pad(t);
+  }
+  // 28/10/2026 (thầy Chung: "giáo viên ít thao tác nhất"): NỘP SỔ THÁNG MỘT BƯỚC. Trước: Kế hoạch › Tháng › gõ
+  // "Kết quả (cuối tháng)" › thẻ Nộp sổ › chọn kỳ › Nộp kỳ này › Nộp (7 chạm). Nay: ô kết quả tháng còn trống thì máy
+  // soạn từ số liệu thật của lớp (điểm danh, khen nhắc — js/scn-mau.js) rồi LƯU vào sổ, cùng các ô kế hoạch tháng còn
+  // trống; chữ thầy cô đã gõ không bị đè. Sau đó hỏi một lần → nộp. Thầy cô vẫn sửa được ở Kế hoạch › Tháng, rồi
+  // "Nộp bản mới". Kỳ cuối HK I / cả năm, hoặc không soạn được (sổ khoá, thiếu số liệu) → nộp như cũ.
+  function hoanTatVaNop(ky, nut) {
+    var ym = thangCuaKy(ky), kt = ym ? keHoach('thang', ym) : null;
+    if (!ym || !laGVCNLopNay() || !coGhi(ym + '-01') || !window.SCN_MAU || (kt && String(kt.ket_qua || '').trim())) return nopKy(nut);
+    var cuThang = D.thangKH; D.thangKH = ym;
+    var ra = window.SCN_MAU.sinh('thang', ctxMau('thang')) || {};
+    D.thangKH = cuThang;
+    var cu = (kt && kt.noi_dung) || {}, nd = Object.assign({}, cu);
+    [['day_hoc', 'kh-day-hoc'], ['doi', 'kh-doi'], ['khac', 'kh-khac']].forEach(function (x) { if (!String(nd[x[0]] || '').trim() && ra[x[1]]) nd[x[0]] = ra[x[1]]; });
+    if (!nd.so_luong) nd.so_luong = soLuongHienTai();
+    if (nd.tang_giam == null) nd.tang_giam = tangGiamGoiY(ym);
+    var ketQua = ra['kh-ket-qua'] || null;
+    if (!ketQua) return nopKy(nut);   // chưa có buổi điểm danh nào trong tháng — không bịa kết quả
+    var dong = { nam_hoc: D.nam, lop: D.lop, cap: 'thang', ky: ym, ngay: ym + '-01', noi_dung: nd, ket_qua: ketQua };
+    var thay = function (d) { D.so.keHoach = D.so.keHoach.filter(function (x) { return !(x.cap === 'thang' && x.ky === ym); }).concat([d || dong]); };
+    var ghiThem = 'Ô "Kết quả (cuối tháng)" còn trống — máy đã soạn từ số liệu của lớp và lưu vào sổ (sửa được ở Kế hoạch › Tháng, rồi bấm Nộp bản mới):\n\n' + ketQua;
+    if (!may()) { thay(dong); return nopKy(nut, ghiThem); }
+    ghiMay(may().from('scn_ke_hoach').upsert(dong, { onConflict: 'nam_hoc,lop,cap,ky' }).select().maybeSingle(), nut, function (d) { thay(d); })
+      .then(function (r) { if (nut) nut.disabled = false; if (r) nopKy(nut, ghiThem); });
+  }
+  function nopKy(nut, ghiThem) {
     var ky = D.kyNop;
-    var hoi = 'Nộp sổ lớp ' + D.lop + ' — ' + (TEN_KY_NOP[ky] || ky) + '? Máy chủ chụp lại sổ tại thời điểm này, lọc bỏ dữ liệu nhạy cảm rồi gửi ' + (laKyThang(ky) ? 'tổ chuyên môn' : 'Ban giám hiệu') + '.';
+    var hoi = (ghiThem ? ghiThem + '\n\n' : '') + 'Nộp sổ lớp ' + D.lop + ' — ' + (TEN_KY_NOP[ky] || ky) + '? Máy chủ chụp lại sổ tại thời điểm này, lọc bỏ dữ liệu nhạy cảm rồi gửi ' + (laKyThang(ky) ? 'tổ chuyên môn' : 'Ban giám hiệu') + '.';
     var xn = window.hopHoi ? window.hopHoi(hoi, { tieuDe: 'Nộp sổ chủ nhiệm', nutOK: 'Nộp' }) : Promise.resolve(window.confirm(hoi));
     xn.then(function (ok) {
       if (!ok) return;
@@ -3469,7 +3510,9 @@
     if (D.capNhat && laNutGhi(b)) { bao('Đang lấy dữ liệu mới nhất từ máy chủ — thầy cô đợi vài giây rồi bấm lại.'); return; }
     if (['data-dd', 'data-chon', 'data-sua-ll', 'data-sua-ht', 'data-goi-y', 'data-goi-y-ht'].some(function (k) { return b.hasAttribute(k); })) D.daCham = true;
     if (a('data-tab')) { tuLuuNgay(); datLaiTuLuu(); var g0 = viTriTabs(); D.tab = a('data-tab'); D.sua = null; ve(); giuTabs(g0); return; }
-    if (a('data-cap')) { tuLuuNgay(); datLaiTuLuu(); D.capKH = a('data-cap'); ve(); return; }
+    // Chỉ các chip Năm học/Tháng/Tuần. Nút có data-act (vd "✨ Soạn …" ở Việc cần làm cũng mang data-cap) đi xuống
+    // bảng hành động — trước 28/10/2026 dòng này nuốt mất, nút "Kế hoạch tuần/tháng" ở Việc cần làm bấm không chuyển thẻ.
+    if (a('data-cap') && !a('data-act')) { tuLuuNgay(); datLaiTuLuu(); D.capKH = a('data-cap'); ve(); return; }
     if (a('data-buoi')) { D.buoiTD = a('data-buoi'); ve(); return; }
     if (a('data-lui')) { D.ngayTD = congNgay(D.ngayTD || homNay(), +a('data-lui')); ve(); return; }
     if (a('data-dd') != null) { D.ddTam.tt[a('data-dd')] = a('data-gt') || ''; veLaiDongDD(a('data-dd')); return; }
@@ -3588,7 +3631,14 @@
         ve(); giuTabs(g);
       },
       'mo-nop': function () { var g = viTriTabs(); D.tab = 'duyet'; D.kyNop = a('data-ky') || D.kyNop; D.sua = null; ve(); giuTabs(g); },
-      'mo-kh': function () { D.tab = 'ke-hoach'; D.capKH = a('data-cap'); ve(); },
+      'mo-kh': function () {
+        tuLuuNgay(); datLaiTuLuu();
+        D.tab = 'ke-hoach'; D.capKH = a('data-cap');
+        if (a('data-thang')) D.thangKH = a('data-thang');
+        if (a('data-tuan')) D.tuanKH = +a('data-tuan');
+        ve();
+        if (a('data-mau')) dienMau(D.capKH);   // "✨ Soạn …" ở Việc cần làm: mở đúng kỳ rồi điền mẫu luôn (chỉ ô trống)
+      },
       'mo-luoi': function () { D.tab = 'hoc-sinh'; D.hsLuoi = true; D.daCham = true; D.luoiNhom = a('data-nhom') || D.luoiNhom; ve(); },
       'hs-them-mo': function () { D.hsThem = !D.hsThem; ve(); },
       'luu-luoi': function () { luuLuoi(b); }, 'luu-them': function () { luuCoBan(null, b); },
@@ -3601,7 +3651,8 @@
         window.BIEU_MAU.diemDanhLop({ lop: D.lop, nam: D.nam, ym: a('data-ym'), hs: D.hs, vang: D.so.vang, ddl: D.so.ddl,
           gvcn: (D.gvcnCua || {})[chuanLop(D.lop)] || '' });
       },
-      'nop-ky': function () { nopKy(b); }, 'nd-them': function () { ndThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
+      'nop-ky': function () { hoanTatVaNop(D.kyNop, b); },
+      'nop-nhanh': function () { D.kyNop = a('data-ky') || D.kyNop; hoanTatVaNop(D.kyNop, b); }, 'nd-them': function () { ndThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
       'mo-so': function () { var l = a('data-lop'); D.moNop = null; D.che = 'so'; D.lop = l; D.tab = 'tong-quan'; D.dangNap = true; ve(); napLop().then(function () { ve(); }); },
       'them-ct': function () { var v = document.getElementById('kh-cuoc-thi'); if (v) { var d = document.createElement('div'); d.innerHTML = dongCuocThi(false)({}); v.appendChild(d.firstChild); } },
       'xoa-ct': function () { var d = b.closest('.scn-ct-dong'); if (d) d.parentNode.removeChild(d); }
@@ -4088,7 +4139,11 @@
     return '<div class="scn-nhac' + (gon ? ' gon' : '') + '"><span class="scn-nhac-chu"><b>Sổ chủ nhiệm lớp ' + thoat(lop) + '</b> · ' + thoat(TEN_KY_NOP[ky] || ky) + ': ' + tt +
       (ddChu ? '<br>' + ddChu : '') + '</span>' +
       '<span class="scn-nhac-nut">' + (gon ? '' : '<button type="button" data-scn-nhac="theo-doi" data-lop="' + thoat(lop) + '">' + (ngayHoc && !dd ? 'Điểm danh' : 'Điểm danh, ghi theo dõi') + '</button>') +
-      '<button type="button" data-scn-nhac="mo" data-lop="' + thoat(lop) + '">Mở sổ</button></span></div>';
+      // 28/10/2026: đến kỳ nộp mà lớp chưa nộp (hoặc tổ yêu cầu bổ sung) → nút "Mở sổ" thành "Nộp sổ", mở thẳng thẻ Nộp sổ
+      // (giữ đúng một nút như cũ — trang chủ không thêm khung mới)
+      (kyCanNop(homNay()) === ky && (!moi || moi.trang_thai === 'yeu_cau_bo_sung')
+        ? '<button type="button" data-scn-nhac="nop" data-ky="' + thoat(ky) + '" data-lop="' + thoat(lop) + '">📤 Nộp sổ</button>'
+        : '<button type="button" data-scn-nhac="mo" data-lop="' + thoat(lop) + '">Mở sổ</button>') + '</span></div>';
   }
   function dongNhacKT(n, bgh) {
     return '<div class="scn-nhac"><span class="scn-nhac-chu"><b>' + n + ' sổ chủ nhiệm</b> đang chờ ' + (bgh ? 'kiểm tra, duyệt' : 'tổ kiểm tra') + '</span>' +
@@ -4329,6 +4384,7 @@
       if (!b) return;
       var viec = b.getAttribute('data-scn-nhac'), lop = b.getAttribute('data-lop') || '';
       if (viec === 'kiemtra') moKiemTra();
+      else if (viec === 'nop') { D.kyNop = b.getAttribute('data-ky') || D.kyNop; moLop(lop, 'duyet'); }
       else moLop(lop, viec === 'theo-doi' ? 'theo-doi' : 'tong-quan');
     });
     var hien = function () { if (!mh || mh.classList.contains('hien')) veNhacHome(); };
