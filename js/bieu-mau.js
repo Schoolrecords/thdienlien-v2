@@ -146,6 +146,10 @@
     '.Section1{box-sizing:border-box;width:21cm;min-height:29.7cm;padding:2cm 1.5cm 2cm 3cm;margin:0 auto 24px;background:#fff;' +
     'box-shadow:0 1px 3px rgba(15,23,42,.12),0 10px 28px rgba(15,23,42,.12)}' +
     'body.ngang .Section1{width:29.7cm;min-height:21cm;padding:1.5cm 1.5cm 1.5cm 2cm}' +
+    // Bề rộng cột khai bằng cm là bề rộng CẢ Ô như Word hiểu. Trình duyệt mặc định cộng thêm đệm + viền
+    // → bảng Danh mục 6 cột phình 28,1 cm trên vùng chữ 26,2 cm, lố mép tờ (thầy Chung 28/10/2026).
+    // Chỉ khung xem trước; tệp Word không qua CSS này (Word COM đo 26,17 cm — vừa).
+    'th,td{box-sizing:border-box}' +
     // Ngắt trang: khe xám giữa hai tờ
     'p.bm-ngat{height:24px;margin:2cm -1.5cm 2cm -3cm !important;background:#e4e7ec;font-size:0 !important;' +
     'box-shadow:inset 0 6px 8px -6px rgba(15,23,42,.25),inset 0 -6px 8px -6px rgba(15,23,42,.25)}' +
