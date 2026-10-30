@@ -153,35 +153,52 @@
     var dem = 6 * co, cao = 0, dong = [];
     var PH = '"Times New Roman", Times, serif';
     function f(px, dam) { return (dam ? 'bold ' : '') + Math.round(px * co * tl) / tl + 'px ' + PH; }
-    function bo(chu, px, dam, giua) {         // ngắt dòng theo bề ngang
+    // Thầy Chung 30/10: kết luận, nhận xét canh trái lệch với cụm ngày tháng – chữ
+    // ký canh giữa → CANH GIỮA CẢ KHỐI, và ngắt dòng CÂN (các dòng dài gần bằng
+    // nhau, không để dòng cuối trơ một hai chữ).
+    function ngat(doan, rongToiDa) {
+      var tu = doan.split(/\s+/).filter(Boolean), kq = [], hang = '';
+      tu.forEach(function (w) {
+        var thu = hang ? hang + ' ' + w : w;
+        if (g.measureText(thu).width > rongToiDa && hang) { kq.push(hang); hang = w; }
+        else hang = thu;
+      });
+      kq.push(hang);
+      return kq;
+    }
+    function bo(chu, px, dam) {
       g.font = f(px, dam);
+      var toiDa = rong - 2 * dem;
       String(chu).split(/\n/).forEach(function (doan) {
-        var tu = doan.split(/\s+/), hang = '';
-        tu.forEach(function (w) {
-          var thu = hang ? hang + ' ' + w : w;
-          if (g.measureText(thu).width > rong - 2 * dem && hang) { dong.push({ s: hang, f: f(px, dam), px: px, giua: giua }); hang = w; }
-          else hang = thu;
-        });
-        dong.push({ s: hang, f: f(px, dam), px: px, giua: giua });
+        var hang = ngat(doan, toiDa);
+        if (hang.length > 1) {            // tìm bề ngang nhỏ nhất mà vẫn đủ ngần ấy dòng
+          var lo = toiDa * .4, hi = toiDa;
+          for (var k = 0; k < 14; k++) {
+            var giua = (lo + hi) / 2;
+            if (ngat(doan, giua).length > hang.length) lo = giua; else hi = giua;
+          }
+          hang = ngat(doan, hi);
+        }
+        hang.forEach(function (h) { dong.push({ s: h, f: f(px, dam), px: px, giua: true }); });
       });
     }
-    if (o.ketLuan) bo(o.ketLuan, 13.5, true, false);
-    if (o.nhanXet) bo(o.nhanXet, 13, false, false);
+    if (o.ketLuan) bo(o.ketLuan, 13.5, true);
+    if (o.nhanXet) bo(o.nhanXet, 13, false);
     var dauKy = dong.length;
-    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false, true);
-    if (o.chucDanh) bo(o.chucDanh, 13, true, true);
+    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false);
+    if (o.chucDanh) bo(o.chucDanh, 13, true);
     var caoKy = 46 * co, iKy = dong.length;
-    if (o.hoTen) bo(o.hoTen, 13.5, true, true);
+    if (o.hoTen) bo(o.hoTen, 13.5, true);
 
     var dg = function (d) { return d.px * co * 1.38; };
-    dong.forEach(function (d, i) { cao += dg(d); if (i === dauKy && dauKy > 0) cao += 6 * co; });
+    dong.forEach(function (d, i) { cao += dg(d); if (i === dauKy && dauKy > 0) cao += 9 * co; });
     cao += caoKy + 2 * dem;
     c.width = Math.ceil(rong * tl); c.height = Math.ceil(cao * tl);
     g.scale(tl, tl);
     g.fillStyle = MUC; g.textBaseline = 'top';
     var y = dem;
     dong.forEach(function (d, i) {
-      if (i === dauKy && dauKy > 0) y += 6 * co;
+      if (i === dauKy && dauKy > 0) y += 9 * co;
       if (i === iKy) {
         if (anhChuKy) {
           var r = Math.min((rong - 2 * dem) / anhChuKy.width, caoKy / anhChuKy.height);
@@ -246,6 +263,7 @@
     phu.addEventListener('change', doiO);
     phu.querySelector('[data-khs="dong"]').focus();
     taiDanhSach(phien);
+    napPdfJs().catch(function () { /* tải lại khi mở tệp */ });   // tải sẵn trong lúc chờ danh sách
   }
 
   function than(p) { return p.phu.querySelector('[data-khs="than"]'); }
@@ -308,8 +326,10 @@
           '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
           '<div class="khs-o"><span class="khs-nhan">Kết luận</span>' +
             '<div class="khs-chon">' +
+              // Bốn mức (thầy Chung hỏi 30/10, dùng chữ "kiểm tra" chứ không "duyệt")
               '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Đạt yêu cầu." checked> Đạt yêu cầu</label>' +
-              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Cần bổ sung, điều chỉnh."> Cần bổ sung</label>' +
+              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Đạt yêu cầu, cần điều chỉnh một số nội dung."> Đạt, cần điều chỉnh</label>' +
+              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Chưa đạt yêu cầu, cần bổ sung."> Chưa đạt, cần bổ sung</label>' +
               '<label><input type="radio" name="khs-kl" value="Đã kiểm tra."> Chỉ ghi đã kiểm tra</label>' +
             '</div></div>' +
           '<label class="khs-o"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
@@ -330,6 +350,7 @@
         '</div>' +
       '</div>';
     napChuKy(p);
+    napPdfLib().catch(function () { /* tải lại lúc bấm lưu */ });   // tải sẵn — bấm lưu khỏi chờ
     var xem = p.phu.querySelector('[data-khs="xem"]');
     Promise.all([goi('tai', { thu_muc: p.thuMuc, tep: f.id }), napPdfJs()]).then(function (r) {
       if (p.huy || p.tep !== f) return;
