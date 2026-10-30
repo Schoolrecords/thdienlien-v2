@@ -811,15 +811,19 @@
   }
 
   // ── Lối vào: nút ✍ trên thẻ giáo viên (du-lieu-sql.js vẽ, có data-ky-thu) ──
+  function moTu(n) {
+    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n, n.getAttribute('data-ky-loai'));
+  }
   document.addEventListener('click', function (e) {
     var n = e.target.closest && e.target.closest('[data-ky-thu]');
     if (!n) return;
     e.preventDefault();
-    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n, n.getAttribute('data-ky-loai'));
+    moTu(n);
   });
 
   window.KY_HO_SO = {
     mo: mo,
+    moTu: moTu,   // nút nằm trong vùng chặn nổi bọt (dòng danh mục hồ sơ, app.js) gọi thẳng
     bat: function () { return !!(C().LINK_KY_HO_SO && window.MAY_CHU); },
     // phần thuần cho bài thử
     _chuNgay: chuNgay, _chucDanhTu: chucDanhTu

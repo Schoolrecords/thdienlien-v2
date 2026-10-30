@@ -206,7 +206,8 @@
       (kyHoSoDuoc(link)
         ? '<button type="button" class="drive hs-ky" title="Ký, đóng dấu tệp PDF trong hồ sơ này" data-ky-loai="ho_so"' +
           ' data-ky-thu="' + thoatHTML(idThuMucDrive(link)) + '" data-ky-ten="' + thoatHTML(h.ma + ' · ' + h.ten) + '"' +
-          ' onclick="event.stopPropagation()">✍</button>'
+          // stopPropagation chặn cả lối bắt chung ở document (ky-ho-so.js) → gọi thẳng
+          ' onclick="event.stopPropagation();window.KY_HO_SO&&window.KY_HO_SO.moTu(this)">✍</button>'
         : '') +
       '</td></tr>';
   }
