@@ -187,11 +187,13 @@
         hang.forEach(function (h) { dong.push({ s: h, f: f(px, dam, nghieng), px: px, giua: true, mau: mau }); });
       });
     }
-    if (o.ketLuan) bo(o.ketLuan, 13.5, true, false, MUC_DO);
-    if (o.nhanXet) bo(o.nhanXet, 13, false);
+    // Khối gọn (thầy Chung 30/10): chỉ ngày tháng · chữ ký · dấu · họ tên
+    if (o.ketLuan && !o.gon) bo(o.ketLuan, 13.5, true, false, MUC_DO);
+    if (o.nhanXet && !o.gon) bo(o.nhanXet, 13, false);
     var dauKy = dong.length;
-    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false, true);   // NĐ 30: in nghiêng
-    if (o.chucDanh) bo(o.chucDanh, 13, true);
+    var ngayKy = o.ngay || new Date();   // chọn được ngày khác hôm nay (ký bù, ký trước)
+    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(ngayKy) : chuNgay(ngayKy).replace(/^n/, 'N'), 12.5, false, true);   // NĐ 30: in nghiêng
+    if (o.chucDanh && !o.gon) bo(o.chucDanh, 13, true);
     // Đóng dấu (BGH): dấu đúng cỡ thật — o.dauTiLe = đường kính dấu / bề ngang khối,
     // tính sẵn từ cỡ trang (veLaiKhoi) — nên chỗ ký cao bằng con dấu.
     var dauD = (o.dau && o.dauTiLe) ? o.dauTiLe * rong : 0;
@@ -357,19 +359,22 @@
           (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
         '<div class="khs-ben">' +
           '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
-          '<div class="khs-o"><span class="khs-nhan">Kết luận</span>' +
+          '<label class="khs-dong-dau"><input type="checkbox" data-khs="gon"' + (nho('gon' + duoi) === '1' ? ' checked' : '') + '> ' +
+            '<span>Khối gọn: chỉ ngày tháng, chữ ký' + (coDau ? ', dấu' : '') + ' và họ tên</span></label>' +
+          '<div class="khs-o khs-phan-day" data-khs="phan-day"><span class="khs-nhan">Kết luận</span>' +
             '<div class="khs-chon">' +
               // Hồ sơ GV: bốn mức (thầy Chung hỏi 30/10 — tổ trưởng "kiểm tra", không "duyệt")
               KL.map(function (k, i) {
                 return '<label><input type="radio" name="khs-kl" value="' + t(k[0]) + '"' + (i ? '' : ' checked') + '> ' + t(k[1]) + '</label>';
               }).join('') +
             '</div></div>' +
-          '<label class="khs-o"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
+          '<label class="khs-o khs-phan-day"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
             '<textarea data-khs="nx" rows="3" maxlength="400" placeholder="Ví dụ: Mục tiêu rõ, cần thêm hoạt động vận dụng."></textarea></label>' +
           '<div class="khs-hai">' +
-            '<label class="khs-o"><span class="khs-nhan">Chức danh</span><textarea data-khs="cd" rows="2">' + t(chucDanh) + '</textarea></label>' +
+            '<label class="khs-o khs-phan-day"><span class="khs-nhan">Chức danh</span><textarea data-khs="cd" rows="2">' + t(chucDanh) + '</textarea></label>' +
             '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(hoTen) + '"></label>' +
           '</div>' +
+          '<label class="khs-o"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
           '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
             '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
             '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
@@ -392,6 +397,7 @@
       '</div>';
     napChuKy(p);
     if (coDau) napDau(p);
+    apKhoiGon(p);
     napPdfLib().catch(function () { /* tải lại lúc bấm lưu */ });   // tải sẵn — bấm lưu khỏi chờ
     var xem = p.phu.querySelector('[data-khs="xem"]');
     Promise.all([goi('tai', { thu_muc: p.thuMuc, loai: p.loai, tep: f.id }), napPdfJs()]).then(function (r) {
@@ -460,6 +466,15 @@
     // Có đóng dấu: khối rộng ít nhất ~2,2 lần đường kính dấu (≈ 77 mm), dấu khỏi tràn mép
     return (dongDau(p) && tr.vp.scale) ? Math.max(r, DAU_PT * tr.vp.scale * 2.2) : r;
   }
+  function homNay() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  // Khối gọn: kết luận, nhận xét, chức danh không in → làm mờ cho khỏi nhầm
+  function apKhoiGon(p) {
+    var g = p.phu.querySelector('[data-khs="gon"]'), gon = !!(g && g.checked);
+    p.phu.querySelectorAll('.khs-phan-day').forEach(function (x) { x.classList.toggle('khs-mo', gon); });
+  }
   // Con dấu tròn của trường: in đúng cỡ thật 35 mm (≈ 99 pt), không co giãn theo khối
   var DAU_PT = 35 / 25.4 * 72;
   var anhDau = null;
@@ -520,6 +535,10 @@
     var kl = p.phu.querySelector('input[name="khs-kl"]:checked');
     var o = { ketLuan: kl ? kl.value : '', nhanXet: giaTri(p, 'nx').trim(), diaDanh: C().DIA_DANH || '',
               chucDanh: giaTri(p, 'cd').trim().toUpperCase(), hoTen: giaTri(p, 'ht').trim() };
+    var g = p.phu.querySelector('[data-khs="gon"]');
+    o.gon = !!(g && g.checked);
+    var nd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(giaTri(p, 'ngay'));
+    if (nd) o.ngay = new Date(+nd[1], +nd[2] - 1, +nd[3]);
     if (dongDau(p) && tr && rong) { o.dau = anhDau; o.dauTiLe = DAU_PT * tr.vp.scale / rong; }
     return o;
   }
@@ -667,6 +686,7 @@
       if (k === 'cd') nho('chuc-danh' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value.trim());
       if (k === 'ht') nho('ho-ten', e.target.value.trim());
       if (k === 'co') nho('co' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value);
+      if (k === 'gon') { nho('gon' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.checked ? '1' : null); apKhoiGon(p); }
     }
     veLaiKhoi(p);
   }
@@ -832,6 +852,8 @@
 
   window.KY_HO_SO = {
     mo: mo,
+    // Nút "Kiểm tra ngay" (app.js): {mã hồ sơ: id thư mục} → {mã: số tệp | -1}
+    demTep: function (ds) { return goi('dem', { ds: ds }).then(function (kq) { return kq.dem || {}; }); },
     moTu: moTu,   // nút nằm trong vùng chặn nổi bọt (dòng danh mục hồ sơ, app.js) gọi thẳng
     bat: function () { return !!(C().LINK_KY_HO_SO && window.MAY_CHU); },
     // phần thuần cho bài thử

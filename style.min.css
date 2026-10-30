@@ -4214,6 +4214,9 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 .khs-dong-dau input { accent-color: var(--chinh); width: 16px; height: 16px; }
 .khs-anh-dau { height: 72px; }
 .khs-anh-dau img { max-height: 66px; }
+.khs-o input[type=date] { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--vien-dam); border-radius: 9px; width: 100%; color: var(--chu); }
+.khs-dong-dau span:not(.khs-nhan) { font-size: 13.5px; }
+.khs-mo { opacity: .4; }
 [data-khs][hidden] { display: none; }
 .khs-goi-y { font-size: 13px; line-height: 1.5; color: var(--chu-mo); background: var(--o-con); border-radius: 9px; padding: 8px 10px; margin: 0; }
 .khs-luu { width: 100%; }

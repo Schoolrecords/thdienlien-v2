@@ -363,7 +363,11 @@
 
     // ── Không quét được (xem thử / chưa cấu hình) → đếm theo trạng thái đã lưu
     var diaChi = String((window.CAU_HINH || {}).LINK_KIEM_TRA_DRIVE || '').trim();
-    if (!window.DA_NOI || !diaChi || !cacMa.length) {
+    // Trường chưa dựng dịch vụ đếm riêng nhưng đã có dịch vụ KÝ HỒ SƠ (cùng Gmail chủ
+    // cây, apps-script/ky-ho-so-drive.gs việc 'dem') → đếm qua đó. Thầy Chung 30/10
+    // (QC2): "Kiểm tra ngay" chỉ ra 0/41 theo trạng thái đã lưu dù Drive đã có tệp.
+    var quaKy = !diaChi && !!(window.KY_HO_SO && window.KY_HO_SO.bat() && window.KY_HO_SO.demTep);
+    if (!window.DA_NOI || (!diaChi && !quaKy) || !cacMa.length) {
       var d = demTrangThai(ds);
       toMau(null);
       dong('📂 Theo trạng thái đã lưu: <b>' + d.co + '/' + d.tong + '</b> đã có hồ sơ — icon thư mục xám là hồ sơ chưa có.' + duoiChu +
@@ -388,13 +392,15 @@
       var qua = new Promise(function (_, tuChoi) {
         hen = setTimeout(function () { tuChoi(new Error('dịch vụ không trả lời sau 100 giây')); }, 100000);
       });
-      Promise.race([fetch(diaChi, { method: 'POST', body: JSON.stringify(goi) }), qua])
-        .then(function (r) {
+      var hoi = quaKy
+        ? window.KY_HO_SO.demTep(goi)
+        : fetch(diaChi, { method: 'POST', body: JSON.stringify(goi) }).then(function (r) {
           if (!r.ok) throw new Error('dịch vụ trả mã ' + r.status);
           return r.json().catch(function () {
             throw new Error('dịch vụ trả về không phải JSON — kiểm bản triển khai Apps Script');
           });
-        })
+        });
+      Promise.race([hoi, qua])
         .then(function (kq) {
           clearTimeout(hen);
           if (!conSong()) return khoaNut(false);
@@ -407,7 +413,7 @@
           if (!conSong()) return khoaNut(false);
           khoaNut(false);
           dong('⚠️ Không gọi được dịch vụ đếm tệp: ' + thoatHTML((e && e.message) || 'lỗi mạng') +
-            '.<br><i>Kiểm lại URL + khóa trong cấu hình <code>link_kiem_tra_drive</code>, và bản triển khai Apps Script (Who has access: Anyone).</i>');
+            (quaKy ? '' : '.<br><i>Kiểm lại URL + khóa trong cấu hình <code>link_kiem_tra_drive</code>, và bản triển khai Apps Script (Who has access: Anyone).</i>'));
         });
     }
 
