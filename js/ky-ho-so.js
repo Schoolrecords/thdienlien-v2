@@ -628,7 +628,9 @@
         var a = g.getImageData(0, 0, c.width, c.height), d = a.data;
         for (var i = 0; i < d.length; i += 4) {
           var sang = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
-          if (sang > 165) d[i + 3] = 0;
+          // Ảnh PNG nền trong suốt: điểm trong suốt mang màu đen (0,0,0) — không loại
+          // trước là cả nền thành mảng mực xanh (thử thật QC2 30/10/2026)
+          if (d[i + 3] < 128 || sang > 165) d[i + 3] = 0;
           else { d[i] = 27; d[i + 1] = 58; d[i + 2] = 143; d[i + 3] = Math.min(255, (200 - sang) * 2.2); }
         }
         g.putImageData(a, 0, 0);
