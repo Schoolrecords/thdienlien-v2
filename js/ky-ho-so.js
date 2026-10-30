@@ -110,7 +110,8 @@
     return window.MAY_CHU.auth.getSession().then(function (r) {
       var tk = r && r.data && r.data.session && r.data.session.access_token;
       if (!tk) throw new Error(LOI.het_phien);
-      var than = Object.assign({ viec: viec, ma: String(C().MA || ''), token: tk }, them);
+      // Mã Sở trước: QC1 còn MA = 'dienlien' (mã cũ), dịch vụ ký tra bảng TRUONG theo mã Sở
+      var than = Object.assign({ viec: viec, ma: String(C().MA_SO || C().MA || ''), token: tk }, them);
       // ⚠️ KHÔNG đặt Content-Type: application/json là dính preflight mà Apps Script không trả lời
       return fetch(url, { method: 'POST', body: JSON.stringify(than), redirect: 'follow' });
     }).then(function (res) {
