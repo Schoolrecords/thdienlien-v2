@@ -1487,10 +1487,11 @@
     var suaHS = quyenSuaHS();
     h += '<div class="scn-hang scn-hs-cong-cu">' +
       (ghi && !nhayCam ? '<button class="scn-nut' + (D.hsLuoi ? ' phu' : '') + '" data-act="hs-luoi">' + (D.hsLuoi ? 'Đóng bảng nhập' : '📝 Nhập thông tin cả lớp') + '</button>' : '') +
-      (laBGH() ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') +
+      // 30/10/2026 thầy Chung: GVCN tự thêm em mới vào lớp mình (sql/88) — trước chỉ BGH (28/10)
+      (suaHS ? '<button class="scn-nut phu" data-act="hs-them-mo">' + (D.hsThem ? 'Đóng' : '+ Thêm học sinh') + '</button>' : '') +
       (ghi && !nhayCam ? '<button class="scn-nut phu" data-act="nam-truoc">📥 Lấy từ sổ năm trước</button>' : '') + '</div>';
     if (D.namTruoc && ghi && !nhayCam) h += veNamTruoc();
-    if (laBGH() && D.hsThem) h += veFormThemHS();   // em chuyển đến: BGH (28/10/2026)
+    if (suaHS && D.hsThem) h += veFormThemHS();   // em chuyển đến: GVCN lớp này hoặc BGH (sql/88, 30/10/2026)
     if (!D.hs.length) return h + rong('Lớp chưa có học sinh trong năm học này.') + veHSRoi(suaHS);
     if (D.hsLuoi && ghi && !nhayCam) return h + veLuoiHS() + veHSRoi(suaHS);
     // 5/10/2026 thầy Chung: "chưa thấy chức năng xoá học sinh" — nút Xoá trước chỉ nằm trong khung mở ra khi bấm tên em;
@@ -1778,20 +1779,21 @@
       '<p class="scn-ghi-chu">Dùng cho học sinh chuyển đến. Em mới mang <b>mã tạm (TAM-…)</b> cho tới khi có mã trên CSDL ngành — Ban giám hiệu đổi sang mã thật ở màn nạp Học sinh.</p></div>');
   }
   // motNut: bên dưới có form hồ sơ — chỉ một nút "Lưu hồ sơ" ở cuối lưu cả hai phần (rà 8/10/2026: hai nút, lưu nửa này mất chữ nửa kia)
-  // 28/10/2026 thầy Chung: GVCN sửa được mọi thông tin (thêm ô số định danh — sql/87);
-  // chuyển trường (Chuyển đi), chuyển lớp, thêm em chuyển đến là việc của BGH.
+  // 28/10/2026 thầy Chung: GVCN sửa được mọi thông tin (thêm ô số định danh — sql/87).
+  // 30/10/2026 thầy Chung mở thêm: GVCN tự thêm em mới, đánh dấu Chuyển trường, xoá (sql/88).
+  // Chuyển lớp vẫn là việc của BGH (đụng tới lớp khác).
   function veFormCoBan(hs, motNut) {
     var bgh = laBGH(), dd = D.so && D.so.dinhDanh;
     var lopKhac = bgh ? (D.dsLop || []).filter(function (l) { return chuanLop(l.lop) !== chuanLop(D.lop); }).map(function (l) { return l.lop; }) : [];
     return '<div class="scn-form scn-co-ban"><p class="scn-nhan"><b>Thông tin cơ bản</b></p>' + oCoBan('cb-', hs) +
       (dd ? '<div class="scn-hang">' + oNgan('cb-dd', dd[hs.ma], 'Số định danh cá nhân (12 số)', '', ' inputmode="numeric" maxlength="15" autocomplete="off"') + '</div>' : '') +
       '<div class="scn-hang">' + (motNut ? '' : '<button class="scn-nut" data-act="luu-cb" data-ma="' + thoat(hs.ma) + '">Lưu thông tin cơ bản</button>') +
-      oChon('cb-tt', (bgh ? [['chuyen_di', 'Chuyển trường']] : []).concat([['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']]), bgh ? 'chuyen_di' : 'thoi_hoc') +
+      oChon('cb-tt', [['chuyen_di', 'Chuyển trường'], ['thoi_hoc', 'Thôi học'], ['bao_luu', 'Bảo lưu']], 'chuyen_di') +
       '<button class="scn-nut phu" data-act="doi-tt" data-ma="' + thoat(hs.ma) + '">Đánh dấu rời lớp</button>' +
       '<button class="scn-nut phu scn-nut-xoa" data-act="xoa-hs" data-ma="' + thoat(hs.ma) + '">🗑 Xoá khỏi danh sách</button></div>' +
       (lopKhac.length ? '<div class="scn-hang">' + oChon('cb-lop-moi', [['', 'Chọn lớp mới…']].concat(lopKhac), '') +
         '<button class="scn-nut phu" data-act="chuyen-lop" data-ma="' + thoat(hs.ma) + '">Chuyển lớp</button></div>' : '') +
-      (bgh ? '' : '<p class="scn-ghi-chu">Em chuyển trường, chuyển lớp, em mới chuyển đến: báo Ban giám hiệu.</p>') +
+      (bgh ? '' : '<p class="scn-ghi-chu">Chuyển em sang lớp khác: báo Ban giám hiệu.</p>') +
       (/^TAM-/.test(hs.ma) ? '<p class="scn-ghi-chu">Em đang mang mã tạm ' + thoat(hs.ma) + '.</p>' : '') + '</div>';
   }
   function veHSRoi(suaHS) {
