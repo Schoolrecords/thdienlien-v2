@@ -32,6 +32,9 @@
   var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
   var PDFLIB = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
   var MUC = '#1b3a8f';           // màu mực xanh của khối chữ ký
+  // Dòng kết luận mực ĐỎ (thầy Chung 30/10) — chỉ lời kết luận; chữ ký, họ tên giữ
+  // mực xanh vì NĐ 30/2020 không dùng mực đỏ khi ký văn bản.
+  var MUC_DO = '#b3261e';
   var phien = null;              // khung đang mở
 
   function t(s) {
@@ -152,7 +155,7 @@
     var c = document.createElement('canvas'), g = c.getContext('2d');
     var dem = 6 * co, cao = 0, dong = [];
     var PH = '"Times New Roman", Times, serif';
-    function f(px, dam) { return (dam ? 'bold ' : '') + Math.round(px * co * tl) / tl + 'px ' + PH; }
+    function f(px, dam, nghieng) { return (nghieng ? 'italic ' : '') + (dam ? 'bold ' : '') + Math.round(px * co * tl) / tl + 'px ' + PH; }
     // Thầy Chung 30/10: kết luận, nhận xét canh trái lệch với cụm ngày tháng – chữ
     // ký canh giữa → CANH GIỮA CẢ KHỐI, và ngắt dòng CÂN (các dòng dài gần bằng
     // nhau, không để dòng cuối trơ một hai chữ).
@@ -166,8 +169,8 @@
       kq.push(hang);
       return kq;
     }
-    function bo(chu, px, dam) {
-      g.font = f(px, dam);
+    function bo(chu, px, dam, nghieng, mau) {
+      g.font = f(px, dam, nghieng);
       var toiDa = rong - 2 * dem;
       String(chu).split(/\n/).forEach(function (doan) {
         var hang = ngat(doan, toiDa);
@@ -179,13 +182,13 @@
           }
           hang = ngat(doan, hi);
         }
-        hang.forEach(function (h) { dong.push({ s: h, f: f(px, dam), px: px, giua: true }); });
+        hang.forEach(function (h) { dong.push({ s: h, f: f(px, dam, nghieng), px: px, giua: true, mau: mau }); });
       });
     }
-    if (o.ketLuan) bo(o.ketLuan, 13.5, true);
+    if (o.ketLuan) bo(o.ketLuan, 13.5, true, false, MUC_DO);
     if (o.nhanXet) bo(o.nhanXet, 13, false);
     var dauKy = dong.length;
-    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false);
+    bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false, true);   // NĐ 30: in nghiêng
     if (o.chucDanh) bo(o.chucDanh, 13, true);
     var caoKy = 46 * co, iKy = dong.length;
     if (o.hoTen) bo(o.hoTen, 13.5, true);
@@ -208,6 +211,7 @@
         y += caoKy;
       }
       g.font = d.f;
+      g.fillStyle = d.mau || MUC;
       g.textAlign = d.giua ? 'center' : 'left';
       g.fillText(d.s, d.giua ? rong / 2 : dem, y + d.px * co * .16);
       y += dg(d);
@@ -230,6 +234,7 @@
     p.huy = true;
     document.removeEventListener('keydown', phim);
     document.documentElement.classList.remove('ck-xvb-khoa');
+    if (p.quan) p.quan.disconnect();
     if (p.pdf) { try { p.pdf.destroy(); } catch (e) { /* đã huỷ */ } }
     if (p.phu.parentNode) p.phu.parentNode.removeChild(p.phu);
     if (p.tro && p.tro.focus) p.tro.focus();
@@ -314,6 +319,7 @@
   function moTep(p, i) {
     var f = p.ds[i];
     if (!f) return;
+    if (p.quan) { p.quan.disconnect(); p.quan = null; }
     p.man = 'ky'; p.tep = f; p.dat = null; p.trang = [];
     phuDe(p, f.ten);
     var nk = p.nguoiKy || {};
@@ -321,7 +327,8 @@
     var hoTen = nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '';
     than(p).innerHTML =
       '<div class="khs-ky">' +
-        '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải giáo án…</p></div>' +
+        '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải giáo án' +
+          (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
         '<div class="khs-ben">' +
           '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
           '<div class="khs-o"><span class="khs-nhan">Kết luận</span>' +
@@ -363,29 +370,45 @@
       p.pdf = pdf;
       xem.innerHTML = '';
       var rongKhung = Math.min(xem.clientWidth - 44, 860);   // chừa thanh cuộn dọc, khỏi cuộn ngang
+      // Thầy Chung 30/10: giáo án 19 trang mở chậm → chỉ VẼ trang sắp cuộn tới
+      // (khung giấy đủ cỡ dựng sẵn cho cả tệp, nên đặt chữ ký trang nào cũng được).
+      var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      function veTrang(giay) {
+        var so = Number(giay.getAttribute('data-trang')), tr = p.trang[so];
+        if (!tr || tr.da) return;
+        tr.da = true;
+        pdf.getPage(so + 1).then(function (trang) {
+          if (p.huy || p.tep !== f) return;
+          var cv = document.createElement('canvas');
+          cv.width = Math.floor(tr.vp.width * dpr); cv.height = Math.floor(tr.vp.height * dpr);
+          cv.style.width = tr.vp.width + 'px'; cv.style.height = tr.vp.height + 'px';
+          giay.insertBefore(cv, giay.firstChild);
+          return trang.render({ canvasContext: cv.getContext('2d'), viewport: tr.vp,
+            transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null }).promise;
+        }).catch(function () { tr.da = false; });
+      }
+      var quan = ('IntersectionObserver' in window) ? new IntersectionObserver(function (ds) {
+        ds.forEach(function (x) { if (x.isIntersecting) { quan.unobserve(x.target); veTrang(x.target); } });
+      }, { root: xem, rootMargin: '900px 0px' }) : null;
+      p.quan = quan;
       var n = 0;
-      (function veTiep() {
+      (function dungTiep() {
         if (p.huy || p.tep !== f || ++n > pdf.numPages) return;
         var so = n;
         pdf.getPage(so).then(function (trang) {
           if (p.huy || p.tep !== f) return;
           var v1 = trang.getViewport({ scale: 1 });
-          var tl = rongKhung / v1.width, vp = trang.getViewport({ scale: tl });
-          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          var vp = trang.getViewport({ scale: rongKhung / v1.width });
           var giay = document.createElement('div');
           giay.className = 'ck-xvb-giay khs-giay';
           giay.setAttribute('data-trang', so - 1);
           giay.style.width = vp.width + 'px'; giay.style.height = vp.height + 'px';
-          var cv = document.createElement('canvas');
-          cv.width = Math.floor(vp.width * dpr); cv.height = Math.floor(vp.height * dpr);
-          cv.style.width = vp.width + 'px'; cv.style.height = vp.height + 'px';
-          giay.appendChild(cv);
           giay.insertAdjacentHTML('beforeend', '<span class="ck-xvb-so">' + so + ' / ' + pdf.numPages + '</span>');
           xem.appendChild(giay);
           p.trang[so - 1] = { vp: vp, giay: giay };
-          return trang.render({ canvasContext: cv.getContext('2d'), viewport: vp,
-            transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null }).promise;
-        }).then(veTiep, veTiep);
+          if (quan) quan.observe(giay); else veTrang(giay);
+          dungTiep();
+        }, dungTiep);
       })();
     }).catch(function (e) {
       if (p.huy || p.tep !== f) return;
@@ -548,7 +571,7 @@
     var nut = p.phu.querySelector('[data-khs="luu"]');
     if (!p.dat || !anhChuKy || !p.byte) return;
     var f = p.tep, dat = p.dat, tr = p.trang[dat.trang];
-    nut.disabled = true; nut.textContent = 'Đang ký và lưu…';
+    nut.disabled = true; nut.textContent = 'Đang ghi chữ ký vào tệp…';
     // Bản in vẽ lại ở bề ngang cố định 520 (x3 = 1560 px ảnh) cho nét — mọi kích
     // thước trong veKhoi tỉ lệ với bề ngang nên bố cục y như khối trên màn hình.
     var k = veKhoi(thongTinKhoi(p), 520);
@@ -563,10 +586,12 @@
           var goc = tr.vp.convertToPdfPoint(dat.x, dat.y + caoIn);
           var xoay = ((pg.getRotation().angle % 360) + 360) % 360;
           pg.drawImage(png, { x: goc[0], y: goc[1], width: dat.rong / tl, height: caoIn / tl, rotate: L.degrees(xoay) });
-          return doc.save();
+          return doc.save({ objectsPerTick: 2000 });   // mặc định 50 vật/lượt — tệp dài ghi rất lâu
         });
       });
     }).then(function (moi) {
+      if (p.huy) return;
+      nut.textContent = 'Đang lưu lên Drive (' + (moi.length / 1048576).toFixed(1).replace('.', ',') + ' MB)…';
       return goi('luu', { thu_muc: p.thuMuc, tep: f.id, sua_luc: p.suaLuc, b64: byteSangB64(moi) });
     }).then(function (kq) {
       if (p.huy) return;
