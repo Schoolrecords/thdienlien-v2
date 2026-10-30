@@ -108,7 +108,10 @@
       return res.json();
     }).then(function (kq) {
       if (kq && kq.loi) {
-        var e = new Error(LOI[kq.loi] || ('Lỗi: ' + kq.loi));
+        // Lỗi phía Drive / máy: kèm mã lỗi gốc (cắt ngắn) để chụp màn hình là dò ra
+        var them = (kq.loi === 'drive_tu_choi' || kq.loi === 'loi_may') && kq.chi_tiet
+          ? ' Mã lỗi: ' + String(kq.chi_tiet).replace(/\s+/g, ' ').slice(0, 160) : '';
+        var e = new Error((LOI[kq.loi] || ('Lỗi: ' + kq.loi)) + them);
         e.ma = kq.loi;
         throw e;
       }
