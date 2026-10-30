@@ -20,6 +20,7 @@
   function thoat(s) { return window.thoatHTML ? window.thoatHTML(s) : String(s || ''); }
   function may() { return window.MAY_CHU; }
   function coQuyen() {
+    if (window.tcqgCoQuyenCham) return window.tcqgCoQuyenCham();
     var u = window.NGUOI_DUNG;
     return !!u && ['admin', 'ban_giam_hieu', 'to_truong'].indexOf(u.vai_tro) >= 0;
   }

@@ -63,10 +63,21 @@
   ];
 
   // ── Quyền ──
-  function coQuyenCham() {
+  // Quyền viết, chấm (31/10/2026, sql/89 — máy chủ kiểm y hệt): BGH, người giữ bút của
+  // hội đồng: mọi tiêu chí · thành viên được giao: tiêu chí của mình · tiêu chí CHƯA GIAO
+  // cho ai: tổ trưởng như trước. Không truyền mã: có được viết tiêu chí nào không.
+  var GAN_MC = false;   // thẻ Minh chứng đang mở danh sách chọn
+  function coQuyenCham(ma) {
     var u = window.NGUOI_DUNG;
-    return !!u && ['admin', 'ban_giam_hieu', 'to_truong'].indexOf(u.vai_tro) >= 0;
+    if (!u) return false;
+    if (['admin', 'ban_giam_hieu'].indexOf(u.vai_tro) >= 0) return true;
+    var v = window.TCQG_VAI_HD || '';
+    if (v === 'Chủ tịch' || v === 'Phó Chủ tịch' || v === 'Thư ký') return true;
+    var cuaToi = window.TCQG_TC_CUA_TOI || [], daGiao = window.TCQG_TC_DA_GIAO || {};
+    if (!ma) return u.vai_tro === 'to_truong' || cuaToi.length > 0;
+    return cuaToi.indexOf(ma) >= 0 || (u.vai_tro === 'to_truong' && !daGiao[ma]);
   }
+  window.tcqgCoQuyenCham = coQuyenCham;
   function laQT() {
     var u = window.NGUOI_DUNG;
     return !!u && ['admin', 'ban_giam_hieu'].indexOf(u.vai_tro) >= 0;
@@ -100,7 +111,9 @@
     veThanh();
     var ct = $('#kd-chi-tiet'), dang = document.activeElement;
     var dangGo = !!(ct && dang && ct.contains(dang) && /^(TEXTAREA|INPUT|SELECT)$/.test(dang.tagName));
-    if (!DANG_SUA && !dangGo && (TAB_CT === 'mc' || TAB_CT === 'dd')) veChiTiet();
+    veList();
+    // Quyền đổi theo phân công nên cả thẻ Nội dung phải vẽ lại — trừ lúc đang gõ dở
+    if (!DANG_SUA && !dangGo) veChiTiet();
   };
 
   // ── Hàng đợi ghi: các lệnh nối đuôi nhau, lệnh lỗi không giết hàng ──
@@ -346,8 +359,95 @@
 
   // ══════════════════ VẼ TOÀN MÀN ══════════════════
   window.veManTCQG = veManTCQG;
+  // ══════════════════ THANH CÁC BƯỚC (31/10/2026) ══════════════════
+  // Quy trình tự đánh giá hằng năm theo TT 57/2026 (tai-lieu/QUY-TRINH-TCQG-TT57.md):
+  // trước đây màn chỉ là các khối rời, người dùng không biết bước tiếp theo.
+  // Chỉ ĐỌC để báo tiến độ; lỗi đọc thì bước đó ghi "chưa rõ", không làm hỏng màn.
+  var BUOC_DL = null;
+  function demHang(bang, dk) {
+    var q = window.MAY_CHU.from(bang).select('*', { count: 'exact', head: true }).eq('nam_hoc', dk);
+    return q.then(function (r) { return r.error ? null : (r.count || 0); });
+  }
+  window.tcqgNapBuoc = function () {
+    var nam = NAM_DL || NAM;
+    if (!window.MAY_CHU) return;
+    Promise.all([
+      window.MAY_CHU.from('hoi_dong_tdg').select('id,so_quyet_dinh').eq('nam_hoc', nam).maybeSingle(),
+      demHang('ke_hoach_cai_tien', nam),
+      demHang('khct_theo_doi', nam),
+      window.tcqgDemSoLieu ? window.tcqgDemSoLieu(nam) : Promise.resolve(null)
+    ]).then(function (kq) {
+      var hd = kq[0].data;
+      var tiep = hd ? window.MAY_CHU.from('thanh_vien_hoi_dong').select('tieu_chi_phu_trach').eq('hoi_dong_id', hd.id)
+        : Promise.resolve({ data: [] });
+      return Promise.resolve(tiep).then(function (tv) {
+        if (nam !== (NAM_DL || NAM)) return;
+        var giao = {};
+        (tv.data || []).forEach(function (t) { (t.tieu_chi_phu_trach || []).forEach(function (m) { giao[m] = 1; }); });
+        BUOC_DL = { hd: hd, soTV: (tv.data || []).length, soGiao: Object.keys(giao).length, khct: kq[1], theoDoi: kq[2], soLieu: kq[3] };
+        veBuoc();
+      });
+    }).catch(function () { /* thanh bước chỉ báo tiến độ — lỗi đọc không làm hỏng màn */ });
+  };
+  function veBuoc() {
+    var goc = $('#kd-buoc');
+    if (!goc || !BUOC_DL) return;
+    var B = BUOC_DL, qt = laQT();
+    var tcCoMC = TC.filter(function (t) {
+      return window.HO_SO.some(function (h) { return h.tt !== 'da_dong' && (h.tc || []).indexOf(t.ma) >= 0; });
+    }).length;
+    var daCham = TC.filter(function (t) { return t.daCham; }).length;
+    var nh = demNoiHamTat();
+    var tcDu = [1, 2, 3, 4].filter(function (s) {
+      var r = DGTC[s] || {};
+      return MUC_DGTC.every(function (m) { return r[m[0]] && String(r[m[0]]).trim(); });
+    }).length;
+    var coBC = !!(BC && Object.keys(BC).some(function (k) { return ['id', 'nam_hoc', 'cap_nhat_luc', 'cap_nhat_boi'].indexOf(k) < 0 && BC[k] && String(BC[k]).trim(); }));
+    // Hạn 15/6 của năm học đang xem (Đ8 k4, Đ9 k3d)
+    var namCuoi = parseInt(String(NAM_DL || NAM).split('-')[1], 10);
+    var conNgay = Math.ceil((new Date(namCuoi, 5, 15) - new Date()) / 86400000);
+    var ds = [
+      { ten: 'Lập hội đồng, phân công', tt: !B.hd ? 'chua' : (B.hd.so_quyet_dinh && B.soTV >= 5 && B.soGiao >= TC.length ? 'xong' : 'dang'),
+        ct: B.hd ? B.soTV + ' thành viên · giao ' + B.soGiao + '/' + TC.length + ' tiêu chí' : 'Chưa lập hội đồng', di: qt ? 'qt:hd' : '' },
+      { ten: 'Gắn minh chứng', tt: tcCoMC >= TC.length && TC.length ? 'xong' : tcCoMC ? 'dang' : 'chua',
+        ct: tcCoMC + '/' + TC.length + ' tiêu chí có minh chứng', di: 'mc' },
+      { ten: 'Số liệu 3 năm', tt: B.soLieu >= 10 ? 'xong' : B.soLieu ? 'dang' : 'chua',
+        ct: B.soLieu === null ? 'Chưa rõ' : 'Đã nhập ' + B.soLieu + ' ô', di: qt ? 'qt:sl' : '' },
+      { ten: 'Viết, chấm từng tiêu chí', tt: daCham >= TC.length && TC.length ? 'xong' : (daCham || nh.viet) ? 'dang' : 'chua',
+        ct: 'Chấm ' + daCham + '/' + TC.length + ' · viết ' + nh.viet + '/' + nh.tong + ' ý', di: 'tc' },
+      { ten: 'Đánh giá chung', tt: tcDu >= 4 ? 'xong' : Object.keys(DGTC).length ? 'dang' : 'chua', ct: tcDu + '/4 tiêu chuẩn', di: 'dg' },
+      { ten: 'Báo cáo tự đánh giá', tt: coBC && daCham >= TC.length ? 'dang' : coBC ? 'dang' : 'chua',
+        ct: conNgay >= 0 ? 'Phê duyệt trước 15/6 · còn ' + conNgay + ' ngày' : 'Hạn 15/6/' + namCuoi + ' đã qua', di: 'bc', gap: conNgay >= 0 && conNgay <= 30 },
+      { ten: 'Kế hoạch cải tiến', tt: B.khct ? 'xong' : 'chua', ct: B.khct === null ? 'Chưa rõ' : B.khct + ' việc cải tiến', di: qt ? 'qt:kh' : '' },
+      { ten: 'Rà soát kế hoạch', tt: B.theoDoi >= 2 ? 'xong' : B.theoDoi ? 'dang' : 'chua', ct: (B.theoDoi || 0) + '/2 lần (cuối HK I, cuối năm)', di: qt ? 'qt:kh' : '' },
+      { ten: 'Điều kiện công nhận', tt: 'theo', ct: 'Theo dõi 4 điều kiện Điều 16', di: qt ? 'qt:cn' : '' }
+    ];
+    var chu = { xong: '✓ Xong', dang: 'Đang làm', chua: 'Chưa làm', theo: 'Theo dõi' };
+    goc.innerHTML = '<div class="kd-buoc-dau"><b>Các bước tự đánh giá năm học ' + thoat(NAM_DL || NAM) + '</b>' +
+      '<span>Làm lần lượt; năm sau chỉ cập nhật. Sở rà soát, thẩm định và công nhận khi có đủ dữ liệu 3 năm học liên tiếp.</span></div>' +
+      '<div class="kd-buoc-luoi">' + ds.map(function (b, i) {
+        return '<button type="button" class="kd-b ' + b.tt + (b.gap ? ' gap' : '') + '"' + (b.di ? ' data-buoc="' + b.di + '"' : ' disabled') + '>' +
+          '<span class="kd-b-so">' + (i + 1) + '</span><span class="kd-b-than"><b>' + b.ten + '</b>' +
+          '<small>' + thoat(b.ct) + '</small><em>' + chu[b.tt] + '</em></span></button>';
+      }).join('') + '</div>';
+    Array.prototype.forEach.call(goc.querySelectorAll('[data-buoc]'), function (n) {
+      n.addEventListener('click', function () { diBuoc(n.getAttribute('data-buoc')); });
+    });
+  }
+  function diBuoc(d) {
+    if (d.indexOf('qt:') === 0) { window.chuyenManHinh('quantri'); if (window.moQuanTri) window.moQuanTri(d.slice(3)); return; }
+    if (d === 'mc') { TAB_CT = 'mc'; veChiTiet(); $('#kd-lam').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (d === 'tc') { TAB_CT = 'nd'; veChiTiet(); $('#kd-lam').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (d === 'dg') {
+      if (!STD) { STD = 1; veThanh(); veList(); veDanhGiaChung(); }
+      $('#kd-danh-gia-chung').scrollIntoView({ behavior: 'smooth' }); return;
+    }
+    if (d === 'bc') $('#kd-bao-cao').scrollIntoView({ behavior: 'smooth' });
+  }
+
   function veManTCQG() {
     if (TAI_HONG) return;
+    window.tcqgNapBuoc();
     veThanh();
     veStats();
     veList();
@@ -455,6 +555,7 @@
       if (LOC === 'bb') return t.batBuoc;
       if (LOC === 'chuaM2') return t.self < 2;
       if (LOC === 'daM2') return t.self >= 2;
+      if (LOC === 'toi') return (window.TCQG_TC_CUA_TOI || []).indexOf(t.ma) >= 0;
       return true;
     });
   }
@@ -486,6 +587,9 @@
       ['chuaM2', 'Chưa đạt M2', demTat.filter(function (t) { return t.self < 2; }).length],
       ['daM2', 'Đã đạt M2', demTat.filter(function (t) { return t.self >= 2; }).length]
     ];
+    var cuaToi = window.TCQG_TC_CUA_TOI || [];
+    if (cuaToi.length) loc.unshift(['toi', 'Của tôi', demTat.filter(function (t) { return cuaToi.indexOf(t.ma) >= 0; }).length]);
+    else if (LOC === 'toi') LOC = 'all';
     $('#kd-loc').innerHTML = loc.map(function (l) {
       return '<button class="chip-loc' + (LOC === l[0] ? ' on' : '') + '" data-loc="' + l[0] + '">' + l[1] + ' <b>' + l[2] + '</b></button>';
     }).join('');
@@ -524,6 +628,7 @@
     // thực sự có từ hai địa điểm trở lên.
     var coDD = !!(c.theoDiaDiem && window.TCQG_CO_SO && window.TCQG_CO_SO.dung());
     if (TAB_CT === 'dd' && !coDD) TAB_CT = 'nd';   // đổi sang tiêu chí không soi địa điểm
+    if (TAB_CT !== 'mc') GAN_MC = false;
     var than = TAB_CT === 'mc' ? oMinhChung(c)
       : TAB_CT === 'kl' ? oKetLuan(c)
       : TAB_CT === 'dd' ? window.TCQG_CO_SO.ve(c)
@@ -591,7 +696,7 @@
       html += '<div class="lv-pick khoa">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</div></div>';
       return html;
     }
-    if (coQuyenCham()) {
+    if (coQuyenCham(c.ma)) {
       html += '<div class="lv-pick">Nhà trường tự đánh giá Mức ' + muc + ':' +
         '<button class="pick dat' + (dat ? ' on' : '') + '" onclick="tcqgSetMuc(\'' + c.ma + '\',' + muc + ',true)">Đạt</button>' +
         '<button class="pick khong' + (c.daCham && !dat ? ' on' : '') + '" onclick="tcqgSetMuc(\'' + c.ma + '\',' + muc + ',false)">Không đạt</button></div>';
@@ -606,9 +711,9 @@
     var viet = dsNH.filter(function (n) { var h = HT_NH[n.id]; return h && h.hien_trang && h.hien_trang.trim(); }).length;
     html += '<div class="tt-box"><div class="tt-dau"><b>Thực trạng &amp; kết quả thực hiện — Mức ' + muc + '</b>' +
       (dsNH.length ? '<span class="dem-nh" data-dem="' + c.ma + '|' + muc + '">đã viết ' + viet + '/' + dsNH.length + ' nội hàm</span>' : '') +
-      (coQuyenCham() && !DANG_SUA ? '<button class="ct-quaylai" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
+      (coQuyenCham(c.ma) && !DANG_SUA ? '<button class="ct-quaylai" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
       '</div>';
-    if (DANG_SUA && coQuyenCham()) {
+    if (DANG_SUA && coQuyenCham(c.ma)) {
       html += dsNH.length ? oHienTrang(c, muc, dsNH) : oHienTrangVanXuoi(c, muc);
     } else {
       if (dsNH.length) {
@@ -649,7 +754,7 @@
               return '<button class="nh-mc' + (daGan.indexOf(mc.ma) >= 0 ? ' on' : '') + '"' +
                 ' title="' + thoat(mc.ten) + '" onclick="tcqgBatMC(' + n.id + ',\'' + mc.ma + '\',this)">' + mc.ma + '</button>';
             }).join('') + '</div>'
-          : '<div class="nh-mcs">Kho hồ sơ chưa có minh chứng nào gắn tiêu chí ' + c.ma + ' — gắn ở màn Quản trị Hồ sơ.</div>') +
+          : '<div class="nh-mcs">Chưa có minh chứng nào gắn tiêu chí ' + c.ma + '. <button class="nut-vien nho" onclick="tcqgMoGanMC()">＋ Gắn minh chứng</button></div>') +
         '</div>';
     }).join('') +
     '<div style="margin-top:10px"><button class="nut-vien nho" onclick="tcqgSua(false)">✔ Xong — thu gọn</button></div>';
@@ -675,11 +780,14 @@
   // ── Tab Minh chứng ──
   function oMinhChung(c) {
     var mc = window.HO_SO.filter(function (h) { return h.tt !== 'da_dong' && (h.tc || []).indexOf(c.ma) >= 0; });
-    if (!mc.length) return '<div class="the-thong-bao">Kho hồ sơ chưa có minh chứng nào gắn với tiêu chí ' + c.ma +
-      '. Vào <b>Quản trị Hồ sơ</b> → sửa hồ sơ → thêm mã tiêu chí này.</div>';
+    var nutGan = coQuyenCham(c.ma)
+      ? '<div style="margin:0 0 12px"><button class="nut-vien" onclick="tcqgMoGanMC()">' + (GAN_MC ? '✔ Xong — đóng danh sách' : '＋ Gắn, bỏ minh chứng cho tiêu chí này') + '</button></div>' : '';
+    if (GAN_MC && coQuyenCham(c.ma)) return nutGan + oGanMC(c);
+    if (!mc.length) return nutGan + '<div class="the-thong-bao">Chưa có minh chứng nào gắn với tiêu chí ' + c.ma + '.' +
+      (nutGan ? ' Bấm nút trên để chọn từ danh mục hồ sơ.' : ' Người được giao tiêu chí này, hoặc Ban giám hiệu, sẽ gắn.') + '</div>';
     var dem = { co: 0, dang: 0, chua: 0 };
     mc.forEach(function (h) { dem[h.tt] = (dem[h.tt] || 0) + 1; });
-    return '<div class="mc-dem"><span class="st st-co">✓ ' + dem.co + ' đã có</span>' +
+    return nutGan + '<div class="mc-dem"><span class="st st-co">✓ ' + dem.co + ' đã có</span>' +
       '<span class="st st-dang">◐ ' + (dem.dang || 0) + ' đang làm</span>' +
       '<span class="st st-chua">○ ' + (dem.chua || 0) + ' chưa có</span></div>' +
       '<div class="ev-list" style="margin-top:12px">' + mc.map(function (h) {
@@ -694,6 +802,47 @@
         : '');
   }
 
+  // Chọn minh chứng ngay tại đây (31/10/2026, sql/89 gan_minh_chung_tieu_chi): trước đây
+  // tổ trưởng được bảo sang Quản trị Hồ sơ mà ở đó chỉ BGH mới có ô tiêu chí.
+  function boDauTim(s) {
+    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+  }
+  function oGanMC(c) {
+    var ds = window.HO_SO.filter(function (h) { return h.tt !== 'da_dong'; });
+    return '<input type="search" class="gan-mc-tim" placeholder="🔍 Gõ tên hoặc mã hồ sơ" oninput="tcqgLocGanMC(this.value)">' +
+      '<div class="gan-mc-ds" id="gan-mc-ds">' + ds.map(function (h) {
+        var co = (h.tc || []).indexOf(c.ma) >= 0;
+        return '<label class="gan-mc-dong" data-tim="' + thoat(boDauTim(h.ma + ' ' + h.ten)) + '">' +
+          '<input type="checkbox"' + (co ? ' checked' : '') + ' onchange="tcqgGanMC(\'' + c.ma + '\',\'' + h.ma + '\',this)">' +
+          '<b>' + thoat(h.ma) + '</b> <span>' + thoat(h.ten) + '</span>' +
+          '<span class="st st-' + h.tt + '">' + (h.tt === 'co' ? 'Đã có' : h.tt === 'dang' ? 'Đang làm' : 'Chưa có') + '</span></label>';
+      }).join('') + '</div>';
+  }
+  window.tcqgMoGanMC = function () { GAN_MC = !GAN_MC || TAB_CT !== 'mc'; TAB_CT = 'mc'; veChiTiet(); };
+  window.tcqgLocGanMC = function (q) {
+    q = boDauTim(q).trim();
+    Array.prototype.forEach.call(document.querySelectorAll('#gan-mc-ds .gan-mc-dong'), function (d) {
+      d.style.display = !q || d.getAttribute('data-tim').indexOf(q) >= 0 ? '' : 'none';
+    });
+  };
+  window.tcqgGanMC = function (tc, ma, o) {
+    var gan = o.checked;
+    o.disabled = true;
+    window.MAY_CHU.rpc('gan_minh_chung_tieu_chi', { p_nam: NAM_DL || NAM, p_ma: ma, p_tc: tc, p_gan: gan }).then(function (r) {
+      o.disabled = false;
+      if (r.error) {
+        o.checked = !gan;
+        window.notify(/gan_minh_chung_tieu_chi/.test(r.error.message || '')
+          ? 'Cơ sở dữ liệu của trường chưa cập nhật phần này (sql/89). Báo quản trị viên.' : 'Không lưu được: ' + r.error.message);
+        return;
+      }
+      var h = window.HO_SO.filter(function (x) { return x.ma === ma; })[0];
+      if (h) h.tc = r.data || [];
+      if (window.HS_BAN_GHI && window.HS_BAN_GHI[ma]) window.HS_BAN_GHI[ma].tieu_chi = r.data || [];
+      if (window.tcqgNapBuoc) window.tcqgNapBuoc();
+    });
+  };
+
   // ── Tab Kết luận & Ghi chú ──
   function gioVN(iso) {
     if (!iso) return '';
@@ -707,7 +856,7 @@
       (c.capNhatLuc ? '<small>Lần chấm gần nhất: ' + gioVN(c.capNhatLuc) + '</small>' : '<small>Chưa chấm lần nào.</small>') + '</div>' +
       '<div class="nh-o" style="margin-top:12px"><div class="nh-so">Ghi chú làm việc của Hội đồng (không in vào báo cáo)' +
       '<span class="tdg-luu" id="luu-gc-' + c.ma + '">✓ đã lưu</span></div>' +
-      '<textarea ' + (coQuyenCham() ? '' : 'disabled ') +
+      '<textarea ' + (coQuyenCham(c.ma) ? '' : 'disabled ') +
       'placeholder="Ví dụ: chờ bổ sung biên bản họp tháng 9; hỏi lại kế toán số liệu CSVC…"' +
       ' onblur="tcqgLuuGhiChu(\'' + c.ma + '\', this.value)">' + thoat(c.ghiChu || '') + '</textarea></div>' +
       '<div class="lv" style="margin-top:12px"><p style="font-size:13px">Điểm mạnh, hạn chế và định hướng viết MỘT LẦN cho cả ' +
@@ -748,7 +897,7 @@
   }
 
   window.tcqgSetMuc = function (ma, muc, dat) {
-    if (!coQuyenCham()) { window.notify('Thầy cô không có quyền chấm mức.'); return; }
+    if (!coQuyenCham(ma)) { window.notify('Tiêu chí ' + ma + ' đã giao cho người khác trong hội đồng.'); return; }
     var thayDoi;
     // Bấm "đạt Mức 1" thì KHÔNG đụng tới dat_m2: trước đây câu này gửi kèm
     // dat_m2 = (c.self >= 2) lấy từ bản chụp cũ, nên nếu người khác vừa chấm
@@ -855,7 +1004,10 @@
       return;
     }
     var r = DGTC[STD] || {};
-    var suaDuoc = coQuyenCham();
+    // Đánh giá chung: người được giao ít nhất một tiêu chí của tiêu chuẩn này (sql/89)
+    var suaDuoc = coQuyenCham() && (laQT() || (window.NGUOI_DUNG || {}).vai_tro === 'to_truong' ||
+      ['Chủ tịch', 'Phó Chủ tịch', 'Thư ký'].indexOf(window.TCQG_VAI_HD || '') >= 0 ||
+      (window.TCQG_TC_CUA_TOI || []).some(function (m) { return m.indexOf(STD + '.') === 0; }));
     goc.innerHTML = '<div class="sub open" style="margin-top:16px"><div class="sub-head"><span class="fo">🧭</span>' +
       '<b>Đánh giá chung — Tiêu chuẩn ' + STD + '</b><span class="tdg-luu" id="luu-dgtc">✓ đã lưu</span></div>' +
       '<div class="sub-body" style="display:block;padding:14px 16px">' +

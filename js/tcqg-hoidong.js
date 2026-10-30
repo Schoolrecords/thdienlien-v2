@@ -93,9 +93,13 @@
       var toi = email ? d.tv.filter(function (t) { return (t.email || '').trim().toLowerCase() === email; })[0] : null;
       // Vai của người đang đăng nhập trong hội đồng năm này → tcqg.js dựa vào
       // đó mở nút xuất báo cáo cho Chủ tịch / Phó Chủ tịch / Thư ký (mục 100).
-      var vaiCu = window.TCQG_VAI_HD || '';
+      var vaiCu = window.TCQG_VAI_HD || '', giaoCu = (window.TCQG_TC_CUA_TOI || []).join();
       window.TCQG_VAI_HD = toi ? toi.vai_tro : '';
-      if (window.TCQG_VAI_HD !== vaiCu && window.tcqgVeLaiQuyen) window.tcqgVeLaiQuyen();
+      // Phân công đi liền quyền viết (sql/89): tiêu chí của tôi + tiêu chí đã giao cho ai đó
+      window.TCQG_TC_CUA_TOI = toi ? (toi.tieu_chi_phu_trach || []) : [];
+      window.TCQG_TC_DA_GIAO = {};
+      d.tv.forEach(function (t) { (t.tieu_chi_phu_trach || []).forEach(function (m) { window.TCQG_TC_DA_GIAO[m] = 1; }); });
+      if ((window.TCQG_VAI_HD !== vaiCu || window.TCQG_TC_CUA_TOI.join() !== giaoCu) && window.tcqgVeLaiQuyen) window.tcqgVeLaiQuyen();
       if (!d.hd) { goc.innerHTML = daiKiem(null); return; }
       var xuatDuoc = !window.tcqgDuocXuat || window.tcqgDuocXuat();
       goc.innerHTML =

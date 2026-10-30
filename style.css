@@ -5389,3 +5389,44 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 .drive.tao-tm { position: relative; cursor: pointer; }
 .nut-tao-tm.dang-tao, .drive.tao-tm.dang-tao { opacity: .5; cursor: progress; }
 .drive.mo.tao-tm { opacity: 1; filter: none; border-style: dashed; }
+
+/* Thanh các bước tự đánh giá + chọn minh chứng + bảng số liệu 3 năm (TCQG, 31/10/2026) */
+.kd-buoc:empty { display: none; }
+.kd-buoc { background: #fff; border: 1px solid var(--vien); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.kd-buoc-dau { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+.kd-buoc-dau b { font-size: 15px; color: var(--dam); }
+.kd-buoc-dau span { font-size: 12.5px; color: var(--chu-mo); }
+.kd-buoc-luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 8px; }
+.kd-b { display: flex; gap: 9px; text-align: left; font: inherit; color: var(--chu); background: var(--o-con); border: 1px solid var(--vien); border-radius: 10px; padding: 9px 10px; cursor: pointer; }
+.kd-b:hover:not(:disabled) { border-color: var(--chinh); }
+.kd-b:disabled { cursor: default; }
+.kd-b-so { flex: none; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 12.5px; font-weight: 800; background: #fff; border: 1px solid var(--vien-dam); color: var(--dam); }
+.kd-b-than { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.kd-b-than b { font-size: 13.5px; line-height: 1.3; color: var(--dam); }
+.kd-b-than small { font-size: 12px; line-height: 1.35; color: var(--chu-mo); }
+.kd-b-than em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--chu-nhat); margin-top: 2px; }
+.kd-b.xong { background: var(--ok-nen); border-color: #b5dfca; }
+.kd-b.xong .kd-b-so { background: var(--ok); border-color: var(--ok); color: #fff; }
+.kd-b.xong em { color: var(--ok); }
+.kd-b.dang em { color: var(--canh); }
+.kd-b.gap { border-color: var(--thieu); }
+.kd-b.gap small { color: var(--thieu); font-weight: 700; }
+.gan-mc-tim { width: 100%; font: inherit; font-size: 14px; padding: 8px 11px; border: 1px solid var(--vien-dam); border-radius: 9px; margin-bottom: 8px; }
+.gan-mc-ds { max-height: 420px; overflow: auto; border: 1px solid var(--ke); border-radius: 10px; }
+.gan-mc-dong { display: flex; align-items: flex-start; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--ke); font-size: 13.5px; cursor: pointer; }
+.gan-mc-dong:hover { background: var(--o-con); }
+.gan-mc-dong b { flex: none; color: var(--chinh); }
+.gan-mc-dong span:not(.st) { flex: 1; min-width: 0; }
+.gan-mc-dong input { flex: none; margin-top: 3px; accent-color: var(--chinh); }
+.sl-td { font-size: 14.5px; color: var(--dam); margin: 16px 0 6px; }
+.sl-cuon { overflow-x: auto; }
+.sl-bang { border-collapse: collapse; width: 100%; font-size: 13.5px; background: #fff; }
+.sl-bang th, .sl-bang td { border: 1px solid var(--ke); padding: 4px 6px; text-align: center; }
+.sl-bang th { background: var(--o-con); color: var(--chu-mo); font-size: 12.5px; }
+.sl-bang .sl-ten { text-align: left; min-width: 260px; }
+.sl-bang tr.dam td { font-weight: 700; }
+.sl-muc { color: var(--chu-nhat); font-weight: 700; margin-right: 2px; }
+.sl-o { font: inherit; font-size: 13.5px; width: 100%; min-width: 84px; padding: 4px 6px; border: 1px solid var(--vien-dam); border-radius: 6px; text-align: center; }
+.tl-o .sl-o { text-align: left; }
+.sl-khac { text-align: left; }
+.sl-tinh { font-weight: 700; color: var(--dam); }
