@@ -492,10 +492,14 @@
         var a = g.getImageData(0, 0, c.width, c.height), d = a.data, coMuc = 0;
         for (var i = 0; i < d.length; i += 4) {
           var do_ = d[i] - Math.max(d[i + 1], d[i + 2]);
-          if (d[i + 3] < 128 || do_ < 45) { d[i + 3] = 0; continue; }
+          if (d[i + 3] < 128 || do_ < 35) { d[i + 3] = 0; continue; }
           d[i] = 206; d[i + 1] = 24; d[i + 2] = 36; d[i + 3] = Math.min(255, do_ * 2.4); coMuc++;
         }
-        if (coMuc < 200) { baoNhanh('Không thấy nét mực đỏ trong ảnh. Thầy cô chụp con dấu đỏ trên giấy trắng, đủ sáng.'); return; }
+        if (coMuc < 200) {
+          var chu = 'Không thấy nét mực đỏ trong ảnh. Thầy cô chụp hoặc quét con dấu đỏ đóng trên giấy trắng, đủ sáng, rồi chọn lại.';
+          if (window.hopBao) window.hopBao({ tieuDe: 'Chưa dùng được ảnh dấu', bieuTuong: '⚠️', noiDung: chu }); else baoNhanh(chu);
+          return;
+        }
         g.putImageData(a, 0, 0);
         var cat = catSat(c);
         nho('dau', cat.toDataURL('image/png'));
@@ -652,7 +656,12 @@
       return;
     }
     if (k === 'bk-tep') { if (e.type === 'change') docAnhKy(e.target.files && e.target.files[0]); return; }
-    if (k === 'dau-tep') { if (e.type === 'change') docAnhDau(p, e.target.files && e.target.files[0]); e.target.value = ''; return; }
+    // Ô chọn tệp phát CẢ 'input' lẫn 'change': chỉ đọc + xoá ô ở 'change' — bản đầu
+    // xoá ngay ở 'input' nên tới 'change' ảnh dấu đã mất (thử thật QC2 30/10)
+    if (k === 'dau-tep') {
+      if (e.type === 'change') { var tepDau = e.target.files && e.target.files[0]; e.target.value = ''; docAnhDau(p, tepDau); }
+      return;
+    }
     if (p.man !== 'ky') return;
     if (e.type === 'change') {
       if (k === 'cd') nho('chuc-danh' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value.trim());
