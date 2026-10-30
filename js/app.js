@@ -166,6 +166,15 @@
     else chuyenManHinh('sochunhiem');
   };
 
+  function idThuMucDrive(link) {
+    if (!/^https?:\/\/drive\.google\.com\//.test(link || '')) return '';
+    var m = /\/folders\/([A-Za-z0-9_-]{10,})/.exec(link) || /[?&]id=([A-Za-z0-9_-]{10,})/.exec(link);
+    return m ? m[1] : '';
+  }
+  function kyHoSoDuoc(link) {
+    return !!(window.MAY_CHU && laQuanTriApp() && window.KY_HO_SO && window.KY_HO_SO.bat() && idThuMucDrive(link));
+  }
+
   // Một dòng minh chứng trong bảng
   function dongBang(h, hienHop) {
     var hs = banGhi(h.ma);
@@ -192,6 +201,13 @@
         ? '<a class="drive" href="' + thoatHTML(link) + '" target="_blank" rel="noopener" title="Mở thư mục trên Drive" onclick="event.stopPropagation()">📂</a>'
         : '<button class="drive mo" title="Chưa gán thư mục Drive" onclick="event.stopPropagation();window.notify(\'Hồ sơ này chưa được gán thư mục trên Drive.\')">📂</button>') +
       (suaDuoc ? '<button class="drive hs-sua" title="Sửa hồ sơ này" onclick="event.stopPropagation();moSuaHoSo(\'' + thoatHTML(h.ma) + '\')">✏️</button>' : '') +
+      // ✍ Ký hồ sơ của trường (js/ky-ho-so.js, thầy Chung 30/10/2026): Hiệu trưởng,
+      // Phó Hiệu trưởng ký + đóng dấu PDF trong thư mục hồ sơ. Dịch vụ ký kiểm lại quyền.
+      (kyHoSoDuoc(link)
+        ? '<button type="button" class="drive hs-ky" title="Ký, đóng dấu tệp PDF trong hồ sơ này" data-ky-loai="ho_so"' +
+          ' data-ky-thu="' + thoatHTML(idThuMucDrive(link)) + '" data-ky-ten="' + thoatHTML(h.ma + ' · ' + h.ten) + '"' +
+          ' onclick="event.stopPropagation()">✍</button>'
+        : '') +
       '</td></tr>';
   }
 
@@ -304,7 +320,7 @@
         var h = null;
         ds.forEach(function (x) { if (x.ma === ma) h = x; });
         if (!h) return;
-        var ic = $('a.drive, button.drive:not(.hs-sua)', tr);
+        var ic = $('a.drive, button.drive:not(.hs-sua):not(.hs-ky)', tr);
         if (!ic) return;
         ic.classList.remove('xam');
         if (!linkCua[ma]) return;                       // chưa gán — .mo đã làm mờ sẵn

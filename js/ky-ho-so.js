@@ -89,6 +89,7 @@
     khong_phai_ho_so: 'Thư mục này không phải thư mục hồ sơ của thầy cô nào trong trường.',
     tu_ky: 'Không tự ký hồ sơ của chính mình.',
     khong_quyen: 'Chỉ Ban giám hiệu và tổ trưởng, tổ phó cùng tổ được ký hồ sơ này.',
+    khong_quyen_bgh: 'Chỉ Hiệu trưởng, Phó Hiệu trưởng được ký, đóng dấu hồ sơ của trường.',
     tep_da_doi: 'Tệp vừa được thay hoặc sửa sau lúc thầy cô mở. Mở lại tệp rồi ký lại.',
     tep_qua_lon: 'Tệp lớn quá 15 MB, chưa ký trong app được.',
     khong_phai_pdf: 'Tệp này không phải PDF.',
@@ -138,9 +139,10 @@
     var ng = d.getDate(), th = d.getMonth() + 1;
     return 'ngày ' + (ng < 10 ? '0' : '') + ng + ' tháng ' + (th < 3 ? '0' : '') + th + ' năm ' + d.getFullYear();
   }
-  function chucDanhTu(cv) {
+  function chucDanhTu(cv, loai) {
     var b = boDau(cv).trim();
-    if (/^pho hieu truong/.test(b)) return 'PHÓ HIỆU TRƯỞNG';
+    // Hồ sơ của trường (danh mục): Phó Hiệu trưởng ký thay Hiệu trưởng (NĐ 30)
+    if (/^pho hieu truong/.test(b)) return loai === 'ho_so' ? 'KT. HIỆU TRƯỞNG\nPHÓ HIỆU TRƯỞNG' : 'PHÓ HIỆU TRƯỞNG';
     if (/^hieu truong/.test(b)) return 'HIỆU TRƯỞNG';
     if (/^to pho/.test(b)) return 'TỔ PHÓ';
     if (/^to truong/.test(b)) return 'TỔ TRƯỞNG';
@@ -190,7 +192,10 @@
     var dauKy = dong.length;
     bo(o.diaDanh ? o.diaDanh + ', ' + chuNgay(new Date()) : chuNgay(new Date()).replace(/^n/, 'N'), 12.5, false, true);   // NĐ 30: in nghiêng
     if (o.chucDanh) bo(o.chucDanh, 13, true);
-    var caoKy = 46 * co, iKy = dong.length;
+    // Đóng dấu (BGH): dấu đúng cỡ thật — o.dauTiLe = đường kính dấu / bề ngang khối,
+    // tính sẵn từ cỡ trang (veLaiKhoi) — nên chỗ ký cao bằng con dấu.
+    var dauD = (o.dau && o.dauTiLe) ? o.dauTiLe * rong : 0;
+    var caoKy = Math.max(46 * co, dauD * .95), iKy = dong.length;
     if (o.hoTen) bo(o.hoTen, 13.5, true);
 
     var dg = function (d) { return d.px * co * 1.38; };
@@ -199,28 +204,39 @@
     c.width = Math.ceil(rong * tl); c.height = Math.ceil(cao * tl);
     g.scale(tl, tl);
     g.fillStyle = MUC; g.textBaseline = 'top';
-    var y = dem;
+    var y = dem, yKy = -1, kyTrai = rong / 2, kyRong = 0;
+    function veChuKy() {
+      yKy = y;
+      if (anhChuKy) {
+        // có dấu: chữ ký gọn lại ~3/4 bề ngang cho dấu khỏi che kín
+        var r = Math.min((rong - 2 * dem) * (dauD ? .75 : 1) / anhChuKy.width, Math.min(caoKy, 60 * co) / anhChuKy.height);
+        var w = anhChuKy.width * r, h = anhChuKy.height * r;
+        kyTrai = (rong - w) / 2; kyRong = w;
+        g.drawImage(anhChuKy, kyTrai, y + (caoKy - h) / 2, w, h);
+      }
+      y += caoKy;
+    }
     dong.forEach(function (d, i) {
       if (i === dauKy && dauKy > 0) y += 9 * co;
-      if (i === iKy) {
-        if (anhChuKy) {
-          var r = Math.min((rong - 2 * dem) / anhChuKy.width, caoKy / anhChuKy.height);
-          var w = anhChuKy.width * r, h = anhChuKy.height * r;
-          g.drawImage(anhChuKy, (rong - w) / 2, y + (caoKy - h) / 2, w, h);
-        }
-        y += caoKy;
-      }
+      if (i === iKy) veChuKy();
       g.font = d.f;
       g.fillStyle = d.mau || MUC;
       g.textAlign = d.giua ? 'center' : 'left';
       g.fillText(d.s, d.giua ? rong / 2 : dem, y + d.px * co * .16);
       y += dg(d);
     });
-    if (iKy >= dong.length) {   // không có họ tên: chữ ký vẫn phải vẽ
-      if (anhChuKy) {
-        var r2 = Math.min((rong - 2 * dem) / anhChuKy.width, caoKy / anhChuKy.height);
-        g.drawImage(anhChuKy, (rong - anhChuKy.width * r2) / 2, y, anhChuKy.width * r2, anhChuKy.height * r2);
-      }
+    if (iKy >= dong.length) veChuKy();   // không có họ tên: chữ ký vẫn phải vẽ
+    // Dấu vẽ SAU CÙNG, đè lên chữ ký: NĐ 30 — dấu trùm khoảng 1/3 chữ ký về bên trái
+    if (dauD) {
+      var R = dauD / 2, s = Math.max(o.dau.width, o.dau.height);
+      var cx = kyRong ? kyTrai + kyRong / 3 - R * .9 : rong / 2 - R * .4;
+      cx = Math.max(R + 1, Math.min(cx, rong - R - 1));
+      var cy = yKy + caoKy / 2;
+      g.save();
+      g.globalAlpha = .9;
+      g.globalCompositeOperation = 'multiply';   // nét chữ ký vẫn lộ qua mực dấu như dấu thật
+      g.drawImage(o.dau, cx - R * o.dau.width / s, cy - R * o.dau.height / s, dauD * o.dau.width / s, dauD * o.dau.height / s);
+      g.restore();
     }
     return { canvas: c, rong: rong, cao: cao };
   }
@@ -245,7 +261,8 @@
     dong();
   }
 
-  function mo(thuMuc, hoTen, tro) {
+  function mo(thuMuc, hoTen, tro, loai) {
+    loai = loai === 'ho_so' ? 'ho_so' : 'giao_vien';
     dong();
     var phu = document.createElement('div');
     phu.className = 'ck-xvb-phu khs-phu';
@@ -260,7 +277,7 @@
         bangKyHtml() +
       '</div>';
     document.body.appendChild(phu);
-    phien = { phu: phu, thuMuc: thuMuc, hoTen: hoTen, tro: tro, huy: false, ds: [], nguoiKy: {} };
+    phien = { phu: phu, thuMuc: thuMuc, hoTen: hoTen, tro: tro, loai: loai, huy: false, ds: [], nguoiKy: {} };
     document.documentElement.classList.add('ck-xvb-khoa');
     document.addEventListener('keydown', phim);
     phu.addEventListener('click', bam);
@@ -275,7 +292,7 @@
   function phuDe(p, s) { p.phu.querySelector('[data-khs="phu-de"]').textContent = s; }
 
   function taiDanhSach(p) {
-    goi('ds', { thu_muc: p.thuMuc }).then(function (kq) {
+    goi('ds', { thu_muc: p.thuMuc, loai: p.loai }).then(function (kq) {
       if (p.huy) return;
       p.ds = kq.tep || [];
       p.nguoiKy = kq.nguoi_ky || {};
@@ -294,7 +311,7 @@
 
   function veDanhSach(p) {
     p.man = 'ds';
-    phuDe(p, 'Chọn tệp PDF cần kiểm tra');
+    phuDe(p, p.loai === 'ho_so' ? 'Chọn tệp PDF cần ký, đóng dấu' : 'Chọn tệp PDF cần kiểm tra');
     if (!p.ds.length) {
       than(p).innerHTML = '<p class="ck-xvb-cho">Thư mục hồ sơ chưa có tệp PDF nào.</p>';
       return;
@@ -323,43 +340,61 @@
     p.man = 'ky'; p.tep = f; p.dat = null; p.trang = [];
     phuDe(p, f.ten);
     var nk = p.nguoiKy || {};
-    var chucDanh = nho('chuc-danh') || chucDanhTu(nk.chuc_vu);
+    var hs = p.loai === 'ho_so', duoi = hs ? '-hs' : '';
+    var chucDanh = nho('chuc-danh' + duoi) || chucDanhTu(nk.chuc_vu, p.loai);
+    // Hồ sơ của trường (Hiệu trưởng, Phó Hiệu trưởng ký): thêm "Duyệt" và "Không ghi
+    // kết luận"; hồ sơ giáo viên giữ bốn mức của tổ trưởng.
+    var KL = (hs ? [['DUYỆT', 'Duyệt']] : []).concat([
+      ['Đã kiểm tra. Đạt yêu cầu.', 'Đạt yêu cầu'],
+      ['Đã kiểm tra. Đạt yêu cầu, cần điều chỉnh một số nội dung.', 'Đạt, cần điều chỉnh'],
+      ['Đã kiểm tra. Chưa đạt yêu cầu, cần bổ sung.', 'Chưa đạt, cần bổ sung'],
+      hs ? ['', 'Không ghi kết luận'] : ['Đã kiểm tra.', 'Chỉ ghi đã kiểm tra']]);
+    var coDau = laBGH();
     var hoTen = nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '';
     than(p).innerHTML =
       '<div class="khs-ky">' +
-        '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải giáo án' +
+        '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải ' + (hs ? 'hồ sơ' : 'giáo án') +
           (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
         '<div class="khs-ben">' +
           '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
           '<div class="khs-o"><span class="khs-nhan">Kết luận</span>' +
             '<div class="khs-chon">' +
-              // Bốn mức (thầy Chung hỏi 30/10, dùng chữ "kiểm tra" chứ không "duyệt")
-              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Đạt yêu cầu." checked> Đạt yêu cầu</label>' +
-              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Đạt yêu cầu, cần điều chỉnh một số nội dung."> Đạt, cần điều chỉnh</label>' +
-              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra. Chưa đạt yêu cầu, cần bổ sung."> Chưa đạt, cần bổ sung</label>' +
-              '<label><input type="radio" name="khs-kl" value="Đã kiểm tra."> Chỉ ghi đã kiểm tra</label>' +
+              // Hồ sơ GV: bốn mức (thầy Chung hỏi 30/10 — tổ trưởng "kiểm tra", không "duyệt")
+              KL.map(function (k, i) {
+                return '<label><input type="radio" name="khs-kl" value="' + t(k[0]) + '"' + (i ? '' : ' checked') + '> ' + t(k[1]) + '</label>';
+              }).join('') +
             '</div></div>' +
           '<label class="khs-o"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
             '<textarea data-khs="nx" rows="3" maxlength="400" placeholder="Ví dụ: Mục tiêu rõ, cần thêm hoạt động vận dụng."></textarea></label>' +
           '<div class="khs-hai">' +
-            '<label class="khs-o"><span class="khs-nhan">Chức danh</span><input data-khs="cd" value="' + t(chucDanh) + '"></label>' +
+            '<label class="khs-o"><span class="khs-nhan">Chức danh</span><textarea data-khs="cd" rows="2">' + t(chucDanh) + '</textarea></label>' +
             '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(hoTen) + '"></label>' +
           '</div>' +
           '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
             '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
             '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
             '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>' +
+          // Con dấu: chỉ Ban giám hiệu. Ảnh dấu chỉ nằm trên máy người ký (như chữ ký).
+          (coDau
+            ? '<div class="khs-o"><label class="khs-dong-dau"><input type="checkbox" data-khs="dong-dau"' + (hs ? ' checked' : '') + '> ' +
+                '<span class="khs-nhan">Đóng dấu</span></label>' +
+              '<div class="khs-chu-ky"><span data-khs="anh-dau" class="khs-anh-ky khs-anh-dau"></span>' +
+              '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="dau-chon">Chọn ảnh dấu</button>' +
+              '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="dau-xoa" hidden>Xoá</button></span></div>' +
+              '<input type="file" accept="image/*" data-khs="dau-tep" hidden></div>'
+            : '') +
           '<label class="khs-o"><span class="khs-nhan">Cỡ khối chữ ký</span>' +
-            '<input type="range" data-khs="co" min="170" max="340" step="10" value="' + t(nho('co') || 240) + '"></label>' +
+            '<input type="range" data-khs="co" min="170" max="420" step="10" value="' + t(nho('co' + duoi) || (hs ? 340 : 240)) + '"></label>' +
           '<p class="khs-goi-y" data-khs="goi-y">Bấm vào trang giáo án, đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.</p>' +
           '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối chữ ký trên trang</button>' +
           '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
         '</div>' +
       '</div>';
     napChuKy(p);
+    if (coDau) napDau(p);
     napPdfLib().catch(function () { /* tải lại lúc bấm lưu */ });   // tải sẵn — bấm lưu khỏi chờ
     var xem = p.phu.querySelector('[data-khs="xem"]');
-    Promise.all([goi('tai', { thu_muc: p.thuMuc, tep: f.id }), napPdfJs()]).then(function (r) {
+    Promise.all([goi('tai', { thu_muc: p.thuMuc, loai: p.loai, tep: f.id }), napPdfJs()]).then(function (r) {
       if (p.huy || p.tep !== f) return;
       p.byte = b64SangByte(r[0].b64);
       p.suaLuc = r[0].sua_luc;
@@ -420,12 +455,69 @@
   // 860 px), không theo px màn hình — không thì ký trên điện thoại (trang hiện
   // rộng ~370 px) khối in ra to gấp đôi ký trên máy tính.
   var RONG_CHUAN = 860;
-  function rongKhoi(p, tr) { return (Number(giaTri(p, 'co')) || 240) * tr.vp.width / RONG_CHUAN; }
+  function rongKhoi(p, tr) {
+    var r = (Number(giaTri(p, 'co')) || 240) * tr.vp.width / RONG_CHUAN;
+    // Có đóng dấu: khối rộng ít nhất ~2,2 lần đường kính dấu (≈ 77 mm), dấu khỏi tràn mép
+    return (dongDau(p) && tr.vp.scale) ? Math.max(r, DAU_PT * tr.vp.scale * 2.2) : r;
+  }
+  // Con dấu tròn của trường: in đúng cỡ thật 35 mm (≈ 99 pt), không co giãn theo khối
+  var DAU_PT = 35 / 25.4 * 72;
+  var anhDau = null;
+  function laBGH() { var v = (window.NGUOI_DUNG || {}).vai_tro; return v === 'admin' || v === 'ban_giam_hieu'; }
+  function dongDau(p) {
+    var o = p.phu.querySelector('[data-khs="dong-dau"]');
+    return !!(o && o.checked && anhDau && laBGH());
+  }
+  function napDau(p) {
+    var du = nho('dau'), o = p.phu.querySelector('[data-khs="anh-dau"]'), x = p.phu.querySelector('[data-khs="dau-xoa"]');
+    anhDau = null;
+    if (!o) return;
+    if (x) x.hidden = !du;
+    if (!du) { o.innerHTML = '<em>Chưa có ảnh dấu</em>'; veLaiKhoi(p); return; }
+    var im = new Image();
+    im.onload = function () { anhDau = im; o.innerHTML = ''; o.appendChild(im.cloneNode()); veLaiKhoi(p); };
+    im.src = du;
+  }
+  // Ảnh chụp / quét con dấu: giữ nét MỰC ĐỎ, bỏ nền và mọi nét không đỏ, cắt sát
+  function docAnhDau(p, tep) {
+    if (!tep) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var r = Math.min(1, 800 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * r); c.height = Math.round(im.height * r);
+        var g = c.getContext('2d');
+        g.drawImage(im, 0, 0, c.width, c.height);
+        var a = g.getImageData(0, 0, c.width, c.height), d = a.data, coMuc = 0;
+        for (var i = 0; i < d.length; i += 4) {
+          var do_ = d[i] - Math.max(d[i + 1], d[i + 2]);
+          if (d[i + 3] < 128 || do_ < 45) { d[i + 3] = 0; continue; }
+          d[i] = 206; d[i + 1] = 24; d[i + 2] = 36; d[i + 3] = Math.min(255, do_ * 2.4); coMuc++;
+        }
+        if (coMuc < 200) { baoNhanh('Không thấy nét mực đỏ trong ảnh. Thầy cô chụp con dấu đỏ trên giấy trắng, đủ sáng.'); return; }
+        g.putImageData(a, 0, 0);
+        var cat = catSat(c);
+        nho('dau', cat.toDataURL('image/png'));
+        napDau(p);
+      };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(tep);
+  }
+  function xoaDau(p) {
+    var hoi = window.hopHoi
+      ? window.hopHoi({ tieuDe: 'Xoá ảnh con dấu?', noiDung: 'Máy này sẽ quên ảnh con dấu. Các tệp đã đóng dấu trên Drive không thay đổi.', nutOK: 'Xoá ảnh dấu', nguyHiem: true })
+      : Promise.resolve(window.confirm('Xoá ảnh con dấu trên máy này?'));
+    hoi.then(function (dongY) { if (dongY && !p.huy) { nho('dau', null); napDau(p); } });
+  }
   function giaTri(p, k) { var o = p.phu.querySelector('[data-khs="' + k + '"]'); return o ? o.value : ''; }
-  function thongTinKhoi(p) {
+  function thongTinKhoi(p, tr, rong) {
     var kl = p.phu.querySelector('input[name="khs-kl"]:checked');
-    return { ketLuan: kl ? kl.value : '', nhanXet: giaTri(p, 'nx').trim(), diaDanh: C().DIA_DANH || '',
-             chucDanh: giaTri(p, 'cd').trim().toUpperCase(), hoTen: giaTri(p, 'ht').trim() };
+    var o = { ketLuan: kl ? kl.value : '', nhanXet: giaTri(p, 'nx').trim(), diaDanh: C().DIA_DANH || '',
+              chucDanh: giaTri(p, 'cd').trim().toUpperCase(), hoTen: giaTri(p, 'ht').trim() };
+    if (dongDau(p) && tr && rong) { o.dau = anhDau; o.dauTiLe = DAU_PT * tr.vp.scale / rong; }
+    return o;
   }
 
   function napChuKy(p) {
@@ -475,7 +567,8 @@
     if (!p.dat) { capNutLuu(p); return; }
     var tr = p.trang[p.dat.trang];
     if (!tr) return;
-    var k = veKhoi(thongTinKhoi(p), rongKhoi(p, tr));
+    var rk = rongKhoi(p, tr);
+    var k = veKhoi(thongTinKhoi(p, tr, rk), rk);
     var im = p.dat.anh;
     if (!im) {
       im = p.dat.anh = document.createElement('img');
@@ -537,6 +630,8 @@
     else if (k === 'lui') { if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; } veDanhSach(p); }
     else if (k === 'ky-moi') moBangKy();
     else if (k === 'xoa-ky') xoaChuKyDaNho(p);
+    else if (k === 'dau-chon') p.phu.querySelector('[data-khs="dau-tep"]').click();
+    else if (k === 'dau-xoa') xoaDau(p);
     else if (k === 'bo-khoi') boKhoi(p);
     else if (k === 'luu') kyVaLuu(p);
     else if (k === 'bk-xoa') xoaBangKy();
@@ -557,11 +652,12 @@
       return;
     }
     if (k === 'bk-tep') { if (e.type === 'change') docAnhKy(e.target.files && e.target.files[0]); return; }
+    if (k === 'dau-tep') { if (e.type === 'change') docAnhDau(p, e.target.files && e.target.files[0]); e.target.value = ''; return; }
     if (p.man !== 'ky') return;
     if (e.type === 'change') {
-      if (k === 'cd') nho('chuc-danh', e.target.value.trim());
+      if (k === 'cd') nho('chuc-danh' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value.trim());
       if (k === 'ht') nho('ho-ten', e.target.value.trim());
-      if (k === 'co') nho('co', e.target.value);
+      if (k === 'co') nho('co' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value);
     }
     veLaiKhoi(p);
   }
@@ -574,7 +670,7 @@
     nut.disabled = true; nut.textContent = 'Đang ghi chữ ký vào tệp…';
     // Bản in vẽ lại ở bề ngang cố định 520 (x3 = 1560 px ảnh) cho nét — mọi kích
     // thước trong veKhoi tỉ lệ với bề ngang nên bố cục y như khối trên màn hình.
-    var k = veKhoi(thongTinKhoi(p), 520);
+    var k = veKhoi(thongTinKhoi(p, tr, dat.rong), 520);
     var caoIn = dat.rong * k.cao / k.rong;
     napPdfLib().then(function (L) {
       return L.PDFDocument.load(p.byte, { ignoreEncryption: true }).then(function (doc) {
@@ -592,14 +688,14 @@
     }).then(function (moi) {
       if (p.huy) return;
       nut.textContent = 'Đang lưu lên Drive (' + (moi.length / 1048576).toFixed(1).replace('.', ',') + ' MB)…';
-      return goi('luu', { thu_muc: p.thuMuc, tep: f.id, sua_luc: p.suaLuc, b64: byteSangB64(moi) });
+      return goi('luu', { thu_muc: p.thuMuc, loai: p.loai, tep: f.id, sua_luc: p.suaLuc, b64: byteSangB64(moi) });
     }).then(function (kq) {
       if (p.huy) return;
       f.da_ky = kq.da_ky || f.da_ky;
       if (kq.sua_luc) f.sua_luc = kq.sua_luc;
       if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; }
       veDanhSach(p);
-      baoNhanh('Đã ký và lưu "' + f.ten + '" vào thư mục của ' + p.hoTen + '.');
+      baoNhanh('Đã ký và lưu "' + f.ten + '" vào ' + (p.loai === 'ho_so' ? 'hồ sơ ' : 'thư mục của ') + p.hoTen + '.');
     }).catch(function (e) {
       if (p.huy) return;
       nut.disabled = false; nut.textContent = 'Ký và lưu vào Drive';
@@ -719,7 +815,7 @@
     var n = e.target.closest && e.target.closest('[data-ky-thu]');
     if (!n) return;
     e.preventDefault();
-    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n);
+    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n, n.getAttribute('data-ky-loai'));
   });
 
   window.KY_HO_SO = {

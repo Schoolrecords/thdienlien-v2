@@ -5352,6 +5352,11 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 .khs-nut-ky .khs-nut-xoa { color: var(--thieu); }
 .khs-nut-ky .khs-nut-xoa:hover { border-color: var(--thieu); }
 .khs-bo-khoi { color: var(--thieu); margin-top: -4px; }
+.khs-o textarea[data-khs="cd"] { min-height: 0; resize: none; line-height: 1.35; }
+.khs-dong-dau { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.khs-dong-dau input { accent-color: var(--chinh); width: 16px; height: 16px; }
+.khs-anh-dau { height: 72px; }
+.khs-anh-dau img { max-height: 66px; }
 [data-khs][hidden] { display: none; }
 .khs-goi-y { font-size: 13px; line-height: 1.5; color: var(--chu-mo); background: var(--o-con); border-radius: 9px; padding: 8px 10px; margin: 0; }
 .khs-luu { width: 100%; }
