@@ -432,9 +432,9 @@
       // biết vì trạng thái các dòng ấy giữ nguyên).
       var gio = new Date();
       var luc = ('0' + gio.getHours()).slice(-2) + ':' + ('0' + gio.getMinutes()).slice(-2);
-      dong('Kiểm tra lúc ' + luc + ': <b>' + coTep + '/' + cacMa.length + '</b> đã có hồ sơ' +
-        (soHong ? ' · ' + soHong + ' thư mục không kiểm được — giữ nguyên trạng thái' : '') +
-        duoiChu);
+      // Thầy Chung 30/10/2026: CHỈ một câu "Kiểm tra lúc HH:MM: X/Y đã có hồ sơ" —
+      // bỏ phần "N thư mục không kiểm được", hồ sơ trỏ nội bộ / link ngoài, dòng nghiêng.
+      dong('Kiểm tra lúc ' + luc + ': <b>' + coTep + '/' + cacMa.length + '</b> đã có hồ sơ');
 
       // ── DRIVE LÀ CHUẨN: đồng bộ trạng thái HAI CHIỀU theo kết quả đếm ──
       // Có tệp → 'co'; 0 tệp → 'chua'; không kiểm được (-1/NaN) KHÔNG gửi lên.
@@ -451,22 +451,25 @@
         if (n >= 0) { doi[h.ma] = n; demDoi++; }
       });
       if (!demDoi || !window.MAY_CHU) return;
-      // Người không phải BGH/quản trị vẫn XEM được kết quả đếm, nhưng không
-      // gửi lệnh ghi — máy chủ (la_admin) từ chối, gửi đi chỉ thêm một lỗi (mục 100).
-      if (!laQuanTriApp()) {
-        var nhanGv = conSong() && $('#kq-kiem-tra .nhan-nho');
-        if (nhanGv) nhanGv.innerHTML += '<br><i>Trạng thái "Đã có / Chưa có" chỉ được ghi lại khi Ban giám hiệu hoặc quản trị bấm kiểm tra.</i>';
-        return;
+      // Không ghi được vào CSDL (không phải BGH/quản trị, hoặc RPC lỗi): nhãn từng
+      // dòng VẪN đổi theo kết quả đếm cho khớp icon 📂 — thầy Chung 30/10 thấy thư
+      // mục đã có tệp mà nhãn vẫn "Chưa có". Chỉ đổi trên màn, không đụng dữ liệu.
+      function nhanTheoDrive() {
+        if (!conSong()) return;
+        $$('#lp-than tr[data-ma]').forEach(function (tr) {
+          var ma = tr.getAttribute('data-ma');
+          if (doi[ma] == null) return;
+          var tt = doi[ma] > 0 ? 'co' : 'chua';
+          var st = $('.st', tr);
+          if (st) { st.className = 'st st-' + tt; st.textContent = ST_LABEL[tt]; }
+        });
       }
+      // Người không phải BGH/quản trị: không gửi lệnh ghi — máy chủ (la_admin) từ chối (mục 100).
+      if (!laQuanTriApp()) { nhanTheoDrive(); return; }
       window.MAY_CHU.rpc('cap_nhat_tu_drive', { du_lieu: doi }).then(function (r) {
         if (r.error) {
-          // Giáo viên bấm: vẫn được xem kết quả đếm, chỉ không được ghi.
-          // Nói rõ thay vì im lặng — không nói thì badge với icon lệch nhau
-          // mà người bấm không hiểu vì sao.
-          if (conSong()) {
-            var nhan = $('#kq-kiem-tra .nhan-nho');
-            if (nhan) nhan.innerHTML += '<br><i>Trạng thái "Đã có / Chưa có" chỉ được ghi lại khi Ban giám hiệu hoặc quản trị bấm kiểm tra.</i>';
-          }
+          if (window.console) console.warn('cap_nhat_tu_drive:', r.error);
+          nhanTheoDrive();
           return;
         }
         // CSDL chưa chạy sql/62: RPC cũ chỉ nâng và trả về MỘT CON SỐ. Khi đó
