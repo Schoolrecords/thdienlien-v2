@@ -69,6 +69,11 @@
       ['so_cbgv', 'Số cán bộ, giáo viên', ''],
       ['so_dang_vien', 'Số đảng viên chính thức',
        'Từ 30 trở lên thì lập đảng bộ cơ sở. Dưới 30 vẫn lập được nhưng phải có văn bản đồng ý của cấp uỷ cấp trên. Mô hình chọn ở thẻ 🚩 Tổ chức đảng']
+    ] },
+    // Dịch vụ Apps Script của Gmail chủ thư mục hồ sơ (apps-script/ky-ho-so-drive.gs,
+    // 30/10/2026). Khai ở đây để trường tự bật nút ✍ Ký hồ sơ, khỏi phải chạy SQL.
+    { ten: '✍ Ký hồ sơ trên Drive', o: [
+      ['link_ky_ho_so', 'Địa chỉ dịch vụ ký hồ sơ', 'URL ứng dụng web Apps Script (đuôi /exec) của Gmail chủ thư mục hồ sơ. Có địa chỉ thì hiện nút ✍; để trống là tắt.']
     ] }
   ];
 
@@ -144,6 +149,7 @@
               if (b.khoa === 'co_quan_thuong') C.CO_QUAN_THUONG = b.gia_tri;
               if (b.khoa === 'hieu_truong') C.HIEU_TRUONG = b.gia_tri;
               if (b.khoa === 'muc_chuan_qg') C.MUC_CHUAN_QG = b.gia_tri;
+              if (b.khoa === 'link_ky_ho_so') C.LINK_KY_HO_SO = b.gia_tri;
             });
             if (window.datNhanDienTruong) window.datNhanDienTruong();
           })

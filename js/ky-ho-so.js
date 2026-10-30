@@ -98,8 +98,14 @@
     drive_tu_choi: 'Drive không cho ghi tệp. Báo quản trị viên.',
     loi_may: 'Dịch vụ ký gặp lỗi. Thử lại sau ít phút.'
   };
+  // Địa chỉ dịch vụ phải đúng dạng ứng dụng web Apps Script: app gửi kèm phiên đăng
+  // nhập, nên không gửi tới bất kỳ địa chỉ nào khác lỡ dán vào ô cấu hình.
+  function urlDichVu() {
+    var u = String(C().LINK_KY_HO_SO || '').trim();
+    return /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/.test(u) ? u : '';
+  }
   function goi(viec, them) {
-    var url = C().LINK_KY_HO_SO;
+    var url = urlDichVu();
     if (!url || !window.MAY_CHU) return Promise.reject(new Error('Trường chưa bật chức năng ký.'));
     return window.MAY_CHU.auth.getSession().then(function (r) {
       var tk = r && r.data && r.data.session && r.data.session.access_token;
@@ -855,7 +861,7 @@
     // Nút "Kiểm tra ngay" (app.js): {mã hồ sơ: id thư mục} → {mã: số tệp | -1}
     demTep: function (ds) { return goi('dem', { ds: ds }).then(function (kq) { return kq.dem || {}; }); },
     moTu: moTu,   // nút nằm trong vùng chặn nổi bọt (dòng danh mục hồ sơ, app.js) gọi thẳng
-    bat: function () { return !!(C().LINK_KY_HO_SO && window.MAY_CHU); },
+    bat: function () { return !!(urlDichVu() && window.MAY_CHU); },
     // phần thuần cho bài thử
     _chuNgay: chuNgay, _chucDanhTu: chucDanhTu
   };
