@@ -171,6 +171,9 @@
     var m = /\/folders\/([A-Za-z0-9_-]{10,})/.exec(link) || /[?&]id=([A-Za-z0-9_-]{10,})/.exec(link);
     return m ? m[1] : '';
   }
+  function taoTmDuoc() {
+    return !!(window.MAY_CHU && laQuanTriApp() && window.KY_HO_SO && window.KY_HO_SO.bat() && window.KY_HO_SO.taoThuMuc);
+  }
   function kyHoSoDuoc(link) {
     return !!(window.MAY_CHU && laQuanTriApp() && window.KY_HO_SO && window.KY_HO_SO.bat() && idThuMucDrive(link));
   }
@@ -199,6 +202,11 @@
         : '') +
       (link
         ? '<a class="drive" href="' + thoatHTML(link) + '" target="_blank" rel="noopener" title="Mở thư mục trên Drive" onclick="event.stopPropagation()">📂</a>'
+        : taoTmDuoc()
+        // Quản trị, BGH: bấm 📂 xám là tạo thư mục (js/ky-ho-so.js taoThuMuc, 30/10/2026)
+        ? '<button class="drive mo tao-tm" title="Chưa gán thư mục — bấm để tạo thư mục trên Drive"' +
+          ' onclick="event.stopPropagation();window.KY_HO_SO.taoThuMuc(\'ho_so\',\'' + thoatHTML(h.ma) + '\',\'' +
+          thoatHTML(h.ma + ' · ' + String(h.ten || '').replace(/['\\]/g, ' ')) + '\',this)">📂</button>'
         : '<button class="drive mo" title="Chưa gán thư mục Drive" onclick="event.stopPropagation();window.notify(\'Hồ sơ này chưa được gán thư mục trên Drive.\')">📂</button>') +
       (suaDuoc ? '<button class="drive hs-sua" title="Sửa hồ sơ này" onclick="event.stopPropagation();moSuaHoSo(\'' + thoatHTML(h.ma) + '\')">✏️</button>' : '') +
       // ✍ Ký hồ sơ của trường (js/ky-ho-so.js, thầy Chung 30/10/2026): Hiệu trưởng,

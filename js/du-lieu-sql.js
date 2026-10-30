@@ -729,6 +729,11 @@
                     ' data-ky-ten="' + tenDayDu + '" title="Kiểm tra, nhận xét và ký giáo án PDF"' +
                     ' aria-label="Ký hồ sơ của ' + tenDayDu + '">✍</button>'
                   : '')
+              : (batKy && toiBGH && m.emails[0])
+              // Quản trị, BGH: tạo thư mục ngay từ đây (js/ky-ho-so.js taoThuMuc, 30/10/2026)
+              ? '<button type="button" class="nut-hs nut-tao-tm" data-tao-tm="' + thoat(m.khoa || m.emails[0]) + '"' +
+                ' data-tao-ten="' + tenDayDu + '" title="Chưa có thư mục — bấm để tạo thư mục hồ sơ trên Drive"' +
+                ' aria-label="Tạo thư mục hồ sơ cho ' + tenDayDu + '">📁</button>'
               : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này"' +
                 ' aria-label="' + tenDayDu + ' chưa được gán thư mục Drive">📁</span>') +
             '</div>';

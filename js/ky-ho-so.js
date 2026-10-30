@@ -89,7 +89,9 @@
     khong_phai_ho_so: 'Thư mục này không phải thư mục hồ sơ của thầy cô nào trong trường.',
     tu_ky: 'Không tự ký hồ sơ của chính mình.',
     khong_quyen: 'Chỉ Ban giám hiệu và tổ trưởng, tổ phó cùng tổ được ký hồ sơ này.',
-    khong_quyen_bgh: 'Chỉ Hiệu trưởng, Phó Hiệu trưởng được ký, đóng dấu hồ sơ của trường.',
+    khong_quyen_bgh: 'Chỉ Hiệu trưởng, Phó Hiệu trưởng (và quản trị) được làm việc này.',
+    khong_thay: 'Không thấy người hoặc hồ sơ này trong dữ liệu của trường. Tải lại trang rồi thử lại.',
+    chua_co_mau: 'Chưa có thư mục nào làm mẫu (chưa người, hồ sơ nào cùng nhóm được gắn thư mục). Gắn tay một thư mục đầu tiên rồi thử lại.',
     tep_da_doi: 'Tệp vừa được thay hoặc sửa sau lúc thầy cô mở. Mở lại tệp rồi ký lại.',
     tep_qua_lon: 'Tệp lớn quá 15 MB, chưa ký trong app được.',
     khong_phai_pdf: 'Tệp này không phải PDF.',
@@ -857,7 +859,63 @@
     moTu(n);
   });
 
+  // ══════════════════════════════════════════════════════════════
+  // TẠO THƯ MỤC HỒ SƠ (thầy Chung 30/10/2026: quản trị tự thêm thư mục, link
+  // mà không phải nhờ ai). Dịch vụ chạy bằng Gmail chủ cây thư mục tạo hộ,
+  // đặt cạnh thư mục "anh em" (cùng tổ / cùng hộp), chép thư mục con, chia sẻ
+  // cho giáo viên; app ghi link vào CSDL (RLS: chỉ quản trị, BGH ghi được).
+  // ══════════════════════════════════════════════════════════════
+  function taoThuMuc(loai, khoa, ten, nut) {
+    var laHs = loai === 'ho_so';
+    var hoi = window.hopHoi
+      ? window.hopHoi({ tieuDe: 'Tạo thư mục trên Drive?', bieuTuong: '📁', nutOK: 'Tạo thư mục',
+          noiDung: laHs
+            ? 'Tạo thư mục cho hồ sơ ' + ten + ', đặt cùng chỗ với các hồ sơ cùng hộp, rồi gắn link vào app.'
+            : 'Tạo thư mục hồ sơ cá nhân cho ' + ten + ' trong thư mục tổ, chia sẻ quyền sửa cho Gmail của người này, rồi gắn link vào app.' })
+      : Promise.resolve(window.confirm('Tạo thư mục trên Drive cho ' + ten + '?'));
+    return hoi.then(function (dongY) {
+      if (!dongY) return null;
+      if (nut) { nut.disabled = true; nut.classList.add('dang-tao'); }
+      baoNhanh('Đang tạo thư mục trên Drive…');
+      return goi('tao_tm', { loai: laHs ? 'ho_so' : 'giao_vien', khoa: khoa }).then(function (kq) {
+        var may = window.MAY_CHU, link = kq.link;
+        var ghi = laHs
+          ? may.from('ho_so').update({ link_drive: link }).eq('ma', khoa).select('ma')
+          : Promise.all([
+              may.from('moi_tai_khoan').update({ link_drive: link }).eq('email', khoa).select('email'),
+              may.from('moi_tai_khoan').update({ link_drive: link }).eq('email_chinh', khoa).select('email')
+            ]).then(function (r) { return { error: r[0].error || r[1].error, data: (r[0].data || []).concat(r[1].data || []) }; });
+        return Promise.resolve(ghi).then(function (r) {
+          if (r.error || !r.data || !r.data.length) {
+            throw new Error('Đã tạo thư mục trên Drive nhưng chưa ghi được link vào app' +
+              (r.error ? ' (' + r.error.message + ')' : '') + '. Link: ' + link);
+          }
+          if (laHs && window.HS_BAN_GHI && window.HS_BAN_GHI[khoa]) window.HS_BAN_GHI[khoa].link_drive = link;
+          var chu = kq.da_co ? 'Hồ sơ này đã có thư mục — đã gắn lại link.'
+            : 'Đã tạo thư mục cho ' + ten + (kq.chia_se ? ' và chia sẻ cho ' + kq.chia_se + ' Gmail' : '') + '.';
+          if (kq.loi_chia_se && kq.loi_chia_se.length) chu += ' Chưa chia sẻ được cho: ' + kq.loi_chia_se.join(', ') + ' (kiểm tra lại Gmail).';
+          baoNhanh(chu);
+          if (window.napDuLieuThat) window.napDuLieuThat();
+          return link;
+        });
+      }).catch(function (e) {
+        if (nut) { nut.disabled = false; nut.classList.remove('dang-tao'); }
+        var chu = (e && e.message) || String(e);
+        if (window.hopBao) window.hopBao({ tieuDe: 'Chưa tạo được thư mục', bieuTuong: '⚠️', noiDung: chu });
+        else baoNhanh(chu);
+        return null;
+      });
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var n = e.target.closest && e.target.closest('[data-tao-tm]');
+    if (!n) return;
+    e.preventDefault(); e.stopPropagation();
+    taoThuMuc(n.getAttribute('data-tao-loai') || 'giao_vien', n.getAttribute('data-tao-tm'), n.getAttribute('data-tao-ten') || '', n);
+  });
+
   window.KY_HO_SO = {
+    taoThuMuc: taoThuMuc,
     mo: mo,
     // Nút "Kiểm tra ngay" (app.js): {mã hồ sơ: id thư mục} → {mã: số tệp | -1}
     demTep: function (ds) { return goi('dem', { ds: ds }).then(function (kq) { return kq.dem || {}; }); },

@@ -5380,3 +5380,12 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
   .khs-xem { padding-bottom: 76px; }
   .khs-luu { position: fixed; left: 12px; right: 12px; bottom: 12px; width: auto; z-index: 3; box-shadow: var(--bong-lon); }
 }
+/* Tạo thư mục từ app (ky-ho-so.js taoThuMuc, 30/10/2026): nút thư mục viền đứt + dấu cộng */
+.the-cbgv .nut-tao-tm { position: relative; cursor: pointer; font-family: inherit; border-style: dashed; border-color: var(--vien-dam); }
+.the-cbgv .nut-tao-tm::after, .drive.tao-tm::after {
+  content: '+'; position: absolute; right: -5px; top: -6px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--chinh); color: #fff; font-size: 12px; font-weight: 800; line-height: 16px; text-align: center;
+}
+.drive.tao-tm { position: relative; cursor: pointer; }
+.nut-tao-tm.dang-tao, .drive.tao-tm.dang-tao { opacity: .5; cursor: progress; }
+.drive.mo.tao-tm { opacity: 1; filter: none; border-style: dashed; }
