@@ -4205,6 +4205,11 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 .khs-anh-ky img { max-width: 100%; max-height: 52px; }
 .khs-nut-phu { font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; color: var(--dam); background: #fff; border: 1px solid var(--vien-dam); border-radius: 9px; padding: 8px 12px; white-space: nowrap; }
 .khs-nut-phu:hover { border-color: var(--chinh); }
+.khs-nut-ky { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.khs-nut-ky .khs-nut-xoa { color: var(--thieu); }
+.khs-nut-ky .khs-nut-xoa:hover { border-color: var(--thieu); }
+.khs-bo-khoi { color: var(--thieu); margin-top: -4px; }
+[data-khs][hidden] { display: none; }
 .khs-goi-y { font-size: 13px; line-height: 1.5; color: var(--chu-mo); background: var(--o-con); border-radius: 9px; padding: 8px 10px; margin: 0; }
 .khs-luu { width: 100%; }
 .khs-bang-ky { position: absolute; inset: 0; z-index: 2; background: rgba(10, 20, 42, .5); display: flex; align-items: center; justify-content: center; padding: 16px; }

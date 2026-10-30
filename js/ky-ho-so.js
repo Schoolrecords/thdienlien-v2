@@ -320,10 +320,12 @@
           '</div>' +
           '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
             '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
-            '<button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button></div></div>' +
+            '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
+            '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>' +
           '<label class="khs-o"><span class="khs-nhan">Cỡ khối chữ ký</span>' +
             '<input type="range" data-khs="co" min="170" max="340" step="10" value="' + t(nho('co') || 240) + '"></label>' +
           '<p class="khs-goi-y" data-khs="goi-y">Bấm vào trang giáo án, đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.</p>' +
+          '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối chữ ký trên trang</button>' +
           '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
         '</div>' +
       '</div>';
@@ -339,7 +341,7 @@
       if (p.pdf) { try { p.pdf.destroy(); } catch (e) { /* bỏ */ } }
       p.pdf = pdf;
       xem.innerHTML = '';
-      var rongKhung = Math.min(xem.clientWidth - 24, 860);
+      var rongKhung = Math.min(xem.clientWidth - 44, 860);   // chừa thanh cuộn dọc, khỏi cuộn ngang
       var n = 0;
       (function veTiep() {
         if (p.huy || p.tep !== f || ++n > pdf.numPages) return;
@@ -385,8 +387,10 @@
   function napChuKy(p) {
     var du = nho('chu-ky');
     var o = p.phu.querySelector('[data-khs="anh-ky"]');
+    var xoa = p.phu.querySelector('[data-khs="xoa-ky"]');
     anhChuKy = null;
-    if (!du) { o.innerHTML = '<em>Chưa có chữ ký</em>'; capNutLuu(p); return; }
+    if (xoa) xoa.hidden = !du;
+    if (!du) { o.innerHTML = '<em>Chưa có chữ ký</em>'; veLaiKhoi(p); return; }
     var im = new Image();
     im.onload = function () { anhChuKy = im; o.innerHTML = ''; o.appendChild(im.cloneNode()); veLaiKhoi(p); };
     im.src = du;
@@ -396,9 +400,30 @@
     var n = p.phu.querySelector('[data-khs="luu"]'), g = p.phu.querySelector('[data-khs="goi-y"]');
     if (!n) return;
     n.disabled = !(p.dat && anhChuKy && p.byte);
+    var bo = p.phu.querySelector('[data-khs="bo-khoi"]');
+    if (bo) bo.hidden = !p.dat;
     if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; máy nhớ cho những lần sau.';
     else if (!p.dat) g.textContent = 'Bấm vào trang giáo án, đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.';
     else g.textContent = 'Kiểm tra lại khối chữ ký trên trang (kéo để dời), rồi bấm Ký và lưu.';
+  }
+
+  // Thầy Chung 30/10: chữ ký thử nghiệm không xoá được (chỉ có "Ký mới" đè lên)
+  // → nút Xoá chữ ký đã nhớ trên máy, và nút bỏ khối đã đặt trên trang.
+  function xoaChuKyDaNho(p) {
+    var hoi = window.hopHoi
+      ? window.hopHoi({ tieuDe: 'Xoá chữ ký đã lưu?', noiDung: 'Máy này sẽ quên chữ ký của thầy cô. Lần ký sau cần ký lại hoặc chọn lại ảnh chữ ký. Các tệp đã ký trên Drive không thay đổi.', nutOK: 'Xoá chữ ký', nguyHiem: true })
+      : Promise.resolve(window.confirm('Xoá chữ ký đã lưu trên máy này?'));
+    hoi.then(function (dongY) {
+      if (!dongY || p.huy) return;
+      nho('chu-ky', null);
+      napChuKy(p);
+      baoNhanh('Đã xoá chữ ký trên máy này.');
+    });
+  }
+  function boKhoi(p) {
+    if (p.dat && p.dat.anh && p.dat.anh.parentNode) p.dat.anh.parentNode.removeChild(p.dat.anh);
+    p.dat = null;
+    capNutLuu(p);
   }
 
   // Đặt / vẽ lại khối chữ ký trên trang đang chọn
@@ -467,6 +492,8 @@
     else if (k === 'mo-tep') moTep(p, Number(n.getAttribute('data-i')));
     else if (k === 'lui') { if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; } veDanhSach(p); }
     else if (k === 'ky-moi') moBangKy();
+    else if (k === 'xoa-ky') xoaChuKyDaNho(p);
+    else if (k === 'bo-khoi') boKhoi(p);
     else if (k === 'luu') kyVaLuu(p);
     else if (k === 'bk-xoa') xoaBangKy();
     else if (k === 'bk-huy') dongBangKy();
