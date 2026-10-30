@@ -196,6 +196,9 @@
     // cho nút "🔄 Kiểm tra ngay". Gán không điều kiện: trường xoá URL trong
     // cau_hinh thì nút phải lùi về đếm theo trạng thái, không dùng URL cũ.
     window.CAU_HINH.LINK_KIEM_TRA_DRIVE = ch.link_kiem_tra_drive || '';
+    // URL dịch vụ ký hồ sơ (apps-script/ky-ho-so-drive.gs, 30/10/2026) — có thì
+    // thẻ giáo viên ở màn Hồ sơ CBGV có nút ✍ (js/ky-ho-so.js). Gán không điều kiện như trên.
+    window.CAU_HINH.LINK_KY_HO_SO = ch.link_ky_ho_so || '';
     // Quy mô trường: CSDL là nguồn duy nhất, số trong cauhinh.js chỉ là dự
     // phòng cho lúc chưa đăng nhập. Đổi quy mô thì sửa bảng cau_hinh, không
     // sửa mã — tránh mỗi nơi một con số.
@@ -596,6 +599,18 @@
         if (toiBGH || g.khoa === khoaToi || g.emails.indexOf(emToi) >= 0) return true;
         return toiDungTo && !!toToi && boDau(g.to_chuyen_mon).trim() === toToi;
       }
+      // ✍ Ký hồ sơ (js/ky-ho-so.js): như moDuoc nhưng KHÔNG tự ký hồ sơ của mình.
+      // Dịch vụ ký kiểm lại y hệt bằng CSDL — đây chỉ là ẩn/hiện nút.
+      var batKy = !!(window.KY_HO_SO && window.KY_HO_SO.bat());
+      function kyDuoc(g, laToi) {
+        if (!batKy || laToi) return false;
+        return toiBGH || (toiDungTo && !!toToi && boDau(g.to_chuyen_mon).trim() === toToi);
+      }
+      function idThuMucHs(link) {
+        var m = /^https?:\/\/drive\.google\.com\//.test(link || '') &&
+          (/\/folders\/([A-Za-z0-9_-]{10,})/.exec(link) || /[?&]id=([A-Za-z0-9_-]{10,})/.exec(link));
+        return m ? m[1] : '';
+      }
 
       // 1 · Gộp người (một thẻ mỗi người)
       var nguoi = [], viTri = {};
@@ -708,7 +723,12 @@
               : link
               ? '<a class="nut-hs" target="_blank" rel="noopener" href="' + thoat(link) + '"' +
                 ' title="Mở thư mục hồ sơ cá nhân trên Drive"' +
-                ' aria-label="Mở thư mục hồ sơ cá nhân của ' + tenDayDu + '">📁</a>'
+                ' aria-label="Mở thư mục hồ sơ cá nhân của ' + tenDayDu + '">📁</a>' +
+                (kyDuoc(m, laToi) && idThuMucHs(link)
+                  ? '<button type="button" class="nut-hs nut-ky" data-ky-thu="' + thoat(idThuMucHs(link)) + '"' +
+                    ' data-ky-ten="' + tenDayDu + '" title="Kiểm tra, nhận xét và ký giáo án PDF"' +
+                    ' aria-label="Ký hồ sơ của ' + tenDayDu + '">✍</button>'
+                  : '')
               : '<span class="nut-hs trong" title="Chưa gán thư mục Drive cho người này"' +
                 ' aria-label="' + tenDayDu + ' chưa được gán thư mục Drive">📁</span>') +
             '</div>';
