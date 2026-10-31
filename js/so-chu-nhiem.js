@@ -947,7 +947,10 @@
     if (giam.length) ra.push('Giảm ' + giam.length + ': ' + giam.map(function (m) { var x = roi[m]; return x ? x.ho_ten + ' (' + String(TEN_ROI[x.trang_thai] || x.trang_thai).toLowerCase() + ')' : m; }).join(', '));
     return ra.join('; ');
   }
-  function hoaNhap() { var o = {}; D.hs.forEach(function (h) { if (h.khuyet_tat_hoa_nhap) o[h.ma] = 1; }); return o; }
+  // Thầy Chung 31/10/2026 (GV đề xuất): tỉ lệ chất lượng trong công tác chủ nhiệm KHÔNG tính HS khuyết tật — cả em đánh dấu
+  // ở danh sách lớp lẫn em chỉ khai diện "Khuyết tật" ở hoàn cảnh. Chuyên cần, dự họp vẫn tính theo sĩ số (các em vẫn đi học).
+  function hoaNhap() { var o = {}, hc = (D.so && D.so.hoanCanh) || {}; D.hs.forEach(function (h) { if (laKhuyetTat(h, hc[h.ma])) o[h.ma] = 1; }); return o; }
+  function siSoTinhTiLe() { return D.hs.length - Object.keys(hoaNhap()).length; }
   function keHoach(cap, ky) { return D.so.keHoach.filter(function (k) { return k.cap === cap && k.ky === ky; })[0] || null; }
   function oChon(id, ds, gt, them) {
     return '<select id="' + id + '" class="scn-o"' + (them || '') + '>' + ds.map(function (x) {
@@ -1292,7 +1295,8 @@
         oVan('kh-thuan-loi', nd.thuan_loi || '', '1. Thuận lợi', 3, khoa) + oVan('kh-kho-khan', nd.kho_khan || '', '2. Khó khăn', 3, khoa));
       h += the('III. Chỉ tiêu, biện pháp', '<p class="scn-ghi-chu">Mỗi mục ghi <b>* Mục tiêu</b> và <b>* Nhiệm vụ và giải pháp</b> như sổ giấy.</p>' +
         MUC_KH.map(function (m) { return oVan('kh-m-' + m[0], nd['kh_' + m[0]] != null ? nd['kh_' + m[0]] : cu(m[0]), m[1], 3, khoa); }).join(''));
-      h += the('Chỉ tiêu chất lượng (số học sinh — tỉ lệ máy tự tính theo sĩ số ' + D.hs.length + ')',
+      var soKT = D.hs.length - siSoTinhTiLe();
+      h += the('Chỉ tiêu chất lượng (số học sinh — tỉ lệ máy tự tính trên ' + siSoTinhTiLe() + ' em' + (soKT ? ', sĩ số ' + D.hs.length + ', không tính ' + soKT + ' em khuyết tật' : '') + ')',
         '<p class="scn-nhan">Chỉ tiêu các môn học, hoạt động giáo dục</p>' + luoiChiTieu('ct_mon', monTheoKhoi(D.khoi), [['T', 'Hoàn thành tốt'], ['H', 'Hoàn thành'], ['C', 'Chưa hoàn thành']], nd.ct_mon, khoa) +
         '<p class="scn-nhan">Phẩm chất</p>' + luoiChiTieu('ct_pc', NLPC.filter(function (x) { return /^PC/.test(x[0]); }), [['T', 'Tốt'], ['Đ', 'Đạt'], ['C', 'Cần cố gắng']], nd.ct_pc, khoa) +
         '<p class="scn-nhan">Năng lực (chung và đặc thù)</p>' + luoiChiTieu('ct_nl', NL_DAY_DU, [['T', 'Tốt'], ['Đ', 'Đạt'], ['C', 'Cần cố gắng']], nd.ct_nl, khoa) +
@@ -2717,14 +2721,14 @@
       Object.keys(n).forEach(function (ma) { dg.nlpc.push({ ky: k[0], ma: ma, T: n[ma].T, 'Đ': n[ma]['Đ'], C: n[ma].C, mau: n[ma].mau }); });
     });
     S.th.forEach(function (x) {
-      if (dg.cuoi_nam[x.hoan_thanh_lop] != null) dg.cuoi_nam[x.hoan_thanh_lop]++;
-      if (dg.cuoi_nam[x.khen_thuong] != null) { dg.cuoi_nam[x.khen_thuong]++; dg.khen.push({ ho_ten: tenHs(x.hoc_sinh_ma), khen: x.khen_thuong }); }
+      if (dg.cuoi_nam[x.hoan_thanh_lop] != null && !bo[x.hoc_sinh_ma]) dg.cuoi_nam[x.hoan_thanh_lop]++;  // đếm tính tỉ lệ: bỏ HS khuyết tật; danh sách khen vẫn ghi tên
+      if (dg.cuoi_nam[x.khen_thuong] != null) { if (!bo[x.hoc_sinh_ma]) dg.cuoi_nam[x.khen_thuong]++; dg.khen.push({ ho_ten: tenHs(x.hoc_sinh_ma), khen: x.khen_thuong }); }
     });
     var tdAsc = S.theoDoi.slice().sort(function (a, b) { return a.ngay < b.ngay ? -1 : a.ngay > b.ngay ? 1 : (a.id || 0) - (b.id || 0); });
     return {
       phien_ban: 1, muc_do: 'day_du', nam_hoc: D.nam, lop: D.lop, khoi: D.khoi, co_so_ten: D.coSoTen, gvcn: D.gvcnTen,
       gvcn_sdt: (S.lop && S.lop.gvcn_sdt) || (D.sdtCua || {})[chuanLop(D.lop)] || '', to_chuyen_mon: toCuaKhoi(D.khoi), lap_luc: new Date().toISOString(), khoa_den: khoaDen() || null,
-      si_so: { tong: hs.length, nu: hs.filter(function (h) { return h.gioi_tinh === 'Nữ'; }).length, nam: hs.filter(function (h) { return h.gioi_tinh === 'Nam'; }).length,
+      si_so: { tong: hs.length, tinh_ti_le: hs.length - Object.keys(bo).length, nu: hs.filter(function (h) { return h.gioi_tinh === 'Nữ'; }).length, nam: hs.filter(function (h) { return h.gioi_tinh === 'Nam'; }).length,
         hoa_nhap: hs.filter(function (h) { return h.khuyet_tat_hoa_nhap; }).length, dtts: hs.filter(function (h) { return h.dan_toc && !/^kinh$/i.test(String(h.dan_toc).trim()); }).length },
       hoc_sinh: hs.map(function (h) {
         var c = S.hoanCanh[h.ma] || {};
@@ -2845,6 +2849,8 @@
     var W = window.WORD_TIEN_ICH, c = W.chan, loc = m.muc_do === 'nop_duyet';
     var nam = m.nam_hoc || D.nam, namCach = String(nam).replace('-', ' - '), lop = String(m.lop || ''), LOP = lop.toUpperCase();
     var ss = m.si_so || {}, siSo = ss.tong != null ? ss.tong : (m.hoc_sinh || []).length, hc = m.hoan_canh_so || {};
+    // Mẫu số tỉ lệ chất lượng: không tính HS khuyết tật. Báo cáo lưu trước 31/10/2026 chưa có tinh_ti_le → trừ hoa_nhap.
+    var mauCL = ss.tinh_ti_le != null ? ss.tinh_ti_le : Math.max(0, siSo - (+ss.hoa_nhap || 0));
     var dl = W.diaDanh ? W.diaDanh() : '', so = function (v) { return v == null ? 0 : v; };
     var kn = (m.ke_hoach || []).filter(function (k) { return k.cap === 'nam'; })[0], nd = (kn && kn.noi_dung) || {};
     var tkCua = function (k) { return (m.tong_ket || []).filter(function (t) { return t.ky === k; })[0] || {}; };
@@ -2911,7 +2917,7 @@
     var MUC_NL = [['T', 'Tốt (T)'], ['Đ', 'Đạt (Đ)'], ['C', 'Cần cố gắng (C)']];
     var PC = NLPC.filter(function (x) { return /^PC/.test(x[0]); });
     var NHOM_NL = { 1: 'I. Năng lực chung', 2: 'II. Năng lực đặc thù' };
-    var ctLay = function (bo) { return function (ma) { return bo && bo[ma] ? Object.assign({ mau: siSo }, bo[ma]) : null; }; };
+    var ctLay = function (bo) { return function (ma) { return bo && bo[ma] ? Object.assign({ mau: mauCL }, bo[ma]) : null; }; };
     var dgLay = function (loai, ky) { return function (ma) { return ((m.danh_gia || {})[loai] || []).filter(function (x) { return x.ky === ky && x.ma === ma; })[0] || null; }; };
     var hoTro = function (loai, moc) { return (m.ho_tro || []).filter(function (x) { return x.loai === loai && mocCua(x) === moc; }); };
     // 1/10/2026: kèm biện pháp, kết quả (trước nhập vào mà sổ không in)
@@ -3090,7 +3096,7 @@
           nho('* Chỉ tiêu năng lực') + bangMuc('Các năng lực', NL_DAY_DU, MUC_NL, ctLay(nd.ct_nl), true, NHOM_NL) +
           nho('* Đánh giá cuối năm học') + bang(['TT', 'Nội dung', 'SL', 'TL'], CT_CUOI_NAM.map(function (x, i) {
             var s = nd.ct_cn && nd.ct_cn[x[0]] ? nd.ct_cn[x[0]].SL : '';
-            return [i + 1, c(x[1]), '<span class="giua">' + (s != null ? s : '') + '</span>', tiLe(s, siSo)];
+            return [i + 1, c(x[1]), '<span class="giua">' + (s != null ? s : '') + '</span>', tiLe(s, mauCL)];
           }), ['8%', '62%', '15%', '15%']) +
           nho('* Học sinh tham gia các cuộc thi, sân chơi trí tuệ') + bang(['TT', 'Cuộc thi, sân chơi', 'Chỉ tiêu'], (nd.cuoc_thi || []).map(function (x, i) { return [i + 1, c(x.ten), c(x.chi_tieu || '')]; }), ['8%', '67%', '25%'], 4);
       }
@@ -3181,12 +3187,12 @@
     h += NGAT + tieuDe('KẾT QUẢ CUỐI NĂM HỌC CỦA LỚP ' + LOP) + ketQuaKy('cuoi_nam').replace('Kết quả các môn học', '1. Kết quả các môn học').replace('Đánh giá phẩm chất', '2. Đánh giá phẩm chất').replace('Đánh giá năng lực', '3. Đánh giá năng lực') +
       muc('4. Đánh giá kết quả giáo dục, khen thưởng cuối năm') + bang(['TT', 'Kết quả', 'SL', 'TL'], [
         ['1.1', 'Hoàn thành xuất sắc', '', ''], ['1.2', 'Hoàn thành tốt', '', ''],
-        ['1.3', 'Hoàn thành chương trình lớp học', coCN ? cn.HT : '', coCN ? tiLe(cn.HT, siSo) : ''],
-        ['1.4', 'Chưa hoàn thành (rèn luyện trong hè: ' + (coCN ? cn.RLTH : '…') + ')', coCN ? cn.CHT : '', coCN ? tiLe(cn.CHT, siSo) : ''],
-        ['2.1', 'Khen thưởng: Học sinh Xuất sắc', coCN ? cn.XS : '', coCN ? tiLe(cn.XS, siSo) : ''],
-        ['2.2', 'Khen thưởng: Học sinh Tiêu biểu hoàn thành tốt trong học tập và rèn luyện', coCN ? cn.TB : '', coCN ? tiLe(cn.TB, siSo) : '']
+        ['1.3', 'Hoàn thành chương trình lớp học', coCN ? cn.HT : '', coCN ? tiLe(cn.HT, mauCL) : ''],
+        ['1.4', 'Chưa hoàn thành (rèn luyện trong hè: ' + (coCN ? cn.RLTH : '…') + ')', coCN ? cn.CHT : '', coCN ? tiLe(cn.CHT, mauCL) : ''],
+        ['2.1', 'Khen thưởng: Học sinh Xuất sắc', coCN ? cn.XS : '', coCN ? tiLe(cn.XS, mauCL) : ''],
+        ['2.2', 'Khen thưởng: Học sinh Tiêu biểu hoàn thành tốt trong học tập và rèn luyện', coCN ? cn.TB : '', coCN ? tiLe(cn.TB, mauCL) : '']
       ].map(function (r) { return [r[0], c(r[1]), '<span class="giua">' + r[2] + '</span>', r[3]]; }), ['9%', '61%', '15%', '15%']) +
-      '<p class="nghieng" style="font-size:11pt;margin:2pt 0 0">Mức Hoàn thành xuất sắc / Hoàn thành tốt ghi theo học bạ số (hệ thống chưa lưu mức này).</p>' +
+      '<p class="nghieng" style="font-size:11pt;margin:2pt 0 0">Mức Hoàn thành xuất sắc / Hoàn thành tốt ghi theo học bạ số (hệ thống chưa lưu mức này). Tỉ lệ không tính học sinh khuyết tật.</p>' +
       muc('5. Học sinh tham gia các cuộc thi, sân chơi trí tuệ') + bang(['TT', 'Cuộc thi, sân chơi', 'Chỉ tiêu', 'Kết quả'], (nd.cuoc_thi || []).map(function (x, i) {
         return [i + 1, c(x.ten), c(x.chi_tieu || ''), c((them.cuoc_thi_kq || {})[x.ten] || '')];
       }), ['8%', '52%', '20%', '20%'], 4) +
