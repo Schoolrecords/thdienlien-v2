@@ -1440,15 +1440,35 @@
       '- Căn cứ tình hình thực tế của lớp ' + D.lop + ', giáo viên chủ nhiệm xây dựng kế hoạch chủ nhiệm năm học ' + D.nam + ' như sau:'].join('\n');
   }
   // Lưới chỉ tiêu: mỗi dòng một môn / phẩm chất / năng lực, mỗi cột một mức — nhập SỐ học sinh
+  // Thầy Chung 31/10/2026: chỉ tiêu gõ tay — tổng một dòng vượt số HS tính tỉ lệ (hay gặp ở chỉ tiêu nhập trước khi bỏ HS khuyết
+  // tật khỏi mẫu số) thì nhắc ngay dưới bảng. Chỉ nhắc, không tự sửa số, không chặn lưu. ct_cn không xét: các dòng chồng nhau.
+  function canhBaoChiTieu(khoa) {
+    var mau = siSoTinhTiLe(), tong = {}, ten = {};
+    Array.prototype.slice.call(EL.querySelectorAll('[data-ct^="' + khoa + '|"]')).forEach(function (i) {
+      var k = i.getAttribute('data-ct').split('|')[1];
+      tong[k] = (tong[k] || 0) + (+i.value || 0);
+      ten[k] = i.getAttribute('data-ct-dong') || k;
+    });
+    var vuot = Object.keys(tong).filter(function (k) { return tong[k] > mau; });
+    var o = EL.querySelector('[data-ct-canh="' + khoa + '"]');
+    if (!o) return;
+    o.style.display = vuot.length ? '' : 'none';
+    o.textContent = vuot.length ? 'Tổng vượt ' + mau + ' em được tính tỉ lệ, cần chỉnh lại: ' + vuot.map(function (k) { return ten[k] + ' (' + tong[k] + ')'; }).join(', ') + '.' : '';
+  }
   function luoiChiTieu(khoa, dong, cot, gt, khoaSo) {
     gt = gt || {};
+    var coCanh = khoa !== 'ct_cn', mau = siSoTinhTiLe();
+    var tongDong = function (d) { var v = gt[d[0]] || {}, n = 0; cot.forEach(function (c) { n += +v[c[0]] || 0; }); return n; };
+    var vuotBanDau = coCanh ? dong.filter(function (d) { return tongDong(d) > mau; }) : [];
     return '<div class="scn-bang-boc"><table class="scn-bang so"><thead><tr><th></th>' + cot.map(function (c) { return '<th>' + thoat(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       dong.map(function (d) {
         return '<tr><th>' + thoat(d[1]) + '</th>' + cot.map(function (c) {
           var v = gt[d[0]] && gt[d[0]][c[0]] != null ? gt[d[0]][c[0]] : '';
-          return '<td><input type="number" min="0" class="scn-o so" data-ct="' + khoa + '|' + d[0] + '|' + c[0] + '" value="' + thoat(v) + '"' + (khoaSo ? ' disabled' : '') + '></td>';
+          return '<td><input type="number" min="0" class="scn-o so" data-ct="' + khoa + '|' + d[0] + '|' + c[0] + '" data-ct-dong="' + thoat(d[1]) + '" value="' + thoat(v) + '"' + (khoaSo ? ' disabled' : '') + '></td>';
         }).join('') + '</tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + '</tbody></table></div>' +
+      (coCanh ? '<p class="scn-ghi-chu" role="status" style="color:#b3261e;' + (vuotBanDau.length ? '' : 'display:none') + '" data-ct-canh="' + khoa + '">' +
+        (vuotBanDau.length ? 'Tổng vượt ' + mau + ' em được tính tỉ lệ, cần chỉnh lại: ' + vuotBanDau.map(function (d) { return thoat(d[1]) + ' (' + tongDong(d) + ')'; }).join(', ') + '.' : '') + '</p>' : '');
   }
   function docLuoiChiTieu() {
     var ra = { ct_mon: {}, ct_pc: {}, ct_nl: {}, ct_cn: {} };
@@ -4468,6 +4488,8 @@
     EL = vung;
     vung.addEventListener('click', khiBam);
     vung.addEventListener('input', function (e) {
+      var oCT = e.target && e.target.getAttribute && e.target.getAttribute('data-ct');
+      if (oCT && oCT.indexOf('ct_cn|') !== 0) canhBaoChiTieu(oCT.split('|')[0]);
       D.daCham = true; nhapKhiGo(e);
       if (D.tab === 'ke-hoach' && e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName)) henTuLuu();
     });
