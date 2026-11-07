@@ -273,12 +273,41 @@
     var hetHK1 = congNgay(ngayDauTuan(nam, k.tuanHK1), 6);
     return { batDau: k.batDau, hetHK1: hetHK1, dauHK2: congNgay(hetHK1, 1), tongKet: k.tongKet, suyTam: !!k.suyTam };
   };
-  // Kỳ nên nộp ở ngày này: tháng 9 → 5 là kỳ tháng đó; ngoài thời gian học → cả năm
-  function kyCanNop(iso) {
+  // Kỳ tháng ứng với ngày này (từ ngày 25: tháng đó; ngày 1–10: tháng trước) — chỉ dùng chọn kỳ mặc định
+  function kyTheoNgay(iso) {
     var d = +String(iso || '').slice(8, 10), m = +String(iso || '').slice(5, 7);
     if (d >= 25 && (m >= 9 || m <= 5)) return 'thang-' + m;
     var t = m === 1 ? 12 : m - 1;
     return d <= 10 && (t >= 9 || t <= 5) ? 'thang-' + t : '';
+  }
+  // ── 07/11/2026 (thầy Chung): BỎ nhắc nộp sổ HẰNG THÁNG. Chỉ nhắc GVCN nộp khi BGH có
+  //    đợt kiểm tra sổ chủ nhiệm trong Kế hoạch kiểm tra nội bộ (Dự giờ › 🔎 Kiểm tra nội bộ,
+  //    khung nhìn ktnb_ke_hoach — sql/33): tên/nội dung/đối tượng có chữ "chủ nhiệm", chưa
+  //    "Đã xong", hôm nay trong [từ ngày − 7 ngày, đến ngày]. Đợt gắn điểm trường → chỉ lớp
+  //    điểm đó. Trường chưa có bảng KTNB hoặc đọc lỗi → không nhắc. ──
+  var KTNB_SCN = { nam: '', ds: [] };
+  var NHAC_TRUOC_DOT = 7;
+  function boDauKT(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); }
+  function docDotKtScn(nam) {
+    if (!may() || !nam) return Promise.resolve([]);
+    return may().from('ktnb_ke_hoach').select('ten, noi_dung, doi_tuong, co_so_ma, tu_ngay, den_ngay, trang_thai')
+      .eq('nam_hoc', nam).neq('trang_thai', 'xong').then(function (r) {
+        var ds = r && !r.error ? (r.data || []).filter(function (x) {
+          return x.tu_ngay && /chu nhiem/.test(boDauKT([x.ten, x.noi_dung, x.doi_tuong].join(' ')));
+        }) : [];
+        KTNB_SCN = { nam: nam, ds: ds };
+        return ds;
+      }, function () { KTNB_SCN = { nam: nam, ds: [] }; return []; });
+  }
+  function dotKtScn(iso, coSo) {
+    return KTNB_SCN.ds.filter(function (x) {
+      return congNgay(x.tu_ngay, -NHAC_TRUOC_DOT) <= iso && iso <= (x.den_ngay || x.tu_ngay) &&
+        (!x.co_so_ma || !coSo || x.co_so_ma === coSo);
+    })[0] || null;
+  }
+  // Kỳ phải nộp hôm nay — RỖNG khi không có đợt kiểm tra sổ chủ nhiệm của BGH
+  function kyCanNop(iso, coSo) {
+    return dotKtScn(iso, coSo) ? (kyTheoNgay(iso) || kyGoiY(iso)) : '';
   }
   function kyGoiY(iso) { var m = +String(iso || '').slice(5, 7); return (m >= 9 || m <= 5) && m ? 'thang-' + m : 'ca-nam'; }
   // Ngày cuối kỳ — mốc đề nghị khoá sổ sau khi BGH duyệt
@@ -517,7 +546,9 @@
       // + gvcn_sdt (sql/73): điện thoại GVCN in trên bìa khi cô chưa tự ghi.
       may().from('lop_hoc').select('lop, gvcn_ten, gvcn_sdt').eq('nam_hoc', D.nam).then(function (r) {
         return r.error ? may().from('lop_hoc').select('lop, gvcn_ten').eq('nam_hoc', D.nam) : r;
-      })
+      }),
+      // Đợt kiểm tra sổ chủ nhiệm của BGH (07/11/2026) — có đợt mới nhắc nộp sổ
+      docDotKtScn(D.nam)
     ]).then(function (r) {
       if (r[0].error) throw r[0].error;
       var pc = r[0].data || [];
@@ -1219,8 +1250,9 @@
     var thieuSdt = D.hs.filter(function (h) { return !(S.hoanCanh[h.ma] || {}).sdt; }).length;
     if (thieuSdt) ds.push([thieuSdt + ' em chưa có số điện thoại cha mẹ.', nut('Nhập cả lớp', 'data-act="mo-luoi" data-nhom="lien_lac"')]);
     // 27/10/2026: QC1 hết tháng 10 mới 4/60 lớp nộp sổ, tổ chưa kiểm tra sổ nào — thầy cô không biết có bước nộp.
-    // Từ ngày 25 nhắc nộp tháng này; ngày 1–10 tháng sau nhắc tháng trước nếu còn chưa nộp.
-    var kyN = kyCanNop(hnay);
+    // 07/11/2026: chỉ nhắc khi BGH có đợt kiểm tra sổ chủ nhiệm (kyCanNop rỗng nếu không có đợt).
+    var lopNay = (D.dsLop || []).filter(function (l) { return l && chuanLop(l.lop) === chuanLop(D.lop); })[0];
+    var kyN = kyCanNop(hnay, lopNay && lopNay.coSo);
     if (kyN && laGVCNLopNay() && !D.dv.loi && !nopMoiNhat(D.dv.nop).some(function (n) { return chuanLop(n.lop) === chuanLop(D.lop) && n.ky === kyN; }))
       // 28/10/2026: nộp NGAY từ đây (máy soạn kết quả tháng nếu còn trống) — trước phải sang thẻ Nộp sổ, chọn kỳ, bấm Nộp
       ds.push(['Chưa <b>nộp sổ ' + thoat(TEN_KY_NOP[kyN].toLowerCase()) + '</b> cho tổ kiểm tra.', nut('📤 Nộp sổ ' + thoat(TEN_KY_NOP[kyN].toLowerCase()), 'data-act="nop-nhanh" data-ky="' + kyN + '"')]);
@@ -2414,7 +2446,7 @@
   // ── GVCN: nộp kỳ + lịch sử ──
   function veNopCuaToi() {
     var ds = D.dv.nop.filter(function (n) { return chuanLop(n.lop) === chuanLop(D.lop); });
-    if (!D.kyNop) D.kyNop = kyCanNop(homNay()) || kyGoiY(homNay());
+    if (!D.kyNop) D.kyNop = kyTheoNgay(homNay()) || kyGoiY(homNay());
     var moi = nopMoiNhat(ds).filter(function (n) { return n.ky === D.kyNop; })[0];
     var xong = moi && (moi.trang_thai === 'da_kiem_tra' || moi.trang_thai === 'da_duyet');
     var nhan = !moi ? 'Nộp kỳ này' : moi.trang_thai === 'yeu_cau_bo_sung' ? 'Nộp lại (lần ' + (moi.lan + 1) + ')' : 'Nộp bản mới (thay lần ' + moi.lan + ')';
@@ -4212,17 +4244,20 @@
   function laNgayHoc(iso) { var t = new Date(iso + 'T00:00:00').getDay(); return t >= 1 && t <= 5; }
   var TEN_BUOI = { sang: 'buổi sáng', chieu: 'buổi chiều' };
   // gon: dòng đứng dưới thẻ điểm danh nhanh — thu nhỏ, chỉ còn lối vào sổ
-  function dongNhacGV(lop, moi, ky, dd, buoi, ngayHoc, gon) {
+  // canNop: BGH đang có đợt kiểm tra sổ chủ nhiệm áp cho lớp này (07/11/2026). Không có đợt thì
+  // không ghi "chưa nộp", không đổi nút — chỉ còn báo khi lớp đã nộp / được yêu cầu bổ sung.
+  function dongNhacGV(lop, moi, ky, dd, buoi, ngayHoc, gon, canNop) {
     var tt = !moi ? 'chưa nộp' : moi.trang_thai === 'da_nop' ? 'đã nộp, chờ kiểm tra' : moi.trang_thai === 'yeu_cau_bo_sung' ? '<b class="scn-nhac-do">cần bổ sung</b>' : 'đã kiểm tra';
     var ddChu = !ngayHoc ? '' : dd
       ? '<span class="scn-nhac-dd xong">Điểm danh ' + TEN_BUOI[buoi] + ': vắng ' + dd.so_vang + '/' + dd.si_so + '</span>'
       : '<span class="scn-nhac-dd chua">Chưa điểm danh ' + TEN_BUOI[buoi] + '</span>';
-    return '<div class="scn-nhac' + (gon ? ' gon' : '') + '"><span class="scn-nhac-chu"><b>Sổ chủ nhiệm lớp ' + thoat(lop) + '</b> · ' + thoat(TEN_KY_NOP[ky] || ky) + ': ' + tt +
+    return '<div class="scn-nhac' + (gon ? ' gon' : '') + '"><span class="scn-nhac-chu"><b>Sổ chủ nhiệm lớp ' + thoat(lop) + '</b>' +
+      (canNop || moi ? ' · ' + thoat(TEN_KY_NOP[ky] || ky) + ': ' + tt : '') +
       (ddChu ? '<br>' + ddChu : '') + '</span>' +
       '<span class="scn-nhac-nut">' + (gon ? '' : '<button type="button" data-scn-nhac="theo-doi" data-lop="' + thoat(lop) + '">' + (ngayHoc && !dd ? 'Điểm danh' : 'Điểm danh, ghi theo dõi') + '</button>') +
       // 28/10/2026: đến kỳ nộp mà lớp chưa nộp (hoặc tổ yêu cầu bổ sung) → nút "Mở sổ" thành "Nộp sổ", mở thẳng thẻ Nộp sổ
       // (giữ đúng một nút như cũ — trang chủ không thêm khung mới)
-      (kyCanNop(homNay()) === ky && (!moi || moi.trang_thai === 'yeu_cau_bo_sung')
+      ((canNop && !moi) || (moi && moi.trang_thai === 'yeu_cau_bo_sung')
         ? '<button type="button" data-scn-nhac="nop" data-ky="' + thoat(ky) + '" data-lop="' + thoat(lop) + '">📤 Nộp sổ</button>'
         : '<button type="button" data-scn-nhac="mo" data-lop="' + thoat(lop) + '">Mở sổ</button>') + '</span></div>';
   }
@@ -4376,7 +4411,8 @@
       var dd = c.ddl.filter(function (d) { return chuanLop(d.lop) === chuanLop(l) && d.buoi === c.buoi; })[0];
       var the = c.ngayHoc && batDDNhanh() && (!dd || DDN.xong[chuanLop(l)]) ? theDDNhanh(l, c.buoi, c.hn) : '';
       // Có thẻ nhanh thì dòng sổ bỏ chữ "Chưa điểm danh" (thẻ đã nói), nút sổ thành "Điểm danh, ghi theo dõi"
-      return the + dongNhacGV(l, c.moi.filter(function (n) { return chuanLop(n.lop) === chuanLop(l) && n.ky === c.ky; })[0], c.ky, dd, c.buoi, c.ngayHoc && !the, !!the);
+      var canNop = kyCanNop(c.hn, (c.csCua || {})[chuanLop(l)]) === c.ky;
+      return the + dongNhacGV(l, c.moi.filter(function (n) { return chuanLop(n.lop) === chuanLop(l) && n.ky === c.ky; })[0], c.ky, dd, c.buoi, c.ngayHoc && !the, !!the, canNop);
     }).join('') + c.duoi;
     NHAC.html = h;
     if (o) {
@@ -4387,7 +4423,7 @@
   function veNhacHome() {
     var o = document.getElementById('scn-nhac-home');
     if (!o) return;
-    var nam = (window.CAU_HINH || {}).NAM_HOC || '', ky = kyCanNop(homNay()) || kyGoiY(homNay()), hn = homNay(), buoi = buoiMacDinh(), ngayHoc = laNgayHoc(hn);
+    var nam = (window.CAU_HINH || {}).NAM_HOC || '', ky = kyTheoNgay(homNay()) || kyGoiY(homNay()), hn = homNay(), buoi = buoiMacDinh(), ngayHoc = laNgayHoc(hn);
     if (!may()) {   // xem thử: khớp lớp mẫu 4A; điểm danh nhanh chỉ ghi trên màn hình
       if (!NHAC.ctx) {
         DDN.hs['4A'] = TEN_MAU.map(function (t, i) { return { ma: 'MAU' + pad(i + 1), ho_ten: t }; }).sort(sapTen);
@@ -4408,10 +4444,15 @@
       may().from('scn_nguoi_duyet').select('email, khoi, co_so_ma').eq('nam_hoc', nam),
       may().from('scn_nop').select('lop, ky, lan, trang_thai, khoi, co_so_ma').eq('nam_hoc', nam).order('id').limit(5000),
       ngayHoc ? may().from('diem_danh_lop').select('lop, buoi, si_so, so_vang').eq('ngay', hn).eq('nam_hoc', nam).limit(2000) : null,
-      ngayHoc && bgh ? may().from('lop_hoc').select('lop').eq('nam_hoc', nam) : null,
+      // lop_hoc: BGH đếm điểm danh toàn trường + điểm trường của lớp (đợt kiểm tra gắn điểm trường)
+      may().from('lop_hoc').select('lop, co_so_ma').eq('nam_hoc', nam),
       // Ngày nghỉ (lễ, nghỉ bù) thì không mở thẻ điểm danh nhanh — bảng thiếu ở trường chưa chạy sql thì coi như ngày học
-      ngayHoc && batDDNhanh() ? may().from('ngay_nghi').select('ngay').eq('ngay', hn).limit(1) : null
+      ngayHoc && batDDNhanh() ? may().from('ngay_nghi').select('ngay').eq('ngay', hn).limit(1) : null,
+      // Đợt kiểm tra sổ chủ nhiệm của BGH (07/11/2026) — có đợt mới nhắc nộp
+      docDotKtScn(nam)
     ]).then(function (r) {
+      var csCua = {};
+      rongNeuLoi(r[4]).forEach(function (l) { csCua[chuanLop(l.lop)] = l.co_so_ma || ''; });
       if (ngayHoc && rongNeuLoi(r[5]).length) ngayHoc = false;
       var lopToi = [];
       rongNeuLoi(r[0]).forEach(function (p) { if (lopToi.indexOf(p.lop) < 0) lopToi.push(p.lop); });
@@ -4437,7 +4478,7 @@
         }).length;
         if (cho) h += dongNhacKT(cho, bgh);
       }
-      var ctx = { nam: nam, hn: hn, buoi: buoi, ky: ky, ngayHoc: ngayHoc, lopToi: lopToi, moi: moi, ddl: ddl, duoi: h };
+      var ctx = { nam: nam, hn: hn, buoi: buoi, ky: ky, ngayHoc: ngayHoc, lopToi: lopToi, moi: moi, ddl: ddl, duoi: h, csCua: csCua };
       // Điểm danh nhanh: đọc danh sách em đang học của lớp mình chủ nhiệm (chỉ khi còn lớp chưa điểm danh buổi này)
       var canHs = ngayHoc && batDDNhanh() ? lopToi.filter(function (l) {
         return !DDN.hs[chuanLop(l)] && !ddl.some(function (d) { return chuanLop(d.lop) === chuanLop(l) && d.buoi === buoi; });
