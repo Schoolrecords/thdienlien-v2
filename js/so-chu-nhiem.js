@@ -290,7 +290,7 @@
   function boDauKT(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); }
   function docDotKtScn(nam) {
     if (!may() || !nam) return Promise.resolve([]);
-    return may().from('ktnb_ke_hoach').select('ten, noi_dung, doi_tuong, co_so_ma, tu_ngay, den_ngay, trang_thai')
+    return may().from('ktnb_ke_hoach').select('id, ten, noi_dung, doi_tuong, co_so_ma, tu_ngay, den_ngay, trang_thai')
       .eq('nam_hoc', nam).neq('trang_thai', 'xong').then(function (r) {
         var ds = r && !r.error ? (r.data || []).filter(function (x) {
           return x.tu_ngay && /chu nhiem/.test(boDauKT([x.ten, x.noi_dung, x.doi_tuong].join(' ')));
@@ -2371,7 +2371,7 @@
   // Màn "Kiểm tra sổ" (nhiều lớp) — tổ trưởng/tổ phó được giao + BGH
   function veKiemTra() {
     var h = baoLoiDuyet();
-    if (laBGH()) h += veTienDo();
+    if (laBGH()) h += veDotKiemTra() + veTienDo();
     if (laBGH() || D.laToKT) h += veDsKiemTra();
     if (laBGH()) h += veNguoiDuyet();
     return h === baoLoiDuyet() ? h + rong('Kiểm tra sổ chủ nhiệm dành cho <b>Ban giám hiệu</b> và <b>tổ trưởng, tổ phó được giao</b>. Thầy cô chưa được giao kiểm tra lớp nào trong năm học ' + thoat(D.nam) + '.') : h;
@@ -2581,6 +2581,57 @@
     h += '<dt>Nổi trội</dt><dd>' + (nt.length ? nt.map(function (x) { return thoat(x.ho_ten); }).join(', ') : '<i>Chưa ghi</i>') + '</dd>';
     h += '<dt>Họp cha mẹ</dt><dd>' + (bc.hop_cmhs || []).length + ' lần · trao đổi riêng: ' + (bc.trao_doi_so || 0) + ' (chỉ số lượng)</dd>';
     return h + '</dl>';
+  }
+
+  // ── BGH: ĐỢT KIỂM TRA SỔ CHỦ NHIỆM (07/11/2026) ──
+  // Mục Dự giờ – Kiểm tra nội bộ đã gỡ khỏi Điều hành (15/8/2026) nên BGH lập đợt ngay tại đây.
+  // Ghi vào ktnb_dot (sql/33, RLS: chỉ BGH/quản trị thêm, sửa) — cùng bảng kế hoạch KTNB, tên có
+  // "sổ chủ nhiệm" ⇒ kyCanNop() nhắc GVCN nộp từ 7 ngày trước "từ ngày" đến hết "đến ngày".
+  function veDotKiemTra() {
+    var tenCs = {}; D.coSo.forEach(function (c) { tenCs[c.ma] = c.ten; });
+    var hn = homNay(), ds = KTNB_SCN.ds.slice().sort(function (a, b) { return String(a.tu_ngay) < String(b.tu_ngay) ? -1 : 1; });
+    var h = '<p class="scn-ghi-chu">Giáo viên chủ nhiệm chỉ thấy nhắc <b>📤 Nộp sổ</b> khi có đợt kiểm tra ở đây: từ ' + NHAC_TRUOC_DOT +
+      ' ngày trước “Từ ngày” đến hết “Đến ngày”. Kiểm tra xong bấm <b>Kết thúc</b> thì hết nhắc.</p>' +
+      (ds.length ? '<div class="scn-bang-boc"><table class="scn-bang"><thead><tr><th>Đợt kiểm tra</th><th>Từ ngày</th><th>Đến ngày</th><th>Điểm trường</th><th>Nhắc nộp</th><th></th></tr></thead><tbody>' +
+        ds.map(function (x) {
+          var dangNhac = congNgay(x.tu_ngay, -NHAC_TRUOC_DOT) <= hn && hn <= (x.den_ngay || x.tu_ngay);
+          return '<tr><td>' + thoat(x.ten) + '</td><td>' + ngayVN(x.tu_ngay) + '</td><td>' + (x.den_ngay ? ngayVN(x.den_ngay) : '—') + '</td>' +
+            '<td>' + thoat(x.co_so_ma ? (tenCs[x.co_so_ma] || x.co_so_ma) : 'Cả trường') + '</td><td>' + (dangNhac ? 'Đang nhắc' : hn < x.tu_ngay ? 'Từ ' + ngayVN(congNgay(x.tu_ngay, -NHAC_TRUOC_DOT)) : 'Đã qua') + '</td>' +
+            '<td><button class="scn-nut phu nho" data-dkt-xong="' + x.id + '">Kết thúc</button></td></tr>';
+        }).join('') + '</tbody></table></div>' : rong('Chưa có đợt kiểm tra sổ chủ nhiệm nào — giáo viên không thấy nhắc nộp sổ.'));
+    var m = +hn.slice(5, 7);
+    h += '<details class="scn-mo-them"' + (ds.length ? '' : ' open') + '><summary>+ Lập đợt kiểm tra</summary><div class="scn-form">' +
+      '<div class="scn-hang"><input id="dkt-ten" class="scn-o" style="flex:1 1 260px" value="Kiểm tra sổ chủ nhiệm tháng ' + (hn.slice(8, 10) <= '10' ? (m === 1 ? 12 : m - 1) : m) + '"></div>' +
+      '<div class="scn-hang"><label>Từ ngày <input id="dkt-tu" class="scn-o" type="date" value="' + hn + '"></label>' +
+      '<label>Đến ngày <input id="dkt-den" class="scn-o" type="date" value="' + congNgay(hn, 7) + '"></label>' +
+      (D.coSo.length > 1 ? oChon('dkt-cs', [['', 'Cả trường']].concat(D.coSo.map(function (c) { return [c.ma, c.ten]; })), '') : '') + '</div>' +
+      '<div class="scn-hang"><button class="scn-nut" data-act="dkt-them">Lập đợt kiểm tra</button></div></div></details>';
+    return the('Đợt kiểm tra sổ chủ nhiệm (Ban giám hiệu lập)', h);
+  }
+  function dktThem(nut) {
+    var ten = giaTri('dkt-ten'), tu = giaTri('dkt-tu'), den = giaTri('dkt-den');
+    if (!/chủ nhiệm/i.test(ten)) ten = (ten ? ten + ' — ' : '') + 'sổ chủ nhiệm';
+    if (!tu) { bao('Chọn ngày bắt đầu kiểm tra.'); return; }
+    if (den && den < tu) { bao('“Đến ngày” phải sau “Từ ngày”.'); return; }
+    var dong = { nam_hoc: D.nam, ten: ten, doi_tuong: 'Sổ chủ nhiệm các lớp', co_so_ma: giaTri('dkt-cs') || null,
+      tu_ngay: tu, den_ngay: den || null, trang_thai: 'ke_hoach' };
+    if (!may()) return xemThu(function () { KTNB_SCN.ds.push(Object.assign({ id: -Date.now() }, dong)); });
+    ghiMay(may().from('ktnb_dot').insert(dong).select('id').maybeSingle(), nut, function (d) {
+      KTNB_SCN.ds.push(Object.assign({ id: d && d.id }, dong));
+      bao('Đã lập đợt kiểm tra. Giáo viên chủ nhiệm thấy nhắc nộp sổ từ ' + ngayVN(congNgay(tu, -NHAC_TRUOC_DOT)) + '.'); ve();
+    });
+  }
+  function dktXong(id) {
+    var xn = window.hopHoi ? window.hopHoi('Kết thúc đợt kiểm tra này? Giáo viên chủ nhiệm hết thấy nhắc nộp sổ của đợt; các sổ đã nộp, đã kiểm tra giữ nguyên.', { tieuDe: 'Kết thúc đợt kiểm tra', nutOK: 'Kết thúc' }) : Promise.resolve(window.confirm('Kết thúc đợt kiểm tra?'));
+    xn.then(function (ok) {
+      if (!ok) return;
+      var bo = function () { KTNB_SCN.ds = KTNB_SCN.ds.filter(function (x) { return x.id !== id; }); };
+      if (!may()) return xemThu(bo);
+      ghiMay(may().from('ktnb_dot').update({ trang_thai: 'xong' }).eq('id', id).select('id'), null, function (d) {
+        if (!d || !d.length) { bao('Không kết thúc được — chỉ Ban giám hiệu, Quản trị.'); return; }
+        bo(); bao('Đã kết thúc đợt kiểm tra.'); ve();
+      });
+    });
   }
 
   // ── BGH: người kiểm tra theo tổ ──
@@ -3707,6 +3758,7 @@
     if (a('data-mo-nop')) { moNop(+a('data-mo-nop')); return; }
     if (a('data-kq')) { xacNhan(a('data-kq'), b); return; }
     if (a('data-nd-xoa')) { ndXoa(+a('data-nd-xoa')); return; }
+    if (a('data-dkt-xong')) { dktXong(+a('data-dkt-xong')); return; }
     if (a('data-goi-y-ht')) { D.sua = { bang: 'moi', moi: { hoc_sinh_ma: a('data-goi-y-ht'), loai: a('data-loai-ht'), bieu_hien: a('data-bh') } }; ve(); var f = document.getElementById('scn-form-ht'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     var act = a('data-act');
     if (!act) return;
@@ -3822,7 +3874,7 @@
           gvcn: (D.gvcnCua || {})[chuanLop(D.lop)] || '' });
       },
       'nop-ky': function () { hoanTatVaNop(D.kyNop, b); },
-      'nop-nhanh': function () { D.kyNop = a('data-ky') || D.kyNop; hoanTatVaNop(D.kyNop, b); }, 'nd-them': function () { ndThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
+      'nop-nhanh': function () { D.kyNop = a('data-ky') || D.kyNop; hoanTatVaNop(D.kyNop, b); }, 'nd-them': function () { ndThem(b); }, 'dkt-them': function () { dktThem(b); }, 'bo-loc-lop': function () { D.lopLoc = ''; ve(); },
       'mo-so': function () { var l = a('data-lop'); D.moNop = null; D.che = 'so'; D.lop = l; D.tab = 'tong-quan'; D.dangNap = true; ve(); napLop().then(function () { ve(); }); },
       'them-ct': function () { var v = document.getElementById('kh-cuoc-thi'); if (v) { var d = document.createElement('div'); d.innerHTML = dongCuocThi(false)({}); v.appendChild(d.firstChild); } },
       'xoa-ct': function () { var d = b.closest('.scn-ct-dong'); if (d) d.parentNode.removeChild(d); }
