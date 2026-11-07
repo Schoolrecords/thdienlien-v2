@@ -4222,6 +4222,8 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 .khs-luu { width: 100%; }
 .khs-bang-ky { position: absolute; inset: 0; z-index: 2; background: rgba(10, 20, 42, .5); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .khs-bang-ky[hidden] { display: none; }
+.khs-bang-ky.rieng { position: fixed; z-index: 950; }
+.khs-bang-ky.rieng { position: fixed; z-index: 950; }
 .khs-bk-hop { width: 100%; max-width: 560px; background: #fff; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--bong-lon); }
 .khs-bk-hop b { font-size: 16px; color: var(--dam); }
 .khs-bk-hop small { font-size: 13px; color: var(--chu-mo); }

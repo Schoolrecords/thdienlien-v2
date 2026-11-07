@@ -46,6 +46,7 @@
     // Ghép tài khoản (sql/86, 28/10/2026): lượt chia sẻ thư mục Drive (BGH đọc được). bi_mat_may KHÔNG có
     // chính sách đọc nào ⇒ luôn ra rỗng — khoá máy Drive đặt lại bằng quan-tri/sinh-dong-bo-drive-th.py.
     'hang_doi_drive', 'bi_mat_may',
+    'scn_chu_ky',   // sql/90 (07/11/2026): chữ ký tay (+ dấu) khi tổ kiểm tra / BGH duyệt sổ chủ nhiệm
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',
     // Sổ ghi đầu bài (sql/83, 5/10/2026) — hồ sơ bắt buộc TT15 Đ.21.1.e, lưu hết khóa học
@@ -299,7 +300,9 @@
     'to_dbcl',
     // Cha của các bảng thêm 1/10/2026 — xếp ABC thì con đứng trước cha:
     // day_thay → gv_vang · tkb_giao_vien/tkb_tiet → tkb_phien_ban · scn_duyet → scn_nop.
-    'gv_vang', 'tkb_phien_ban', 'scn_nop'
+    'gv_vang', 'tkb_phien_ban', 'scn_nop',
+    // scn_chu_ky → scn_duyet (sql/90): xếp ABC thì 'scn_chu_ky' đứng trước cha
+    'scn_duyet'
   ];
 
   function sqlGiaTri(v) {

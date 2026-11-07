@@ -1142,6 +1142,7 @@
     };
   }
   window.SCN_NHAP = { khoa: nhapKhoa };   // cho bài thử
+  window.SCN_KY_THU = { ghepKy: function (a, b) { return ghepKy(a, b); }, wordSo: function (m, tc) { return wordSo(m, tc); } };   // bài thử ký sổ (07/11/2026)
 
   function dauMan() { return dauManGoc() + bangMay(); }
   function dauManGoc() {
@@ -2698,8 +2699,30 @@
       }
       ghiMay(may().rpc('scn_duyet_ghi', { p_nop_id: n.id, p_ket_qua: kq, p_nhan_xet: nx || null, p_ma_bam: n.ma_bam }), nut, function (r) {
         bao('Đã ghi xác nhận: ' + (TEN_TT_NOP[kq] || kq) + ' — lớp ' + n.lop + '.');
-        napDuyet().then(function () { ve(); if (r && r.de_nghi_khoa) deNghiKhoa(n); else moSoKeTiep(n.id); });
+        (kq === 'yeu_cau_bo_sung' ? Promise.resolve() : kySauXacNhan(n, laBGH())).then(function () {
+          return napDuyet();
+        }).then(function () { ve(); if (r && r.de_nghi_khoa) deNghiKhoa(n); else moSoKeTiep(n.id); });
       });
+    });
+  }
+  // ── KÝ TAY SAU KHI XÁC NHẬN (thầy Chung 07/11/2026, sql/90) ──
+  // Chữ ký đã nhớ trên máy (cùng chữ ký nút ✍ ký giáo án) → gửi luôn, không thêm chạm;
+  // máy chưa có → mở bảng ký một lần. BGH kèm ảnh dấu nếu máy đã lưu dấu.
+  // Lỗi (trường chưa chạy sql/90…) chỉ báo — xác nhận điện tử đã ghi vẫn giữ nguyên.
+  function kySauXacNhan(n, bgh) {
+    var K = window.KY_HO_SO;
+    if (!K || !K.chuKyToi || !may()) return Promise.resolve();
+    var ck = K.chuKyToi();
+    return (ck ? Promise.resolve(ck) : K.kyRieng('Ký tên xác nhận sổ chủ nhiệm lớp ' + n.lop)).then(function (url) {
+      if (!url) return;
+      var dau = bgh && K.dauToi ? (K.dauToi() || null) : null;
+      return may().rpc('scn_ky_duyet', { p_nop_id: n.id, p_chu_ky: url, p_dau: dau }).then(function (r) {
+        if (!r.error) { bao('Đã ký tên' + (dau ? ' và đóng dấu' : '') + ' vào sổ lớp ' + n.lop + '.'); return; }
+        var l = loiChu(r.error);
+        bao(/scn_ky_duyet|schema cache|does not exist|Could not find/i.test(l)
+          ? 'Đã xác nhận. Trường chưa bật ký tay vào sổ chủ nhiệm (người phụ trách hệ thống chạy sql/90).'
+          : 'Đã xác nhận nhưng chưa lưu được chữ ký: ' + l);
+      }, function () { /* mất mạng: xác nhận đã ghi, bỏ qua chữ ký */ });
     });
   }
   // BGH duyệt xong kỳ học kỳ → ĐỀ NGHỊ khoá sổ, bấm xác nhận mới khoá
@@ -2980,10 +3003,12 @@
         return [i + 1, c(x.ho_ten), c([x.bieu_hien, x.mon_ky_nang, bpKq(x)].filter(Boolean).join('; ')), c(x.hs_giup_do || '')];
       }), ['8%', '28%', '40%', '24%'], 5);
     };
-    var kyKy = function (tieuDeTrai, ngayKy, chucVu, ten) {
+    var kyKy = function (tieuDeTrai, ngayKy, chucVu, ten, anh) {
+      var w = anh && Math.round(anh.wPt), hh = anh && Math.round(anh.hPt);
       return '<table style="border:none;width:100%;margin-top:10pt"><tr><td style="border:none;width:45%">' + (tieuDeTrai || '') + '</td>' +
         '<td style="border:none;width:55%;text-align:center;font-size:13pt"><i>' + c(dl) + ', ' + (ngayKy ? ngayChu(ngayKy) : 'ngày …… tháng …… năm ……') + '</i><br>' +
-        chucVu + '<div style="height:48pt"></div><b>' + c(ten || '') + '</b></td></tr></table>';
+        chucVu + (anh ? '<p style="margin:2pt 0;text-align:center;line-height:1"><img src="' + anh.ten + '" width="' + Math.round(w * 4 / 3) + '" height="' + Math.round(hh * 4 / 3) + '" style="width:' + w + 'pt;height:' + hh + 'pt" alt="Chữ ký"></p>'
+          : '<div style="height:48pt"></div>') + '<b>' + c(ten || '') + '</b></td></tr></table>';
     };
     var h = '';
 
@@ -3301,7 +3326,7 @@
     var kk = khoiKyDuLieu(dsNop, dsDuyet);
     h += NGAT + tieuDe('NHẬN XÉT CỦA BAN GIÁM HIỆU VỀ CÔNG TÁC CHỦ NHIỆM') +
       (kk.bgh && kk.bgh.nhan_xet ? van(kk.bgh.nhan_xet) + cham(2) : cham(8)) +
-      kyKy('', kk.bgh && kk.bgh.luc, '<b>BAN GIÁM HIỆU</b>', kk.bgh ? kk.bgh.ho_ten : '');
+      kyKy('', kk.bgh && kk.bgh.luc, '<b>BAN GIÁM HIỆU</b>', kk.bgh ? kk.bgh.ho_ten : '', kk.bgh && (tc.anhKy || {}).bgh);
     var lanCua = {}; dsNop.forEach(function (n) { lanCua[n.id] = n.lan; });
     h += tieuDe('BẢNG THEO DÕI KIỂM TRA SỔ CHỦ NHIỆM', 13) +
       bang(['Lần', 'Kỳ', 'Người kiểm tra (chức vụ)', 'Ngày', 'Nhận xét, yêu cầu', 'Trạng thái', 'Xác nhận'], dsDuyet.map(function (x, i) {
@@ -3309,16 +3334,24 @@
           ngayVN(String(x.luc || '').slice(0, 10)), c(x.nhan_xet || ''), c(TEN_TT_NOP[x.ket_qua] || x.ket_qua), '<span style="font-size:10pt">Điện tử ' + gioVN(x.luc) + ' · mã ' + maNgan(x.ma_bam) + '</span>'];
       }), ['6%', '13%', '20%', '11%', '24%', '11%', '15%'], 8);
     var laHT = kk.bgh && /^\s*hiệu trưởng/i.test(kk.bgh.chuc_vu || '');
-    var o = function (tieu, ghi, x, ten, luc, bam) {
+    // anh: chữ ký tay (+ dấu) đã ghép sẵn (sql/90) — tên tệp trong gói Word, cỡ theo pt
+    var anhKy = tc.anhKy || {};
+    var oKy = function (anh) {
+      if (!anh) return '<div style="height:44pt"></div>';
+      var w = Math.round(anh.wPt), h = Math.round(anh.hPt);
+      return '<p style="margin:2pt 0;text-align:center;line-height:1"><img src="' + anh.ten + '" width="' + Math.round(w * 4 / 3) + '" height="' + Math.round(h * 4 / 3) + '"' +
+        ' style="width:' + w + 'pt;height:' + h + 'pt" alt="Chữ ký"></p>';
+    };
+    var o = function (tieu, ghi, x, ten, luc, bam, anh) {
       return '<td style="border:none;width:33%;text-align:center;vertical-align:top;font-size:12pt"><b>' + tieu + '</b><br><span class="nghieng">(Ký, ghi rõ họ tên)</span>' +
-        (x ? '<br><span class="nghieng" style="font-size:11pt">' + ghi + '</span>' : '') + '<div style="height:44pt"></div>' +
+        (x ? '<br><span class="nghieng" style="font-size:11pt">' + ghi + '</span>' : '') + oKy(x && anh) +
         (ten ? '<b>' + c(ten) + '</b>' : '<span style="letter-spacing:1pt">.............................</span>') +
         (x ? '<br><span style="font-size:9.5pt">Xác nhận điện tử trên hệ thống Quản trị số lúc ' + gioVN(luc) + ' · mã ' + maNgan(bam) + '</span>' : '') + '</td>';
     };
     h += '<table style="border:none;width:100%;margin-top:14pt"><tr>' +
       o('GIÁO VIÊN CHỦ NHIỆM', 'Đã nộp điện tử', kk.gv, kk.gv ? (kk.gv.ho_ten_nop || m.gvcn) : m.gvcn, kk.gv && kk.gv.nop_luc, kk.gv && kk.gv.ma_bam) +
-      o('TỔ TRƯỞNG CHUYÊN MÔN', 'Đã kiểm tra điện tử', kk.to, kk.to && kk.to.ho_ten, kk.to && kk.to.luc, kk.to && kk.to.ma_bam) +
-      o(laHT ? 'HIỆU TRƯỞNG' : 'KT. HIỆU TRƯỞNG<br>PHÓ HIỆU TRƯỞNG', 'Đã duyệt điện tử', kk.bgh, kk.bgh && kk.bgh.ho_ten, kk.bgh && kk.bgh.luc, kk.bgh && kk.bgh.ma_bam) +
+      o('TỔ TRƯỞNG CHUYÊN MÔN', 'Đã kiểm tra điện tử', kk.to, kk.to && kk.to.ho_ten, kk.to && kk.to.luc, kk.to && kk.to.ma_bam, anhKy.to) +
+      o(laHT ? 'HIỆU TRƯỞNG' : 'KT. HIỆU TRƯỞNG<br>PHÓ HIỆU TRƯỞNG', 'Đã duyệt điện tử', kk.bgh, kk.bgh && kk.bgh.ho_ten, kk.bgh && kk.bgh.luc, kk.bgh && kk.bgh.ma_bam, anhKy.bgh) +
       '</tr></table>';
     h += '<p class="nghieng" style="font-size:10.5pt;margin-top:10pt">Sổ chủ nhiệm lớp ' + c(lop) + ', năm học ' + c(namCach) + ' — ' +
       (tc.nop ? 'Mã bản: ' + maNgan(tc.nop.ma_bam) + ' (SHA-256 của bản chụp nộp lúc ' + gioVN(tc.nop.nop_luc) + ')' : loc ? 'bản xem trước, chưa nộp kiểm tra' : 'BẢN LÀM VIỆC, xuất lúc ' + gioVN(new Date().toISOString())) + '.</p>';
@@ -3347,9 +3380,59 @@
   // HTML Word hoàn chỉnh của một mô hình (bìa section 1 có viền, ruột section 2)
   // Ảnh nền bìa màu: tên tệp trong gói Word (MHTML) và đường dẫn trên web
   var ANH_BIA = 'bia-so-chu-nhiem.jpg', ANH_BIA_WEB = 'img/bia-so-chu-nhiem.jpg';
+  // ── Ảnh chữ ký (+ dấu) cho khối ký cuối sổ (sql/90, 07/11/2026) ──
+  // Ghép sẵn thành MỘT ảnh PNG: dấu 35 mm trùm 1/3 chữ ký bên trái (như ký hồ sơ),
+  // để Word chỉ cần một <img> — không phải xếp hình nổi chồng nhau.
+  var KY_CAO_PT = 40, DAU_PT = 99, KY_RONG_TOI_DA = 160;   // 35 mm ≈ 99 pt; ô ký rộng ~5,4 cm
+  function napAnh(url) {
+    return new Promise(function (xong, hong) { var im = new Image(); im.onload = function () { xong(im); }; im.onerror = hong; im.src = url; });
+  }
+  function ghepKy(ck, dau) {
+    return Promise.all([napAnh(ck), dau ? napAnh(dau).catch(function () { return null; }) : null]).then(function (a) {
+      var ky = a[0], d = a[1], kq;
+      if (!d) {
+        var s = KY_CAO_PT / ky.height;
+        kq = { url: ck, wPt: ky.width * s, hPt: KY_CAO_PT };
+      } else {
+        var S = 300, pt = DAU_PT / S, kyH = Math.round(S * 0.42), kyW = Math.round(ky.width * kyH / ky.height);
+        var x0 = Math.max(0, Math.round(S - kyW / 3)), W = Math.max(S, x0 + kyW);
+        var cv = document.createElement('canvas'); cv.width = W; cv.height = S;
+        var g = cv.getContext('2d');
+        g.drawImage(ky, x0, Math.round((S - kyH) / 2), kyW, kyH);
+        g.globalCompositeOperation = 'multiply';
+        g.drawImage(d, 0, 0, S, S);
+        kq = { url: cv.toDataURL('image/png'), wPt: W * pt, hPt: S * pt };
+      }
+      if (kq.wPt > KY_RONG_TOI_DA) { var k = KY_RONG_TOI_DA / kq.wPt; kq.wPt *= k; kq.hPt *= k; }
+      return kq;
+    });
+  }
+  // Đọc chữ ký của lần tổ kiểm tra + lần BGH duyệt đang in vào khối ký của lớp
+  function napAnhKy(lop) {
+    XT.anhKy = {};
+    if (!may()) return Promise.resolve();
+    var kk = khoiKyDuLieu(D.dv.nop.filter(function (n) { return chuanLop(n.lop) === chuanLop(lop); }),
+      D.dv.duyet.filter(function (x) { return chuanLop(x.lop) === chuanLop(lop); }));
+    var ai = { to: kk.to, bgh: kk.bgh }, ids = [kk.to, kk.bgh].filter(function (x) { return x && x.id > 0; }).map(function (x) { return x.id; });
+    if (!ids.length) return Promise.resolve();
+    return may().from('scn_chu_ky').select('duyet_id, chu_ky, dau').in('duyet_id', ids).then(function (r) {
+      if (r.error) return;
+      var theo = {}; (r.data || []).forEach(function (x) { theo[x.duyet_id] = x; });
+      return Promise.all(Object.keys(ai).map(function (k) {
+        var x = ai[k] && theo[ai[k].id];
+        if (!x) return null;
+        return ghepKy(x.chu_ky, k === 'bgh' ? x.dau : null).then(function (a) { a.ten = 'ky-' + k + '.png'; XT.anhKy[k] = a; }, function () {});
+      }));
+    }, function () {});
+  }
+  // Bản xem trước (iframe) không đọc được tệp trong gói Word → thay tên ảnh bằng data URL
+  function htmlCoAnhKy(html) {
+    Object.keys(XT.anhKy || {}).forEach(function (k) { var a = XT.anhKy[k]; html = html.split('src="' + a.ten + '"').join('src="' + a.url + '"'); });
+    return html;
+  }
   function htmlWord(m, nop) {
     var lop = m.lop || D.lop;
-    return wordSo(m, { nop: nop || null, tt27: D.tt27 ? window.SCN_TT27 : null, to: toCuaKhoi(m.khoi),
+    return wordSo(m, { nop: nop || null, tt27: D.tt27 ? window.SCN_TT27 : null, to: toCuaKhoi(m.khoi), anhKy: XT.anhKy || {},
       dsNop: D.dv.nop.filter(function (n) { return chuanLop(n.lop) === chuanLop(lop); }),
       dsDuyet: D.dv.duyet.filter(function (x) { return chuanLop(x.lop) === chuanLop(lop); }) });
   }
@@ -3485,10 +3568,10 @@
     var cho = k.querySelector('#scn-xt-cho'), ifr = k.querySelector('#scn-xt-khung'), luu = k.querySelector('[data-xt="luu"]'), nIn = k.querySelector('[data-xt="in"]');
     cho.textContent = 'Đang dựng bản xem trước…'; cho.hidden = false; ifr.hidden = true; luu.disabled = true; nIn.disabled = true; XT.html = '';
     if (!window.WORD_TIEN_ICH) { cho.textContent = 'Chưa tải được bộ xuất Word.'; return; }
-    napTT27().then(function () { return layMoHinh(XT.ban); }).then(function (m) {
+    napTT27().then(function () { return napAnhKy(XT.lop); }).then(function () { return layMoHinh(XT.ban); }).then(function (m) {
       if (lan !== XT.dem || !XT.mo) return;
       XT.html = htmlWord(m, XT.nop);
-      ifr.srcdoc = htmlXem(XT.html);
+      ifr.srcdoc = htmlXem(htmlCoAnhKy(XT.html));
       cho.hidden = true; ifr.hidden = false; luu.disabled = false; nIn.disabled = false;
     }).catch(function (e) {
       if (lan !== XT.dem) return;
@@ -3518,7 +3601,10 @@
     };
     if (!W.taiVeMHT || !window.fetch || !window.FileReader) { W.taiVe(html, ten); xong(); return; }
     docAnhBia().then(function (b64) {
-      W.taiVeMHT(html, ten, [{ ten: ANH_BIA, loai: 'image/jpeg', b64: b64 }]); xong();
+      // + chữ ký tay (sql/90) — mỗi ảnh một phần trong gói
+      var kem = [{ ten: ANH_BIA, loai: 'image/jpeg', b64: b64 }];
+      Object.keys(XT.anhKy || {}).forEach(function (k) { var a = XT.anhKy[k]; kem.push({ ten: a.ten, loai: 'image/png', b64: String(a.url).split(',')[1] || '' }); });
+      W.taiVeMHT(html, ten, kem); xong();
     }, function () {
       // Không đọc được ảnh (mất mạng…) thì vẫn cho tải — bìa không có nền màu
       W.taiVe(html, ten); xong(' Chưa tải được ảnh nền bìa — bìa không có màu.');

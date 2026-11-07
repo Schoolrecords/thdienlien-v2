@@ -914,7 +914,63 @@
     taoThuMuc(n.getAttribute('data-tao-loai') || 'giao_vien', n.getAttribute('data-tao-tm'), n.getAttribute('data-tao-ten') || '', n);
   });
 
+  // ── Bảng ký ĐỨNG RIÊNG (07/11/2026): sổ chủ nhiệm ký khi tổ kiểm tra / BGH duyệt.
+  //    Cùng chữ ký nhớ trên máy (khs:chu-ky:<gmail>) với nút ✍ ký giáo án.
+  //    Trả Promise<dataURL PNG | null (không ký)>. ──
+  function kyRieng(tieuDe) {
+    return new Promise(function (xong) {
+      var lop = document.createElement('div');
+      lop.className = 'khs-bang-ky rieng';
+      lop.setAttribute('role', 'dialog'); lop.setAttribute('aria-modal', 'true');
+      lop.innerHTML = '<div class="khs-bk-hop"><b>' + t(tieuDe || 'Ký tên vào khung') + '</b>' +
+        '<small>Dùng chuột hoặc ngón tay. Máy nhớ chữ ký cho những lần sau (dùng chung với ký giáo án).</small>' +
+        '<canvas class="khs-bk-giay"></canvas><div class="khs-bk-nut">' +
+        '<button type="button" class="khs-nut-phu" data-r="xoa">Ký lại</button><span class="khs-gian"></span>' +
+        '<button type="button" class="khs-nut-phu" data-r="huy">Không ký</button>' +
+        '<button type="button" class="nut-chinh" data-r="dung">Dùng chữ ký này</button></div></div>';
+      document.body.appendChild(lop);
+      var cv = lop.querySelector('canvas');
+      var rong = Math.max(240, Math.min(520, lop.querySelector('.khs-bk-hop').clientWidth - 32)), cao = Math.round(rong * .42);
+      var dpr = window.devicePixelRatio || 1;
+      cv.style.width = rong + 'px'; cv.style.height = cao + 'px';
+      cv.width = Math.round(rong * dpr); cv.height = Math.round(cao * dpr);
+      var g = cv.getContext('2d'), co = false, ve = false, truoc = null;
+      g.scale(dpr, dpr); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = MUC; g.lineWidth = 2.6;
+      cv.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); cv.setPointerCapture(e.pointerId);
+        var r = cv.getBoundingClientRect(); ve = true; truoc = [e.clientX - r.left, e.clientY - r.top];
+        g.beginPath(); g.arc(truoc[0], truoc[1], 1.2, 0, 7); g.fillStyle = MUC; g.fill(); co = true;
+      });
+      cv.addEventListener('pointermove', function (e) {
+        if (!ve) return;
+        var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        g.beginPath(); g.moveTo(truoc[0], truoc[1]); g.lineTo(x, y); g.stroke(); truoc = [x, y];
+      });
+      var het = function () { ve = false; };
+      cv.addEventListener('pointerup', het); cv.addEventListener('pointercancel', het);
+      var dong = function (kq) { if (lop.parentNode) lop.parentNode.removeChild(lop); xong(kq); };
+      lop.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-r]');
+        if (!b) return;
+        var r = b.getAttribute('data-r');
+        if (r === 'xoa') { g.clearRect(0, 0, cv.width, cv.height); co = false; }
+        else if (r === 'huy') dong(null);
+        else if (r === 'dung') {
+          var c = co && catSat(cv);
+          if (!c) { baoNhanh('Thầy cô ký vào khung trước đã.'); return; }
+          var url = c.toDataURL('image/png');
+          nho('chu-ky', url);
+          dong(url);
+        }
+      });
+    });
+  }
+
   window.KY_HO_SO = {
+    // Sổ chủ nhiệm (07/11/2026): chữ ký / dấu đã nhớ trên máy + bảng ký riêng
+    chuKyToi: function () { return nho('chu-ky') || ''; },
+    dauToi: function () { return nho('dau') || ''; },
+    kyRieng: kyRieng,
     taoThuMuc: taoThuMuc,
     mo: mo,
     // Nút "Kiểm tra ngay" (app.js): {mã hồ sơ: id thư mục} → {mã: số tệp | -1}
