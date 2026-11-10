@@ -46,6 +46,7 @@
     // Ghép tài khoản (sql/86, 28/10/2026): lượt chia sẻ thư mục Drive (BGH đọc được). bi_mat_may KHÔNG có
     // chính sách đọc nào ⇒ luôn ra rỗng — khoá máy Drive đặt lại bằng quan-tri/sinh-dong-bo-drive-th.py.
     'hang_doi_drive', 'bi_mat_may',
+    'chu_ky_ca_nhan',   // sql/91 (10/11/2026): chữ ký, ảnh dấu theo tài khoản — RLS chỉ trả dòng của chính người sao lưu
     'scn_chu_ky',   // sql/90 (07/11/2026): chữ ký tay (+ dấu) khi tổ kiểm tra / BGH duyệt sổ chủ nhiệm
     'scn_duyet', 'scn_ho_tro', 'scn_hoan_canh', 'scn_ke_hoach', 'scn_lien_lac', 'scn_lop',
     'scn_nguoi_duyet', 'scn_nop', 'scn_theo_doi', 'scn_tong_ket',

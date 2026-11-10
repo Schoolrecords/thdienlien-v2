@@ -57,6 +57,72 @@
     return null;
   }
 
+  // ── Chữ ký, ảnh dấu LƯU THEO TÀI KHOẢN (thầy Chung 10/11/2026, sql/91) ──
+  // Máy chủ (bảng chu_ky_ca_nhan, mỗi người một dòng, chỉ chính mình đọc/ghi) là
+  // bản chính; localStorage giữ bản sao để mở nhanh. Đồng bộ lúc đăng nhập + lúc
+  // mở khung ký. Ghi lên máy chủ hỏng (mất mạng) → đánh dấu "chờ", lần đồng bộ
+  // sau đưa bản trên máy lên chứ không lấy bản cũ trên máy chủ đè xuống.
+  // Trường chưa chạy sql/91: lỗi đọc bảng → im lặng, chạy như cũ (chỉ nhớ trên máy).
+  var COT_MAY = { 'chu-ky': 'chu_ky', 'dau': 'dau', 'dau-dang': 'dau_dang' };
+  var huaMay = {}, trangThaiMay = '';
+  function bangMay() { return window.MAY_CHU && window.MAY_CHU.from ? window.MAY_CHU.from('chu_ky_ca_nhan') : null; }
+  function idToi() {
+    return window.MAY_CHU.auth.getSession().then(function (r) {
+      return r && r.data && r.data.session && r.data.session.user && r.data.session.user.id;
+    });
+  }
+  function luuAnh(k, gt) {
+    nho(k, gt);
+    if (!bangMay() || !emailToi()) return;
+    nho(k + '-cho', '1');
+    idToi().then(function (id) {
+      if (!id) throw new Error('chưa đăng nhập');
+      var o = { nguoi: id, luc: new Date().toISOString() };
+      o[COT_MAY[k]] = gt || null;
+      return bangMay().upsert(o, { onConflict: 'nguoi' }).then(function (r) {
+        if (r.error) throw r.error;
+        nho(k + '-cho', null);
+        trangThaiMay = 'ok';
+      });
+    }).catch(function (e) {
+      trangThaiMay = 'loi';
+      if (window.console) console.warn('[ký hồ sơ] chưa lưu được ' + k + ' lên tài khoản:', e && e.message);
+    }).then(function () { if (phien && phien.man === 'ky') napChuKy(phien); });
+  }
+  function dongBoMay() {
+    var em = emailToi();
+    if (!em || !bangMay()) return Promise.resolve(false);
+    if (huaMay[em]) return huaMay[em];
+    huaMay[em] = idToi().then(function (id) {
+      if (!id) throw new Error('chưa đăng nhập');
+      return bangMay().select('chu_ky, dau, dau_dang').eq('nguoi', id).maybeSingle().then(function (r) {
+        if (r.error) throw r.error;
+        var dong = r.data || {}, doi = false, len = {}, coLen = false;
+        Object.keys(COT_MAY).forEach(function (k) {
+          var c = COT_MAY[k], tren = dong[c] || null, may = nho(k), cho = nho(k + '-cho') === '1';
+          if (cho || (!tren && may)) { len[c] = may || null; coLen = true; }   // máy có mà tài khoản chưa có / chờ đưa lên
+          else if (tren && tren !== may) { nho(k, tren); doi = true; }       // tài khoản có → về máy
+        });
+        trangThaiMay = 'ok';
+        if (!coLen) return doi;
+        len.nguoi = id; len.luc = new Date().toISOString();
+        return bangMay().upsert(len, { onConflict: 'nguoi' }).then(function (r2) {
+          if (r2.error) throw r2.error;
+          Object.keys(COT_MAY).forEach(function (k) { nho(k + '-cho', null); });
+          return doi;
+        });
+      });
+    }).catch(function (e) {
+      delete huaMay[em];
+      trangThaiMay = 'loi';
+      if (window.console) console.warn('[ký hồ sơ] chưa đồng bộ chữ ký theo tài khoản:', e && e.message);
+      return false;
+    });
+    return huaMay[em];
+  }
+  // Đăng nhập xong là kéo chữ ký về luôn — sổ chủ nhiệm (chuKyToi) dùng được ngay
+  document.addEventListener('dangnhap-xong', function () { dongBoMay(); });
+
   // ── Nạp thư viện (tải chậm, lần đầu bấm ✍) ──
   var huaJs = {};
   function napJs(src, ten) {
@@ -267,10 +333,19 @@
     if (p.phu.parentNode) p.phu.parentNode.removeChild(p.phu);
     if (p.tro && p.tro.focus) p.tro.focus();
   }
+  // Thầy Chung 10/11 (rà trang ký): lỡ bấm Esc khi đã đặt khối chữ ký là mất việc
+  // → hỏi lại trước khi đóng. Nút ✕ là bấm có chủ ý, đóng ngay như cũ.
+  function dangDo(p) {
+    if (!p || p.man !== 'ky') return false;
+    return p.dang ? !!(p.khoi && p.khoi.ky && !p.tuDat) : !!p.dat;
+  }
   function phim(e) {
-    if (e.key !== 'Escape' || !phien) return;
+    if (e.key !== 'Escape' || !phien || e.defaultPrevented) return;   // hộp hỏi đang mở tự xử lý Esc
     if (phien.phu.querySelector('.khs-bang-ky:not([hidden])')) { dongBangKy(); return; }
-    dong();
+    var p = phien;
+    if (!dangDo(p) || !window.hopHoi) { dong(); return; }
+    window.hopHoi({ tieuDe: 'Đóng khi chưa lưu?', noiDung: 'Khối chữ ký đã đặt trên trang nhưng chưa bấm "Ký và lưu vào Drive". Đóng lúc này thì tệp chưa được ký.', nutOK: 'Đóng, không lưu', nguyHiem: true })
+      .then(function (dongY) { if (dongY && phien === p) dong(); });
   }
 
   function mo(thuMuc, hoTen, tro, loai, dang) {
@@ -299,6 +374,12 @@
     phu.addEventListener('change', doiO);
     phu.querySelector('[data-khs="dong"]').focus();
     taiDanhSach(phien);
+    var p0 = phien;
+    dongBoMay().then(function (doi) {   // máy mới: chữ ký, dấu từ tài khoản về; khung đang mở thì vẽ lại
+      if (phien !== p0 || p0.man !== 'ky') return;
+      napChuKy(p0);
+      if (doi) napDau(p0);
+    });
     napPdfJs().catch(function () { /* tải lại khi mở tệp */ });   // tải sẵn trong lúc chờ danh sách
   }
 
@@ -330,20 +411,42 @@
       than(p).innerHTML = '<p class="ck-xvb-cho">Thư mục hồ sơ chưa có tệp PDF nào.</p>';
       return;
     }
-    var nhieu = p.ds.length > 8;
-    than(p).innerHTML = '<div class="khs-ds">' +
+    var nhieu = p.ds.length > 8, daKy = soDaKy(p), conLai = p.ds.length - daKy;
+    if (!p.loc || (p.loc === 'chua' && !conLai) || (p.loc === 'da' && !daKy)) p.loc = 'tat';
+    // Thầy Chung 10/11: lọc Chưa ký / Đã ký + nút ký lần lượt — thư mục nhiều tệp
+    // khỏi dò từng dòng xem tệp nào còn thiếu chữ ký
+    than(p).innerHTML = '<div class="khs-ds"><div class="khs-ds-trong">' +
+      '<div class="khs-ds-dau">' +
+        '<div class="khs-loc" role="group" aria-label="Lọc tệp">' +
+          [['tat', 'Tất cả', p.ds.length], ['chua', 'Chưa ký', conLai], ['da', 'Đã ký', daKy]].map(function (x) {
+            return '<button type="button" data-khs="loc" data-loc="' + x[0] + '"' + (p.loc === x[0] ? ' class="chon"' : '') + '>' + x[1] + ' <b>' + x[2] + '</b></button>';
+          }).join('') +
+        '</div>' +
+        (conLai ? '<button type="button" class="nut-chinh khs-lan-luot" data-khs="lan-luot">Ký lần lượt ' + conLai + ' tệp chưa ký</button>'
+                : '<span class="khs-xong-het">Đã ký hết các tệp trong thư mục</span>') +
+      '</div>' +
       (nhieu ? '<input type="search" class="khs-tim" data-khs="tim" placeholder="🔍 Gõ tên tệp hoặc tuần để lọc" aria-label="Lọc tệp">' : '') +
       '<ul class="khs-tep">' + p.ds.map(function (f, i) {
         var ngay = f.sua_luc ? new Date(f.sua_luc) : null;
-        return '<li data-tim="' + t(boDau(f.ten + ' ' + f.duong)) + '"><button type="button" data-khs="mo-tep" data-i="' + i + '">' +
+        return '<li data-tim="' + t(boDau(f.ten + ' ' + f.duong)) + '"' + (f.da_ky ? ' data-da="1"' : '') + '><button type="button" data-khs="mo-tep" data-i="' + i + '">' +
           '<span class="ck-pdf">PDF</span>' +
           '<span class="khs-tep-tt"><b>' + t(f.ten) + '</b>' +
           '<small>' + t([f.duong, ngay ? 'sửa ' + ngay.toLocaleDateString('vi-VN') : ''].filter(Boolean).join(' · ')) + '</small></span>' +
           (f.da_ky ? '<span class="khs-da-ky">' + t(nhanDaKy(f.da_ky)) + '</span>' : '') +
           '</button></li>';
       }).join('') + '</ul></div>';
+    locDs(p);
     var o = than(p).querySelector('[data-khs="tim"]');
     if (o) o.focus();
+  }
+  function soDaKy(p) { return p.ds.filter(function (f) { return f.da_ky; }).length; }
+  function locDs(p) {
+    var o = than(p).querySelector('[data-khs="tim"]'), q = o ? boDau(o.value).trim() : '';
+    p.phu.querySelectorAll('.khs-tep li').forEach(function (li) {
+      var da = li.getAttribute('data-da') === '1';
+      li.hidden = (!!q && li.getAttribute('data-tim').indexOf(q) < 0) || (p.loc === 'chua' && da) || (p.loc === 'da' && !da);
+    });
+    p.phu.querySelectorAll('[data-khs="loc"]').forEach(function (b) { b.classList.toggle('chon', b.getAttribute('data-loc') === p.loc); });
   }
 
   // ── Màn ký một tệp ──
@@ -375,41 +478,40 @@
         '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải ' + (hs ? 'hồ sơ' : 'giáo án') +
           (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
         '<div class="khs-ben">' +
-          '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
-          '<label class="khs-dong-dau"><input type="checkbox" data-khs="gon"' + (nho('gon' + duoi) === '1' ? ' checked' : '') + '> ' +
-            '<span>Khối gọn: chỉ ngày tháng, chữ ký' + (coDau ? ', dấu' : '') + ' và họ tên</span></label>' +
-          '<div class="khs-o khs-phan-day" data-khs="phan-day"><span class="khs-nhan">Kết luận</span>' +
-            '<div class="khs-chon">' +
-              // Hồ sơ GV: bốn mức (thầy Chung hỏi 30/10 — tổ trưởng "kiểm tra", không "duyệt")
-              KL.map(function (k, i) {
-                return '<label><input type="radio" name="khs-kl" value="' + t(k[0]) + '"' + (i ? '' : ' checked') + '> ' + t(k[1]) + '</label>';
-              }).join('') +
-            '</div></div>' +
-          '<label class="khs-o khs-phan-day"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
-            '<textarea data-khs="nx" rows="3" maxlength="400" placeholder="Ví dụ: Mục tiêu rõ, cần thêm hoạt động vận dụng."></textarea></label>' +
-          '<div class="khs-hai">' +
-            '<label class="khs-o khs-phan-day"><span class="khs-nhan">Chức danh</span><textarea data-khs="cd" rows="2">' + t(chucDanh) + '</textarea></label>' +
-            '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(hoTen) + '"></label>' +
+          benDau(p) +
+          '<div class="khs-ben-cuon">' +
+            // ── Kết luận, nhận xét ──
+            '<div class="khs-muc khs-phan-day"><b>Kết luận, nhận xét</b>' +
+              '<div class="khs-chon khs-chon-luoi" data-khs="phan-day">' +
+                // Hồ sơ GV: bốn mức (thầy Chung hỏi 30/10 — tổ trưởng "kiểm tra", không "duyệt")
+                KL.map(function (k, i) {
+                  return '<label><input type="radio" name="khs-kl" value="' + t(k[0]) + '"' + (i ? '' : ' checked') + '> ' + t(k[1]) + '</label>';
+                }).join('') +
+              '</div>' +
+              '<label class="khs-o"><span class="khs-nhan">Nhận xét (không bắt buộc)</span>' +
+                '<textarea data-khs="nx" rows="3" maxlength="400" placeholder="Ví dụ: Mục tiêu rõ, cần thêm hoạt động vận dụng."></textarea></label>' +
+            '</div>' +
+            // ── Người ký ──
+            '<div class="khs-muc"><b>Người ký</b>' +
+              '<label class="khs-o khs-phan-day"><span class="khs-nhan">Chức danh</span><textarea data-khs="cd" rows="2">' + t(chucDanh) + '</textarea></label>' +
+              '<div class="khs-hai">' +
+                '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(hoTen) + '"></label>' +
+                '<label class="khs-o"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
+              '</div>' +
+              oChuKyHtml() +
+              // Con dấu: chỉ Ban giám hiệu
+              (coDau ? oDauHtml('Đóng dấu', hs, '') : '') +
+            '</div>' +
+            // ── Khối trên trang ──
+            '<div class="khs-muc"><b>Khối chữ ký trên trang</b>' +
+              '<label class="khs-dong-dau"><input type="checkbox" data-khs="gon"' + (nho('gon' + duoi) === '1' ? ' checked' : '') + '> ' +
+                '<span>Khối gọn: chỉ ngày tháng, chữ ký' + (coDau ? ', dấu' : '') + ' và họ tên</span></label>' +
+              '<label class="khs-o"><span class="khs-nhan">Cỡ khối chữ ký</span>' +
+                '<input type="range" data-khs="co" min="170" max="420" step="10" value="' + t(nho('co' + duoi) || (hs ? 340 : 240)) + '"></label>' +
+              nutTrangHtml() +
+            '</div>' +
           '</div>' +
-          '<label class="khs-o"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
-          '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
-            '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
-            '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
-            '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>' +
-          // Con dấu: chỉ Ban giám hiệu. Ảnh dấu chỉ nằm trên máy người ký (như chữ ký).
-          (coDau
-            ? '<div class="khs-o"><label class="khs-dong-dau"><input type="checkbox" data-khs="dong-dau"' + (hs ? ' checked' : '') + '> ' +
-                '<span class="khs-nhan">Đóng dấu</span></label>' +
-              '<div class="khs-chu-ky"><span data-khs="anh-dau" class="khs-anh-ky khs-anh-dau"></span>' +
-              '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="dau-chon">Chọn ảnh dấu</button>' +
-              '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="dau-xoa" hidden>Xoá</button></span></div>' +
-              '<input type="file" accept="image/*" data-khs="dau-tep" hidden></div>'
-            : '') +
-          '<label class="khs-o"><span class="khs-nhan">Cỡ khối chữ ký</span>' +
-            '<input type="range" data-khs="co" min="170" max="420" step="10" value="' + t(nho('co' + duoi) || (hs ? 340 : 240)) + '"></label>' +
-          '<p class="khs-goi-y" data-khs="goi-y">Bấm vào trang giáo án, đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.</p>' +
-          '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối chữ ký trên trang</button>' +
-          '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
+          benChan(p, 'Bấm vào trang ' + (hs ? 'hồ sơ' : 'giáo án') + ', đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.') +
         '</div>' +
       '</div>';
     napChuKy(p);
@@ -453,7 +555,7 @@
       var n = 0;
       (function dungTiep() {
         if (p.huy || p.tep !== f) return;
-        if (++n > pdf.numPages) { p.du = true; if (p.dang) datNhuTruocDang(p, true); return; }
+        if (++n > pdf.numPages) { p.du = true; if (p.dang) datNhuTruocDang(p, true); else capNutLuu(p); return; }
         var so = n;
         pdf.getPage(so).then(function (trang) {
           if (p.huy || p.tep !== f) return;
@@ -538,7 +640,7 @@
         }
         g.putImageData(a, 0, 0);
         var cat = catSat(c);
-        nho(khoaDau(p), cat.toDataURL('image/png'));
+        luuAnh(khoaDau(p), cat.toDataURL('image/png'));
         napDau(p);
       };
       im.src = fr.result;
@@ -547,9 +649,9 @@
   }
   function xoaDau(p) {
     var hoi = window.hopHoi
-      ? window.hopHoi({ tieuDe: 'Xoá ảnh con dấu?', noiDung: 'Máy này sẽ quên ảnh con dấu. Các tệp đã đóng dấu trên Drive không thay đổi.', nutOK: 'Xoá ảnh dấu', nguyHiem: true })
+      ? window.hopHoi({ tieuDe: 'Xoá ảnh con dấu?', noiDung: 'Ảnh con dấu đã lưu sẽ bị xoá (trên mọi máy). Các tệp đã đóng dấu trên Drive không thay đổi.', nutOK: 'Xoá ảnh dấu', nguyHiem: true })
       : Promise.resolve(window.confirm('Xoá ảnh con dấu trên máy này?'));
-    hoi.then(function (dongY) { if (dongY && !p.huy) { nho(khoaDau(p), null); napDau(p); } });
+    hoi.then(function (dongY) { if (dongY && !p.huy) { luuAnh(khoaDau(p), null); napDau(p); } });
   }
   function giaTri(p, k) { var o = p.phu.querySelector('[data-khs="' + k + '"]'); return o ? o.value : ''; }
   function thongTinKhoi(p, tr, rong) {
@@ -566,6 +668,8 @@
 
   function napChuKy(p) {
     var du = nho('chu-ky');
+    var nh = p.phu.querySelector('[data-khs="ky-luu-may"]');
+    if (nh) nh.textContent = trangThaiMay === 'ok' ? '· lưu theo tài khoản' : (trangThaiMay === 'loi' && du ? '· mới lưu trên máy này' : '');
     var o = p.phu.querySelector('[data-khs="anh-ky"]');
     var xoa = p.phu.querySelector('[data-khs="xoa-ky"]');
     anhChuKy = null;
@@ -583,7 +687,9 @@
     n.disabled = !(p.dat && anhChuKy && p.byte);
     var bo = p.phu.querySelector('[data-khs="bo-khoi"]');
     if (bo) bo.hidden = !p.dat;
-    if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; máy nhớ cho những lần sau.';
+    var nt = p.phu.querySelector('[data-khs="nhu-truoc"]');
+    if (nt) nt.hidden = !nho('vi-tri' + duoiThuong(p)) || !p.du;
+    if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; chữ ký lưu theo tài khoản, máy nào cũng dùng được.';
     else if (!p.dat) g.textContent = 'Bấm vào trang giáo án, đúng chỗ muốn đặt chữ ký. Kéo khối chữ ký để dời chỗ.';
     else g.textContent = 'Kiểm tra lại khối chữ ký trên trang (kéo để dời), rồi bấm Ký và lưu.';
   }
@@ -592,14 +698,30 @@
   // → nút Xoá chữ ký đã nhớ trên máy, và nút bỏ khối đã đặt trên trang.
   function xoaChuKyDaNho(p) {
     var hoi = window.hopHoi
-      ? window.hopHoi({ tieuDe: 'Xoá chữ ký đã lưu?', noiDung: 'Máy này sẽ quên chữ ký của thầy cô. Lần ký sau cần ký lại hoặc chọn lại ảnh chữ ký. Các tệp đã ký trên Drive không thay đổi.', nutOK: 'Xoá chữ ký', nguyHiem: true })
+      ? window.hopHoi({ tieuDe: 'Xoá chữ ký đã lưu?', noiDung: 'Chữ ký đã lưu của thầy cô sẽ bị xoá (trên mọi máy). Lần ký sau cần ký lại hoặc chọn lại ảnh chữ ký. Các tệp đã ký trên Drive không thay đổi.', nutOK: 'Xoá chữ ký', nguyHiem: true })
       : Promise.resolve(window.confirm('Xoá chữ ký đã lưu trên máy này?'));
     hoi.then(function (dongY) {
       if (!dongY || p.huy) return;
-      nho('chu-ky', null);
+      luuAnh('chu-ky', null);
       napChuKy(p);
-      baoNhanh('Đã xoá chữ ký trên máy này.');
+      baoNhanh('Đã xoá chữ ký đã lưu.');
     });
+  }
+  // Thầy Chung 10/11: giáo án các tuần cùng mẫu → chữ ký đặt đúng chỗ lần trước (theo tỉ lệ
+  // trang; lần trước ký ở trang cuối thì nay cũng trang cuối). KHÔNG tự đặt: trang cuối giáo án
+  // dài ngắn khác nhau, người ký bấm nút rồi xem có đè chữ không.
+  function duoiThuong(p) { return p.loai === 'ho_so' ? '-hs' : ''; }
+  function datNhuTruoc(p) {
+    var v = null;
+    try { v = JSON.parse(nho('vi-tri' + duoiThuong(p)) || 'null'); } catch (e) { v = null; }
+    if (!v || !p.du || !p.trang.length) return;
+    var so = v.cuoi ? p.trang.length - 1 : Math.min(v.trang, p.trang.length - 1), tr = p.trang[so];
+    if (!tr) return;
+    if (p.dat && p.dat.anh && p.dat.anh.parentNode) p.dat.anh.parentNode.removeChild(p.dat.anh);
+    p.dat = { trang: so, x: v.fx * tr.vp.width, y: v.fy * tr.vp.height, anh: p.dat && p.dat.anh };
+    veLaiKhoi(p);
+    var xem = oD(p, 'xem');
+    if (xem) xem.scrollTop = Math.max(0, tr.giay.offsetTop + p.dat.y - xem.clientHeight / 3);
   }
   function boKhoi(p) {
     if (p.dat && p.dat.anh && p.dat.anh.parentNode) p.dat.anh.parentNode.removeChild(p.dat.anh);
@@ -681,7 +803,10 @@
     else if (k === 'dau-xoa') xoaDau(p);
     else if (k === 'bo-khoi') { if (p.dang) boKhoiDang(p, p.dangDat); else boKhoi(p); }
     else if (k === 'dat' && p.dang) { p.dangDat = n.getAttribute('data-loai') === 'nx' ? 'nx' : 'ky'; batNx(p); capNutLuuDang(p); }
-    else if (k === 'nhu-truoc' && p.dang) datNhuTruocDang(p, false);
+    else if (k === 'nhu-truoc') { if (p.dang) datNhuTruocDang(p, false); else datNhuTruoc(p); }
+    else if (k === 'trang-dau' || k === 'trang-cuoi') denTrang(p, k === 'trang-cuoi');
+    else if (k === 'loc') { p.loc = n.getAttribute('data-loc'); locDs(p); }
+    else if (k === 'lan-luot') { var j0 = p.ds.findIndex(function (x) { return !x.da_ky; }); if (j0 >= 0) moTep(p, j0); }
     else if (k === 'tep-truoc' && p.iTep > 0) moTep(p, p.iTep - 1);
     else if (k === 'tep-sau' && p.iTep < p.ds.length - 1) moTep(p, p.iTep + 1);
     else if (k === 'luu') kyVaLuu(p);
@@ -695,13 +820,9 @@
     var p = phien;
     if (!p) return;
     var k = e.target.getAttribute && e.target.getAttribute('data-khs');
-    if (k === 'tim') {
-      var q = boDau(e.target.value).trim();
-      p.phu.querySelectorAll('.khs-tep li').forEach(function (li) {
-        li.hidden = !!q && li.getAttribute('data-tim').indexOf(q) < 0;
-      });
-      return;
-    }
+    if (k === 'tim') { locDs(p); return; }
+    if (k === 'chon-tep') { if (e.type === 'change') moTep(p, Number(e.target.value)); return; }
+    if (k === 'tiep') { if (e.type === 'change') nho(khoaTiep(p), e.target.checked ? '1' : '0'); return; }
     if (k === 'bk-tep') { if (e.type === 'change') docAnhKy(e.target.files && e.target.files[0]); return; }
     // Ô chọn tệp phát CẢ 'input' lẫn 'change': chỉ đọc + xoá ô ở 'change' — bản đầu
     // xoá ngay ở 'input' nên tới 'change' ảnh dấu đã mất (thử thật QC2 30/10)
@@ -752,9 +873,12 @@
       if (p.huy) return;
       f.da_ky = kq.da_ky || f.da_ky;
       if (kq.sua_luc) f.sua_luc = kq.sua_luc;
+      var trD = p.trang[dat.trang];
+      nho('vi-tri' + duoiThuong(p), JSON.stringify({ cuoi: dat.trang === p.trang.length - 1, trang: dat.trang, fx: dat.x / trD.vp.width, fy: dat.y / trD.vp.height }));
       if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; }
-      veDanhSach(p);
-      baoNhanh('Đã ký và lưu "' + f.ten + '" vào ' + (p.loai === 'ho_so' ? 'hồ sơ ' : 'thư mục của ') + p.hoTen + '.');
+      var sau = chonD(p, 'tiep') ? tepChuaKyTiep(p) : -1;
+      baoNhanh('Đã ký và lưu "' + f.ten + '" vào ' + (p.loai === 'ho_so' ? 'hồ sơ ' : 'thư mục của ') + p.hoTen + '.' + (sau >= 0 ? ' Mở tệp tiếp theo…' : ''));
+      if (sau >= 0) moTep(p, sau); else veDanhSach(p);
     }).catch(function (e) {
       if (p.huy) return;
       nut.disabled = false; nut.textContent = 'Ký và lưu vào Drive';
@@ -835,58 +959,101 @@
       '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải hồ sơ' +
         (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
       '<div class="khs-ben">' +
-        '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
-        thanhChonTep(p) +
+        benDau(p) +
+        '<div class="khs-ben-cuon">' +
         // ── Khối nhận xét ──
         '<div class="khs-muc' + (coNx ? '' : ' tat') + '" data-khs="muc-nx"><b><label class="khs-dong-dau"><input type="checkbox" data-khs="nx-co"' + (coNx ? ' checked' : '') + '> Khối nhận xét</label></b>' +
-          '<label class="khs-o"><span class="khs-nhan">Tiêu đề</span><select data-khs="td-mau">' + luaChon(D.td, D.td.indexOf(td) >= 0 ? td : '', 'Tự gõ / không có tiêu đề') + '</select>' +
-            '<input data-khs="td" value="' + t(td) + '" placeholder="Không có tiêu đề"></label>' +
+          '<div class="khs-hai">' +
+            '<label class="khs-o"><span class="khs-nhan">Tiêu đề mẫu</span><select data-khs="td-mau">' + luaChon(D.td, D.td.indexOf(td) >= 0 ? td : '', 'Tự gõ / không có tiêu đề') + '</select></label>' +
+            '<label class="khs-o"><span class="khs-nhan">Tiêu đề in ra</span><input data-khs="td" value="' + t(td) + '" placeholder="Không có tiêu đề"></label>' +
+          '</div>' +
           '<label class="khs-o"><span class="khs-nhan">Câu mẫu (chọn để thêm vào nội dung)</span><select data-khs="cau-mau"><option value="">Chọn câu mẫu…</option>' +
             D.cau.map(function (nh) { return '<optgroup label="' + t(nh[0]) + '">' + nh[1].map(function (c) { return '<option>' + t(c) + '</option>'; }).join('') + '</optgroup>'; }).join('') +
           '</select></label>' +
           '<label class="khs-o"><span class="khs-nhan">Nội dung nhận xét</span><textarea data-khs="nx" rows="4" maxlength="1500" placeholder="Gõ nhận xét, mỗi ý một dòng.">' + t(nxNho) + '</textarea></label>' +
-          '<div class="khs-o"><span class="khs-tri khs-nhan">Bề rộng <b data-khs="nx-rong-chu"></b></span><input type="range" data-khs="nx-rong" min="4" max="18" step="0.1" value="' + t(macDinhD('nx-rong', '16')) + '"></div>' +
-          '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Giãn dòng</span><select data-khs="nx-gian">' + luaChon(GIAN_DONG, macDinhD('nx-gian', '1.15')) + '</select></label>' +
-            '<div class="khs-o"><span class="khs-nhan">Chiều cao</span><span data-khs="nx-cao">tự tính</span></div></div>' +
-          '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-deu"' + (macDinhD('nx-deu', '1') === '1' ? ' checked' : '') + '> <span>Căn đều hai bên</span></label>' +
-          '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-lui"' + (macDinhD('nx-lui', '0') === '1' ? ' checked' : '') + '> <span>Lùi đầu dòng 1 cm</span></label>' +
+          '<details class="khs-them"><summary>Bề rộng, giãn dòng, căn lề</summary>' +
+            '<div class="khs-o"><span class="khs-tri khs-nhan">Bề rộng <b data-khs="nx-rong-chu"></b></span><input type="range" data-khs="nx-rong" min="4" max="18" step="0.1" value="' + t(macDinhD('nx-rong', '16')) + '"></div>' +
+            '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Giãn dòng</span><select data-khs="nx-gian">' + luaChon(GIAN_DONG, macDinhD('nx-gian', '1.15')) + '</select></label>' +
+              '<div class="khs-o"><span class="khs-nhan">Chiều cao</span><span data-khs="nx-cao">tự tính</span></div></div>' +
+            '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-deu"' + (macDinhD('nx-deu', '1') === '1' ? ' checked' : '') + '> <span>Căn đều hai bên</span></label>' +
+            '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-lui"' + (macDinhD('nx-lui', '0') === '1' ? ' checked' : '') + '> <span>Lùi đầu dòng 1 cm</span></label>' +
+          '</details>' +
         '</div>' +
         // ── Khối chữ ký ──
         '<div class="khs-muc"><b>Khối chữ ký</b>' +
-          '<label class="khs-o"><span class="khs-nhan">Chức danh</span><select data-khs="cd-mau">' + luaChon(D.cd, D.cd.indexOf(cd) >= 0 ? cd : '', 'Tự gõ…') + '</select>' +
-            '<textarea data-khs="cd" rows="2">' + t(cd) + '</textarea></label>' +
-          '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '') + '"></label>' +
-          '<div class="khs-o"><span class="khs-tri khs-nhan">Khoảng chức danh – họ tên (chỗ ký) <b data-khs="kk-chu"></b></span><input type="range" data-khs="kk" min="1.5" max="4" step="0.1" value="' + t(macDinhD('kk', '2.6')) + '"></div>' +
+          '<div class="khs-o"><span class="khs-nhan">Chức danh</span><div class="khs-hai">' +
+            '<select data-khs="cd-mau" aria-label="Chức danh mẫu">' + luaChon(D.cd, D.cd.indexOf(cd) >= 0 ? cd : '', 'Tự gõ…') + '</select>' +
+            '<textarea data-khs="cd" rows="2" aria-label="Chức danh in ra">' + t(cd) + '</textarea></div></div>' +
+          '<div class="khs-hai">' +
+            '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '') + '"></label>' +
+            '<label class="khs-o" data-khs="dong-ngay"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
+          '</div>' +
           '<label class="khs-dong-dau"><input type="checkbox" data-khs="co-ngay"' + (macDinhD('co-ngay', '0') === '1' ? ' checked' : '') + '> <span>Ghi địa danh, ngày tháng trên chức danh</span></label>' +
-          '<label class="khs-o" data-khs="dong-ngay"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
-          '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
-            '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
-            '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
-            '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>' +
-          (laDU
-            ? '<div class="khs-o"><label class="khs-dong-dau"><input type="checkbox" data-khs="dong-dau"' + (macDinhD('dong-dau', '1') === '1' ? ' checked' : '') + '> ' +
-                '<span class="khs-nhan">Đóng dấu Đảng ủy</span></label>' +
-              '<div class="khs-chu-ky"><span data-khs="anh-dau" class="khs-anh-ky khs-anh-dau"></span>' +
-              '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="dau-chon">Chọn ảnh dấu</button>' +
-              '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="dau-xoa" hidden>Xoá</button></span></div>' +
-              '<span class="khs-tri khs-nhan">Đường kính dấu <b data-khs="mm-chu"></b></span><input type="range" data-khs="mm" min="28" max="42" step="1" value="' + t(macDinhD('mm', '35')) + '">' +
-              '<input type="file" accept="image/*" data-khs="dau-tep" hidden></div>'
-            : '') +
+          oChuKyHtml() +
+          (laDU ? oDauHtml('Đóng dấu Đảng ủy', macDinhD('dong-dau', '1') === '1') : '') +
+          '<details class="khs-them"><summary>Khoảng ký' + (laDU ? ', cỡ dấu' : '') + ', cỡ chữ, màu chữ</summary>' +
+            '<div class="khs-o"><span class="khs-tri khs-nhan">Khoảng chức danh – họ tên (chỗ ký) <b data-khs="kk-chu"></b></span><input type="range" data-khs="kk" min="1.5" max="4" step="0.1" value="' + t(macDinhD('kk', '2.6')) + '"></div>' +
+            (laDU ? '<div class="khs-o"><span class="khs-tri khs-nhan">Đường kính dấu <b data-khs="mm-chu"></b></span><input type="range" data-khs="mm" min="28" max="42" step="1" value="' + t(macDinhD('mm', '35')) + '"></div>' : '') +
+            '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Cỡ chữ</span><select data-khs="fs">' + luaChon([['13', '13'], ['14', '14']], macDinhD('fs', '14')) + '</select></label>' +
+              '<label class="khs-o"><span class="khs-nhan">Màu chữ</span><select data-khs="mau">' + luaChon([['xanh', 'Mực xanh'], ['den', 'Đen']], macDinhD('mau', 'xanh')) + '</select></label></div>' +
+          '</details>' +
         '</div>' +
-        // ── Chữ, vị trí ──
-        '<div class="khs-muc"><b>Chữ và vị trí</b>' +
-          '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Cỡ chữ</span><select data-khs="fs">' + luaChon([['13', '13'], ['14', '14']], macDinhD('fs', '14')) + '</select></label>' +
-            '<label class="khs-o"><span class="khs-nhan">Màu chữ</span><select data-khs="mau">' + luaChon([['xanh', 'Mực xanh'], ['den', 'Đen']], macDinhD('mau', 'xanh')) + '</select></label></div>' +
-          '<div class="khs-o"><span class="khs-nhan">Bấm lên trang để đặt</span><div class="khs-chon-dat">' +
+        // ── Đặt lên trang ──
+        '<div class="khs-muc"><b>Đặt lên trang</b>' +
+          '<div class="khs-o"><span class="khs-nhan">Chọn khối rồi bấm lên trang</span><div class="khs-chon-dat">' +
             '<button type="button" data-khs="dat" data-loai="ky" class="chon">Khối chữ ký</button><button type="button" data-khs="dat" data-loai="nx">Khối nhận xét</button></div></div>' +
-          '<p class="khs-goi-y" data-khs="goi-y"></p>' +
-          '<button type="button" class="khs-nut-phu" data-khs="nhu-truoc" hidden>Đặt như lần trước</button>' +
-          '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối đang chọn</button>' +
+          nutTrangHtml() +
         '</div>' +
-        '<label class="khs-dong-dau"><input type="checkbox" data-khs="tiep"' + (macDinhD('tiep', '1') === '1' ? ' checked' : '') + '> <span>Lưu xong tự mở tệp tiếp theo chưa ký</span></label>' +
-        '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
+        '</div>' +
+        benChan(p, '') +
       '</div>' +
     '</div>';
+  }
+  // ── Phần dùng chung của thanh bên (thầy Chung 10/11: khung rộng, thanh bên ba tầng —
+  //    đầu: chuyển tệp + tiến độ · giữa: các mục cuộn được · chân: gợi ý + nút lưu LUÔN THẤY,
+  //    khỏi cuộn xuống tận đáy mới bấm được "Ký và lưu") ──
+  function khoaTiep(p) { return p.dang ? 'dg-tiep' : 'tiep' + (p.loai === 'ho_so' ? '-hs' : ''); }
+  function benDau(p) {
+    return '<div class="khs-ben-dau">' +
+      '<div class="khs-ben-hang"><button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
+        '<span class="khs-tien-do" title="Số tệp đã ký trong thư mục">Đã ký <b>' + soDaKy(p) + '/' + p.ds.length + '</b></span></div>' +
+      thanhChonTep(p) +
+    '</div>';
+  }
+  function benChan(p, goiY) {
+    var tiep = nho(khoaTiep(p));
+    return '<div class="khs-ben-chan">' +
+      '<p class="khs-goi-y" data-khs="goi-y">' + t(goiY) + '</p>' +
+      '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ ' + (p.dang ? 'Bỏ khối đang chọn' : 'Bỏ khối chữ ký trên trang') + '</button>' +
+      (p.ds.length > 1 ? '<label class="khs-dong-dau"><input type="checkbox" data-khs="tiep"' + (tiep == null || tiep === '1' ? ' checked' : '') + '> <span>Lưu xong tự mở tệp tiếp theo chưa ký</span></label>' : '') +
+      '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
+    '</div>';
+  }
+  function oChuKyHtml() {
+    return '<div class="khs-o"><span class="khs-nhan">Chữ ký <small class="khs-luu-may" data-khs="ky-luu-may"></small></span>' +
+      '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
+      '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
+      '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>';
+  }
+  function oDauHtml(nhan, chon) {
+    return '<div class="khs-o"><label class="khs-dong-dau"><input type="checkbox" data-khs="dong-dau"' + (chon ? ' checked' : '') + '> ' +
+        '<span class="khs-nhan">' + t(nhan) + '</span></label>' +
+      '<div class="khs-chu-ky"><span data-khs="anh-dau" class="khs-anh-ky khs-anh-dau"></span>' +
+      '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="dau-chon">Chọn ảnh dấu</button>' +
+      '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="dau-xoa" hidden>Xoá</button></span></div>' +
+      '<input type="file" accept="image/*" data-khs="dau-tep" hidden></div>';
+  }
+  // Chữ ký thường nằm ở trang cuối: nhảy thẳng tới, khỏi cuộn qua cả tệp
+  function nutTrangHtml() {
+    return '<div class="khs-nut-hang">' +
+      '<button type="button" class="khs-nut-phu" data-khs="trang-dau">Trang đầu</button>' +
+      '<button type="button" class="khs-nut-phu" data-khs="trang-cuoi">Trang cuối</button>' +
+      '<button type="button" class="khs-nut-phu khs-nut-nhan" data-khs="nhu-truoc" hidden>Đặt như lần trước</button>' +
+    '</div>';
+  }
+  function denTrang(p, cuoi) {
+    var xem = oD(p, 'xem'), tr = p.trang[cuoi ? p.trang.length - 1 : 0];
+    if (xem && tr) xem.scrollTop = Math.max(0, tr.giay.offsetTop - 12);
   }
   // Thầy Chung 10/11: chuyển tệp ngay trên thanh bên, khỏi quay ra danh sách rồi mở lại
   function thanhChonTep(p) {
@@ -1040,7 +1207,7 @@
     oD(p, 'nhu-truoc').hidden = !nhoD('vi-tri') || !p.du;
     p.phu.querySelectorAll('[data-khs="dat"]').forEach(function (b) { b.classList.toggle('chon', b.getAttribute('data-loai') === p.dangDat); });
     ['ky', 'nx'].forEach(function (l) { var k = p.khoi[l]; if (k && k.el) k.el.classList.toggle('dang-dat', l === p.dangDat); });
-    if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; máy nhớ cho những lần sau.';
+    if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; chữ ký lưu theo tài khoản, máy nào cũng dùng được.';
     else if (chonD(p, 'dong-dau') && !anhDau) g.textContent = 'Chưa có ảnh con dấu Đảng ủy: bấm "Chọn ảnh dấu" (ảnh chụp dấu đỏ trên giấy trắng), hoặc bỏ chọn Đóng dấu.';
     else if (!p.khoi.ky) g.textContent = 'Bấm vào trang, đúng chỗ muốn đặt khối chữ ký. Kéo khối để dời chỗ.';
     else if (thieuNx) g.textContent = 'Chọn "Khối nhận xét" ở trên rồi bấm lên trang để đặt. Kéo ô vuông ở mép phải khối để chỉnh bề rộng.';
@@ -1185,8 +1352,6 @@
       if (['co-ngay', 'dong-dau', 'nx-co', 'nx-deu', 'nx-lui'].indexOf(k) >= 0) nhoD(k, x.checked ? '1' : '0');
     }
     if (k === 'nx') nxNho = x.value;
-    if (k === 'chon-tep') { if (e.type === 'change') moTep(p, Number(x.value)); return; }
-    if (k === 'tiep') { if (e.type === 'change') nhoD('tiep', x.checked ? '1' : '0'); return; }
     veLaiDangCa(p);
     if (e.type === 'change' || k === 'nx') { tuDatNx(p); capNutLuuDang(p); }
   }
@@ -1244,7 +1409,7 @@
   function bangKyHtml() {
     return '<div class="khs-bang-ky" hidden>' +
       '<div class="khs-bk-hop">' +
-        '<b>Ký tên vào khung</b><small>Dùng chuột hoặc ngón tay. Máy nhớ chữ ký cho những lần sau.</small>' +
+        '<b>Ký tên vào khung</b><small>Dùng chuột hoặc ngón tay. Chữ ký lưu theo tài khoản: đổi máy, đổi trình duyệt vẫn dùng được.</small>' +
         '<canvas class="khs-bk-giay" data-khs-bk="giay"></canvas>' +
         '<div class="khs-bk-nut">' +
           '<button type="button" class="khs-nut-phu" data-khs="bk-xoa">Ký lại</button>' +
@@ -1309,7 +1474,7 @@
   function luuChuKy(cv) {
     var c = catSat(cv);
     if (!c) { baoNhanh('Khung ký còn trống.'); return false; }
-    nho('chu-ky', c.toDataURL('image/png'));
+    luuAnh('chu-ky', c.toDataURL('image/png'));
     dongBangKy();
     if (phien) napChuKy(phien);
     return true;
@@ -1418,7 +1583,7 @@
       lop.className = 'khs-bang-ky rieng';
       lop.setAttribute('role', 'dialog'); lop.setAttribute('aria-modal', 'true');
       lop.innerHTML = '<div class="khs-bk-hop"><b>' + t(tieuDe || 'Ký tên vào khung') + '</b>' +
-        '<small>Dùng chuột hoặc ngón tay. Máy nhớ chữ ký cho những lần sau (dùng chung với ký giáo án).</small>' +
+        '<small>Dùng chuột hoặc ngón tay. Chữ ký lưu theo tài khoản, dùng chung với ký giáo án, hồ sơ.</small>' +
         '<canvas class="khs-bk-giay"></canvas><div class="khs-bk-nut">' +
         '<button type="button" class="khs-nut-phu" data-r="xoa">Ký lại</button><span class="khs-gian"></span>' +
         '<button type="button" class="khs-nut-phu" data-r="huy">Không ký</button>' +
@@ -1454,7 +1619,7 @@
           var c = co && catSat(cv);
           if (!c) { baoNhanh('Thầy cô ký vào khung trước đã.'); return; }
           var url = c.toDataURL('image/png');
-          nho('chu-ky', url);
+          luuAnh('chu-ky', url);
           dong(url);
         }
       });
@@ -1464,6 +1629,7 @@
   window.KY_HO_SO = {
     // Sổ chủ nhiệm (07/11/2026): chữ ký / dấu đã nhớ trên máy + bảng ký riêng
     chuKyToi: function () { return nho('chu-ky') || ''; },
+    dongBo: dongBoMay,
     dauToi: function () { return nho('dau') || ''; },
     kyRieng: kyRieng,
     taoThuMuc: taoThuMuc,
