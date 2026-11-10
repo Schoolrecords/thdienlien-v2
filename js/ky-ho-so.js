@@ -90,6 +90,7 @@
     tu_ky: 'Không tự ký hồ sơ của chính mình.',
     khong_quyen: 'Chỉ Ban giám hiệu và tổ trưởng, tổ phó cùng tổ được ký hồ sơ này.',
     khong_quyen_bgh: 'Chỉ Hiệu trưởng, Phó Hiệu trưởng (và quản trị) được làm việc này.',
+    khong_quyen_dang: 'Hồ sơ Đảng này do Bí thư phụ trách ký (người được ghi ở ô Người phụ trách của hồ sơ).',
     khong_thay: 'Không thấy người hoặc hồ sơ này trong dữ liệu của trường. Tải lại trang rồi thử lại.',
     chua_co_mau: 'Chưa có thư mục nào làm mẫu (chưa người, hồ sơ nào cùng nhóm được gắn thư mục). Gắn tay một thư mục đầu tiên rồi thử lại.',
     tep_da_doi: 'Tệp vừa được thay hoặc sửa sau lúc thầy cô mở. Mở lại tệp rồi ký lại.',
@@ -272,8 +273,10 @@
     dong();
   }
 
-  function mo(thuMuc, hoTen, tro, loai) {
+  function mo(thuMuc, hoTen, tro, loai, dang) {
     loai = loai === 'ho_so' ? 'ho_so' : 'giao_vien';
+    // Hồ sơ Đảng (app.js loaiHopDang): khối chữ ký + khối nhận xét kiểu công tác Đảng
+    dang = loai === 'ho_so' && (dang === 'dang_uy' || dang === 'chi_bo') ? dang : '';
     dong();
     var phu = document.createElement('div');
     phu.className = 'ck-xvb-phu khs-phu';
@@ -288,7 +291,7 @@
         bangKyHtml() +
       '</div>';
     document.body.appendChild(phu);
-    phien = { phu: phu, thuMuc: thuMuc, hoTen: hoTen, tro: tro, loai: loai, huy: false, ds: [], nguoiKy: {} };
+    phien = { phu: phu, thuMuc: thuMuc, hoTen: hoTen, tro: tro, loai: loai, dang: dang, huy: false, ds: [], nguoiKy: {} };
     document.documentElement.classList.add('ck-xvb-khoa');
     document.addEventListener('keydown', phim);
     phu.addEventListener('click', bam);
@@ -362,6 +365,11 @@
       hs ? ['', 'Không ghi kết luận'] : ['Đã kiểm tra.', 'Chỉ ghi đã kiểm tra']]);
     var coDau = laBGH();
     var hoTen = nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '';
+    if (p.dang) {
+      p.khoi = { ky: null, nx: null }; p.dangDat = 'ky'; p.du = false; p.tuDat = false;
+      than(p).innerHTML = khungDangHtml(p, f, nk);
+      napChuKy(p); napDau(p); capChuDang(p);
+    } else {
     than(p).innerHTML =
       '<div class="khs-ky">' +
         '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải ' + (hs ? 'hồ sơ' : 'giáo án') +
@@ -407,6 +415,7 @@
     napChuKy(p);
     if (coDau) napDau(p);
     apKhoiGon(p);
+    }
     napPdfLib().catch(function () { /* tải lại lúc bấm lưu */ });   // tải sẵn — bấm lưu khỏi chờ
     var xem = p.phu.querySelector('[data-khs="xem"]');
     Promise.all([goi('tai', { thu_muc: p.thuMuc, loai: p.loai, tep: f.id }), napPdfJs()]).then(function (r) {
@@ -443,7 +452,8 @@
       p.quan = quan;
       var n = 0;
       (function dungTiep() {
-        if (p.huy || p.tep !== f || ++n > pdf.numPages) return;
+        if (p.huy || p.tep !== f) return;
+        if (++n > pdf.numPages) { p.du = true; if (p.dang) datNhuTruocDang(p, true); return; }
         var so = n;
         pdf.getPage(so).then(function (trang) {
           if (p.huy || p.tep !== f) return;
@@ -487,13 +497,15 @@
   // Con dấu tròn của trường: in đúng cỡ thật 35 mm (≈ 99 pt), không co giãn theo khối
   var DAU_PT = 35 / 25.4 * 72;
   var anhDau = null;
+  // Dấu Đảng ủy KHÁC dấu nhà trường → nhớ riêng trên máy
+  function khoaDau(p) { return p && p.dang ? 'dau-dang' : 'dau'; }
   function laBGH() { var v = (window.NGUOI_DUNG || {}).vai_tro; return v === 'admin' || v === 'ban_giam_hieu'; }
   function dongDau(p) {
     var o = p.phu.querySelector('[data-khs="dong-dau"]');
-    return !!(o && o.checked && anhDau && laBGH());
+    return !!(o && o.checked && anhDau && (p.dang ? p.dang === 'dang_uy' : laBGH()));
   }
   function napDau(p) {
-    var du = nho('dau'), o = p.phu.querySelector('[data-khs="anh-dau"]'), x = p.phu.querySelector('[data-khs="dau-xoa"]');
+    var du = nho(khoaDau(p)), o = p.phu.querySelector('[data-khs="anh-dau"]'), x = p.phu.querySelector('[data-khs="dau-xoa"]');
     anhDau = null;
     if (!o) return;
     if (x) x.hidden = !du;
@@ -526,7 +538,7 @@
         }
         g.putImageData(a, 0, 0);
         var cat = catSat(c);
-        nho('dau', cat.toDataURL('image/png'));
+        nho(khoaDau(p), cat.toDataURL('image/png'));
         napDau(p);
       };
       im.src = fr.result;
@@ -537,7 +549,7 @@
     var hoi = window.hopHoi
       ? window.hopHoi({ tieuDe: 'Xoá ảnh con dấu?', noiDung: 'Máy này sẽ quên ảnh con dấu. Các tệp đã đóng dấu trên Drive không thay đổi.', nutOK: 'Xoá ảnh dấu', nguyHiem: true })
       : Promise.resolve(window.confirm('Xoá ảnh con dấu trên máy này?'));
-    hoi.then(function (dongY) { if (dongY && !p.huy) { nho('dau', null); napDau(p); } });
+    hoi.then(function (dongY) { if (dongY && !p.huy) { nho(khoaDau(p), null); napDau(p); } });
   }
   function giaTri(p, k) { var o = p.phu.querySelector('[data-khs="' + k + '"]'); return o ? o.value : ''; }
   function thongTinKhoi(p, tr, rong) {
@@ -565,6 +577,7 @@
   }
 
   function capNutLuu(p) {
+    if (p.dang) { capNutLuuDang(p); return; }
     var n = p.phu.querySelector('[data-khs="luu"]'), g = p.phu.querySelector('[data-khs="goi-y"]');
     if (!n) return;
     n.disabled = !(p.dat && anhChuKy && p.byte);
@@ -596,6 +609,7 @@
 
   // Đặt / vẽ lại khối chữ ký trên trang đang chọn
   function veLaiKhoi(p) {
+    if (p.dang) { veLaiDangCa(p); return; }
     if (!p.dat) { capNutLuu(p); return; }
     var tr = p.trang[p.dat.trang];
     if (!tr) return;
@@ -647,6 +661,7 @@
     // Bấm ra nền KHÔNG đóng: đang đặt chữ ký mà lỡ tay là mất việc — chỉ ✕ / Esc
     var n = e.target.closest && e.target.closest('[data-khs]');
     var giay = e.target.closest && e.target.closest('.khs-giay');
+    if (giay && p.man === 'ky' && p.dang) { datKhoiDangBam(p, e, giay); return; }
     if (giay && p.man === 'ky') {   // (n lúc này là khung [data-khs="xem"] bọc ngoài trang)
       var r = giay.getBoundingClientRect(), so = Number(giay.getAttribute('data-trang'));
       var rong = rongKhoi(p, p.trang[so] || { vp: { width: r.width } });
@@ -664,7 +679,9 @@
     else if (k === 'xoa-ky') xoaChuKyDaNho(p);
     else if (k === 'dau-chon') p.phu.querySelector('[data-khs="dau-tep"]').click();
     else if (k === 'dau-xoa') xoaDau(p);
-    else if (k === 'bo-khoi') boKhoi(p);
+    else if (k === 'bo-khoi') { if (p.dang) boKhoiDang(p, p.dangDat); else boKhoi(p); }
+    else if (k === 'dat' && p.dang) { p.dangDat = n.getAttribute('data-loai') === 'nx' ? 'nx' : 'ky'; batNx(p); capNutLuuDang(p); }
+    else if (k === 'nhu-truoc' && p.dang) datNhuTruocDang(p, false);
     else if (k === 'luu') kyVaLuu(p);
     else if (k === 'bk-xoa') xoaBangKy();
     else if (k === 'bk-huy') dongBangKy();
@@ -691,6 +708,7 @@
       return;
     }
     if (p.man !== 'ky') return;
+    if (p.dang) { doiODang(p, e, k); return; }
     if (e.type === 'change') {
       if (k === 'cd') nho('chuc-danh' + (p.loai === 'ho_so' ? '-hs' : ''), e.target.value.trim());
       if (k === 'ht') nho('ho-ten', e.target.value.trim());
@@ -702,6 +720,7 @@
 
   // ── Ghi chữ ký vào PDF rồi gửi lên Drive ──
   function kyVaLuu(p) {
+    if (p.dang) { kyVaLuuDang(p); return; }
     var nut = p.phu.querySelector('[data-khs="luu"]');
     if (!p.dat || !anhChuKy || !p.byte) return;
     var f = p.tep, dat = p.dat, tr = p.trang[dat.trang];
@@ -734,6 +753,446 @@
       if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; }
       veDanhSach(p);
       baoNhanh('Đã ký và lưu "' + f.ten + '" vào ' + (p.loai === 'ho_so' ? 'hồ sơ ' : 'thư mục của ') + p.hoTen + '.');
+    }).catch(function (e) {
+      if (p.huy) return;
+      nut.disabled = false; nut.textContent = 'Ký và lưu vào Drive';
+      var chu = (e && e.message) || String(e);
+      if (window.hopBao) window.hopBao({ tieuDe: 'Chưa lưu được', bieuTuong: '⚠️', noiDung: chu });
+      else baoNhanh(chu);
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // KÝ HỒ SƠ ĐẢNG (thầy Chung 10/11/2026) — hộp H04 / H04.n (app.js loaiHopDang)
+  //   · Khối chữ ký: chức danh Đảng (T/M ĐẢNG ỦY / T/M CHI BỘ…), khoảng ký rộng
+  //     (mặc định 2,6 cm) cho chữ ký nằm giữa thoáng; dấu Đảng ủy riêng (chi bộ
+  //     trực thuộc không có dấu).
+  //   · Khối nhận xét RIÊNG, đặt chỗ khác: bề rộng chỉnh được (kéo mép phải),
+  //     chiều cao tự tính theo cỡ chữ + giãn dòng NĐ 30 (dòng đơn → 1,5; cách
+  //     đoạn 6 pt; lùi đầu dòng 1 cm).
+  //   Hai khối vẽ theo đơn vị pt (in đúng cỡ thật), không co giãn theo màn hình.
+  // ══════════════════════════════════════════════════════════════
+  var PT_CM = 72 / 2.54, S_IN = 4;
+  var PH_IN = '"Times New Roman", Times, "Noto Serif", serif';
+  var MAU_MUC = { xanh: MUC, den: '#111111' };
+  var DANG = {
+    dang_uy: {
+      cd: ['T/M ĐẢNG ỦY\nBÍ THƯ', 'BÍ THƯ ĐẢNG ỦY', 'BÍ THƯ'],
+      td: ['Ý kiến của Đảng ủy:', 'Nhận xét của Đảng ủy:', 'Xác nhận của Đảng ủy:', 'Đảng ủy phê duyệt:', 'NHẬN XÉT, ĐÁNH GIÁ CỦA ĐẢNG ỦY'],
+      cau: [
+        ['Cam kết, kế hoạch học tập và làm theo Bác', [
+          'Đảng ủy nhất trí với nội dung cam kết.',
+          'Đề nghị chi bộ theo dõi, đánh giá việc thực hiện cam kết của đảng viên.']],
+        ['Kiểm điểm, đánh giá, xếp loại', [
+          'Đảng ủy nhất trí với đề nghị của Chi bộ.',
+          'Đảng ủy xếp loại: Hoàn thành tốt nhiệm vụ.',
+          'Đảng ủy xếp loại: Hoàn thành xuất sắc nhiệm vụ.']],
+        ['Báo cáo, kế hoạch của chi bộ', [
+          'Đảng ủy nhất trí, đề nghị chi bộ tổ chức thực hiện.',
+          'Đảng ủy phê duyệt.',
+          'Đề nghị chi bộ bổ sung, hoàn thiện và gửi lại Đảng ủy.']]]
+    },
+    chi_bo: {
+      cd: ['T/M CHI BỘ\nBÍ THƯ', 'T/M CHI ỦY\nBÍ THƯ', 'BÍ THƯ CHI BỘ', 'BÍ THƯ'],
+      td: ['Nhận xét của Chi bộ:', 'Nhận xét của Chi ủy:', 'Ý kiến của Chi bộ:', 'Xác nhận của Chi bộ:', 'NHẬN XÉT, ĐÁNH GIÁ CỦA CHI ỦY'],
+      cau: [
+        ['Cam kết, kế hoạch học tập và làm theo Bác', [
+          'Bản cam kết đầy đủ nội dung, sát với chức trách, nhiệm vụ được giao.',
+          'Nội dung đăng ký cụ thể, có biện pháp và thời gian thực hiện. Đề nghị đồng chí thực hiện nghiêm túc.',
+          'Đề nghị đồng chí bổ sung nội dung đăng ký làm theo cụ thể hơn, gắn với nhiệm vụ chuyên môn.']],
+        ['Kiểm điểm, đánh giá, xếp loại đảng viên', [
+          'Chi ủy nhất trí với nội dung tự kiểm điểm của đồng chí.',
+          'Đồng chí có bản lĩnh chính trị vững vàng; phẩm chất đạo đức, lối sống tốt; hoàn thành tốt nhiệm vụ được giao.',
+          'Đề nghị Chi bộ xếp loại: Hoàn thành tốt nhiệm vụ.',
+          'Đề nghị Chi bộ xếp loại: Hoàn thành xuất sắc nhiệm vụ.']],
+        ['Báo cáo, kế hoạch, hồ sơ trình Đảng ủy', [
+          'Chi bộ nhất trí, đề nghị Đảng ủy xem xét.',
+          'Đã xem, nhất trí.']]]
+    }
+  };
+  var GIAN_DONG = [['1', 'Dòng đơn'], ['1.15', '1,15'], ['1.3', '1,3'], ['1.5', '1,5 (tối đa)']];
+  var nxNho = '';   // nội dung nhận xét giữ qua các tệp trong một lần mở (ký hàng loạt cùng lời)
+
+  function nhoD(k, gt) { return nho('dg-' + k, gt); }
+  function macDinhD(k, gt) { var v = nhoD(k); return v == null ? gt : v; }
+  function soVN(x) { return Number(x).toFixed(1).replace('.', ','); }
+  function luaChon(ds, chon, nhanRong) {
+    return (nhanRong ? '<option value="">' + t(nhanRong) + '</option>' : '') + ds.map(function (x) {
+      var v = Array.isArray(x) ? x[0] : x, n = Array.isArray(x) ? x[1] : x.replace(/\n/g, ' / ');
+      return '<option value="' + t(v) + '"' + (v === chon ? ' selected' : '') + '>' + t(n) + '</option>';
+    }).join('');
+  }
+  function oD(p, k) { return p.phu.querySelector('[data-khs="' + k + '"]'); }
+  function chonD(p, k) { var x = oD(p, k); return !!(x && x.checked); }
+
+  function khungDangHtml(p, f, nk) {
+    var D = DANG[p.dang], laDU = p.dang === 'dang_uy';
+    var cd = macDinhD('cd-' + p.dang, D.cd[0]), td = macDinhD('td-' + p.dang, D.td[0]);
+    var coNx = macDinhD('nx-co', '1') === '1';
+    return '<div class="khs-ky khs-ky-dang">' +
+      '<div class="khs-xem" data-khs="xem"><p class="ck-xvb-cho">Đang tải hồ sơ' +
+        (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
+      '<div class="khs-ben">' +
+        '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
+        // ── Khối nhận xét ──
+        '<div class="khs-muc' + (coNx ? '' : ' tat') + '" data-khs="muc-nx"><b><label class="khs-dong-dau"><input type="checkbox" data-khs="nx-co"' + (coNx ? ' checked' : '') + '> Khối nhận xét</label></b>' +
+          '<label class="khs-o"><span class="khs-nhan">Tiêu đề</span><select data-khs="td-mau">' + luaChon(D.td, D.td.indexOf(td) >= 0 ? td : '', 'Tự gõ / không có tiêu đề') + '</select>' +
+            '<input data-khs="td" value="' + t(td) + '" placeholder="Không có tiêu đề"></label>' +
+          '<label class="khs-o"><span class="khs-nhan">Câu mẫu (chọn để thêm vào nội dung)</span><select data-khs="cau-mau"><option value="">Chọn câu mẫu…</option>' +
+            D.cau.map(function (nh) { return '<optgroup label="' + t(nh[0]) + '">' + nh[1].map(function (c) { return '<option>' + t(c) + '</option>'; }).join('') + '</optgroup>'; }).join('') +
+          '</select></label>' +
+          '<label class="khs-o"><span class="khs-nhan">Nội dung nhận xét</span><textarea data-khs="nx" rows="4" maxlength="1500" placeholder="Gõ nhận xét, mỗi ý một dòng.">' + t(nxNho) + '</textarea></label>' +
+          '<div class="khs-o"><span class="khs-tri khs-nhan">Bề rộng <b data-khs="nx-rong-chu"></b></span><input type="range" data-khs="nx-rong" min="4" max="18" step="0.1" value="' + t(macDinhD('nx-rong', '16')) + '"></div>' +
+          '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Giãn dòng</span><select data-khs="nx-gian">' + luaChon(GIAN_DONG, macDinhD('nx-gian', '1.15')) + '</select></label>' +
+            '<div class="khs-o"><span class="khs-nhan">Chiều cao</span><span data-khs="nx-cao">tự tính</span></div></div>' +
+          '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-deu"' + (macDinhD('nx-deu', '1') === '1' ? ' checked' : '') + '> <span>Căn đều hai bên</span></label>' +
+          '<label class="khs-dong-dau"><input type="checkbox" data-khs="nx-lui"' + (macDinhD('nx-lui', '0') === '1' ? ' checked' : '') + '> <span>Lùi đầu dòng 1 cm</span></label>' +
+        '</div>' +
+        // ── Khối chữ ký ──
+        '<div class="khs-muc"><b>Khối chữ ký</b>' +
+          '<label class="khs-o"><span class="khs-nhan">Chức danh</span><select data-khs="cd-mau">' + luaChon(D.cd, D.cd.indexOf(cd) >= 0 ? cd : '', 'Tự gõ…') + '</select>' +
+            '<textarea data-khs="cd" rows="2">' + t(cd) + '</textarea></label>' +
+          '<label class="khs-o"><span class="khs-nhan">Họ tên</span><input data-khs="ht" value="' + t(nho('ho-ten') || nk.ho_ten || (window.NGUOI_DUNG || {}).ho_ten || '') + '"></label>' +
+          '<div class="khs-o"><span class="khs-tri khs-nhan">Khoảng chức danh – họ tên (chỗ ký) <b data-khs="kk-chu"></b></span><input type="range" data-khs="kk" min="1.5" max="4" step="0.1" value="' + t(macDinhD('kk', '2.6')) + '"></div>' +
+          '<label class="khs-dong-dau"><input type="checkbox" data-khs="co-ngay"' + (macDinhD('co-ngay', '0') === '1' ? ' checked' : '') + '> <span>Ghi địa danh, ngày tháng trên chức danh</span></label>' +
+          '<label class="khs-o" data-khs="dong-ngay"><span class="khs-nhan">Ngày ký</span><input type="date" data-khs="ngay" value="' + homNay() + '"></label>' +
+          '<div class="khs-o"><span class="khs-nhan">Chữ ký</span>' +
+            '<div class="khs-chu-ky"><span data-khs="anh-ky" class="khs-anh-ky"></span>' +
+            '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="ky-moi">Ký mới</button>' +
+            '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="xoa-ky" hidden>Xoá</button></span></div></div>' +
+          (laDU
+            ? '<div class="khs-o"><label class="khs-dong-dau"><input type="checkbox" data-khs="dong-dau"' + (macDinhD('dong-dau', '1') === '1' ? ' checked' : '') + '> ' +
+                '<span class="khs-nhan">Đóng dấu Đảng ủy</span></label>' +
+              '<div class="khs-chu-ky"><span data-khs="anh-dau" class="khs-anh-ky khs-anh-dau"></span>' +
+              '<span class="khs-nut-ky"><button type="button" class="khs-nut-phu" data-khs="dau-chon">Chọn ảnh dấu</button>' +
+              '<button type="button" class="khs-nut-phu khs-nut-xoa" data-khs="dau-xoa" hidden>Xoá</button></span></div>' +
+              '<span class="khs-tri khs-nhan">Đường kính dấu <b data-khs="mm-chu"></b></span><input type="range" data-khs="mm" min="28" max="42" step="1" value="' + t(macDinhD('mm', '35')) + '">' +
+              '<input type="file" accept="image/*" data-khs="dau-tep" hidden></div>'
+            : '') +
+        '</div>' +
+        // ── Chữ, vị trí ──
+        '<div class="khs-muc"><b>Chữ và vị trí</b>' +
+          '<div class="khs-hai"><label class="khs-o"><span class="khs-nhan">Cỡ chữ</span><select data-khs="fs">' + luaChon([['13', '13'], ['14', '14']], macDinhD('fs', '14')) + '</select></label>' +
+            '<label class="khs-o"><span class="khs-nhan">Màu chữ</span><select data-khs="mau">' + luaChon([['xanh', 'Mực xanh'], ['den', 'Đen']], macDinhD('mau', 'xanh')) + '</select></label></div>' +
+          '<div class="khs-o"><span class="khs-nhan">Bấm lên trang để đặt</span><div class="khs-chon-dat">' +
+            '<button type="button" data-khs="dat" data-loai="ky" class="chon">Khối chữ ký</button><button type="button" data-khs="dat" data-loai="nx">Khối nhận xét</button></div></div>' +
+          '<p class="khs-goi-y" data-khs="goi-y"></p>' +
+          '<button type="button" class="khs-nut-phu" data-khs="nhu-truoc" hidden>Đặt như lần trước</button>' +
+          '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối đang chọn</button>' +
+        '</div>' +
+        '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Đo chữ theo pt (vẽ thử ở cỡ ×10 cho đủ chính xác)
+  var doCv = null;
+  function phongIn(px, dam, nghieng) { return (nghieng ? 'italic ' : '') + (dam ? 'bold ' : '') + px + 'px ' + PH_IN; }
+  function doRong(chu, fs, dam, nghieng) {
+    if (!doCv) doCv = document.createElement('canvas').getContext('2d');
+    doCv.font = phongIn(fs * 10, dam, nghieng);
+    return doCv.measureText(chu).width / 10;
+  }
+
+  // Khối chữ ký: [địa danh, ngày] · chức danh · khoảng ký (chữ ký + dấu) · họ tên. s = điểm ảnh / pt
+  function veKyDang(o, s) {
+    var fs = o.fs, lh = fs * 1.25, le = 4, dong = [];
+    if (o.coNgay) {
+      var nk = o.ngay || new Date();
+      dong.push({ s: o.diaDanh ? o.diaDanh + ', ' + chuNgay(nk) : chuNgay(nk).replace(/^n/, 'N'), n: true });
+    }
+    String(o.chucDanh || '').split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean)
+      .forEach(function (x) { dong.push({ s: x.toUpperCase(), d: true }); });
+    var rongChu = 0;
+    dong.forEach(function (d) { rongChu = Math.max(rongChu, doRong(d.s, fs, d.d, d.n)); });
+    if (o.hoTen) rongChu = Math.max(rongChu, doRong(o.hoTen, fs, true));
+    var D = o.dau ? o.dauPt : 0;
+    var W = Math.max(rongChu + 2 * le, 5.5 * PT_CM, D * 1.9);
+    var sw = 0, sh = 0;
+    if (o.chuKy) {
+      var r = Math.min(Math.min(W - 2 * le, 6.5 * PT_CM) / o.chuKy.width, o.khoangKy * 0.86 / o.chuKy.height);
+      sw = o.chuKy.width * r; sh = o.chuKy.height * r;
+    }
+    var y = le, viTri = [];
+    dong.forEach(function (d) { viTri.push(y); y += lh; if (d.n) y += 4; });
+    var yKy = y; y += o.khoangKy;
+    var yTen = y; if (o.hoTen) y += lh;
+    var H = y + le, trai = (W - sw) / 2, R = D / 2, cx = 0, cy = 0, tren = 0, duoi = 0;
+    if (D) {   // NĐ 30: dấu trùm khoảng 1/3 chữ ký về bên trái
+      cx = sw ? trai + sw / 3 - R * 0.9 : W / 2 - R * 0.4;
+      cx = Math.max(R + 1, Math.min(cx, W - R - 1));
+      cy = yKy + o.khoangKy / 2;
+      tren = Math.max(0, R - cy + 1); duoi = Math.max(0, cy + R - H + 1);
+    }
+    var c = document.createElement('canvas');
+    c.width = Math.ceil(W * s); c.height = Math.ceil((H + tren + duoi) * s);
+    var g = c.getContext('2d');
+    g.scale(s, s); g.translate(0, tren);
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = o.mau;
+    var chan = (lh - fs) / 2 + fs * 0.86;
+    dong.forEach(function (d, i) { g.font = phongIn(fs, d.d, d.n); g.fillText(d.s, W / 2, viTri[i] + chan); });
+    if (o.hoTen) { g.font = phongIn(fs, true); g.fillText(o.hoTen, W / 2, yTen + chan); }
+    if (o.chuKy) g.drawImage(o.chuKy, trai, yKy + (o.khoangKy - sh) / 2, sw, sh);
+    if (D) {
+      var m = Math.max(o.dau.width, o.dau.height);
+      g.save(); g.globalAlpha = .9; g.globalCompositeOperation = 'multiply';
+      g.drawImage(o.dau, cx - R * o.dau.width / m, cy - R * o.dau.height / m, D * o.dau.width / m, D * o.dau.height / m);
+      g.restore();
+    }
+    return { canvas: c, rong: W, cao: H + tren + duoi };
+  }
+
+  // Khối nhận xét: ngắt dòng theo bề rộng đã chọn; chiều cao = số dòng × cỡ chữ × giãn dòng
+  function catDong(doan, fs, dam, rongDau, rong) {
+    var tu = doan.split(/\s+/).filter(Boolean), kq = [], hang = [], rh = 0, cach = doRong(' ', fs, dam);
+    tu.forEach(function (w) {
+      var rw = doRong(w, fs, dam), toiDa = kq.length ? rong : rongDau;
+      var thu = hang.length ? rh + cach + rw : rw;
+      if (hang.length && thu > toiDa) { kq.push({ tu: hang, rong: rh }); hang = [w]; rh = rw; }
+      else { hang.push(w); rh = thu; }
+    });
+    if (hang.length) kq.push({ tu: hang, rong: rh });
+    return kq;
+  }
+  function boCucNx(o) {
+    var fs = o.fs, lh = fs * 1.15 * o.gian, CACH_DOAN = 6, lui = o.lui ? PT_CM : 0, W = o.rong, doan = [], dong = [], y = 2;
+    if (o.tieuDe) doan.push({ s: o.tieuDe, d: true, tieuDe: true });
+    String(o.noiDung || '').split(/\n/).forEach(function (x) { if (x.trim()) doan.push({ s: x.trim() }); });
+    doan.forEach(function (d, i) {
+      if (i) y += CACH_DOAN;
+      var l = d.tieuDe ? 0 : lui, hs = catDong(d.s, fs, d.d, W - l, W);
+      hs.forEach(function (h, j) {
+        dong.push({ tu: h.tu, rong: h.rong, d: d.d, x: j ? 0 : l, y: y, cuoi: j === hs.length - 1, toiDa: W - (j ? 0 : l) });
+        y += lh;
+      });
+    });
+    return { dong: dong, cao: doan.length ? y + 2 : 0, lh: lh };
+  }
+  function veNxDang(o, s) {
+    var bc = boCucNx(o), fs = o.fs, c = document.createElement('canvas');
+    c.width = Math.ceil(o.rong * s); c.height = Math.max(1, Math.ceil(bc.cao * s));
+    var g = c.getContext('2d');
+    g.scale(s, s); g.textBaseline = 'alphabetic'; g.fillStyle = o.mau;
+    var chan = (bc.lh - fs) / 2 + fs * 0.86;
+    bc.dong.forEach(function (d) {
+      g.font = phongIn(fs, d.d);
+      var cach = doRong(' ', fs, d.d), x = d.x;
+      if (o.canDeu && !d.cuoi && d.tu.length > 1) cach += (d.toiDa - d.rong) / (d.tu.length - 1);
+      d.tu.forEach(function (w) { g.fillText(w, x, d.y + chan); x += doRong(w, fs, d.d) + cach; });
+    });
+    return { canvas: c, rong: o.rong, cao: bc.cao };
+  }
+
+  function thongTinKyDang(p) {
+    var x = { fs: Number(giaTri(p, 'fs')) || 14, mau: MAU_MUC[giaTri(p, 'mau')] || MUC, chucDanh: giaTri(p, 'cd'),
+              hoTen: giaTri(p, 'ht').trim(), coNgay: chonD(p, 'co-ngay'), diaDanh: C().DIA_DANH || '',
+              khoangKy: (Number(giaTri(p, 'kk')) || 2.6) * PT_CM, chuKy: anhChuKy };
+    var nd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(giaTri(p, 'ngay'));
+    if (nd) x.ngay = new Date(+nd[1], +nd[2] - 1, +nd[3]);
+    if (dongDau(p)) { x.dau = anhDau; x.dauPt = (Number(giaTri(p, 'mm')) || 35) / 25.4 * 72; }
+    return x;
+  }
+  function thongTinNxDang(p) {
+    return { fs: Number(giaTri(p, 'fs')) || 14, mau: MAU_MUC[giaTri(p, 'mau')] || MUC, tieuDe: giaTri(p, 'td').trim(),
+             noiDung: giaTri(p, 'nx'), rong: (Number(giaTri(p, 'nx-rong')) || 16) * PT_CM,
+             gian: Number(giaTri(p, 'nx-gian')) || 1.15, canDeu: chonD(p, 'nx-deu'), lui: chonD(p, 'nx-lui') };
+  }
+  function veKhoiDang(p, loai, s) { return loai === 'ky' ? veKyDang(thongTinKyDang(p), s) : veNxDang(thongTinNxDang(p), s); }
+  function coNx(p) { return chonD(p, 'nx-co'); }
+  function nxCoChu(p) { return coNx(p) && !!(giaTri(p, 'td').trim() || giaTri(p, 'nx').trim()); }
+  function batNx(p) {   // chọn đặt khối nhận xét mà đang tắt → bật lên
+    if (p.dangDat === 'nx' && !coNx(p)) { oD(p, 'nx-co').checked = true; nhoD('nx-co', '1'); capChuDang(p); }
+  }
+
+  function capChuDang(p) {
+    if (!oD(p, 'kk')) return;
+    oD(p, 'kk-chu').textContent = soVN(giaTri(p, 'kk')) + ' cm';
+    if (oD(p, 'mm-chu')) oD(p, 'mm-chu').textContent = giaTri(p, 'mm') + ' mm';
+    oD(p, 'nx-rong-chu').textContent = soVN(giaTri(p, 'nx-rong')) + ' cm';
+    oD(p, 'dong-ngay').hidden = !chonD(p, 'co-ngay');
+    oD(p, 'muc-nx').classList.toggle('tat', !coNx(p));
+    var bc = boCucNx(thongTinNxDang(p));
+    oD(p, 'nx-cao').textContent = bc.dong.length ? soVN(bc.cao / PT_CM) + ' cm (' + bc.dong.length + ' dòng)' : 'tự tính';
+  }
+  function capNutLuuDang(p) {
+    var n = oD(p, 'luu'), g = oD(p, 'goi-y');
+    if (!n || !p.khoi) return;
+    var thieuNx = nxCoChu(p) && !p.khoi.nx;
+    n.disabled = !(p.khoi.ky && anhChuKy && p.byte) || thieuNx;
+    oD(p, 'bo-khoi').hidden = !p.khoi[p.dangDat];
+    oD(p, 'nhu-truoc').hidden = !nhoD('vi-tri') || !p.du;
+    p.phu.querySelectorAll('[data-khs="dat"]').forEach(function (b) { b.classList.toggle('chon', b.getAttribute('data-loai') === p.dangDat); });
+    ['ky', 'nx'].forEach(function (l) { var k = p.khoi[l]; if (k && k.el) k.el.classList.toggle('dang-dat', l === p.dangDat); });
+    if (!anhChuKy) g.textContent = 'Bấm "Ký mới" để ký tên một lần; máy nhớ cho những lần sau.';
+    else if (chonD(p, 'dong-dau') && !anhDau) g.textContent = 'Chưa có ảnh con dấu Đảng ủy: bấm "Chọn ảnh dấu" (ảnh chụp dấu đỏ trên giấy trắng), hoặc bỏ chọn Đóng dấu.';
+    else if (!p.khoi.ky) g.textContent = 'Bấm vào trang, đúng chỗ muốn đặt khối chữ ký. Kéo khối để dời chỗ.';
+    else if (thieuNx) g.textContent = 'Chọn "Khối nhận xét" ở trên rồi bấm lên trang để đặt. Kéo ô vuông ở mép phải khối để chỉnh bề rộng.';
+    else g.textContent = (p.tuDat ? 'Đã đặt như lần trước. ' : '') + 'Xem lại các khối trên trang (kéo để dời; kéo mép phải khối nhận xét để chỉnh bề rộng), rồi bấm Ký và lưu.';
+  }
+
+  function veLaiDang(p, loai) {
+    var k = p.khoi && p.khoi[loai];
+    if (!k) return;
+    if (loai === 'nx' && !coNx(p)) { boKhoiDang(p, 'nx'); return; }
+    var tr = p.trang[k.trang];
+    if (!tr) return;
+    var v = veKhoiDang(p, loai, tr.vp.scale * Math.min(window.devicePixelRatio || 1, 2));
+    if (!k.el) k.el = taoKhoiDang(p, loai);
+    if (k.el.parentNode !== tr.giay) tr.giay.appendChild(k.el);
+    k.rong = v.rong * tr.vp.scale; k.cao = Math.max(8, v.cao * tr.vp.scale);
+    k.x = Math.max(0, Math.min(k.x, tr.vp.width - k.rong));
+    k.y = Math.max(0, Math.min(k.y, tr.vp.height - k.cao));
+    k.el.firstChild.src = v.canvas.toDataURL('image/png');
+    k.el.style.left = k.x + 'px'; k.el.style.top = k.y + 'px';
+    k.el.style.width = k.rong + 'px'; k.el.style.height = k.cao + 'px';
+  }
+  function veLaiDangCa(p) {
+    if (!p.khoi) return;
+    veLaiDang(p, 'ky'); veLaiDang(p, 'nx'); capChuDang(p); capNutLuuDang(p);
+  }
+  function taoKhoiDang(p, loai) {
+    var el = document.createElement('div');
+    el.className = 'khs-khoi';
+    el.setAttribute('aria-label', loai === 'ky' ? 'Khối chữ ký' : 'Khối nhận xét');
+    var im = document.createElement('img'); im.alt = ''; im.draggable = false;
+    el.appendChild(im);
+    var tay = null;
+    if (loai === 'nx') { tay = document.createElement('span'); tay.className = 'khs-keo-rong'; tay.title = 'Kéo để chỉnh bề rộng'; el.appendChild(tay); }
+    var bd = null;
+    el.addEventListener('pointerdown', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var k = p.khoi[loai];
+      p.dangDat = loai;
+      bd = { x: e.clientX, y: e.clientY, ox: k.x, oy: k.y, rong: e.target === tay, cm: Number(giaTri(p, 'nx-rong')) || 16 };
+      el.setPointerCapture(e.pointerId);
+      capNutLuuDang(p);
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!bd) return;
+      var k = p.khoi[loai], tr = p.trang[k.trang];
+      if (bd.rong) {
+        var cm = bd.cm + (e.clientX - bd.x) / tr.vp.scale / PT_CM;
+        cm = Math.max(4, Math.min(cm, (tr.vp.width - k.x) / tr.vp.scale / PT_CM, 18));
+        oD(p, 'nx-rong').value = cm.toFixed(1);
+        veLaiDang(p, 'nx'); capChuDang(p);
+        return;
+      }
+      k.x = Math.max(0, Math.min(bd.ox + e.clientX - bd.x, tr.vp.width - k.rong));
+      k.y = Math.max(0, Math.min(bd.oy + e.clientY - bd.y, tr.vp.height - k.cao));
+      p.tuDat = false;
+      el.style.left = k.x + 'px'; el.style.top = k.y + 'px';
+    });
+    function tha() { if (bd && bd.rong) nhoD('nx-rong', giaTri(p, 'nx-rong')); bd = null; capNutLuuDang(p); }
+    el.addEventListener('pointerup', tha);
+    el.addEventListener('pointercancel', tha);
+    el.addEventListener('click', function (e) { e.stopPropagation(); });
+    return el;
+  }
+  function boKhoiDang(p, loai) {
+    var k = p.khoi && p.khoi[loai];
+    if (k && k.el && k.el.parentNode) k.el.parentNode.removeChild(k.el);
+    if (p.khoi) p.khoi[loai] = null;
+    p.tuDat = false;
+    capNutLuuDang(p);
+  }
+  function datKhoiDang(p, loai, so, x, y) {
+    var cu = p.khoi[loai];
+    if (cu && cu.el && cu.el.parentNode) cu.el.parentNode.removeChild(cu.el);
+    p.khoi[loai] = { trang: so, x: x, y: y, el: cu && cu.el };
+    veLaiDang(p, loai);
+  }
+  function datKhoiDangBam(p, e, giay) {
+    var r = giay.getBoundingClientRect(), so = Number(giay.getAttribute('data-trang')), tr = p.trang[so];
+    if (!tr) return;
+    var loai = p.dangDat;
+    batNx(p);
+    var rong = (loai === 'nx' ? (Number(giaTri(p, 'nx-rong')) || 16) : 6) * PT_CM * tr.vp.scale;
+    datKhoiDang(p, loai, so, e.clientX - r.left - (loai === 'nx' ? 10 : rong / 2), e.clientY - r.top - 12);
+    p.tuDat = false;
+    // Đặt xong khối chữ ký mà khối nhận xét có chữ, chưa đặt → chuyển sang đặt khối nhận xét
+    if (loai === 'ky' && nxCoChu(p) && !p.khoi.nx) p.dangDat = 'nx';
+    else if (loai === 'nx' && !p.khoi.ky) p.dangDat = 'ky';
+    capChuDang(p); capNutLuuDang(p);
+  }
+  // Vị trí lần ký trước (theo tỉ lệ trang): văn bản cùng mẫu thì hai khối rơi đúng chỗ
+  function datNhuTruocDang(p, tuDong) {
+    if (!p.du || !p.khoi) return;
+    var v = null;
+    try { v = JSON.parse(nhoD('vi-tri') || 'null'); } catch (e) { v = null; }
+    if (!v || !v.ky || (tuDong && p.khoi.ky)) { capNutLuuDang(p); return; }
+    var n = p.trang.length, dau = null;
+    ['ky', 'nx'].forEach(function (l) {
+      var x = v[l];
+      if (!x || (l === 'nx' && !coNx(p))) return;
+      var so = x.cuoi ? n - 1 : Math.min(x.trang, n - 1), tr = p.trang[so];
+      if (!tr) return;
+      datKhoiDang(p, l, so, x.fx * tr.vp.width, x.fy * tr.vp.height);
+      if (!dau) dau = { tr: tr, y: p.khoi[l].y };
+    });
+    p.tuDat = true;
+    p.dangDat = 'ky';
+    capChuDang(p); capNutLuuDang(p);
+    var xem = oD(p, 'xem');
+    if (dau && xem) xem.scrollTop = Math.max(0, dau.tr.giay.offsetTop + dau.y - xem.clientHeight / 3);
+  }
+
+  function doiODang(p, e, k) {
+    if (!k) return;
+    var x = e.target;
+    if (e.type === 'change') {
+      if (k === 'cd-mau') { if (x.value) { oD(p, 'cd').value = x.value; nhoD('cd-' + p.dang, x.value); } else oD(p, 'cd').focus(); }
+      if (k === 'td-mau') { oD(p, 'td').value = x.value; nhoD('td-' + p.dang, x.value); }
+      if (k === 'cau-mau') {
+        var c = x.value; x.value = '';
+        if (c) { var ta = oD(p, 'nx'); ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, '') + '\n' + c : c; nxNho = ta.value; }
+      }
+      if (k === 'cd') { nhoD('cd-' + p.dang, x.value); oD(p, 'cd-mau').value = DANG[p.dang].cd.indexOf(x.value) >= 0 ? x.value : ''; }
+      if (k === 'td') nhoD('td-' + p.dang, x.value);
+      if (k === 'ht') nho('ho-ten', x.value.trim());
+      if (['kk', 'mm', 'fs', 'mau', 'nx-rong', 'nx-gian'].indexOf(k) >= 0) nhoD(k, x.value);
+      if (['co-ngay', 'dong-dau', 'nx-co', 'nx-deu', 'nx-lui'].indexOf(k) >= 0) nhoD(k, x.checked ? '1' : '0');
+    }
+    if (k === 'nx') nxNho = x.value;
+    if (k === 'nx-co' && x.checked && p.khoi.ky && !p.khoi.nx && nxCoChu(p)) p.dangDat = 'nx';
+    veLaiDangCa(p);
+  }
+
+  // Ghi hai khối vào PDF (mỗi khối một ảnh PNG, đúng cỡ pt) rồi gửi lên Drive
+  function kyVaLuuDang(p) {
+    var nut = oD(p, 'luu');
+    if (!p.khoi.ky || !anhChuKy || !p.byte) return;
+    var f = p.tep, viTri = {};
+    var ve = ['ky', 'nx'].filter(function (l) { return p.khoi[l] && (l === 'ky' || nxCoChu(p)); }).map(function (l) {
+      var k = p.khoi[l], tr = p.trang[k.trang];
+      viTri[l] = { cuoi: k.trang === p.trang.length - 1, trang: k.trang, fx: k.x / tr.vp.width, fy: k.y / tr.vp.height };
+      return { k: k, tr: tr, v: veKhoiDang(p, l, S_IN) };
+    });
+    nut.disabled = true; nut.textContent = 'Đang ghi vào tệp…';
+    napPdfLib().then(function (L) {
+      return L.PDFDocument.load(p.byte, { ignoreEncryption: true }).then(function (doc) {
+        return ve.reduce(function (hua, x) {
+          return hua.then(function () {
+            return doc.embedPng(x.v.canvas.toDataURL('image/png')).then(function (png) {
+              var pg = doc.getPage(x.k.trang);
+              var goc = x.tr.vp.convertToPdfPoint(x.k.x, x.k.y + x.v.cao * x.tr.vp.scale);
+              var xoay = ((pg.getRotation().angle % 360) + 360) % 360;
+              pg.drawImage(png, { x: goc[0], y: goc[1], width: x.v.rong, height: x.v.cao, rotate: L.degrees(xoay) });
+            });
+          });
+        }, Promise.resolve()).then(function () { return doc.save({ objectsPerTick: 2000 }); });
+      });
+    }).then(function (moi) {
+      if (p.huy) return;
+      nut.textContent = 'Đang lưu lên Drive (' + (moi.length / 1048576).toFixed(1).replace('.', ',') + ' MB)…';
+      return goi('luu', { thu_muc: p.thuMuc, loai: p.loai, tep: f.id, sua_luc: p.suaLuc, b64: byteSangB64(moi) });
+    }).then(function (kq) {
+      if (p.huy || !kq) return;
+      f.da_ky = kq.da_ky || f.da_ky;
+      if (kq.sua_luc) f.sua_luc = kq.sua_luc;
+      nhoD('vi-tri', JSON.stringify(viTri));
+      if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; }
+      veDanhSach(p);
+      baoNhanh('Đã ký và lưu "' + f.ten + '" vào hồ sơ ' + p.hoTen + '.');
     }).catch(function (e) {
       if (p.huy) return;
       nut.disabled = false; nut.textContent = 'Ký và lưu vào Drive';
@@ -850,7 +1309,7 @@
 
   // ── Lối vào: nút ✍ trên thẻ giáo viên (du-lieu-sql.js vẽ, có data-ky-thu) ──
   function moTu(n) {
-    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n, n.getAttribute('data-ky-loai'));
+    mo(n.getAttribute('data-ky-thu'), n.getAttribute('data-ky-ten') || '', n, n.getAttribute('data-ky-loai'), n.getAttribute('data-ky-dang'));
   }
   document.addEventListener('click', function (e) {
     var n = e.target.closest && e.target.closest('[data-ky-thu]');

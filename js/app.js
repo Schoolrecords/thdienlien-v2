@@ -174,8 +174,25 @@
   function taoTmDuoc() {
     return !!(window.MAY_CHU && laQuanTriApp() && window.KY_HO_SO && window.KY_HO_SO.bat() && window.KY_HO_SO.taoThuMuc);
   }
-  function kyHoSoDuoc(link) {
-    return !!(window.MAY_CHU && laQuanTriApp() && window.KY_HO_SO && window.KY_HO_SO.bat() && idThuMucDrive(link));
+  // Hồ sơ Đảng (thầy Chung 10/11/2026): hộp H04 (Đảng bộ / Chi bộ) và H04.n (chi bộ
+  // trực thuộc). Đã ghi người phụ trách (phu_trach_email) thì CHỈ những Gmail đó ký
+  // — QC1: H04 Bí thư Đảng bộ; H04.n Bí thư chi bộ điểm trường đó + Bí thư Đảng bộ.
+  // Dịch vụ ký (ky-ho-so-drive.gs) kiểm lại y hệt. Trả 'dang_uy' | 'chi_bo' | ''.
+  function loaiHopDang(h) {
+    var m = String((h && h.hop) || '');
+    if (m === 'H04') return (window.CAU_HINH || {}).TO_CHUC_DANG === 'dang_bo' ? 'dang_uy' : 'chi_bo';
+    return m.indexOf('H04.') === 0 ? 'chi_bo' : '';
+  }
+  function giaoKyDang(h) {   // null: hồ sơ chưa ghi người phụ trách → theo luật BGH
+    var hs = h && banGhi(h.ma), ds = String((hs && hs.phu_trach_email) || '').toLowerCase().trim();
+    if (!loaiHopDang(h) || !ds) return null;
+    var u = window.NGUOI_DUNG || {}, em = String(u.email || '').toLowerCase();
+    return ds === '*' || ds.split(',').map(function (s) { return s.trim(); }).indexOf(em) >= 0;
+  }
+  function kyHoSoDuoc(link, h) {
+    if (!(window.MAY_CHU && window.KY_HO_SO && window.KY_HO_SO.bat() && idThuMucDrive(link))) return false;
+    var dang = giaoKyDang(h);
+    return dang === null ? laQuanTriApp() : dang;
   }
 
   // Một dòng minh chứng trong bảng
@@ -211,8 +228,9 @@
       (suaDuoc ? '<button class="drive hs-sua" title="Sửa hồ sơ này" onclick="event.stopPropagation();moSuaHoSo(\'' + thoatHTML(h.ma) + '\')">✏️</button>' : '') +
       // ✍ Ký hồ sơ của trường (js/ky-ho-so.js, thầy Chung 30/10/2026): Hiệu trưởng,
       // Phó Hiệu trưởng ký + đóng dấu PDF trong thư mục hồ sơ. Dịch vụ ký kiểm lại quyền.
-      (kyHoSoDuoc(link)
+      (kyHoSoDuoc(link, h)
         ? '<button type="button" class="drive hs-ky" title="Ký, đóng dấu tệp PDF trong hồ sơ này" data-ky-loai="ho_so"' +
+          (loaiHopDang(h) ? ' data-ky-dang="' + loaiHopDang(h) + '"' : '') +
           ' data-ky-thu="' + thoatHTML(idThuMucDrive(link)) + '" data-ky-ten="' + thoatHTML(h.ma + ' · ' + h.ten) + '"' +
           // stopPropagation chặn cả lối bắt chung ở document (ky-ho-so.js) → gọi thẳng
           ' onclick="event.stopPropagation();window.KY_HO_SO&&window.KY_HO_SO.moTu(this)">✍</button>'
