@@ -4244,6 +4244,10 @@ tr.dnn-doi td:first-child { box-shadow: inset 3px 0 0 var(--chinh); }
 div.khs-khoi { background: transparent; outline-color: #8a97b8; }
 div.khs-khoi.dang-dat { outline: 2px dashed var(--chinh); }
 div.khs-khoi img { display: block; width: 100%; height: 100%; pointer-events: none; }
+.khs-chon-tep { display: flex; gap: 6px; align-items: center; }
+.khs-chon-tep select { flex: 1; min-width: 0; font: inherit; font-size: 13.5px; padding: 7px 8px; border: 1px solid var(--vien-dam); border-radius: 9px; background: #fff; color: var(--chu); }
+.khs-chon-tep .khs-nut-phu { padding: 6px 11px; font-size: 16px; line-height: 1; }
+.khs-chon-tep .khs-nut-phu:disabled { opacity: .4; cursor: default; }
 .khs-keo-rong { position: absolute; right: -9px; top: 50%; width: 14px; height: 30px; margin-top: -15px; background: #fff; border: 2px solid var(--chinh); border-radius: 4px; cursor: ew-resize; touch-action: none; }
 @media (max-width: 760px) {
   .khs-ky { flex-direction: column; overflow: auto; }

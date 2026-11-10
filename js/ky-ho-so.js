@@ -351,7 +351,7 @@
     var f = p.ds[i];
     if (!f) return;
     if (p.quan) { p.quan.disconnect(); p.quan = null; }
-    p.man = 'ky'; p.tep = f; p.dat = null; p.trang = [];
+    p.man = 'ky'; p.tep = f; p.iTep = i; p.dat = null; p.trang = [];
     phuDe(p, f.ten);
     var nk = p.nguoiKy || {};
     var hs = p.loai === 'ho_so', duoi = hs ? '-hs' : '';
@@ -682,6 +682,8 @@
     else if (k === 'bo-khoi') { if (p.dang) boKhoiDang(p, p.dangDat); else boKhoi(p); }
     else if (k === 'dat' && p.dang) { p.dangDat = n.getAttribute('data-loai') === 'nx' ? 'nx' : 'ky'; batNx(p); capNutLuuDang(p); }
     else if (k === 'nhu-truoc' && p.dang) datNhuTruocDang(p, false);
+    else if (k === 'tep-truoc' && p.iTep > 0) moTep(p, p.iTep - 1);
+    else if (k === 'tep-sau' && p.iTep < p.ds.length - 1) moTep(p, p.iTep + 1);
     else if (k === 'luu') kyVaLuu(p);
     else if (k === 'bk-xoa') xoaBangKy();
     else if (k === 'bk-huy') dongBangKy();
@@ -834,6 +836,7 @@
         (f.co ? ' (' + (f.co / 1048576).toFixed(1).replace('.', ',') + ' MB)' : '') + '…</p></div>' +
       '<div class="khs-ben">' +
         '<button type="button" class="khs-lui" data-khs="lui">‹ Danh sách tệp</button>' +
+        thanhChonTep(p) +
         // ── Khối nhận xét ──
         '<div class="khs-muc' + (coNx ? '' : ' tat') + '" data-khs="muc-nx"><b><label class="khs-dong-dau"><input type="checkbox" data-khs="nx-co"' + (coNx ? ' checked' : '') + '> Khối nhận xét</label></b>' +
           '<label class="khs-o"><span class="khs-nhan">Tiêu đề</span><select data-khs="td-mau">' + luaChon(D.td, D.td.indexOf(td) >= 0 ? td : '', 'Tự gõ / không có tiêu đề') + '</select>' +
@@ -880,9 +883,23 @@
           '<button type="button" class="khs-nut-phu" data-khs="nhu-truoc" hidden>Đặt như lần trước</button>' +
           '<button type="button" class="khs-lui khs-bo-khoi" data-khs="bo-khoi" hidden>✕ Bỏ khối đang chọn</button>' +
         '</div>' +
+        '<label class="khs-dong-dau"><input type="checkbox" data-khs="tiep"' + (macDinhD('tiep', '1') === '1' ? ' checked' : '') + '> <span>Lưu xong tự mở tệp tiếp theo chưa ký</span></label>' +
         '<button type="button" class="nut-chinh khs-luu" data-khs="luu" disabled>Ký và lưu vào Drive</button>' +
       '</div>' +
     '</div>';
+  }
+  // Thầy Chung 10/11: chuyển tệp ngay trên thanh bên, khỏi quay ra danh sách rồi mở lại
+  function thanhChonTep(p) {
+    if (p.ds.length < 2) return '';
+    return '<div class="khs-chon-tep"><button type="button" class="khs-nut-phu" data-khs="tep-truoc" title="Tệp trước"' + (p.iTep > 0 ? '' : ' disabled') + '>‹</button>' +
+      '<select data-khs="chon-tep" aria-label="Chọn tệp khác">' + p.ds.map(function (x, j) {
+        return '<option value="' + j + '"' + (j === p.iTep ? ' selected' : '') + '>' + (x.da_ky ? '✓ ' : '') + t((x.duong ? x.duong + ' / ' : '') + x.ten) + '</option>';
+      }).join('') + '</select>' +
+      '<button type="button" class="khs-nut-phu" data-khs="tep-sau" title="Tệp sau"' + (p.iTep < p.ds.length - 1 ? '' : ' disabled') + '>›</button></div>';
+  }
+  function tepChuaKyTiep(p) {   // tệp chưa ký kế sau tệp đang mở (vòng lại đầu danh sách)
+    for (var d = 1; d < p.ds.length; d++) { var j = (p.iTep + d) % p.ds.length; if (!p.ds[j].da_ky) return j; }
+    return -1;
   }
 
   // Đo chữ theo pt (vẽ thử ở cỡ ×10 cho đủ chính xác)
@@ -1110,9 +1127,23 @@
     datKhoiDang(p, loai, so, e.clientX - r.left - (loai === 'nx' ? 10 : rong / 2), e.clientY - r.top - 12);
     p.tuDat = false;
     // Đặt xong khối chữ ký mà khối nhận xét có chữ, chưa đặt → chuyển sang đặt khối nhận xét
-    if (loai === 'ky' && nxCoChu(p) && !p.khoi.nx) p.dangDat = 'nx';
-    else if (loai === 'nx' && !p.khoi.ky) p.dangDat = 'ky';
+    if (loai === 'ky') tuDatNx(p);
+    else if (!p.khoi.ky) p.dangDat = 'ky';
     capChuDang(p); capNutLuuDang(p);
+  }
+  // Thầy Chung 10/11: đặt khối chữ ký mà khối nhận xét không hiện (phải bấm thêm lần nữa)
+  // → khối nhận xét có chữ, chưa đặt thì TỰ ĐẶT ngay trên khối chữ ký, canh giữa trang.
+  function tuDatNx(p) {
+    var ky = p.khoi.ky;
+    if (!ky || p.khoi.nx || !nxCoChu(p)) return;
+    var tr = p.trang[ky.trang];
+    datKhoiDang(p, 'nx', ky.trang, 0, ky.y);
+    var nx = p.khoi.nx;
+    nx.x = Math.max(0, (tr.vp.width - nx.rong) / 2);
+    nx.y = ky.y - nx.cao - 6 * tr.vp.scale;
+    if (nx.y < 0) nx.y = ky.y + ky.cao + 6 * tr.vp.scale;   // sát mép trên thì đặt xuống dưới
+    veLaiDang(p, 'nx');
+    p.dangDat = 'ky';
   }
   // Vị trí lần ký trước (theo tỉ lệ trang): văn bản cùng mẫu thì hai khối rơi đúng chỗ
   function datNhuTruocDang(p, tuDong) {
@@ -1131,6 +1162,7 @@
     });
     p.tuDat = true;
     p.dangDat = 'ky';
+    tuDatNx(p);   // lần trước chưa đặt khối nhận xét mà nay có chữ → đặt trên khối chữ ký
     capChuDang(p); capNutLuuDang(p);
     var xem = oD(p, 'xem');
     if (dau && xem) xem.scrollTop = Math.max(0, dau.tr.giay.offsetTop + dau.y - xem.clientHeight / 3);
@@ -1153,8 +1185,10 @@
       if (['co-ngay', 'dong-dau', 'nx-co', 'nx-deu', 'nx-lui'].indexOf(k) >= 0) nhoD(k, x.checked ? '1' : '0');
     }
     if (k === 'nx') nxNho = x.value;
-    if (k === 'nx-co' && x.checked && p.khoi.ky && !p.khoi.nx && nxCoChu(p)) p.dangDat = 'nx';
+    if (k === 'chon-tep') { if (e.type === 'change') moTep(p, Number(x.value)); return; }
+    if (k === 'tiep') { if (e.type === 'change') nhoD('tiep', x.checked ? '1' : '0'); return; }
     veLaiDangCa(p);
+    if (e.type === 'change' || k === 'nx') { tuDatNx(p); capNutLuuDang(p); }
   }
 
   // Ghi hai khối vào PDF (mỗi khối một ảnh PNG, đúng cỡ pt) rồi gửi lên Drive
@@ -1191,8 +1225,10 @@
       if (kq.sua_luc) f.sua_luc = kq.sua_luc;
       nhoD('vi-tri', JSON.stringify(viTri));
       if (p.pdf) { try { p.pdf.destroy(); } catch (x) { /* bỏ */ } p.pdf = null; }
-      veDanhSach(p);
-      baoNhanh('Đã ký và lưu "' + f.ten + '" vào hồ sơ ' + p.hoTen + '.');
+      // Lưu xong tự mở tệp tiếp theo chưa ký — hai khối tự đặt như lần trước (datNhuTruocDang)
+      var sau = chonD(p, 'tiep') ? tepChuaKyTiep(p) : -1;
+      baoNhanh('Đã ký và lưu "' + f.ten + '".' + (sau >= 0 ? ' Mở tệp tiếp theo…' : ''));
+      if (sau >= 0) moTep(p, sau); else veDanhSach(p);
     }).catch(function (e) {
       if (p.huy) return;
       nut.disabled = false; nut.textContent = 'Ký và lưu vào Drive';
