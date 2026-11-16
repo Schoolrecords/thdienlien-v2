@@ -297,5 +297,5 @@
   };
 
   window.qtTabPhu = window.qtTabPhu || [];
-  window.qtTabPhu.push({ ma: 'sl', ten: '📊 Số liệu 3 năm', ve: ve });
+  window.qtTabPhu.push({ ma: 'sl3', ten: '📊 Số liệu 3 năm', ve: ve });
 })();
