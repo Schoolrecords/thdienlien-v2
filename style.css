@@ -5492,3 +5492,18 @@ div.khs-khoi img { display: block; width: 100%; height: 100%; pointer-events: no
 .tl-o .sl-o { text-align: left; }
 .sl-khac { text-align: left; }
 .sl-tinh { font-weight: 700; color: var(--dam); }
+
+/* ── EduQA (bdclgd.vn): nhãn mục + nút chép sang — js/tcqg-eduqa.js (16/11/2026, chung với mầm non) ── */
+.nhan-eduqa { display: inline-block; font-size: 11px; font-weight: 700; color: var(--dam);
+  background: var(--o-con); border: 1px solid var(--vien-dam); border-radius: 6px; padding: 1px 7px;
+  margin-left: 6px; text-decoration: none; vertical-align: middle; }
+.nhan-eduqa:hover { text-decoration: underline; }
+.nut-chep-eduqa { font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  color: var(--chinh); background: #fff; border: 1.5px solid var(--chinh); border-radius: 8px;
+  padding: 3px 10px; margin-left: 8px; vertical-align: middle; }
+.nut-chep-eduqa:hover { background: var(--o-con); }
+.hs-o label .nut-chep-eduqa { float: right; margin-left: 8px; }
+#kd-eduqa .sub { margin-top: 14px; }
+.eduqa-giai { font-size: 13px; color: var(--chu-mo); margin: 0 0 10px; line-height: 1.55; }
+.eduqa-bang td:first-child { white-space: nowrap; font-weight: 700; }
+.eduqa-bang td { vertical-align: top; }

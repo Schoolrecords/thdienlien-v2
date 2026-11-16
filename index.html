@@ -85,7 +85,7 @@
        Không gọi Google Fonts nữa: bớt một phụ thuộc bên ngoài, trang vẫn đúng
        phông khi mạng trường chập chờn. -->
   <link rel="stylesheet" href="fonts-utm-avo.css?v=2026093005">
-  <link rel="stylesheet" href="style.min.css?v=498d5b8bf8">
+  <link rel="stylesheet" href="style.min.css?v=71871fc995">
 </head>
 <body class="dang-khoa">
 
@@ -388,11 +388,15 @@
       <div class="kd-nut">
         <button id="kd-nut-hd" style="display:none" onclick="chuyenManHinh('quantri');window.moQuanTri&&moQuanTri('hd')">✏ Sửa hội đồng</button>
         <button id="kd-nut-kh" style="display:none" onclick="chuyenManHinh('quantri');window.moQuanTri&&moQuanTri('kh')">📈 Kế hoạch cải tiến</button>
+        <!-- Xuất danh mục minh chứng đúng mẫu "Nhập từ Excel" của EduQA (bdclgd.vn) — js/xuat-minh-chung-eduqa.js -->
+        <button id="kd-nut-eduqa" onclick="window.xuatMinhChungEduQA&&xuatMinhChungEduQA()" title="Tệp Excel đúng mẫu mục 4.3 Minh chứng của phần mềm EduQA">📤 Xuất minh chứng cho EduQA</button>
       </div>
     </div>
 
     <div id="kd-giai-thich" class="kd-vi"></div>
     <div id="kd-hoi-dong"></div>
+    <!-- Bảng sáu mục EduQA (bdclgd.vn): app soạn tới đâu, dán vào đâu — js/tcqg-eduqa.js -->
+    <div id="kd-eduqa"></div>
 
     <div class="kd-thanh" id="kd-thanh"></div>
 
@@ -537,7 +541,7 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=53172be211"></script>
+<script src="js/goi.min.js?v=52abdd5dd4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
@@ -598,6 +602,7 @@
 <script src="js/tcqg.js?v=2026093005"></script>
 <script src="js/tcqg-hoidong.js?v=2026093005"></script>
 <script src="js/tcqg-so-lieu.js?v=2026093005"></script>
+<script src="js/tcqg-eduqa.js?v=2026093005"></script>
 <script src="js/bach-lieu-shim.js?v=2026093005"></script>
 <script src="js/co-so.js?v=2026093005"></script>
 <script src="js/len-lop.js?v=2026093005"></script>
@@ -625,6 +630,7 @@
 <!-- Bộ đóng gói .xlsx + ba tệp mẫu nhập dữ liệu (CBGV · Học sinh · Chia lớp
      tuyển sinh) cho nút "Tải mẫu Excel" ở thẻ Nạp dữ liệu. Nạp TRƯỚC nap-du-lieu.js. -->
 <script src="js/xuat-excel.js?v=2026093005"></script>
+<script src="js/xuat-minh-chung-eduqa.js?v=2026093005"></script>
 <script src="js/mau-nhap-excel.js?v=2026093005"></script>
 <script src="js/nap-du-lieu.js?v=2026093005"></script>
 <!-- THỜI KHÓA BIỂU (14/9/2026, sổ dự án 91.13 — đảo quyết định gỡ 15/8): nạp tệp

@@ -37,30 +37,39 @@
   // Là HÀM chứ không phải hằng: hai nhãn "Kiến nghị với …" lấy tên cơ quan từ
   // CAU_HINH, mà cấu hình trường về SAU khi tệp này nạp — chụp lúc nạp tệp thì
   // nhãn mãi mãi là chữ chung "cơ quan quản lý ngành". Đọc lúc vẽ mới đúng.
+  // Tên nhóm và nhãn ô theo ĐÚNG mục của phần mềm EduQA (bdclgd.vn) — thầy
+  // Chung chốt 16/11/2026 "làm cho chuẩn" (mầm non trước, tiểu học cùng ngày):
+  // hội đồng soạn ở app, nộp trên EduQA, nên nhìn ô nào ở app là biết dán vào
+  // ô nào bên kia. `eduqa` = mã mục EduQA để vẽ nhãn dẫn sang (js/tcqg-eduqa.js).
   function cotBC() { return [
-    { nhom: 'Phần I — Thông tin chung', muc: [
-      ['nam_thanh_lap', 'Năm thành lập trường', 1],
-      ['kt_xh', 'Điều kiện kinh tế - xã hội của địa phương', 0],
+    { nhom: 'Thông tin chung (EduQA ghi năm thành lập ở 3.1)', muc: [
+      ['nam_thanh_lap', 'Năm thành lập trường', 1]] },
+    { nhom: '4.1 Bối cảnh và đặc điểm — Biểu 1 Phần I', eduqa: '4.1', muc: [
+      ['kt_xh', 'Điều kiện kinh tế - xã hội địa phương', 0],
       ['thuan_loi', 'Thuận lợi', 0],
       ['kho_khan', 'Khó khăn', 0],
-      ['dac_diem_nguoi_hoc', 'Đặc điểm học sinh', 0]] },
-    { nhom: 'Phần I mục 4 — Quá trình tự đánh giá', muc: [
-      ['lap_ke_hoach', 'Lập kế hoạch tự đánh giá', 0],
-      ['to_chuc_thuc_hien', 'Tổ chức thực hiện', 0],
-      ['kiem_tra_phan_tich', 'Kiểm tra, phân tích dữ liệu', 0],
-      ['tong_hop_xac_nhan', 'Tổng hợp, xác nhận kết quả', 0]] },
-    { nhom: 'Phần III — Kết luận, kiến nghị', muc: [
-      ['khai_quat', 'Khái quát kết quả tự đánh giá', 0],
-      ['kn_so', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'cơ quan quản lý ngành'), 0],
-      ['kn_ubnd', 'Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'đơn vị chủ quản'), 0],
-      ['kn_khac', 'Kiến nghị khác (nếu có — trống thì báo cáo không in mục này)', 0]] }
+      ['dac_diem_nguoi_hoc', 'Đặc điểm người học (học sinh)', 0]] },
+    { nhom: '4.2 Quá trình thực hiện tự đánh giá — Biểu 1 Phần I mục 4', eduqa: '4.2', muc: [
+      ['lap_ke_hoach', 'a) Lập kế hoạch TĐG — quyết định thành lập Hội đồng, kế hoạch TĐG', 0],
+      ['to_chuc_thuc_hien', 'b) Tổ chức thực hiện — phân công, thu thập minh chứng, rà soát hoạt động', 0],
+      ['kiem_tra_phan_tich', 'c) Kiểm tra, phân tích — phân tích minh chứng, đối chiếu yêu cầu, xác định mức', 0],
+      ['tong_hop_xac_nhan', 'd) Tổng hợp và xác nhận kết quả tự đánh giá', 0]] },
+    { nhom: '4.5 Kết luận chung — Biểu 1 Phần III', eduqa: '4.5', muc: [
+      ['khai_quat', 'Khái quát về mức độ đáp ứng tiêu chuẩn chất lượng giáo dục', 0],
+      ['kn_so', 'a) Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CO_QUAN_THUONG) || 'Sở Giáo dục và Đào tạo'), 0],
+      ['kn_ubnd', 'b) Kiến nghị với ' + ((window.CAU_HINH && window.CAU_HINH.CHU_QUAN_THUONG) || 'Ủy ban nhân dân'), 0],
+      ['kn_khac', 'c) Với tổ chức, cá nhân liên quan (nếu có — trống thì báo cáo không in mục này)', 0]] }
   ]; }
+  // Nhãn trùng chữ EduQA (Tiêu chuẩn n / Đánh giá chung)
   var MUC_DGTC = [
-    ['diem_manh', '1. Điểm mạnh nổi bật'],
-    ['han_che_nguyen_nhan', '2. Điểm hạn chế trọng tâm và nguyên nhân cốt lõi'],
-    ['xu_huong_3_nam', '3a. Xu hướng chất lượng trong 03 năm học liên tiếp'],
-    ['van_de_uu_tien', '3b. Các vấn đề trọng tâm cần ưu tiên cải tiến']
+    ['diem_manh', 'Điểm mạnh nổi bật'],
+    ['han_che_nguyen_nhan', 'Điểm hạn chế trọng tâm và nguyên nhân cốt lõi'],
+    ['xu_huong_3_nam', 'Định hướng cải tiến — a) Phân tích chung về xu hướng chất lượng của Tiêu chuẩn trong 03 năm học liên tiếp'],
+    ['van_de_uu_tien', 'Định hướng cải tiến — b) Các vấn đề trọng tâm cần ưu tiên cải tiến ở tiêu chuẩn']
   ];
+  function nutChep(nhan) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nutChep(nhan) : ''; }
+  function nhanEduQA(muc) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nhan(muc) : ''; }
+  function veEduQA() { if (window.TCQG_EDUQA) window.TCQG_EDUQA.ve(); }
 
   // ── Quyền ──
   // Quyền viết, chấm (31/10/2026, sql/89 — máy chủ kiểm y hệt): BGH, người giữ bút của
@@ -459,6 +468,7 @@
     $('#kd-nut-hd').style.display = laQT() ? '' : 'none';
     $('#kd-nut-kh').style.display = laQT() ? '' : 'none';
     window.veHoiDongTCQG && window.veHoiDongTCQG(NAM_DL || NAM);
+    veEduQA();
   }
 
   function veThanh() {
@@ -709,7 +719,12 @@
     // Thực trạng của mức
     var dsNH = NOI_HAM[c.ma + '|' + muc] || [];
     var viet = dsNH.filter(function (n) { var h = HT_NH[n.id]; return h && h.hien_trang && h.hien_trang.trim(); }).length;
-    html += '<div class="tt-box"><div class="tt-dau"><b>Thực trạng &amp; kết quả thực hiện — Mức ' + muc + '</b>' +
+    // "Mô tả hiện trạng" = đúng tên ô của EduQA (4.4 › tiêu chí › Mức n). Nút
+    // Chép ghép các đoạn đã viết theo nội hàm + mã minh chứng đã gắn thành
+    // một bài để dán vào EduQA (js/tcqg-eduqa.js) — không viết thêm chữ nào.
+    var coMoTa = window.TCQG_EDUQA && window.TCQG_EDUQA.moTa(c.ma, muc).trim();
+    html += '<div class="tt-box"><div class="tt-dau"><b>Mô tả hiện trạng — Mức ' + muc + '</b>' + nhanEduQA('4.4') +
+      (coMoTa ? '<button class="nut-chep-eduqa" onclick="tcqgChepMoTa(\'' + c.ma + '\',' + muc + ')" title="Ghép các đoạn đã viết thành một bài để dán vào ô Mô tả hiện trạng trên EduQA">📋 Chép sang EduQA</button>' : '') +
       (dsNH.length ? '<span class="dem-nh" data-dem="' + c.ma + '|' + muc + '">đã viết ' + viet + '/' + dsNH.length + ' nội hàm</span>' : '') +
       (coQuyenCham(c.ma) && !DANG_SUA ? '<button class="ct-quaylai" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
       '</div>';
@@ -906,7 +921,7 @@
     if (muc === 1) thayDoi = dat ? { dat_m1: true } : { dat_m1: false, dat_m2: false };
     else thayDoi = { dat_m1: true, dat_m2: dat };
     luuTDG(ma, thayDoi, function () {
-      veStats(); veList(); veChiTiet();
+      veStats(); veList(); veChiTiet(); veEduQA();
       window.notify('Đã lưu tiêu chí ' + ma + ' — người chấm và thời điểm đã ghi vào sổ nhật ký.');
     });
   };
@@ -917,7 +932,7 @@
     if (!dangGhiDo() && (chu || '').trim() === (cu || '').trim()) return;
     var thayDoi = {};
     thayDoi[muc === 1 ? 'hien_trang_m1' : 'hien_trang_m2'] = chu.trim() || null;
-    luuTDG(ma, thayDoi, function () { nhayDaLuu('luu-vx-' + ma + '-' + muc); });
+    luuTDG(ma, thayDoi, function () { nhayDaLuu('luu-vx-' + ma + '-' + muc); veEduQA(); });
   };
 
   window.tcqgLuuGhiChu = function (ma, chu) {
@@ -959,6 +974,7 @@
       var o = document.querySelector('[data-nh-o="' + id + '"]');
       if (o) o.classList.toggle('xong', !!chu.trim());
       demLaiNoiHam(NH_CUA[id]);
+      veEduQA();
     });
   };
 
@@ -1009,10 +1025,10 @@
       ['Chủ tịch', 'Phó Chủ tịch', 'Thư ký'].indexOf(window.TCQG_VAI_HD || '') >= 0 ||
       (window.TCQG_TC_CUA_TOI || []).some(function (m) { return m.indexOf(STD + '.') === 0; }));
     goc.innerHTML = '<div class="sub open" style="margin-top:16px"><div class="sub-head"><span class="fo">🧭</span>' +
-      '<b>Đánh giá chung — Tiêu chuẩn ' + STD + '</b><span class="tdg-luu" id="luu-dgtc">✓ đã lưu</span></div>' +
+      '<b>Đánh giá chung — Tiêu chuẩn ' + STD + '</b>' + nhanEduQA('4.4') + '<span class="tdg-luu" id="luu-dgtc">✓ đã lưu</span></div>' +
       '<div class="sub-body" style="display:block;padding:14px 16px">' +
       MUC_DGTC.map(function (m) {
-        return '<div class="hs-o"><label>' + m[1] + '</label>' +
+        return '<div class="hs-o"><label>' + m[1] + nutChep('Tiêu chuẩn ' + STD + ' — ' + m[1]) + '</label>' +
           '<textarea ' + (suaDuoc ? '' : 'disabled ') + 'onblur="tcqgLuuDGTC(\'' + m[0] + '\', this.value)">' +
           thoat(r[m[0]] || '') + '</textarea></div>';
       }).join('') + '</div></div>';
@@ -1038,6 +1054,7 @@
         // bộ đệm đang bày năm khác.
         if (nam === NAM_DL) DGTC[std] = d;
         nhayDaLuu('luu-dgtc');
+        veEduQA();
       }, function (e) { baoKhongLuu('đánh giá chung', e); });
     });
   };
@@ -1049,13 +1066,13 @@
     var bc = BC || {};
     goc.innerHTML = '<div class="sub" style="margin-top:14px"><div class="sub-head" role="button" ' +
       'onclick="this.parentNode.classList.toggle(\'open\')"><span class="fo">🖋</span>' +
-      '<b>Các mục viết bằng lời của Báo cáo tự đánh giá (Phần I và Phần III)</b>' +
+      '<b>Các mục viết bằng lời — EduQA 4.1, 4.2, 4.5 (Biểu 1 Phần I và Phần III)</b>' +
       '<span class="tdg-luu" id="luu-bc">✓ đã lưu</span><span class="sub-arrow">▶</span></div>' +
       '<div class="sub-body" style="padding:14px 16px">' +
       cotBC().map(function (nh) {
-        return '<div class="nhan-nho" style="margin:12px 0 8px">' + nh.nhom + '</div>' +
+        return '<div class="nhan-nho" style="margin:12px 0 8px">' + thoat(nh.nhom) + (nh.eduqa ? ' ' + nhanEduQA(nh.eduqa) : '') + '</div>' +
           nh.muc.map(function (m) {
-            return '<div class="hs-o"><label>' + m[1] + '</label>' +
+            return '<div class="hs-o"><label>' + thoat(m[1]) + (nh.eduqa ? nutChep(m[1]) : '') + '</label>' +
               (m[2]
                 ? '<input onblur="tcqgLuuBC(\'' + m[0] + '\', this.value)" value="' + thoat(bc[m[0]] || '') + '">'
                 : '<textarea onblur="tcqgLuuBC(\'' + m[0] + '\', this.value)">' + thoat(bc[m[0]] || '') + '</textarea>') +
@@ -1086,6 +1103,7 @@
         // so nhầm giá trị.
         if (nam === NAM_DL) BC = d;
         nhayDaLuu('luu-bc');
+        veEduQA();
       }, function (e) { baoKhongLuu('mục báo cáo', e); });
     });
   };
