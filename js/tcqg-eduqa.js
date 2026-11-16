@@ -232,14 +232,19 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-eduqa-khoa]'), function (nut) {
       var k = nut.getAttribute('data-eduqa-khoa'), tt = trangThai(k, noiDungCuaNut(nut));
       var v = PHU.dau[k] ? PHU.dau[k].split('|')[0] : '';
+      // 🔴 CHỈ ghi khi khác (vá 16/11/2026): gán textContent dù trùng chữ vẫn tạo
+      // childList mutation → MutationObserver gọi lại trangTri sau 120 ms → lặp
+      // vô tận, trang báo "Không phản hồi" (QC1).
       nut.classList.toggle('da-chep', tt === 'dong');
       nut.classList.toggle('lech', tt === 'lech');
-      nut.title = tt === 'dong' ? 'Đã chép sang EduQA ngày ' + v + ' — nội dung chưa đổi.'
+      var tieuDe = tt === 'dong' ? 'Đã chép sang EduQA ngày ' + v + ' — nội dung chưa đổi.'
         : tt === 'lech' ? 'Đã sửa SAU lần chép ngày ' + v + ' — chép lại và dán đè trên EduQA cho khớp.'
         : 'Chưa chép sang EduQA.';
+      if (nut.title !== tieuDe) nut.title = tieuDe;
       var nhan = nut.getAttribute('data-nhan') || nut.textContent;
       if (!nut.getAttribute('data-nhan')) nut.setAttribute('data-nhan', nhan);
-      nut.textContent = tt === 'dong' ? '✓ ' + nhan.replace(/^📋\s*/, '') : tt === 'lech' ? '⚠ ' + nhan.replace(/^📋\s*/, '') + ' lại' : nhan;
+      var chu = tt === 'dong' ? '✓ ' + nhan.replace(/^📋\s*/, '') : tt === 'lech' ? '⚠ ' + nhan.replace(/^📋\s*/, '') + ' lại' : nhan;
+      if (nut.textContent !== chu) nut.textContent = chu;
     });
     var xbc = document.querySelector('#kd-thanh .nut-xuat-bc');
     if (xbc) xbc.title = 'Bản nháp nội bộ để hội đồng đọc, góp ý. Báo cáo nộp chính thức xuất trên EduQA (mục 6.2 Báo cáo TĐG).';
