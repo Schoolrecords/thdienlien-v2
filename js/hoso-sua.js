@@ -73,6 +73,12 @@
     '<div class="goi-y">Dán đường dẫn thư mục chứa tệp của hồ sơ này.</div></div>' +
     '<div class="hs-o"><label>Ghi chú</label>' +
     '<textarea id="hsGhiChu" placeholder="Ghi chú nội bộ, ví dụ: còn thiếu biên bản tháng 9…"></textarea></div>' +
+    // VỊ TRÍ LƯU TRỮ / ĐỊNH DẠNG (16/11/2026) — cột "Định dạng, vị trí lưu trữ hoặc đường dẫn điện tử" của
+    // danh mục minh chứng (TT57 Phụ lục IV). Hồ sơ KHÔNG số hoá ghi nơi lưu ở đây là đúng luật (PL IV II.3c).
+    // Nút Xuất minh chứng cho EduQA đưa ô này vào cột Ghi chú. Ghi chú nội bộ KHÔNG ra ngoài. (Bản gốc ở app mầm non.)
+    '<div class="hs-o"><label>Vị trí lưu trữ / định dạng (danh mục minh chứng)</label>' +
+    '<input id="hsDinhDang" placeholder="Ví dụ: PDF trên Drive · hoặc: Bản giấy, tủ hồ sơ phòng Hiệu trưởng">' +
+    '<div class="goi-y">Ghi nơi lưu khi hồ sơ không có link Drive. In vào danh mục minh chứng và tệp xuất cho EduQA.</div></div>' +
     '</div>' +
     '<div class="hs-loi" id="hsLoi"></div>' +
     '<div class="hs-chan"><button class="huy" id="hsHuy">Huỷ</button><button class="luu" id="hsLuu">Lưu thay đổi</button></div>' +
@@ -128,6 +134,7 @@
     $('hsNguoi').value = hs.nguoi_phu_trach || '';
     $('hsLink').value = hs.link_drive || '';
     $('hsGhiChu').value = hs.ghi_chu || '';
+    $('hsDinhDang').value = hs.dinh_dang || '';
     veNutTrangThai();
 
     $('hsTenMoi').value = hs.ten || '';
@@ -220,6 +227,8 @@
       cap_nhat_luc: new Date().toISOString(),
       cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
     };
+    var ddMoi = $('hsDinhDang').value.trim(), ddCu = ((window.HS_BAN_GHI[maDangSua] || {}).dinh_dang || '').trim();
+    if (ddMoi !== ddCu) thayDoi.dinh_dang = ddMoi || null;   // chỉ gửi khi đổi
     if (laQuanTri()) {
       thayDoi.phu_trach_id = $('hsTaiKhoan').value || null;
       thayDoi.nguoi_phu_trach = $('hsNguoi').value.trim() || null;

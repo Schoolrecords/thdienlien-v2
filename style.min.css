@@ -4354,3 +4354,11 @@ div.khs-khoi img { display: block; width: 100%; height: 100%; pointer-events: no
 .eduqa-giai { font-size: 13px; color: var(--chu-mo); margin: 0 0 10px; line-height: 1.55; }
 .eduqa-bang td:first-child { white-space: nowrap; font-weight: 700; }
 .eduqa-bang td { vertical-align: top; }
+.nut-chep-eduqa.da-chep { opacity: .72; border-style: dashed; }
+.nut-chep-eduqa.lech { color: #b42318; border-color: #b42318; background: #fff4f2; }
+#kd-eduqa .eduqa-con { margin-top: 10px; }
+#kd-eduqa td.thieu, .eduqa-ds li.thieu { color: #b42318; }
+.eduqa-ds { margin: 0 0 10px; padding-left: 20px; font-size: 13px; line-height: 1.6; }
+.eduqa-ma { display: inline-block; min-width: 30px; font-weight: 800; color: var(--dam); }
+textarea.eduqa-kh { width: 100%; min-height: 64px; font: inherit; font-size: 13.5px; padding: 6px 8px; border: 1px solid var(--vien-dam); border-radius: 8px; }
+input.eduqa-kh { width: 100%; min-width: 140px; font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--vien-dam); border-radius: 6px; }

@@ -170,6 +170,7 @@
     function dauNam() { return D.ds.map(function (n) { return '<th>Năm học ' + n + '</th>'; }).join(''); }
     var h = '<div class="nhan-nho" style="margin:14px 0 10px">Biểu "Thông tin dữ liệu" kèm báo cáo tự đánh giá (Mẫu 1, TT 57/2026). ' +
       'Số <b>mờ</b> trong ô là máy đếm từ dữ liệu app; gõ đè nếu cần sửa. Máy tự lưu khi rời ô. Báo cáo tự đánh giá in biểu này ở cuối.</div>';
+    h += '<div style="margin:0 0 10px"><button class="nut-vien nho" id="sl-chot" title="Ghi các số máy đếm (số mờ) vào những ô còn trống — chốt số cuối năm học, năm sau vẫn còn">📌 Ghi số máy đếm vào ô trống</button></div>';
     if (D.thieuHam) h += '<div class="hs-loi hien" style="margin:0 0 10px">Cơ sở dữ liệu của trường chưa cài phần đếm tự động (sql/89), các ô vẫn nhập tay được.</div>';
 
     h += '<div class="tl-nhom sl-chung"><h4>Thông tin chung</h4>' + TT_O.map(function (o) {
@@ -202,6 +203,8 @@
       thoat((D.luu[cuoi] || {}).khac || '') + '</textarea><p class="tl-bao" id="sl-bao"></p>';
     hop.innerHTML = h;
 
+    var nutChot = hop.querySelector('#sl-chot');
+    if (nutChot) nutChot.onclick = function () { chotSo(D, hop); };
     hop.onchange = function (e) {   // gán, không addEventListener: thẻ vẽ lại không nhân đôi lệnh lưu
       var o = e.target;
       if (!o.classList || !o.classList.contains('sl-o')) return;
@@ -229,6 +232,27 @@
           if (!r2.data || !r2.data.length) throw new Error('máy chủ không ghi dòng nào — kiểm tra quyền');
         });
       });
+  }
+  // CHỐT SỐ (16/11/2026, cùng bản mầm non): ghi số máy đếm vào ô TRỐNG — moi_tai_khoan không có
+  // cột năm, không chốt thì sang năm sau mất số đội ngũ của năm nay. Ô đã gõ tay giữ nguyên.
+  function chotSo(D, hop) {
+    var ds = Array.prototype.filter.call(hop.querySelectorAll('input.sl-o'), function (i) { return !i.value.trim() && i.placeholder; });
+    if (!ds.length) { window.notify('Không còn ô trống nào có số máy đếm.'); return; }
+    var bao = hop.querySelector('#sl-bao'), xong = 0, hong = 0;
+    ds.reduce(function (p, i) {
+      return p.then(function () {
+        var nam = i.getAttribute('data-nam'), k = i.getAttribute('data-k'), gt = String(i.placeholder);
+        return ghiSoLieu(nam, k, gt).then(function () {
+          (D.luu[nam] = D.luu[nam] || {})[k] = gt; i.value = gt; xong++;
+        }, function () { hong++; });
+      });
+    }, Promise.resolve()).then(function () {
+      Array.prototype.forEach.call(hop.querySelectorAll('[data-tinh]'), function (c) {
+        c.textContent = tinhCong(D, c.getAttribute('data-nam'), timDong(c.getAttribute('data-tinh')));
+      });
+      if (bao) bao.textContent = '✓ Đã ghi ' + xong + ' ô' + (hong ? ', ' + hong + ' ô lỗi' : '');
+      window.notify('Đã ghi ' + xong + ' số máy đếm vào ô' + (hong ? ' — ' + hong + ' ô không ghi được, thử lại' : '') + '.');
+    });
   }
   function luu(D, o, hop) {
     var nam = o.getAttribute('data-nam'), k = o.getAttribute('data-k'), gt = o.value.trim();
@@ -290,6 +314,28 @@
       return h;
     });
   };
+  // Dòng số liệu cho gói nội dung EduQA (tcqg-eduqa.js, trang 2) — theo mục 3 EduQA bản tiểu học:
+  // 3.1 thông tin chung · 3.2 số lớp · 3.3 công trình · 3.4 a/b đội ngũ · 3.5 a/b học sinh, phổ cập.
+  var MUC_EDUQA = { lop: '3.2', ct: '3.3', gv: '3.4 b', hs: '3.5 a', pc: '3.5 b' };
+  window.soLieu3NamDong = function (nam) {
+    return nap(nam).then(function (D) {
+      var cuoi = D.ds[2], dong = [];
+      function v1(k) { return ['', '', giaTri(D, cuoi, k)]; }
+      TT_O.forEach(function (o) { dong.push({ muc: '3.1', ten: o[1], v: v1(o[0]) }); });
+      NHOM.forEach(function (n) {
+        if (n.ma === 'gv') {
+          CB_DONG.forEach(function (dg) {
+            CB_COT.forEach(function (c) { dong.push({ muc: '3.4 a', ten: dg[1] + ' — ' + c[1], v: v1('cb.' + dg[0] + '.' + c[0]) }); });
+          });
+        }
+        n.dong.forEach(function (d) {
+          dong.push({ muc: MUC_EDUQA[n.ma] || '', ten: (d.muc ? d.muc + '. ' : '') + d.ten, v: D.ds.map(function (nm) { return hienThi(D, nm, d); }), gc: giaTri(D, cuoi, 'gc.' + d.k) });
+        });
+      });
+      return { ds: D.ds, dong: dong };
+    });
+  };
+
   // Đếm ô đã nhập cho thanh các bước
   window.tcqgDemSoLieu = function (nam) {
     return window.MAY_CHU.from('so_lieu_bao_cao').select('ma_dong', { count: 'exact', head: true }).eq('nam_hoc', nam)

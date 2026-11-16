@@ -67,7 +67,7 @@
     ['xu_huong_3_nam', 'Định hướng cải tiến — a) Phân tích chung về xu hướng chất lượng của Tiêu chuẩn trong 03 năm học liên tiếp'],
     ['van_de_uu_tien', 'Định hướng cải tiến — b) Các vấn đề trọng tâm cần ưu tiên cải tiến ở tiêu chuẩn']
   ];
-  function nutChep(nhan) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nutChep(nhan) : ''; }
+  function nutChep(nhan, khoa) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nutChep(nhan, khoa) : ''; }
   function nhanEduQA(muc) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nhan(muc) : ''; }
   function veEduQA() { if (window.TCQG_EDUQA) window.TCQG_EDUQA.ve(); }
 
@@ -724,7 +724,7 @@
     // một bài để dán vào EduQA (js/tcqg-eduqa.js) — không viết thêm chữ nào.
     var coMoTa = window.TCQG_EDUQA && window.TCQG_EDUQA.moTa(c.ma, muc).trim();
     html += '<div class="tt-box"><div class="tt-dau"><b>Mô tả hiện trạng — Mức ' + muc + '</b>' + nhanEduQA('4.4') +
-      (coMoTa ? '<button class="nut-chep-eduqa" onclick="tcqgChepMoTa(\'' + c.ma + '\',' + muc + ')" title="Ghép các đoạn đã viết thành một bài để dán vào ô Mô tả hiện trạng trên EduQA">📋 Chép sang EduQA</button>' : '') +
+      (coMoTa ? '<button class="nut-chep-eduqa" data-eduqa-khoa="44.' + c.ma + '.' + muc + '" onclick="tcqgChepMoTa(\'' + c.ma + '\',' + muc + ')" title="Ghép các đoạn đã viết thành một bài để dán vào ô Mô tả hiện trạng trên EduQA">📋 Chép sang EduQA</button>' : '') +
       (dsNH.length ? '<span class="dem-nh" data-dem="' + c.ma + '|' + muc + '">đã viết ' + viet + '/' + dsNH.length + ' nội hàm</span>' : '') +
       (coQuyenCham(c.ma) && !DANG_SUA ? '<button class="ct-quaylai" onclick="tcqgSua(true)">✏ Chỉnh sửa</button>' : '') +
       '</div>';
@@ -1028,7 +1028,7 @@
       '<b>Đánh giá chung — Tiêu chuẩn ' + STD + '</b>' + nhanEduQA('4.4') + '<span class="tdg-luu" id="luu-dgtc">✓ đã lưu</span></div>' +
       '<div class="sub-body" style="display:block;padding:14px 16px">' +
       MUC_DGTC.map(function (m) {
-        return '<div class="hs-o"><label>' + m[1] + nutChep('Tiêu chuẩn ' + STD + ' — ' + m[1]) + '</label>' +
+        return '<div class="hs-o"><label>' + m[1] + nutChep('Tiêu chuẩn ' + STD + ' — ' + m[1], 'dg.' + STD + '.' + m[0]) + '</label>' +
           '<textarea ' + (suaDuoc ? '' : 'disabled ') + 'onblur="tcqgLuuDGTC(\'' + m[0] + '\', this.value)">' +
           thoat(r[m[0]] || '') + '</textarea></div>';
       }).join('') + '</div></div>';
@@ -1072,7 +1072,7 @@
       cotBC().map(function (nh) {
         return '<div class="nhan-nho" style="margin:12px 0 8px">' + thoat(nh.nhom) + (nh.eduqa ? ' ' + nhanEduQA(nh.eduqa) : '') + '</div>' +
           nh.muc.map(function (m) {
-            return '<div class="hs-o"><label>' + thoat(m[1]) + (nh.eduqa ? nutChep(m[1]) : '') + '</label>' +
+            return '<div class="hs-o"><label>' + thoat(m[1]) + (nh.eduqa ? nutChep(m[1], 'bc.' + m[0]) : '') + '</label>' +
               (m[2]
                 ? '<input onblur="tcqgLuuBC(\'' + m[0] + '\', this.value)" value="' + thoat(bc[m[0]] || '') + '">'
                 : '<textarea onblur="tcqgLuuBC(\'' + m[0] + '\', this.value)">' + thoat(bc[m[0]] || '') + '</textarea>') +

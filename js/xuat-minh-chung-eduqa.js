@@ -54,7 +54,11 @@
     var tc = (h.tc || []).slice();
     if (tc.length > 1) phan.push('Dùng cho tiêu chí ' + tc.join(', ') + '.');
     if (h.tt !== 'co') phan.push('Kho hồ sơ: chưa hoàn thiện.');
-    phan.push(h.link ? 'Đường dẫn: ' + h.link : 'Chưa gắn đường dẫn Drive.');
+    // Vị trí lưu trữ / định dạng (ho_so.dinh_dang — ô sửa hồ sơ, 16/11/2026): hồ sơ không số hoá ghi nơi lưu
+    // là đúng luật (TT57 PL IV II.3c). Ghi chú NỘI BỘ của hồ sơ (ho_so.ghi_chu) KHÔNG đưa ra ngoài.
+    var dd = String(((window.HS_BAN_GHI || {})[h.ma] || {}).dinh_dang || h.dinhDang || '').trim();
+    if (h.link) phan.push('Đường dẫn: ' + h.link + (dd ? ' (' + dd + ')' : ''));
+    else phan.push(dd ? 'Vị trí lưu trữ: ' + dd : 'Chưa gắn đường dẫn Drive, chưa ghi vị trí lưu trữ.');
     return phan.join(' ');
   }
 
@@ -104,9 +108,9 @@
     var nam = String(CH.NAM_HOC || '').replace(/\D/g, '');
     var ten = 'MINH-CHUNG-EduQA-' + khongDau(CH.TEN_TRUONG || 'Truong') + (nam ? '-' + nam : '') + '.xlsx';
     taiVe(new Blob([byte], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), ten);
-    var thieuLink = ds.dong.filter(function (d) { return /Chưa gắn đường dẫn/.test(d.ghiChu); }).length;
+    var thieuLink = ds.dong.filter(function (d) { return /Chưa gắn đường dẫn Drive, chưa ghi/.test(d.ghiChu); }).length;
     window.notify('✅ Đã tạo ' + ten + ' — ' + ds.dong.length + ' minh chứng' +
-      (thieuLink ? ' (' + thieuLink + ' chưa có link Drive)' : '') +
+      (thieuLink ? ' (' + thieuLink + ' chưa có link lẫn vị trí lưu trữ)' : '') +
       '. Trên EduQA: mục 4.3 Minh chứng → Nhập từ Excel. ' +
       'Người thẩm định chỉ mở được link khi thư mục minh chứng trên Drive đã chia sẻ cho họ.' +
       (ds.boQua.length ? ' Bỏ qua ' + ds.boQua.length + ' mã sai dạng MC.a.b.cc: ' + ds.boQua.join(', ') + '.' : ''));
