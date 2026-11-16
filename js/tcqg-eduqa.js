@@ -29,6 +29,7 @@
 
   var GOC = 'https://bdclgd.vn/self-assessment/self-assessment-info/';
   var MUC = {
+    '3': { ten: '3. Cơ sở dữ liệu nhà trường (3.1–3.5)', url: 'https://bdclgd.vn/self-assessment/school-data/general-info' },
     '4.1': { ten: '4.1 Bối cảnh và đặc điểm', url: GOC + 'context-characteristics' },
     '4.2': { ten: '4.2 Quá trình thực hiện TĐG', url: GOC + 'purpose-scope-process' },
     '4.3': { ten: '4.3 Minh chứng', url: GOC + 'evidence' },
@@ -175,6 +176,7 @@
     });
     var tc = (d.tieuChi || []).length || 15;
     var dong = [
+      ['3', '', 'Quản trị › thẻ “📊 Số liệu 3 năm” (số nhóm/lớp, công trình, đội ngũ, trẻ/học sinh 03 năm học)'],
       ['4.1', demBC('4.1'), 'Khối “Các mục viết bằng lời” cuối trang'],
       ['4.2', demBC('4.2'), 'Khối “Các mục viết bằng lời” cuối trang'],
       ['4.3', soMC + ' minh chứng', 'Nút “Xuất minh chứng cho EduQA” → trên EduQA bấm Nhập từ Excel'],

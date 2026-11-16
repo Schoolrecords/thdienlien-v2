@@ -83,7 +83,7 @@
   function nap(nam) {
     var may = window.MAY_CHU, ds = baNam(nam);
     return Promise.all([
-      may.from('so_lieu_bao_cao').select('nam_hoc,ma_dong,gia_tri').in('nam_hoc', ds),
+      may.from('so_lieu_bao_cao').select('nam_hoc,ma_dong,gia_tri').in('nam_hoc', ds).is('co_so_ma', null),
       Promise.all(ds.map(function (n) { return may.rpc('so_lieu_tt57', { p_nam: n }); })),
       nam === namHienTai() ? may.from('moi_tai_khoan').select('*') : Promise.resolve({ data: null })
     ]).then(function (kq) {
@@ -208,16 +208,32 @@
       luu(D, o, hop);
     };
   }
+  // 🔴 Khoá duy nhất của so_lieu_bao_cao là (nam_hoc, ma_dong, co_so_ma) NULLS NOT
+  // DISTINCT (sql/19). Bản 31/10 upsert onConflict 'nam_hoc,ma_dong' — Postgres không
+  // tìm thấy ràng buộc khớp và từ chối cả lệnh (vá 16/11/2026 cùng bản mầm non).
+  // Nay: update dòng toàn trường (co_so_ma NULL) → chưa có thì insert.
+  function ghiSoLieu(nam, k, gt) {
+    var may = window.MAY_CHU;
+    if (!gt) {
+      return may.from('so_lieu_bao_cao').delete().eq('nam_hoc', nam).eq('ma_dong', k).is('co_so_ma', null).select()
+        .then(function (r) { if (r.error) throw r.error; });
+    }
+    var ban = { gia_tri: gt, cap_nhat_luc: new Date().toISOString(), cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null };
+    return may.from('so_lieu_bao_cao').update(ban).eq('nam_hoc', nam).eq('ma_dong', k).is('co_so_ma', null).select()
+      .then(function (r) {
+        if (r.error) throw r.error;
+        if (r.data && r.data.length) return;
+        ban.nam_hoc = nam; ban.ma_dong = k;
+        return may.from('so_lieu_bao_cao').insert(ban).select().then(function (r2) {
+          if (r2.error) throw r2.error;
+          if (!r2.data || !r2.data.length) throw new Error('máy chủ không ghi dòng nào — kiểm tra quyền');
+        });
+      });
+  }
   function luu(D, o, hop) {
     var nam = o.getAttribute('data-nam'), k = o.getAttribute('data-k'), gt = o.value.trim();
-    var bang = window.MAY_CHU.from('so_lieu_bao_cao');
-    var hua = gt
-      ? bang.upsert({ nam_hoc: nam, ma_dong: k, gia_tri: gt }, { onConflict: 'nam_hoc,ma_dong' }).select()
-      : bang.delete().eq('nam_hoc', nam).eq('ma_dong', k).select();
     var bao = hop.querySelector('#sl-bao');
-    hua.then(function (r) {
-      if (r.error) throw r.error;
-      if (gt && (!r.data || !r.data.length)) throw new Error('máy chủ không ghi dòng nào — kiểm tra quyền');
+    ghiSoLieu(nam, k, gt).then(function () {
       D.luu[nam] = D.luu[nam] || {};
       if (gt) D.luu[nam][k] = gt; else delete D.luu[nam][k];
       Array.prototype.forEach.call(hop.querySelectorAll('[data-tinh]'), function (c) {
