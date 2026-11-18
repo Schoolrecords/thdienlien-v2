@@ -14,14 +14,6 @@
     return !!u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu');
   }
 
-  // Hồ sơ Đảng (hộp H04 / H04.n) KHÔNG cho đóng trong app — thầy Chung 18/11/2026: QC1 cô Bí thư
-  // chi bộ bấm nhầm "Đã đóng" ở MC.1.2.49 (để trống lý do) → hồ sơ biến khỏi danh mục chi bộ.
-  // Hồ sơ Đảng lưu theo năm, không có chuyện "hết căn cứ" như danh mục tinh gọn 1/10.
-  function laHopDang(ma) {
-    var h = (window.HO_SO || []).filter(function (x) { return x.ma === ma; })[0];
-    return !!h && /^H04(\.|$)/.test(String(h.hop || ''));
-  }
-
   window.coQuyenSuaHoSo = function (ma) {
     var u = window.NGUOI_DUNG;
     var hs = window.HS_BAN_GHI && window.HS_BAN_GHI[ma];
@@ -148,7 +140,7 @@
     $('hsTenMoi').value = hs.ten || '';
     $('hsOTen').style.display = laQuanTri() ? '' : 'none';
     $('hsONguoi').style.display = laQuanTri() ? '' : 'none';
-    $('hsNutDong').style.display = hs.trang_thai === 'da_dong' || (laQuanTri() && !laHopDang(ma)) ? '' : 'none';
+    $('hsNutDong').style.display = laQuanTri() || hs.trang_thai === 'da_dong' ? '' : 'none';
     $('hsOHop').style.display = laQuanTri() ? '' : 'none';
     $('hsOTc').style.display = laQuanTri() ? '' : 'none';
     $('hsLyDo').value = ''; $('hsGopVao').value = '';
@@ -213,15 +205,6 @@
       return;
     }
     var dangDong = ttDangChon === 'da_dong' && cu.trang_thai !== 'da_dong';
-    if (dangDong && laHopDang(maDangSua)) {
-      hienLoi('Hồ sơ Đảng không đóng được — chọn lại Đã có / Đang cập nhật / Chưa có.');
-      return;
-    }
-    // Đóng là rút hồ sơ khỏi danh mục: bắt gõ lý do để một cú bấm nhầm không làm mất hồ sơ.
-    if (dangDong && !$('hsLyDo').value.trim()) {
-      hienLoi('Muốn đóng hồ sơ này thì ghi lý do đóng. Bấm nhầm thì chọn lại trạng thái cũ.');
-      return;
-    }
     var gopVao = dangDong ? $('hsGopVao').value.trim().toUpperCase() : '';
     var dich = gopVao ? window.HS_BAN_GHI[gopVao] : null;
     if (gopVao && (!dich || gopVao === maDangSua || dich.trang_thai === 'da_dong')) {
