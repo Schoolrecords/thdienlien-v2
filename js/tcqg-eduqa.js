@@ -116,8 +116,12 @@
   var PHU = { nam: null, kh: {}, dau: {}, dangTai: null, loi: false };
   function namDL() { return window.duLieuTuDanhGia ? window.duLieuTuDanhGia().namHoc : ''; }
   function taiPhu(nam) {
-    if (PHU.nam === nam && !PHU.loi) return Promise.resolve();
+    // 🔴 Hỏi "đang tải" TRƯỚC (vá 18/11/2026, QC1 đơ trang): taiPhu đặt PHU.nam
+    // ngay khi bắt đầu tải, nên hỏi "đã có năm này" trước thì giữa lúc tải nó trả
+    // Promise.resolve() → ve() thấy dangTai còn đó lại gọi taiPhu().then(ve) →
+    // vòng microtask vô tận, chiếm luồng chính nên lần tải không bao giờ xong.
     if (PHU.dangTai && PHU.nam === nam) return PHU.dangTai;
+    if (PHU.nam === nam && !PHU.loi) return Promise.resolve();
     PHU.nam = nam; PHU.kh = {}; PHU.dau = {}; PHU.loi = false;
     if (!window.MAY_CHU || !nam) return Promise.resolve();
     function doc(tien) {
