@@ -697,7 +697,8 @@
         : (m.dinh_dang ? chan(m.dinh_dang) : '<span style="color:#555;font-style:italic">Chưa gán thư mục lưu trữ</span>');
       /* Ghi chú: tiêu chí dùng mã này — KHÔNG in ho_so.ghi_chu (ghi chú nội bộ, giống tệp EduQA). */
       const gc = m.ngoaiKho ? 'Mã có trích trong báo cáo nhưng không còn trong danh mục minh chứng — kiểm tra lại.'
-        : ((m.tcDung || []).length > 1 ? 'Dùng cho tiêu chí ' + m.tcDung.join(', ') + '.' : '');
+        : ((m.cha ? 'Minh chứng Mức ' + (m.muc || 1) + ', thuộc hồ sơ ' + m.cha + '. ' : '')
+          + ((m.tcDung || []).length > 1 ? 'Dùng cho tiêu chí ' + m.tcDung.join(', ') + '.' : ''));
       h += '<tr><td style="' + O + 'text-align:center">' + (i + 1) + '</td>'
         + '<td style="' + O + 'font-weight:bold;text-align:center">' + chan(m.ma) + '</td>'
         + '<td style="' + O + '">' + chan(m.ten) + '</td>'

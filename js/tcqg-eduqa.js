@@ -90,7 +90,7 @@
     return !!u && ['admin', 'ban_giam_hieu'].indexOf(u.vai_tro) >= 0;
   }
   // Danh sách hồ sơ đang quản lý (bản mầm non đọc hàm danh sách hồ sơ riêng).
-  function dsHoSo() { return window.HO_SO || []; }   // bản tiểu học
+  function dsHoSo() { return (window.dsHoSoVaMCC ? window.dsHoSoVaMCC() : window.HO_SO) || []; }   // bản tiểu học — kèm minh chứng cụ thể
   function banGhi(ma) { return (window.HS_BAN_GHI && window.HS_BAN_GHI[ma]) || {}; }
 
   // ── Ghép "Mô tả hiện trạng" của một mức ──

@@ -123,7 +123,7 @@
     var TEN_TT = W().TEN_TT;
     // Gom theo mã — một minh chứng dùng nhiều tiêu chí chỉ vào bảng MỘT lần (Phụ lục IV mục I.3)
     var gom = {};
-    window.HO_SO.forEach(function (h) {
+    window.dsHoSoVaMCC().forEach(function (h) {
       if (!window.laMinhChungTDG(h)) return;   // đã đóng, hồ sơ Đảng/Đoàn, BGH chọn không dùng (app.js, 20/11/2026)
       var dinh = (h.tc || []).filter(function (ma) { return dsTieuChi.indexOf(ma) >= 0; });
       if (!dinh.length) return;
@@ -140,9 +140,9 @@
       var banGhi = (window.HS_BAN_GHI && window.HS_BAN_GHI[x.h.ma]) || {};
       return '<tr><td class="giua">' + (i + 1) + '</td>' +
         '<td class="giua"><b>' + (x.h.link ? '<a href="' + chan(x.h.link) + '">' + chan(x.h.ma) + '</a>' : chan(x.h.ma)) + '</b></td>' +
-        '<td>' + chan(x.h.ten) + (banGhi.ghi_chu ? '<br><span class="nghieng" style="font-size:10.5pt">' + chan(banGhi.ghi_chu) + '</span>' : '') + '</td>' +
+        '<td>' + chan(x.h.ten) + (x.h.laCon ? ' <i>(Mức ' + x.h.muc + ', trong hồ sơ ' + chan(x.h.cha) + ')</i>' : '') + (banGhi.ghi_chu ? '<br><span class="nghieng" style="font-size:10.5pt">' + chan(banGhi.ghi_chu) + '</span>' : '') + '</td>' +
         '<td class="giua">' + x.tc.join(', ') + '</td>' +
-        '<td class="duongdan">' + (x.h.link ? chan(x.h.link) : (banGhi.dinh_dang ? chan(banGhi.dinh_dang) : 'Hồ sơ lưu tại trường')) + '</td>' +
+        '<td class="duongdan">' + (x.h.link ? chan(x.h.link) : (banGhi.dinh_dang || x.h.dinhDang ? chan(banGhi.dinh_dang || x.h.dinhDang) : 'Hồ sơ lưu tại trường')) + '</td>' +
         '<td>' + chan(x.h.phuTrach || '') + '</td>' +
         '<td class="giua">' + (TEN_TT[x.h.tt] || '') + '</td></tr>';
     }).join('');

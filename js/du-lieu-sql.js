@@ -250,7 +250,10 @@
     }
 
     window.veTatCa && window.veTatCa();
-    window.khoiDongTCQG && window.khoiDongTCQG();
+    // Minh chứng cụ thể (minh-chung-con.js, sql/93) đọc trước khi dựng màn TCQG — taiMinhChungCon luôn resolve.
+    (window.taiMinhChungCon ? window.taiMinhChungCon() : Promise.resolve()).then(function () {
+      window.khoiDongTCQG && window.khoiDongTCQG();
+    });
   }
   function baoChuaCapNhat(m) {
     window.baoTrangThai && window.baoTrangThai('loi',

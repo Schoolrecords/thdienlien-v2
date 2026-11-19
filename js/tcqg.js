@@ -271,14 +271,15 @@
   // Bạch Liêu (chạy nguyên văn qua bach-lieu-shim.js)
   window.duLieuTuDanhGia = function () {
     var mcTheoTC = {};
-    window.HO_SO.forEach(function (h) {
+    window.dsHoSoVaMCC().forEach(function (h) {
       if (!window.laMinhChungTDG(h)) return;   // đã đóng, chưa gắn tiêu chí, hồ sơ Đảng/Đoàn (app.js, 20/11/2026)
       var banGhi = (window.HS_BAN_GHI && window.HS_BAN_GHI[h.ma]) || {};
       (h.tc || []).forEach(function (ma) {
         (mcTheoTC[ma] = mcTheoTC[ma] || []).push({
           ma: h.ma, ten: h.ten, trang_thai: h.tt, link_drive: h.link || null,
           ghi_chu: banGhi.ghi_chu || null, nguoi_phu_trach: h.phuTrach || null,
-          dinh_dang: banGhi.dinh_dang || null
+          dinh_dang: banGhi.dinh_dang || h.dinhDang || null,
+          muc: h.muc || null, cha: h.cha || ''   // minh chứng cụ thể (minh-chung-con.js)
         });
       });
     });
@@ -403,7 +404,7 @@
     if (!goc || !BUOC_DL) return;
     var B = BUOC_DL, qt = laQT();
     var tcCoMC = TC.filter(function (t) {
-      return window.HO_SO.some(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(t.ma) >= 0; });
+      return window.dsHoSoVaMCC().some(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(t.ma) >= 0; });
     }).length;
     var daCham = TC.filter(function (t) { return t.daCham; }).length;
     var nh = demNoiHamTat();
@@ -756,7 +757,7 @@
     // Chip gắn mã: chỉ hồ sơ dùng làm minh chứng (app.js laMinhChungTDG, 20/11/2026); mã đã gắn từ trước vẫn hiện để bỏ được.
     var daGanNH = {};
     dsNH.forEach(function (n) { ((HT_NH[n.id] || {}).ma_minh_chung || []).forEach(function (m) { daGanNH[m] = 1; }); });
-    var mcTC = window.HO_SO.filter(function (h) { return (h.tc || []).indexOf(c.ma) >= 0 && (window.laMinhChungTDG(h) || (h.tt !== 'da_dong' && daGanNH[h.ma])); });
+    var mcTC = window.dsHoSoVaMCC().filter(function (h) { return (h.tc || []).indexOf(c.ma) >= 0 && (window.laMinhChungTDG(h) || (h.tt !== 'da_dong' && daGanNH[h.ma])); });
     return dsNH.map(function (n, i) {
       var h = HT_NH[n.id] || {};
       var daGan = h.ma_minh_chung || [];
@@ -788,7 +789,7 @@
   }
 
   function dongMinhChungGon(c) {
-    var mc = window.HO_SO.filter(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(c.ma) >= 0; });
+    var mc = window.dsHoSoVaMCC().filter(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(c.ma) >= 0; });
     var co = mc.filter(function (h) { return h.tt === 'co'; }).length;
     return '<div class="mc-dong">📎 Minh chứng: <b>' + co + '/' + mc.length + '</b> đã có trong kho' +
       (mc.length - co ? ' · <b style="color:var(--thieu)">' + (mc.length - co) + ' chưa có</b>' : '') +
@@ -797,7 +798,7 @@
 
   // ── Tab Minh chứng ──
   function oMinhChung(c) {
-    var mc = window.HO_SO.filter(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(c.ma) >= 0; });
+    var mc = window.dsHoSoVaMCC().filter(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(c.ma) >= 0; });
     var nutGan = coQuyenCham(c.ma)
       ? '<div style="margin:0 0 12px"><button class="nut-vien" onclick="tcqgMoGanMC()">' + (GAN_MC ? '✔ Xong — đóng danh sách' : '＋ Gắn, bỏ minh chứng cho tiêu chí này') + '</button></div>' : '';
     if (GAN_MC && coQuyenCham(c.ma)) return nutGan + oGanMC(c);
@@ -810,7 +811,7 @@
       '<span class="st st-chua">○ ' + (dem.chua || 0) + ' chưa có</span></div>' +
       '<div class="ev-list" style="margin-top:12px">' + mc.map(function (h) {
         var chip = '<span class="ev' + (h.tt !== 'co' ? ' thieu' : '') + '" title="Phụ trách: ' + thoat(h.phuTrach || '—') + '">📄 ' +
-          thoat(h.ma + ' · ' + h.ten) + '</span>';
+          thoat(h.ma + ' · ' + h.ten + (h.laCon ? ' · Mức ' + h.muc : '')) + '</span>';
         return h.link ? '<a href="' + thoat(h.link) + '" target="_blank" rel="noopener" style="text-decoration:none">' + chip + '</a>' : chip;
       }).join('') + '</div>' +
       (dem.chua ? '<div class="hs-loi hien" style="margin:12px 0 0">Còn ' + dem.chua +

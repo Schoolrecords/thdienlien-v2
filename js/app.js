@@ -100,6 +100,7 @@
     if (!h) return 'Không có hồ sơ';
     if (h.tt === 'da_dong') return 'Đã đóng';
     if (!(h.tc && h.tc.length)) return 'Chưa gắn tiêu chí';
+    if (h.laCon) return '';   // minh chứng cụ thể BGH tự gắn (minh-chung-con.js) — luôn đưa
     var bg = (window.HS_BAN_GHI || {})[h.ma] || {};
     if (!boQuaCot && bg.dung_mc === true) return '';
     if (!boQuaCot && bg.dung_mc === false) return 'Ban giám hiệu chọn không dùng làm minh chứng';

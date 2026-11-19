@@ -53,6 +53,7 @@
     var phan = [];
     var tc = (h.tc || []).slice();
     if (tc.length > 1) phan.push('Dùng cho tiêu chí ' + tc.join(', ') + '.');
+    if (h.laCon) phan.push('Minh chứng Mức ' + h.muc + (h.cha ? ', thuộc hồ sơ ' + h.cha : '') + '.');
     // Vị trí lưu trữ / định dạng (ho_so.dinh_dang — ô sửa hồ sơ, 16/11/2026): hồ sơ không số hoá ghi nơi lưu
     // là đúng luật (TT57 PL IV II.3c). Ghi chú NỘI BỘ của hồ sơ (ho_so.ghi_chu) KHÔNG đưa ra ngoài.
     var dd = String(((window.HS_BAN_GHI || {})[h.ma] || {}).dinh_dang || h.dinhDang || '').trim();
@@ -75,7 +76,7 @@
       if (daCo[ma]) return;
       daCo[ma] = true;
       if (h.tt === 'chua') { chuaCo.push(ma); return; }
-      dong.push({ ma: ma, ten: String(h.ten || '').trim(), ghiChu: ghiChu(h), tc: (h.tc || []).slice() });
+      dong.push({ ma: ma, ten: String(h.ten || '').trim(), ghiChu: ghiChu(h), tc: (h.tc || []).slice(), muc: h.laCon ? h.muc : 1 });
     });
     dong.sort(function (a, b) { return soMa(a.ma, b.ma); });
     chuaCo.sort(soMa);
@@ -96,6 +97,13 @@
     if (thieuTrich.length) loi.push('Báo cáo đã trích ' + thieuTrich.length + ' mã không có trong tệp: ' + thieuTrich.join(', ') + '.');
     var bbTrong = (tieuChi || []).filter(function (t) { return t.batBuoc && !demTC[t.ma]; }).map(function (t) { return t.ma; });
     if (bbTrong.length) loi.push('Tiêu chí bắt buộc chưa có minh chứng: ' + bbTrong.join(', ') + '.');
+    // Mức 2 chỉ đếm được khi trường đã gắn minh chứng cụ thể (minh-chung-con.js, bảng minh_chung).
+    if (window.CO_BANG_MCC) {
+      var coM2 = {};
+      ds.dong.forEach(function (x) { if (x.muc === 2) x.tc.forEach(function (t) { coM2[t] = 1; }); });
+      var bbM2 = (tieuChi || []).filter(function (t) { return t.batBuoc && !coM2[t.ma]; }).map(function (t) { return t.ma; });
+      if (bbM2.length) loi.push('Tiêu chí bắt buộc chưa có minh chứng Mức 2: ' + bbM2.join(', ') + '.');
+    }
     var nhieu = Object.keys(demTC).filter(function (t) { return demTC[t] > NHIEU_MC; })
       .map(function (t) { return t + ' (' + demTC[t] + ' mã)'; });
     if (nhieu.length) loi.push('Tiêu chí nhiều minh chứng, nên rà bớt: ' + nhieu.join(', ') + '.');
@@ -123,7 +131,7 @@
     if (!window.EXCEL_DEP) { window.notify('Chưa tải xong bộ ghi Excel, thầy cô thử lại sau ít giây.'); return; }
     // Ban xuất văn bản chính thức của màn TCQG (tcqg.js duocXuat): BGH + người giữ bút hội đồng.
     if (window.tcqgDuocXuat && !window.tcqgDuocXuat()) { window.notify(window.TCQG_CHU_CHAN_XUAT || 'Thầy cô không có quyền xuất.'); return; }
-    var ds = lapDanhSach(window.HO_SO || []);
+    var ds = lapDanhSach(window.dsHoSoVaMCC ? window.dsHoSoVaMCC() : (window.HO_SO || []));
     if (!ds.dong.length) {
       window.notify('Chưa có hồ sơ nào gắn tiêu chí TT57 để xuất. Đăng nhập rồi thử lại.');
       return;

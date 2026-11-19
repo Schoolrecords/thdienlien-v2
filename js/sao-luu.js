@@ -35,6 +35,7 @@
     'thanh_vien_to_dbcl', 'to_dbcl',
     'thong_bao', 'thong_bao_nhan', 'tieu_chi', 'tieu_chuan', 'truc_tuan',
     'truong_tien_than', 'tu_danh_gia',
+    'minh_chung',   // sql/93 (20/11/2026): minh chứng cụ thể trong hồ sơ (minh-chung-con.js)
     // 16 bảng BỊ SÓT đến 1/10/2026 (rà toàn app): bản sao lưu không có sổ chủ nhiệm,
     // TKB, dạy thay. Từ nay quet-app.js mục 15 chặn nếu sql/ có bảng mà đây không có.
     'day_thay', 'ho_so_truoc_2026',
