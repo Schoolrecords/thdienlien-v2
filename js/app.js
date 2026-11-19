@@ -83,6 +83,33 @@
     return { co: co, dang: dang, dong: dong, chua: ds.length - co - dang - dong, tong: ds.length - dong };
   }
 
+  // ── MINH CHỨNG TỰ ĐÁNH GIÁ (TT57 Phụ lục IV) — 20/11/2026 ──
+  // Hồ sơ trong kho KHÔNG mặc nhiên là minh chứng. Chỉ hồ sơ qua cửa này mới ra tệp EduQA, Phần IV báo cáo
+  // tự đánh giá, danh mục minh chứng và chip gắn mã ở màn Trường chuẩn quốc gia:
+  //  · còn quản lý (không 'da_dong') và có gắn tiêu chí;
+  //  · cột ho_so.dung_mc (sql/92 — Ban giám hiệu chọn Có/Không) nếu đã đặt thì theo cột;
+  //  · chưa đặt → hồ sơ của tổ chức Đảng (hộp H04, H04.n, hộp tên Đảng bộ/Chi bộ) và hồ sơ Đoàn KHÔNG đưa:
+  //    Đảng, Đoàn tự quản lý (danh mục hồ sơ bản 7); tập huấn TT57 của Bộ 23/9/2026: số minh chứng hợp lý,
+  //    tránh trùng lặp. Tiêu chí 1.2 cần minh chứng phối hợp chi bộ – nhà trường thì BGH bật riêng hồ sơ đó.
+  window.coCotDungMC = function () {
+    var bg = window.HS_BAN_GHI || {};
+    for (var k in bg) if (bg[k] && Object.prototype.hasOwnProperty.call(bg[k], 'dung_mc')) return true;
+    return false;
+  };
+  window.lyDoNgoaiMinhChung = function (h, boQuaCot) {
+    if (!h) return 'Không có hồ sơ';
+    if (h.tt === 'da_dong') return 'Đã đóng';
+    if (!(h.tc && h.tc.length)) return 'Chưa gắn tiêu chí';
+    var bg = (window.HS_BAN_GHI || {})[h.ma] || {};
+    if (!boQuaCot && bg.dung_mc === true) return '';
+    if (!boQuaCot && bg.dung_mc === false) return 'Ban giám hiệu chọn không dùng làm minh chứng';
+    var tenHop = ((window.HOP || {})[h.hop] || {}).ten || '';
+    if (/^H04(\.|$)/.test(String(h.hop || '')) || /Đảng|Chi bộ/i.test(tenHop)) return 'Hồ sơ của tổ chức Đảng';
+    if (/Chi đoàn|Đoàn TNCS|Đoàn Thanh niên/i.test(String(h.ten || ''))) return 'Hồ sơ của tổ chức Đoàn';
+    return '';
+  };
+  window.laMinhChungTDG = function (h) { return !window.lyDoNgoaiMinhChung(h); };
+
   // ── Trang chủ + thống kê màn Hồ sơ ──
   function veThongKe() {
     var d = demTrangThai(window.HO_SO);

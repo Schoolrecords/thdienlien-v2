@@ -87,6 +87,12 @@
     '<div class="hs-o"><label>Vị trí lưu trữ / định dạng (danh mục minh chứng)</label>' +
     '<input id="hsDinhDang" placeholder="Ví dụ: PDF trên Drive · hoặc: Bản giấy, tủ hồ sơ phòng Hiệu trưởng">' +
     '<div class="goi-y">Ghi nơi lưu khi hồ sơ không có link Drive. In vào danh mục minh chứng và tệp xuất cho EduQA.</div></div>' +
+    // DÙNG LÀM MINH CHỨNG TỰ ĐÁNH GIÁ (20/11/2026; cột ho_so.dung_mc — sql/92, chưa chạy thì ô ẩn). Chỉ Ban giám hiệu.
+    // "Tự động" = theo app.js lyDoNgoaiMinhChung: hồ sơ Đảng, Đoàn không đưa; hồ sơ khác có gắn tiêu chí thì đưa.
+    '<div class="hs-o" id="hsODungMC" style="display:none"><label>Dùng làm minh chứng tự đánh giá (TT57)</label>' +
+    '<select id="hsDungMC"><option value="">Tự động</option><option value="co">Có — đưa vào danh mục minh chứng</option>' +
+    '<option value="khong">Không — chỉ lưu trong kho hồ sơ</option></select>' +
+    '<div class="goi-y" id="hsDungMCGoiY"></div></div>' +
     '</div>' +
     '<div class="hs-loi" id="hsLoi"></div>' +
     '<div class="hs-chan"><button class="huy" id="hsHuy">Huỷ</button><button class="luu" id="hsLuu">Lưu thay đổi</button></div>' +
@@ -143,6 +149,12 @@
     $('hsLink').value = hs.link_drive || '';
     $('hsGhiChu').value = hs.ghi_chu || '';
     $('hsDinhDang').value = hs.dinh_dang || '';
+    $('hsODungMC').style.display = laQuanTri() && window.coCotDungMC && window.coCotDungMC() ? '' : 'none';
+    $('hsDungMC').value = hs.dung_mc === true ? 'co' : (hs.dung_mc === false ? 'khong' : '');
+    var hMC = (window.HO_SO || []).filter(function (x) { return x.ma === ma; })[0];
+    var lyMD = hMC && window.lyDoNgoaiMinhChung ? window.lyDoNgoaiMinhChung(hMC, true) : '';
+    $('hsDungMCGoiY').textContent = 'Tự động: ' + (lyMD ? 'không đưa — ' + lyMD.toLowerCase() + '.' : 'đưa vào khi hồ sơ có gắn tiêu chí.') +
+      ' Hồ sơ được đưa sẽ có trong tệp EduQA và Phần IV báo cáo tự đánh giá.';
     veNutTrangThai();
 
     $('hsTenMoi').value = hs.ten || '';
@@ -246,6 +258,12 @@
     };
     var ddMoi = $('hsDinhDang').value.trim(), ddCu = ((window.HS_BAN_GHI[maDangSua] || {}).dinh_dang || '').trim();
     if (ddMoi !== ddCu) thayDoi.dinh_dang = ddMoi || null;   // chỉ gửi khi đổi
+    if (laQuanTri() && $('hsODungMC').style.display !== 'none') {
+      var dmMoi = { co: true, khong: false }[$('hsDungMC').value];
+      if (dmMoi === undefined) dmMoi = null;
+      var dmCu = (window.HS_BAN_GHI[maDangSua] || {}).dung_mc;
+      if (dmMoi !== (dmCu === undefined ? null : dmCu)) thayDoi.dung_mc = dmMoi;   // chỉ gửi khi đổi
+    }
     if (laQuanTri()) {
       thayDoi.phu_trach_id = $('hsTaiKhoan').value || null;
       thayDoi.nguoi_phu_trach = $('hsNguoi').value.trim() || null;

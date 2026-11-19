@@ -309,7 +309,8 @@
   function thongKeMinhChung() {
     var daCo = {}, ds = [];
     dsHoSo().forEach(function (h) {
-      if (h.tt === 'da_dong' || !(h.tc && h.tc.length) || !/^MC\.\d\.\d\.\d{2}$/.test(h.ma || '') || daCo[h.ma]) return;
+      // Cùng cửa với tệp xuất EduQA (app.js laMinhChungTDG, 20/11/2026): bỏ hồ sơ Đảng/Đoàn, hồ sơ BGH chọn không dùng.
+      if (!window.laMinhChungTDG(h) || !/^MC\.\d\.\d\.\d{2}$/.test(h.ma || '') || daCo[h.ma]) return;
       daCo[h.ma] = 1; ds.push(h);
     });
     var r = { tong: ds.length, link: 0, viTri: 0, thieu: [], chuaXong: 0 };

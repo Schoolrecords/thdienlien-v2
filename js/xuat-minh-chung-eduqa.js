@@ -53,7 +53,6 @@
     var phan = [];
     var tc = (h.tc || []).slice();
     if (tc.length > 1) phan.push('Dùng cho tiêu chí ' + tc.join(', ') + '.');
-    if (h.tt !== 'co') phan.push('Kho hồ sơ: chưa hoàn thiện.');
     // Vị trí lưu trữ / định dạng (ho_so.dinh_dang — ô sửa hồ sơ, 16/11/2026): hồ sơ không số hoá ghi nơi lưu
     // là đúng luật (TT57 PL IV II.3c). Ghi chú NỘI BỘ của hồ sơ (ho_so.ghi_chu) KHÔNG đưa ra ngoài.
     var dd = String(((window.HS_BAN_GHI || {})[h.ma] || {}).dinh_dang || h.dinhDang || '').trim();
@@ -63,18 +62,44 @@
   }
 
   // Trả về { dong: [...], boQua: [...] } — tách riêng để kiểm thử được.
+  // Sửa 20/11/2026 (tập huấn TT57 của Bộ 23/9/2026 — minh chứng hợp lý, tránh trùng lặp):
+  //  · hồ sơ Đảng, Đoàn và hồ sơ Ban giám hiệu chọn "Không" KHÔNG lên EduQA (app.js laMinhChungTDG);
+  //  · hồ sơ "Chưa có" chưa có gì để người thẩm định mở → không đưa, báo trường bổ sung.
   function lapDanhSach(hoSo) {
-    var daCo = {}, dong = [], boQua = [];
+    var daCo = {}, dong = [], boQua = [], ngoai = [], chuaCo = [];
     (hoSo || []).forEach(function (h) {
       if (!h || h.tt === 'da_dong' || !(h.tc && h.tc.length)) return;
       var ma = String(h.ma || '').trim();
+      if (window.laMinhChungTDG && !window.laMinhChungTDG(h)) { if (ngoai.indexOf(ma) < 0) ngoai.push(ma); return; }
       if (!MA_HOP_LE.test(ma)) { boQua.push(ma || '(trống)'); return; }
       if (daCo[ma]) return;
       daCo[ma] = true;
-      dong.push({ ma: ma, ten: String(h.ten || '').trim(), ghiChu: ghiChu(h) });
+      if (h.tt === 'chua') { chuaCo.push(ma); return; }
+      dong.push({ ma: ma, ten: String(h.ten || '').trim(), ghiChu: ghiChu(h), tc: (h.tc || []).slice() });
     });
     dong.sort(function (a, b) { return soMa(a.ma, b.ma); });
-    return { dong: dong, boQua: boQua };
+    chuaCo.sort(soMa);
+    return { dong: dong, boQua: boQua, ngoai: ngoai, chuaCo: chuaCo };
+  }
+
+  // Cảnh báo trước khi nộp (20/11/2026): mã báo cáo đã trích mà tệp không có; tiêu chí bắt buộc chưa có
+  // minh chứng; tiêu chí quá nhiều minh chứng (mẫu 80 mã của Bộ cho 15 tiêu chí ≈ 5 mã/tiêu chí).
+  var NHIEU_MC = 15;
+  function canhBao(ds, d, tieuChi) {
+    var coMa = {}, demTC = {}, loi = [];
+    ds.dong.forEach(function (x) { coMa[x.ma] = 1; x.tc.forEach(function (t) { demTC[t] = (demTC[t] || 0) + 1; }); });
+    var trich = {};
+    Object.keys((d && d.htNh) || {}).forEach(function (id) {
+      (d.htNh[id].ma_minh_chung || []).forEach(function (m) { if (!coMa[m]) trich[m] = 1; });
+    });
+    var thieuTrich = Object.keys(trich).sort(soMa);
+    if (thieuTrich.length) loi.push('Báo cáo đã trích ' + thieuTrich.length + ' mã không có trong tệp: ' + thieuTrich.join(', ') + '.');
+    var bbTrong = (tieuChi || []).filter(function (t) { return t.batBuoc && !demTC[t.ma]; }).map(function (t) { return t.ma; });
+    if (bbTrong.length) loi.push('Tiêu chí bắt buộc chưa có minh chứng: ' + bbTrong.join(', ') + '.');
+    var nhieu = Object.keys(demTC).filter(function (t) { return demTC[t] > NHIEU_MC; })
+      .map(function (t) { return t + ' (' + demTC[t] + ' mã)'; });
+    if (nhieu.length) loi.push('Tiêu chí nhiều minh chứng, nên rà bớt: ' + nhieu.join(', ') + '.');
+    return loi;
   }
 
   function taoSheet(dong) {
@@ -113,9 +138,15 @@
       (thieuLink ? ' (' + thieuLink + ' chưa có link lẫn vị trí lưu trữ)' : '') +
       '. Trên EduQA: mục 4.3 Minh chứng → Nhập từ Excel. ' +
       'Người thẩm định chỉ mở được link khi thư mục minh chứng trên Drive đã chia sẻ cho họ.' +
-      (ds.boQua.length ? ' Bỏ qua ' + ds.boQua.length + ' mã sai dạng MC.a.b.cc: ' + ds.boQua.join(', ') + '.' : ''));
+      (ds.boQua.length ? ' Bỏ qua ' + ds.boQua.length + ' mã sai dạng MC.a.b.cc: ' + ds.boQua.join(', ') + '.' : '') +
+      (ds.ngoai.length ? ' Không đưa ' + ds.ngoai.length + ' hồ sơ Đảng, Đoàn hoặc hồ sơ Ban giám hiệu chọn không dùng làm minh chứng.' : '') +
+      (ds.chuaCo.length ? ' Chưa đưa ' + ds.chuaCo.length + ' hồ sơ còn "Chưa có" (bổ sung tệp rồi xuất lại): ' + ds.chuaCo.join(', ') + '.' : '') +
+      (function () {
+        var cb = canhBao(ds, window.duLieuTuDanhGia ? window.duLieuTuDanhGia() : null, window.TIEU_CHI);
+        return cb.length ? ' ⚠ ' + cb.join(' ') : '';
+      })());
   };
 
   // Cho kiểm thử ngoài trình duyệt
-  window.__eduqa = { lapDanhSach: lapDanhSach, taoSheet: taoSheet };
+  window.__eduqa = { lapDanhSach: lapDanhSach, taoSheet: taoSheet, canhBao: canhBao };
 })();

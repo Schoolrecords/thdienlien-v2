@@ -632,11 +632,28 @@
 
   /* ---------------- Phần IV — Phụ lục ---------------- */
   function phanIV(d, coBangSoLieu) {
-    const ds = [];
+    /* Danh mục minh chứng = các mã báo cáo THỰC SỰ dùng (TT57 Phụ lục IV mục I.2–I.3; sửa 20/11/2026).
+       Tiêu chí đã nhập theo nội hàm → mã gắn ở từng ý (cả Mức 1, Mức 2); tiêu chí còn lối văn xuôi → mã
+       của tiêu chí (dòng "Minh chứng của tiêu chí" in kèm ở Phần II). Trước đây in MỌI hồ sơ trong kho,
+       kể cả hồ sơ Đảng, và in cả ghi chú nội bộ của hồ sơ ra văn bản gửi Sở. */
+    const theoMa = {}, ds = [];
     Object.keys(d.mcTheoTC).forEach(function (k) {
       d.mcTheoTC[k].forEach(function (h) {
-        if (!ds.some(function (x) { return x.ma === h.ma; })) ds.push(h);
+        if (!theoMa[h.ma]) theoMa[h.ma] = Object.assign({}, h, { tcDung: [] });
+        if (theoMa[h.ma].tcDung.indexOf(k) < 0) theoMa[h.ma].tcDung.push(k);
       });
+    });
+    function themMa(ma) {
+      if (!ma || ds.some(function (x) { return x.ma === ma; })) return;
+      if (theoMa[ma]) { ds.push(theoMa[ma]); return; }
+      const h = (window.HO_SO || []).filter(function (x) { return x.ma === ma; })[0];
+      ds.push({ ma: ma, ten: h ? h.ten : '', link_drive: h ? (h.link || null) : null, tcDung: [], ngoaiKho: true });
+    }
+    (d.tieuChi || []).forEach(function (c) {
+      const nh1 = (d.noiHam || {})[c.code + '|1'] || [], nh2 = (d.noiHam || {})[c.code + '|2'] || [];
+      const theoNoiHam = nh1.some(function (n) { return String(((d.htNh || {})[n.id] || {}).hien_trang || '').trim(); });
+      if (theoNoiHam) nh1.concat(nh2).forEach(function (n) { (((d.htNh || {})[n.id] || {}).ma_minh_chung || []).forEach(themMa); });
+      else (d.mcTheoTC[c.code] || []).forEach(function (h) { themMa(h.ma); });
     });
     ds.sort(function (a, b) { return String(a.ma).localeCompare(String(b.ma), 'vi'); });
 
@@ -676,13 +693,16 @@
          thư mục lưu trữ. Kho hồ sơ số của trường đã có link Drive sẵn, nên chỗ
          này là lợi thế: hội đồng thẩm định bấm vào là mở đúng thư mục. */
       const vt = m.link_drive
-        ? '<a href="' + chan(m.link_drive) + '">Thư mục trên hệ thống hồ sơ số</a>'
-        : '<span style="color:#555;font-style:italic">Chưa gán thư mục lưu trữ</span>';
+        ? '<a href="' + chan(m.link_drive) + '">Thư mục trên hệ thống hồ sơ số</a>' + (m.dinh_dang ? ' (' + chan(m.dinh_dang) + ')' : '')
+        : (m.dinh_dang ? chan(m.dinh_dang) : '<span style="color:#555;font-style:italic">Chưa gán thư mục lưu trữ</span>');
+      /* Ghi chú: tiêu chí dùng mã này — KHÔNG in ho_so.ghi_chu (ghi chú nội bộ, giống tệp EduQA). */
+      const gc = m.ngoaiKho ? 'Mã có trích trong báo cáo nhưng không còn trong danh mục minh chứng — kiểm tra lại.'
+        : ((m.tcDung || []).length > 1 ? 'Dùng cho tiêu chí ' + m.tcDung.join(', ') + '.' : '');
       h += '<tr><td style="' + O + 'text-align:center">' + (i + 1) + '</td>'
         + '<td style="' + O + 'font-weight:bold;text-align:center">' + chan(m.ma) + '</td>'
         + '<td style="' + O + '">' + chan(m.ten) + '</td>'
         + '<td style="' + O + 'font-size:11pt">' + vt + '</td>'
-        + '<td style="' + O + 'font-size:11pt">' + chan(m.ghi_chu || '') + '</td></tr>';
+        + '<td style="' + O + 'font-size:11pt">' + chan(gc) + '</td></tr>';
     });
     if (!ds.length) {
       h += '<tr><td colspan="5" style="' + O + 'text-align:center;font-style:italic;color:#555">'
