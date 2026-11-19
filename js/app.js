@@ -38,15 +38,59 @@
   function chuyenManHinh(ma) {
     $$('.man-hinh').forEach(function (m) { m.classList.toggle('hien', m.id === 'mh-' + ma); });
     // Màn con không có nút riêng trên menu thì tô sáng nút của nhánh cha
-    var nutSang = (ma === 'cbgv') ? 'hoso' : (ma === 'sochunhiem' || ma === 'sodaubai') ? 'hocsinh' : ma;
+    var nutSang = (ma === 'cbgv') ? 'hoso' : (ma === 'sochunhiem' || ma === 'sodaubai') ? 'hocsinh' : (ma === 'dbcl') ? 'chuanqg' : ma;
     $$('nav.menu button').forEach(function (b) {
       b.classList.toggle('dang-chon', b.getAttribute('data-di') === nutSang);
     });
     $('#hero').style.display = (ma === 'home') ? '' : 'none';
     dongBangMenu();          // chọn xong thì bảng ☰ tự đóng
     window.scrollTo(0, 0);
+    if (ma === 'chuanqg' || ma === 'dbcl') veTheBdcl(ma === 'dbcl' ? 'dbcl' : 'tdg');
   }
   window.chuyenManHinh = chuyenManHinh;
+
+  // ── BẢO ĐẢM CHẤT LƯỢNG (TT57): một nút menu, hàng thẻ con (20/11/2026, thầy Chung "Em làm cả đi em") ──
+  // TT57 coi tự đánh giá – cải tiến – theo dõi dữ liệu là MỘT chu trình bảo đảm chất lượng; công nhận chuẩn
+  // quốc gia là việc Sở thẩm định. Có EduQA (bdclgd.vn) rồi: app soạn + giữ bản gốc + dữ liệu hằng ngày,
+  // EduQA nộp. Hàng thẻ này chỉ là lối đi chung — mỗi thẻ mở đúng màn/ khối đã có, không đổi dữ liệu.
+  function laBGHBdcl() {
+    var u = window.NGUOI_DUNG;
+    return !!u && (u.vai_tro === 'admin' || u.vai_tro === 'ban_giam_hieu');
+  }
+  var THE_BDCL = [
+    ['tdg', 'Tự đánh giá (TT57)'],
+    ['kh', 'Kế hoạch cải tiến'],
+    ['dbcl', 'Chỉ tiêu, đối sánh, điều kiện'],
+    ['eduqa', 'Nộp lên EduQA']
+  ];
+  function veTheBdcl(dangChon) {
+    var ds = THE_BDCL.filter(function (t) { return t[0] !== 'kh' || laBGHBdcl(); });
+    var html = '<div class="lh-the" role="tablist" style="margin:0 0 14px">' + ds.map(function (t) {
+      return '<button type="button" role="tab" data-the-bdcl="' + t[0] + '"' +
+        (t[0] === dangChon ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + t[1] + '</button>';
+    }).join('') + '</div>';
+    $$('[data-cho-the-bdcl]').forEach(function (o) {
+      o.innerHTML = html;
+      Array.prototype.forEach.call(o.querySelectorAll('button'), function (b) {
+        var on = b.getAttribute('data-the-bdcl') === o.getAttribute('data-cho-the-bdcl');
+        b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-the-bdcl]');
+    if (!b) return;
+    var ma = b.getAttribute('data-the-bdcl');
+    if (ma === 'tdg') chuyenManHinh('chuanqg');
+    else if (ma === 'dbcl') chuyenManHinh('dbcl');
+    else if (ma === 'kh') { chuyenManHinh('quantri'); window.moQuanTri && window.moQuanTri('kh'); }
+    else if (ma === 'eduqa') {
+      chuyenManHinh('chuanqg');
+      var k = document.getElementById('kd-eduqa');
+      if (k && k.scrollIntoView) setTimeout(function () { k.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+    }
+  });
+  window.veTheBdcl = veTheBdcl;
 
   // ── Nút ☰ (chỉ hiện dưới 1000px, CSS lo phần ẩn/hiện) ──
   function dongBangMenu() {
@@ -832,7 +876,7 @@
     if (tuDG) {
       if (oMuc) oMuc.textContent = tuDG.muc;
       if (oMucNhan) oMucNhan.textContent = 'tự đánh giá năm học ' + tuDG.nam;
-      if (oMucHop) oMucHop.title = 'Kết quả tự đánh giá theo Thông tư 57 (trang Trường chuẩn quốc gia), chưa phải mức được công nhận. Khai mức được công nhận ở Quản trị → ⚙️ Thông tin trường.';
+      if (oMucHop) oMucHop.title = 'Kết quả tự đánh giá theo Thông tư 57 (mục Bảo đảm chất lượng → Tự đánh giá), chưa phải mức được công nhận. Khai mức được công nhận ở Quản trị → ⚙️ Thông tin trường.';
     }
 
     // Khẩu hiệu: dựng cả dòng ở đây. Trống thì ẩn hẳn, đừng để trơ hai bông lúa.

@@ -85,7 +85,11 @@
     return Promise.all([
       may.from('so_lieu_bao_cao').select('nam_hoc,ma_dong,gia_tri').in('nam_hoc', ds).is('co_so_ma', null),
       Promise.all(ds.map(function (n) { return may.rpc('so_lieu_tt57', { p_nam: n }); })),
-      nam === namHienTai() ? may.from('moi_tai_khoan').select('*') : Promise.resolve({ data: null })
+      nam === namHienTai() ? may.from('moi_tai_khoan').select('*') : Promise.resolve({ data: null }),
+      // Kiểm kê cơ sở vật chất (csvc.js, sql/45) — nguồn gốc của mục 2 "Cơ cấu khối công trình" (20/11/2026).
+      // Lỗi đọc (RLS, kho chưa có bảng) thì bỏ qua, ô vẫn để gõ tay như cũ.
+      Promise.resolve(may.from('csvc_kiem_ke').select('nam_hoc,hang_muc,kien_co,ban_kien_co,tam').in('nam_hoc', ds))
+        .then(function (r) { return r; }, function () { return { data: null }; })
     ]).then(function (kq) {
       if (kq[0].error) throw kq[0].error;
       var luu = {}, tu = {}, thieuHam = false;
@@ -96,6 +100,7 @@
         tu[n] = doiSoDem(r.data || {});
       });
       demDoiNgu(kq[2].data, tu[nam], nam);
+      demCongTrinh(kq[3] && !kq[3].error ? kq[3].data : null, tu);
       return { nam: nam, ds: ds, luu: luu, tu: tu, thieuHam: thieuHam };
     });
   }
@@ -113,6 +118,42 @@
     o._lop = v.lop_tong; o._hs = v.hs_tong;
     return o;
   }
+  // CƠ CẤU KHỐI CÔNG TRÌNH từ kiểm kê cơ sở vật chất (20/11/2026). Trước đây trường khai số phòng kiên cố /
+  // bán kiên cố / tạm ở thẻ "Điều kiện bảo đảm" rồi gõ LẠI ở đây — hai nơi, dễ lệch. Nay kiểm kê là nơi gốc;
+  // số hiện mờ trong ô như các số máy đếm khác, gõ đè được. Gộp hạng mục theo nhóm dòng của biểu Phụ lục V.
+  var CT_NHOM = {
+    'ct.1': ['phong_hoc'],
+    'ct.2': ['p_tin_hoc', 'p_ngoai_ngu', 'p_am_nhac', 'p_mi_thuat'],
+    'ct.3': ['p_da_chuc_nang', 'p_thiet_bi', 'p_truyen_thong'],
+    'ct.h': ['p_hieu_truong', 'p_hanh_chinh', 'p_hop']
+  };
+  var CT_TONG = { 'ct.III': ['thu_vien'], 'ct.IV': ['p_y_te', 'p_bep_an'] };
+  function demCongTrinh(dong, tu) {
+    if (!dong || !dong.length) return;
+    var theoNam = {};
+    dong.forEach(function (r) {
+      var n = theoNam[r.nam_hoc] = theoNam[r.nam_hoc] || {};
+      var h = n[r.hang_muc] = n[r.hang_muc] || { k: 0, b: 0, t: 0 };
+      h.k += +r.kien_co || 0; h.b += +r.ban_kien_co || 0; h.t += +r.tam || 0;   // cộng các địa điểm
+    });
+    Object.keys(theoNam).forEach(function (nam) {
+      var o = tu[nam] = tu[nam] || {}, hm = theoNam[nam];
+      function cong(ds, cot) { return ds.reduce(function (s, m) { return s + ((hm[m] || {})[cot] || 0); }, 0); }
+      function coDong(ds) { return ds.some(function (m) { return hm[m]; }); }
+      Object.keys(CT_NHOM).forEach(function (g) {
+        var ds = CT_NHOM[g];
+        if (!coDong(ds)) return;   // chưa kiểm kê nhóm này: để trống, không ghi số 0
+        var k = cong(ds, 'k'), b = cong(ds, 'b'), t = cong(ds, 't');
+        if (g === 'ct.h') { o['ct.h.1'] = k; o['ct.h.2'] = b; o['ct.h.3'] = t; }
+        else { o[g + '.a'] = k; o[g + '.b'] = b; o[g + '.c'] = t; }
+      });
+      Object.keys(CT_TONG).forEach(function (g) {
+        var ds = CT_TONG[g];
+        if (coDong(ds)) o[g] = cong(ds, 'k') + cong(ds, 'b') + cong(ds, 't');
+      });
+    });
+  }
+
   // Đội ngũ NĂM HIỆN TẠI: đúng luật danh bạ (window.nhomCBGV), một người hai Gmail đếm một
   function demDoiNgu(mtk, o, nam) {
     if (!mtk || !window.nhomCBGV || !o) return;

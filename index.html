@@ -170,8 +170,9 @@
              (thanh menu quá chật): nó là một thẻ con của trang Lớp học, vào từ hàng thẻ
              con (Sổ chủ nhiệm · Kiểm tra sổ) · dòng từng lớp · lối tắt theo vai ở trang chủ.
              Khi đang ở màn sổ, app.js tô sáng nút "Lớp học". -->
-        <button data-di="chuanqg">Trường chuẩn Quốc gia</button>
-        <button data-di="dbcl">Đảm bảo chất lượng</button>
+        <!-- 20/11/2026: "Trường chuẩn Quốc gia" + "Đảm bảo chất lượng" gộp thành MỘT nút (TT57: một chu trình bảo đảm
+             chất lượng). Màn dbcl vẫn còn, vào từ hàng thẻ con đầu màn (js/app.js veTheBdcl) — app.js tô sáng nút này. -->
+        <button data-di="chuanqg">Bảo đảm chất lượng</button>
       </nav>
       <div class="khu-tai-khoan" id="khu-tai-khoan"></div>
     </div>
@@ -286,7 +287,7 @@
       </div>
       <div class="the-module v-xanh-la" onclick="chuyenManHinh('chuanqg')">
         <div class="bi"><svg class="ic" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
-        <h3>Trường chuẩn Quốc gia</h3>
+        <h3>Tự đánh giá (TT57)</h3>
         <div class="chip-hang"><span class="chip">4 tiêu chuẩn</span><span class="chip">15 tiêu chí</span></div>
         <p>Tự đánh giá hằng năm theo bộ tiêu chuẩn mới của Thông tư 57/2026. Chọn mức đạt,
         gắn minh chứng sẵn có từ kho hồ sơ số, hệ thống tổng hợp và kết xuất báo cáo.</p>
@@ -295,10 +296,10 @@
       </div>
       <div class="the-module v-tim" onclick="chuyenManHinh('dbcl')">
         <div class="bi"><svg class="ic" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-        <h3>Đảm bảo chất lượng</h3>
-        <div class="chip-hang"><span class="chip">Chuẩn đầu ra</span><span class="chip">Cam kết chất lượng</span><span class="chip">Kế hoạch cải tiến</span></div>
+        <h3>Chỉ tiêu, đối sánh, điều kiện</h3>
+        <div class="chip-hang"><span class="chip">Chuẩn đầu ra</span><span class="chip">Cam kết chất lượng</span><span class="chip">Đối sánh</span></div>
         <p>Nhập một bộ chỉ tiêu theo Thông tư 27/2020, hệ thống tự sinh các phụ lục và tự đối chiếu
-        kết quả với chuẩn đầu ra đã cam kết. Kèm kế hoạch cải tiến và bộ chỉ số nhiều năm.</p>
+        kết quả với chuẩn đầu ra đã cam kết. Vấn đề phát hiện được đưa vào Kế hoạch cải tiến (Biểu 2) ở phần Tự đánh giá.</p>
         <div class="chan-the">Xem theo dõi <span class="mui-ten">→</span></div>
         <span class="hinh-chim"><svg class="ic" viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="12" width="3.2" height="8" rx=".6"/><rect x="10.4" y="8" width="3.2" height="12" rx=".6"/><rect x="15.8" y="4.5" width="3.2" height="15.5" rx=".6"/></svg></span>
       </div>
@@ -366,10 +367,11 @@
 
   <!-- ═══ MODULE 2: TRƯỜNG CHUẨN QUỐC GIA (kế thừa Bạch Liêu) ═══ -->
   <section class="man-hinh" id="mh-chuanqg">
+    <div data-cho-the-bdcl="tdg"></div>
     <div class="kd-dau">
       <div class="dau-muc" style="margin-bottom:0">
         <div class="nhan-nho">Tự đánh giá và cải tiến chất lượng</div>
-        <h2>Trường chuẩn Quốc gia</h2>
+        <h2>Tự đánh giá và trường chuẩn quốc gia</h2>
         <p>Theo Thông tư 57/2026/TT-BGDĐT — 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức 1 và Mức 2.</p>
       </div>
       <div class="kd-dau-phai">
@@ -423,9 +425,10 @@
 
   <!-- ═══ MODULE 3: ĐẢM BẢO CHẤT LƯỢNG ═══ -->
   <section class="man-hinh" id="mh-dbcl">
+    <div data-cho-the-bdcl="dbcl"></div>
     <div class="dau-muc">
       <div class="nhan-nho">Thông tư 57/2026 · Điều 110 Luật Giáo dục</div>
-      <h2>Đảm bảo Chất lượng</h2>
+      <h2>Chỉ tiêu, đối sánh và điều kiện bảo đảm</h2>
       <p>Bảo đảm chất lượng là hoạt động <b>thường xuyên, liên tục</b> của nhà trường theo bốn trọng tâm
       của Thông tư 57/2026: đổi mới phương pháp dạy học · phát triển đội ngũ · tăng cường điều kiện
       bảo đảm · nâng cao hiệu quả quản trị. Vòng khép kín: đặt chuẩn đầu ra → cam kết →
@@ -542,7 +545,7 @@
         Thêm/bớt/đổi thứ tự tệp → sửa trong <template> rồi chạy lại lệnh ấy.
      supabase-js đứng SAU gói: chỉ supabase-ket-noi.js dùng, và dùng sau khi
      trang dựng xong — để gói chạy trước cho cauhinh.js đi hỏi cấu hình sớm. -->
-<script src="js/goi.min.js?v=1f319f4509"></script>
+<script src="js/goi.min.js?v=85f0659993"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <template id="goi-nguon">
 <!-- Trình duyệt KHÔNG chạy gì trong <template>. Đây là danh sách nguồn của
