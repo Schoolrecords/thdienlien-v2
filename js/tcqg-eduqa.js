@@ -325,6 +325,8 @@
   function ve() {
     var goc = document.getElementById('kd-eduqa');
     if (!goc || !window.duLieuTuDanhGia) return;
+    // Bảng nộp chỉ cho người giữ bút (BGH + Thư ký hội đồng; mầm non: BGH) — 20/11/2026.
+    if (!(window.tcqgDuocXuat ? window.tcqgDuocXuat() : laQT())) { goc.innerHTML = ''; return; }
     // Đang gõ trong khối này thì không vẽ lại (mất chữ đang gõ) — lần lưu sau vẽ.
     if (goc.contains(document.activeElement) && /TEXTAREA|INPUT/.test(document.activeElement.tagName)) return;
     var nam = namDL();
@@ -352,17 +354,30 @@
     });
     var tc = (d.tieuChi || []).length || 15;
     var khCo = O_KH.filter(function (o) { return o[0] !== '4.7' && co(PHU.kh[o[1]]); }).length;
-    var dong = [
-      ['2', khCo + '/' + O_KH.filter(function (o) { return o[0] !== '4.7'; }).length + ' ô', 'Khối “Kế hoạch tự đánh giá” ngay dưới (2.2, 2.3: hội đồng ở nút Sửa hội đồng)', chuChep(demChep(ok['2'] || []))],
-      ['3', '', 'Quản trị › thẻ “📊 Số liệu 3 năm” (nhóm/lớp, công trình, đội ngũ, trẻ/học sinh 03 năm học)', ''],
-      ['4.1', demBC('4.1'), 'Khối “Các mục viết bằng lời” cuối trang', chuChep(demChep(ok['4.1'] || []))],
-      ['4.2', demBC('4.2'), 'Khối “Các mục viết bằng lời” cuối trang', chuChep(demChep(ok['4.2'] || []))],
-      ['4.3', mc.tong + ' minh chứng', 'Nút “Xuất minh chứng cho EduQA” → trên EduQA bấm Nhập từ Excel', ''],
-      ['4.4', moTaCo + '/' + tc + ' tiêu chí có mô tả Mức 1 · ' + cham + '/' + tc + ' đã chấm · ' + dg + '/4 đánh giá chung',
-        'Mỗi tiêu chí: nút “Chép sang EduQA” ở từng mức; Đánh giá chung: chọn Tiêu chuẩn ở ô lọc', chuChep(demChep(ok['4.4'] || []))],
-      ['4.5', demBC('4.5'), 'Khối “Các mục viết bằng lời” cuối trang', chuChep(demChep(ok['4.5'] || []))],
-      ['4.6', '', 'Nút “Kế hoạch cải tiến” (mục IV Các vấn đề trọng tâm)', ''],
-      ['4.7', co(PHU.kh['47_viet_tat']) ? 'đã có' : '—', 'Khối “Kế hoạch tự đánh giá” ngay dưới', chuChep(demChep(ok['4.7'] || []))]
+    // ── BẢNG NỘP LÊN EduQA (20/11/2026, thầy Chung: "EduQA mờ nhạt, khó thấy") ──
+    // Bảng tiến độ DUY NHẤT của trang, đặt đầu trang, luôn mở; mỗi dòng một mục EduQA đúng thứ tự trên
+    // bdclgd.vn. Thay lưới 9 bước cũ (tên do app tự đặt) và khối gập "Nộp lên EduQA". Nút [Soạn] mở thẳng
+    // chỗ viết (tcqg.js window.tcqgDi). Chỉ người giữ bút thấy: BGH + Thư ký hội đồng (một tài khoản EduQA/trường).
+    function gopChep(ds) { return chuChep(demChep([].concat.apply([], ds.map(function (m) { return ok[m] || []; })))); }
+    function demBCNhieu(ds) {
+      var o = O_BC.filter(function (x) { return ds.indexOf(x[0]) >= 0 && x[1] !== 'kn_khac'; });
+      return o.filter(function (x) { return co(bc[x[1]]); }).length + '/' + o.length + ' ô';
+    }
+    var tongKh = O_KH.filter(function (o) { return o[0] !== '4.7'; }).length;
+    var hang = [
+      { muc: '2', ten: '2. Kế hoạch tự đánh giá (2.1–2.7) · 4.7 Viết tắt', soan: khCo + '/' + tongKh + ' ô',
+        chep: gopChep(['2', '4.7']), nut: [['Soạn', 'mo:kh'], ['Hội đồng (2.2, 2.3)', 'di:qt:hd']] },
+      { muc: '3', ten: '3. Cơ sở dữ liệu — số liệu 03 năm học', soan: 'Thẻ Số liệu 3 năm', chep: '',
+        nut: [['Soạn', 'di:qt:sl3']] },
+      { muc: '4.1', ten: '4.1–4.2 Bối cảnh, quá trình tự đánh giá', soan: demBCNhieu(['4.1', '4.2']),
+        chep: gopChep(['4.1', '4.2']), nut: [['Soạn', 'di:bc']] },
+      { muc: '4.3', ten: '4.3 Minh chứng', soan: mc.tong + ' mã' + (mc.thieu.length ? ' · ⚠ ' + mc.thieu.length + ' chưa có link, nơi lưu' : ''),
+        chep: 'Nhập từ Excel', nut: [['Xuất Excel', 'lam:xuatmc'], ['Kiểm link', 'mo:td']], thieu: mc.thieu.length > 0 },
+      { muc: '4.4', ten: '4.4 Đánh giá từng tiêu chí, từng tiêu chuẩn',
+        soan: moTaCo + '/' + tc + ' tiêu chí có mô tả · chấm ' + cham + '/' + tc + ' · chung ' + dg + '/4',
+        chep: gopChep(['4.4']), nut: [['Soạn tiêu chí', 'di:tc'], ['Đánh giá chung', 'di:dg']] },
+      { muc: '4.5', ten: '4.5 Kết luận chung', soan: demBC('4.5'), chep: gopChep(['4.5']), nut: [['Soạn', 'di:bc']] },
+      { muc: '4.6', ten: '4.6 Kế hoạch cải tiến', soan: '', chep: '', nut: [['Soạn', 'di:qt:kh']] }
     ];
     var suaDuoc = laQT();
     function sub(id, tieuDe, than) {
@@ -402,28 +417,51 @@
       '🔴 Không bật “Bất kỳ ai có đường liên kết”: hồ sơ có dữ liệu cá nhân của trẻ, giáo viên. App không đọc được quyền chia sẻ của Drive, ' +
       'nên hãy nhờ một người ngoài trường (không thuộc danh sách chia sẻ) bấm thử vài link trước ngày thẩm định.</p>';
 
-    goc.innerHTML = '<div class="sub eduqa-hop' + (dangMo ? ' open' : '') + '"><div class="sub-head" role="button" ' +
-      'onclick="this.parentNode.classList.toggle(\'open\')"><span class="fo">📤</span>' +
-      '<b>Nộp lên EduQA — app soạn, EduQA nộp</b><span class="sub-arrow">▶</span></div>' +
-      '<div class="sub-body" style="padding:12px 16px">' +
-      '<p class="eduqa-giai">Mỗi ô của màn này ứng đúng một ô trên phần mềm EduQA của Sở (bdclgd.vn — đối chiếu ' + NGAY_DOI_CHIEU + '). ' +
-      'Hội đồng soạn ở đây; xong bấm <b>📋 Chép</b> rồi dán (Ctrl+V) vào ô cùng tên trên EduQA, hoặc tải <b>gói nội dung</b>. ' +
-      'Nút đổi thành <b>✓</b> khi đã chép, <b>⚠</b> khi ô bị sửa sau lần chép (phải dán lại trên EduQA). ' +
-      'Ô “Đánh giá: Đạt” trên EduQA do người có thẩm quyền tự tích theo kết luận của Hội đồng. ' +
-      '<b>Báo cáo nộp chính thức xuất trên EduQA (6.2)</b>; nút “Xuất báo cáo tự đánh giá” của app là bản nháp nội bộ.</p>' +
+    var namCuoi = parseInt(String(nam).split('-')[1], 10);
+    var conNgay = namCuoi ? Math.ceil((new Date(namCuoi, 5, 15) - new Date()) / 86400000) : null;
+    function nutLam(n) { return '<button type="button" class="nut-vien nho" style="margin:2px 6px 2px 0" data-eduqa="' + n[1] + '">' + n[0] + '</button>'; }
+    goc.innerHTML = '<div class="eduqa-nop" style="border:2px solid var(--chinh,#1f3b7a);border-radius:12px;padding:14px 16px;margin:0 0 16px;background:var(--nen-the,#fff)">' +
+      '<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:0 0 6px">' +
+      '<b style="font-size:17px">📤 Nộp lên EduQA — năm học ' + thoat(nam) + '</b>' +
+      (conNgay === null ? '' : '<span style="font-size:13.5px' + (conNgay >= 0 && conNgay <= 30 ? ';color:#b42318;font-weight:600' : '') + '">' +
+        (conNgay >= 0 ? 'Hội đồng thông qua, Hiệu trưởng phê duyệt trước 15/6 · còn ' + conNgay + ' ngày' : 'Hạn 15/6/' + namCuoi + ' đã qua') + '</span>') +
+      '</div>' +
+      '<p class="eduqa-giai" style="margin:0 0 10px">Mỗi dòng là một mục trên phần mềm EduQA (bdclgd.vn). Hội đồng soạn trong app; người giữ tài khoản ' +
+      'bấm <b>📋 Chép</b> cạnh từng ô rồi dán vào ô cùng tên trên EduQA. <b>⚠</b> = ô bị sửa sau lần chép, phải dán lại. ' +
+      'Báo cáo nộp chính thức xuất trên EduQA (mục 6.2).</p>' +
       '<div class="cuon-ngang"><table class="bang-quan-tri nho eduqa-bang"><thead><tr>' +
-      '<th>Mục trên EduQA</th><th>Đã soạn trong app</th><th>Đã chép sang EduQA</th><th>Lấy ở đâu</th></tr></thead><tbody>' +
-      dong.map(function (r) {
-        return '<tr><td><a href="' + MUC[r[0]].url + '" target="_blank" rel="noopener">' + thoat(MUC[r[0]].ten) + '</a></td>' +
-          '<td>' + thoat(r[1] || '—') + '</td><td' + (/⚠/.test(r[3]) ? ' class="thieu"' : '') + '>' + thoat(r[3] || '—') + '</td><td>' + thoat(r[2]) + '</td></tr>';
+      '<th>Mục trên EduQA</th><th>Đã soạn trong app</th><th>Đã chép sang EduQA</th><th></th></tr></thead><tbody>' +
+      hang.map(function (r) {
+        return '<tr><td><b>' + thoat(r.ten) + '</b></td>' +
+          '<td' + (r.thieu ? ' class="thieu"' : '') + '>' + thoat(r.soan || '—') + '</td>' +
+          '<td' + (/⚠/.test(r.chep) ? ' class="thieu"' : '') + '>' + thoat(r.chep || '—') + '</td>' +
+          '<td style="white-space:nowrap">' + r.nut.map(nutLam).join('') +
+          '<a href="' + MUC[r.muc].url + '" target="_blank" rel="noopener" style="font-size:13px">Mở EduQA ↗</a></td></tr>';
       }).join('') + '</tbody></table></div>' +
       (PHU.loi ? '<div class="hs-loi hien" style="margin:8px 0">Chưa đọc được phần lưu phụ (ô mục 2, dấu đã chép) — tải lại trang.</div>' : '') +
       sub('kh', '📝 Kế hoạch tự đánh giá — EduQA 2.1, 2.4, 2.5, 2.6, 2.7 và 4.7 (' + khCo + ' ô đã ghi)', khHtml) +
       sub('td', '🔎 Chuẩn bị cho đoàn thẩm định — link minh chứng (' + (mc.tong - mc.thieu.length) + '/' + mc.tong + ' mở được hoặc có nơi lưu)', tdHtml) +
-      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
-      '<button class="nut-vien" onclick="tcqgXuatGoiEduQA()">📦 Tải gói nội dung cho EduQA (Excel)</button>' +
-      '<button class="nut-vien" onclick="window.xuatMinhChungEduQA&&xuatMinhChungEduQA()">📤 Xuất minh chứng (mẫu 4.3)</button>' +
-      '</div></div></div>';
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      '<button class="nut-vien" data-eduqa="lam:goi">📦 Tải gói nội dung cho EduQA (Excel)</button>' +
+      '<span style="font-size:13px;color:var(--chu-mo,#5b6575)">Bản Word dùng nội bộ: ' +
+      '<a href="javascript:void 0" data-eduqa="lam:nhap">bản nháp báo cáo (đọc soát)</a> · ' +
+      '<a href="javascript:void 0" data-eduqa="lam:dmmc">danh mục minh chứng</a>' +
+      (suaDuoc ? ' · <a href="javascript:void 0" data-eduqa="di:qt:cn">điều kiện công nhận (Điều 16)</a>' : '') +
+      '</span></div></div>';
+    goc.onclick = function (e) {   // gán, không addEventListener: vẽ lại không nhân đôi
+      var b = e.target.closest && e.target.closest('[data-eduqa]');
+      if (!b) return;
+      e.preventDefault();
+      var v = b.getAttribute('data-eduqa');
+      if (v.indexOf('mo:') === 0) {
+        var s = goc.querySelector('[data-sub="' + v.slice(3) + '"]');
+        if (s) { s.classList.add('open'); if (s.scrollIntoView) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      } else if (v.indexOf('di:') === 0) { if (window.tcqgDi) window.tcqgDi(v.slice(3)); }
+      else if (v === 'lam:xuatmc') { if (window.xuatMinhChungEduQA) window.xuatMinhChungEduQA(); }
+      else if (v === 'lam:goi') { if (window.tcqgXuatGoiEduQA) window.tcqgXuatGoiEduQA(); }
+      else if (v === 'lam:nhap') { if (window.xuatBaoCaoTuDanhGia) window.xuatBaoCaoTuDanhGia(); }
+      else if (v === 'lam:dmmc') { if (window.xuatMinhChungTheoTieuChuan) window.xuatMinhChungTheoTieuChuan(); }
+    };
     goc.onchange = function (e) {   // gán, không addEventListener: vẽ lại không nhân đôi lệnh lưu
       var o = e.target;
       if (!o.classList || !o.classList.contains('eduqa-kh')) return;

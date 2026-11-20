@@ -69,7 +69,7 @@
   ];
   function nutChep(nhan, khoa) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nutChep(nhan, khoa) : ''; }
   function nhanEduQA(muc) { return window.TCQG_EDUQA ? window.TCQG_EDUQA.nhan(muc) : ''; }
-  function veEduQA() { if (window.TCQG_EDUQA) window.TCQG_EDUQA.ve(); }
+  function veEduQA() { if (window.TCQG_EDUQA) window.TCQG_EDUQA.ve(); veBuoc(); }   // phần việc của tôi cập nhật theo
 
   // ── Quyền ──
   // Quyền viết, chấm (31/10/2026, sql/89 — máy chủ kiểm y hệt): BGH, người giữ bút của
@@ -118,6 +118,7 @@
   window.tcqgVeLaiQuyen = function () {
     if (TAI_HONG || !$('#kd-thanh')) return;
     veThanh();
+    veEduQA();   // 20/11/2026: Thư ký mới nhận vai → thấy bảng Nộp lên EduQA; thành viên → Phần việc của tôi
     var ct = $('#kd-chi-tiet'), dang = document.activeElement;
     var dangGo = !!(ct && dang && ct.contains(dang) && /^(TEXTAREA|INPUT|SELECT)$/.test(dang.tagName));
     veList();
@@ -401,47 +402,31 @@
   };
   function veBuoc() {
     var goc = $('#kd-buoc');
-    if (!goc || !BUOC_DL) return;
-    var B = BUOC_DL, qt = laQT();
-    var tcCoMC = TC.filter(function (t) {
-      return window.dsHoSoVaMCC().some(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(t.ma) >= 0; });
-    }).length;
-    var daCham = TC.filter(function (t) { return t.daCham; }).length;
-    var nh = demNoiHamTat();
-    var tcDu = [1, 2, 3, 4].filter(function (s) {
-      var r = DGTC[s] || {};
-      return MUC_DGTC.every(function (m) { return r[m[0]] && String(r[m[0]]).trim(); });
-    }).length;
-    var coBC = !!(BC && Object.keys(BC).some(function (k) { return ['id', 'nam_hoc', 'cap_nhat_luc', 'cap_nhat_boi'].indexOf(k) < 0 && BC[k] && String(BC[k]).trim(); }));
-    // Hạn 15/6 của năm học đang xem (Đ8 k4, Đ9 k3d)
-    var namCuoi = parseInt(String(NAM_DL || NAM).split('-')[1], 10);
-    var conNgay = Math.ceil((new Date(namCuoi, 5, 15) - new Date()) / 86400000);
-    var ds = [
-      { ten: 'Lập hội đồng, phân công', tt: !B.hd ? 'chua' : (B.hd.so_quyet_dinh && B.soTV >= 5 && B.soGiao >= TC.length ? 'xong' : 'dang'),
-        ct: B.hd ? B.soTV + ' thành viên · giao ' + B.soGiao + '/' + TC.length + ' tiêu chí' : 'Chưa lập hội đồng', di: qt ? 'qt:hd' : '' },
-      { ten: 'Gắn minh chứng', tt: tcCoMC >= TC.length && TC.length ? 'xong' : tcCoMC ? 'dang' : 'chua',
-        ct: tcCoMC + '/' + TC.length + ' tiêu chí có minh chứng', di: 'mc' },
-      { ten: 'Số liệu 3 năm', tt: B.soLieu >= 10 ? 'xong' : B.soLieu ? 'dang' : 'chua',
-        ct: B.soLieu === null ? 'Chưa rõ' : 'Đã nhập ' + B.soLieu + ' ô', di: qt ? 'qt:sl' : '' },
-      { ten: 'Viết, chấm từng tiêu chí', tt: daCham >= TC.length && TC.length ? 'xong' : (daCham || nh.viet) ? 'dang' : 'chua',
-        ct: 'Chấm ' + daCham + '/' + TC.length + ' · viết ' + nh.viet + '/' + nh.tong + ' ý', di: 'tc' },
-      { ten: 'Đánh giá chung', tt: tcDu >= 4 ? 'xong' : Object.keys(DGTC).length ? 'dang' : 'chua', ct: tcDu + '/4 tiêu chuẩn', di: 'dg' },
-      { ten: 'Báo cáo tự đánh giá', tt: coBC && daCham >= TC.length ? 'dang' : coBC ? 'dang' : 'chua',
-        ct: conNgay >= 0 ? 'Phê duyệt trước 15/6 · còn ' + conNgay + ' ngày' : 'Hạn 15/6/' + namCuoi + ' đã qua', di: 'bc', gap: conNgay >= 0 && conNgay <= 30 },
-      { ten: 'Kế hoạch cải tiến', tt: B.khct ? 'xong' : 'chua', ct: B.khct === null ? 'Chưa rõ' : B.khct + ' việc cải tiến', di: qt ? 'qt:kh' : '' },
-      { ten: 'Rà soát kế hoạch', tt: B.theoDoi >= 2 ? 'xong' : B.theoDoi ? 'dang' : 'chua', ct: (B.theoDoi || 0) + '/2 lần (cuối HK I, cuối năm)', di: qt ? 'qt:kh' : '' },
-      { ten: 'Điều kiện công nhận', tt: 'theo', ct: 'Theo dõi 4 điều kiện Điều 16', di: qt ? 'qt:cn' : '' }
-    ];
-    var chu = { xong: '✓ Xong', dang: 'Đang làm', chua: 'Chưa làm', theo: 'Theo dõi' };
-    goc.innerHTML = '<div class="kd-buoc-dau"><b>Các bước tự đánh giá năm học ' + thoat(NAM_DL || NAM) + '</b>' +
-      '<span>Làm lần lượt; năm sau chỉ cập nhật. Sở rà soát, thẩm định và công nhận khi có đủ dữ liệu 3 năm học liên tiếp.</span></div>' +
-      '<div class="kd-buoc-luoi">' + ds.map(function (b, i) {
-        return '<button type="button" class="kd-b ' + b.tt + (b.gap ? ' gap' : '') + '"' + (b.di ? ' data-buoc="' + b.di + '"' : ' disabled') + '>' +
-          '<span class="kd-b-so">' + (i + 1) + '</span><span class="kd-b-than"><b>' + b.ten + '</b>' +
-          '<small>' + thoat(b.ct) + '</small><em>' + chu[b.tt] + '</em></span></button>';
-      }).join('') + '</div>';
-    Array.prototype.forEach.call(goc.querySelectorAll('[data-buoc]'), function (n) {
-      n.addEventListener('click', function () { diBuoc(n.getAttribute('data-buoc')); });
+    if (!goc) return;
+    // 20/11/2026: lưới 9 bước cũ bỏ — bảng tiến độ duy nhất là "Nộp lên EduQA" (tcqg-eduqa.js) cho người giữ bút.
+    // Thành viên hội đồng khác chỉ thấy PHẦN VIỆC CỦA MÌNH: các tiêu chí được giao.
+    if (duocXuat() || !TC.length) { goc.innerHTML = ''; return; }
+    var cuaToi = TC.filter(function (t) { return coQuyenCham(t.ma); });
+    if (!cuaToi.length) { goc.innerHTML = ''; return; }
+    var ds = window.dsHoSoVaMCC ? window.dsHoSoVaMCC() : window.HO_SO;
+    goc.innerHTML = '<div class="kd-buoc-dau"><b>Phần việc của tôi — năm học ' + thoat(NAM_DL || NAM) + '</b>' +
+      '<span>Viết hiện trạng từng ý, gắn minh chứng; Ban giám hiệu chép sang EduQA.</span></div>' +
+      '<div class="cuon-ngang"><table class="bang-quan-tri nho"><thead><tr><th>Tiêu chí</th><th>Đã viết</th><th>Minh chứng</th><th></th></tr></thead><tbody>' +
+      cuaToi.map(function (t) {
+        var nh = ((NOI_HAM[t.ma + '|1'] || []).concat(NOI_HAM[t.ma + '|2'] || []));
+        var viet = nh.filter(function (n) { var h = HT_NH[n.id]; return h && h.hien_trang && h.hien_trang.trim(); }).length;
+        var mc = ds.filter(function (h) { return window.laMinhChungTDG(h) && (h.tc || []).indexOf(t.ma) >= 0; });
+        var m2 = mc.filter(function (h) { return h.laCon && h.muc === 2; }).length;
+        return '<tr><td><b>' + thoat(t.ma) + '</b> ' + thoat(t.ten) + (t.batBuoc ? ' <i>(bắt buộc)</i>' : '') + '</td>' +
+          '<td>' + viet + '/' + nh.length + ' ý' + (t.daCham ? ' · đã chấm' : '') + '</td>' +
+          '<td' + (t.batBuoc && !m2 ? ' class="thieu"' : '') + '>' + mc.length + ' mã · Mức 2: ' + m2 + '</td>' +
+          '<td><button type="button" class="nut-vien nho" data-viet-tc="' + thoat(t.ma) + '">Viết</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+    Array.prototype.forEach.call(goc.querySelectorAll('[data-viet-tc]'), function (n) {
+      n.addEventListener('click', function () {
+        TC_CHON = n.getAttribute('data-viet-tc'); TAB_CT = 'nd'; veList(); veChiTiet();
+        $('#kd-lam').scrollIntoView({ behavior: 'smooth' });
+      });
     });
   }
   function diBuoc(d) {
@@ -455,6 +440,20 @@
     if (d === 'bc') $('#kd-bao-cao').scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Lối đi từ bảng "Nộp lên EduQA" (tcqg-eduqa.js, 20/11/2026): qt:<thẻ Quản trị> · tc · dg · bc
+  window.tcqgDi = function (d) {
+    if (d.indexOf('qt:') === 0) { window.chuyenManHinh('quantri'); if (window.moQuanTri) window.moQuanTri(d.slice(3)); return; }
+    if (d === 'tc') { TAB_CT = 'nd'; veChiTiet(); $('#kd-lam').scrollIntoView({ behavior: 'smooth' }); return; }
+    if (d === 'dg') {
+      if (!STD) { STD = 1; veThanh(); veList(); veDanhGiaChung(); }
+      $('#kd-danh-gia-chung').scrollIntoView({ behavior: 'smooth' }); return;
+    }
+    if (d === 'bc') {
+      var s = $('#kd-bao-cao .sub'); if (s) s.classList.add('open');
+      $('#kd-bao-cao').scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   function veManTCQG() {
     if (TAI_HONG) return;
     window.tcqgNapBuoc();
@@ -466,8 +465,9 @@
     veBaoCao();
     // Có cả nhánh ẩn: vai bị hạ giữa phiên (Quản trị đổi vai rồi vé tự làm
     // mới) thì hai nút sửa không được đứng lại trên màn.
-    $('#kd-nut-hd').style.display = laQT() ? '' : 'none';
-    $('#kd-nut-kh').style.display = laQT() ? '' : 'none';
+    // 20/11/2026: Sửa hội đồng, Kế hoạch cải tiến, Xuất minh chứng nay ở bảng "Nộp lên EduQA" — ba nút cũ ẩn.
+    $('#kd-nut-hd').style.display = 'none';
+    $('#kd-nut-kh').style.display = 'none';
     window.veHoiDongTCQG && window.veHoiDongTCQG(NAM_DL || NAM);
     veEduQA();
   }
@@ -489,10 +489,7 @@
         return '<option value="' + t.so + '"' + (STD === t.so ? ' selected' : '') + '>Tiêu chuẩn ' + t.so + ' — ' + thoat(t.ten) + '</option>';
       }).join('') + '</select>' +
       '<span class="sp"></span>' +
-      (duocXuat()
-        ? '<button class="nut-vien" onclick="window.xuatMinhChungTheoTieuChuan?xuatMinhChungTheoTieuChuan():notify(\'Bản xuất danh mục minh chứng sẽ có ở bước sau.\')">📋 Danh mục minh chứng</button>' +
-          '<button class="nut-xuat-bc" onclick="window.xuatBaoCaoTuDanhGia?xuatBaoCaoTuDanhGia():notify(\'Bản xuất báo cáo sẽ có ở bước sau.\')">📄 Xuất báo cáo tự đánh giá</button>'
-        : '<span class="kd-chi-xem" title="' + thoat(window.TCQG_CHU_CHAN_XUAT) + '">🔒 Báo cáo tự đánh giá do Ban giám hiệu, Thư ký hội đồng xuất</span>');
+      '';   // 20/11/2026: hai nút xuất Word chuyển xuống chân bảng "Nộp lên EduQA"
     $('#kd-nam-hoc').addEventListener('change', function () { NAM = this.value; taiTCQG(); });
     $('#kd-std').addEventListener('change', function () { STD = +this.value; veList(); veDanhGiaChung(); });
   }
